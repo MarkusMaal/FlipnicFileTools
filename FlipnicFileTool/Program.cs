@@ -16,7 +16,8 @@ internal static class Program
         ExtractPssStreams,
         ListBin,
         ExtractBin,
-        ShowGimmick
+        ShowGimmick,
+        ShowLp4
     }
 
     public static bool SimpleOutput = false;
@@ -52,6 +53,7 @@ internal static class Program
                 "--list-files" => Modes.ListBin,
                 "--extract-files" => Modes.ExtractBin,
                 "--show-gimmick" => Modes.ShowGimmick,
+                "--show-lp4" => Modes.ShowLp4,
                 _ => mode
             };
             switch (arg)
@@ -123,6 +125,9 @@ internal static class Program
             case Modes.ShowHelp:
                 Console.WriteLine(GetHelp());
                 break;
+            case Modes.ShowLp4:
+                Console.WriteLine(new Lp4(File.ReadAllBytes(fileName)).ToString());
+                break;
         }
     }
 
@@ -133,26 +138,26 @@ internal static class Program
                
                Specifying a filename without any option will run an action corresponding file format below highlighted with an asterisk (*).
                
-               --input                File to open
-               --output               File to write to
-               --help                 Display help
-               --simple               Use output that is easy to parse for computer programs
-               --low-memory           Reduces performance to save on memory usage
+               --input                    File to open
+               --output                   File to write to
+               --help                     Display help
+               --simple                   Use output that is easy to parse for computer programs
+               --low-memory               Reduces performance to save on memory usage
                
                Flipnic Camera sequences (*.FPC)
                
-               --show-fpc*            Display data from .FPC file as human-readable text
-               --convert-fpc-to-xml   Convert .FPC file to .XML
+               --show-fpc*                Display data from .FPC file as human-readable text
+               --convert-fpc-to-xml       Convert .FPC file to .XML
 
                Stage information files (*.SST)
                
-               --show-sst-resources   Display all resources referenced by SST file
-               --show-sst-toc*        Display table of contents of the SST file
-               --show-gimmick [name]  Display a gimmick (name from TOC)
+               --show-sst-resources       Display all resources referenced by SST file
+               --show-sst-toc*            Display table of contents of the SST file
+               --show-gimmick [name]      Display a gimmick (name from TOC)
                
                Message file (JA.MSG)
                
-               --show-messages*       Display all strings stored in the file
+               --show-messages*           Display all strings stored in the file
                
                Interleaved audio/video stream (*.PSS)
                
@@ -163,6 +168,10 @@ internal static class Program
                
                --list-files*              List all files inside this container file
                --extract-files            Extract files inside the container to a folder (output = folder)
+               
+               Resource files (*.LP4)
+               
+               --show-lp4                 Display general information about the file
                """;
     }
 
@@ -175,6 +184,7 @@ internal static class Program
             ".MSG" => Modes.ShowMessages,
             ".PSS" => Modes.ListPssStreams,
             ".BIN" => Modes.ListBin,
+            ".LP4" => Modes.ShowLp4,
             _ => Modes.ShowHelp
         };
     }
