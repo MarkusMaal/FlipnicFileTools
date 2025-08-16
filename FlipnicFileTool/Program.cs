@@ -15,7 +15,8 @@ internal static class Program
         ListPssStreams,
         ExtractPssStreams,
         ListBin,
-        ExtractBin
+        ExtractBin,
+        ShowGimmick
     }
 
     public static bool SimpleOutput = false;
@@ -24,6 +25,7 @@ internal static class Program
     public static void Main(string[] args)
     {
         var fileName = "";
+        var secondaryFileName = "";
         var outFile = "";
         var lastPar = "";
         var mode = Modes.ShowHelp;
@@ -49,6 +51,7 @@ internal static class Program
                 "--extract-pss-streams" => Modes.ExtractPssStreams,
                 "--list-files" => Modes.ListBin,
                 "--extract-files" => Modes.ExtractBin,
+                "--show-gimmick" => Modes.ShowGimmick,
                 _ => mode
             };
             switch (arg)
@@ -60,13 +63,20 @@ internal static class Program
                     LowMem = true;
                     break;
             }
-            if (lastPar == "--input") {
-                fileName = arg;
-                break;
-            }
-            if (lastPar == "--output") {
-                outFile = arg;
-                break;
+
+            switch (lastPar)
+            {
+                case "--show-gimmick":
+                    secondaryFileName = arg;
+                    break;
+                case "--input":
+                    fileName = arg;
+                    break;
+                case "--output":
+                    outFile = arg;
+                    break;
+                default:
+                    break;
             }
             lastPar = arg;
         }
@@ -91,6 +101,9 @@ internal static class Program
                 break;
             case Modes.ShowSstToc:
                 new FpnSst(fileName).ListEntries();
+                break;
+            case Modes.ShowGimmick:
+                new FpnSst(fileName).ShowGimmick(secondaryFileName);
                 break;
             case Modes.ShowMessages:
                 Console.WriteLine(SimpleOutput ? new FpnMsg(fileName).ToSimpleString() : new FpnMsg(fileName).ToString());
@@ -123,7 +136,7 @@ internal static class Program
                --input                File to open
                --output               File to write to
                --help                 Display help
-               --simple-output        Use output that is easy to parse for computer programs
+               --simple               Use output that is easy to parse for computer programs
                --low-memory           Reduces performance to save on memory usage
                
                Flipnic Camera sequences (*.FPC)
@@ -135,6 +148,7 @@ internal static class Program
                
                --show-sst-resources   Display all resources referenced by SST file
                --show-sst-toc*        Display table of contents of the SST file
+               --show-gimmick [name]  Display a gimmick (name from TOC)
                
                Message file (JA.MSG)
                

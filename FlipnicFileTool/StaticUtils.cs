@@ -7,6 +7,23 @@ public class StaticUtils
 {
     private static char[] Loaders = ['/', '-', '\\', '|'];
     public static int LoadIdx = 0;
+    public enum ControllerButtons : byte {
+        Disabled = 0xFF,
+        L2 = 0x0,
+        R2,
+        L1,
+        R1,
+        Triangle,
+        Circle,
+        Cross,
+        Square, // not idea, but maybe 0x8 = Select?, 0xB = Start?, these won't work anyway, since they're reserved for stage status and pause menu
+        L3 = 0x9,
+        R3,
+        DPadUp = 0xC,
+        DPadRight,
+        DPadDown,
+        DPadLeft
+    };
 
     public static void PrintLoader()
     {

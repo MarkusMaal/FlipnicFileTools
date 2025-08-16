@@ -1,3 +1,5 @@
+using FlipnicFileTool.Types;
+
 namespace FlipnicFileTool;
 
 public class FpnSst
@@ -15,17 +17,14 @@ public class FpnSst
 
     public void GenerateMagicNumbers()
     {
-        foreach (var entry in TableOfContents.Where(entry => entry.Key.EndsWith('N')))
+        string[] colHeaders = ["TOC name", "Index", "Value"];
+        List<string[]> rows = [];
+        foreach (var entry in TableOfContents.Where(entry => entry.Key.EndsWith('N') || entry.Key.EndsWith("NAME")))
         {
-            Console.WriteLine("\n----------------------------");
-            Console.WriteLine(entry.Key);
-            Console.WriteLine("----------------------------");
             var subEntries = GetSubentries(entry.Value.Offset, entry.Value.EntrySize, entry.Value.Count);
-            for (var i = 0; i < subEntries.Count; i++)
-            {
-                Console.WriteLine(i.ToString("X") + ": " + StaticUtils.GetString(subEntries[i]));
-            }
+            rows.AddRange(subEntries.Select((t, i) => (string[]) [entry.Key, "0x" + i.ToString("X").PadLeft(2, '0'), StaticUtils.GetString(t)]));
         }
+        Console.Write(StaticUtils.GenerateTable(colHeaders, rows, rows.Select(row => row[2].Length + 1).Prepend(15).Max()));
     }
     
     public void ListEntries()
@@ -33,6 +32,23 @@ public class FpnSst
         string[] colHeaders = ["Name", "Offset", "Entry count", "Entry size"];
         var rows = TableOfContents.Select(entry => (string[]) [entry.Key, $"0x{entry.Value.Offset:X}", entry.Value.Count.ToString(), $"0x{entry.Value.EntrySize:X}"]).ToList();
         Console.Write(StaticUtils.GenerateTable(colHeaders, rows));
+    }
+
+    public void ShowGimmick(string name)
+    {
+        var tocEntry = TableOfContents[name];
+        var gimmickData = Data.Skip(tocEntry.Offset).Take(tocEntry.EntrySize * tocEntry.Count).ToArray();
+        List<Gimmick> gimmicks = [];
+        for (var i = 0; i < tocEntry.Count; i++)
+        {
+            gimmicks.Add(new Gimmick(gimmickData.Skip(i * tocEntry.EntrySize).Take(tocEntry.EntrySize).ToArray()));
+        }
+
+        string[] colHeaders = ["Label", "Type", "Button", "Sound effect", "Flip. strength", "Knockback", "Bounciness"];
+        List<string[]> rows = [];
+        rows.AddRange(gimmicks.Select(entry => (string[]) [entry.Label, entry.Type.ToString(), entry.Button.ToString(), entry.SoundEffect.ToString(), StaticUtils.DotFloatString(entry.FlipperStrength), StaticUtils.DotFloatString(entry.Knockback), StaticUtils.DotFloatString(entry.Bounciness)]));
+        Console.Write(StaticUtils.GenerateTable(colHeaders, rows,
+            rows.Select(row => row[0].Length).Prepend(15).Max()));
     }
 
     private List<byte[]> GetSubentries(int offset, int entrySize, int count)
