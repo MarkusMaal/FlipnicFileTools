@@ -17,7 +17,8 @@ internal static class Program
         ListBin,
         ExtractBin,
         ShowGimmick,
-        ShowLp4
+        ShowLp4,
+        ShowMlb
     }
 
     public static bool SimpleOutput = false;
@@ -54,6 +55,7 @@ internal static class Program
                 "--extract-files" => Modes.ExtractBin,
                 "--show-gimmick" => Modes.ShowGimmick,
                 "--show-lp4" => Modes.ShowLp4,
+                "--show-mlb" => Modes.ShowMlb,
                 _ => mode
             };
             switch (arg)
@@ -128,6 +130,9 @@ internal static class Program
             case Modes.ShowLp4:
                 Console.WriteLine(new Lp4(File.ReadAllBytes(fileName)).ToString());
                 break;
+            case Modes.ShowMlb:
+                Console.WriteLine(new FpnMlb(File.ReadAllBytes(fileName)).ToString());
+                break;
         }
     }
 
@@ -172,6 +177,10 @@ internal static class Program
                Resource files (*.LP4)
                
                --show-lp4                 Display general information about the file
+               
+               Menu files (*.MLB)
+               
+               --show-mlb                 Display all menu elements as a table
                """;
     }
 
@@ -185,6 +194,7 @@ internal static class Program
             ".PSS" => Modes.ListPssStreams,
             ".BIN" => Modes.ListBin,
             ".LP4" => Modes.ShowLp4,
+            ".MLB" => Modes.ShowMlb,
             _ => Modes.ShowHelp
         };
     }
