@@ -18,15 +18,17 @@ internal static class Program
         ExtractBin,
         ShowGimmick,
         ShowLp4,
-        ShowMlb
+        ShowMlb,
+        ShowTim2,
+        ConvertTim2
     }
 
     public static bool SimpleOutput = false;
     public static bool LowMem = false;
+    private static string FileName = "";
     
     public static void Main(string[] args)
     {
-        var fileName = "";
         var secondaryFileName = "";
         var outFile = "";
         var lastPar = "";
@@ -36,7 +38,7 @@ internal static class Program
             mode = GuessAction(args[0]);
             if (mode != Modes.ShowHelp)
             {
-                fileName = args[0];
+                FileName = args[0];
             }
         }
         foreach (var arg in args)
@@ -56,6 +58,8 @@ internal static class Program
                 "--show-gimmick" => Modes.ShowGimmick,
                 "--show-lp4" => Modes.ShowLp4,
                 "--show-mlb" => Modes.ShowMlb,
+                "--show-tim2" => Modes.ShowTim2,
+                "--convert-tim2" => Modes.ConvertTim2,
                 _ => mode
             };
             switch (arg)
@@ -74,7 +78,7 @@ internal static class Program
                     secondaryFileName = arg;
                     break;
                 case "--input":
-                    fileName = arg;
+                    FileName = arg;
                     break;
                 case "--output":
                     outFile = arg;
@@ -85,9 +89,9 @@ internal static class Program
             lastPar = arg;
         }
 
-        if (fileName == "" && mode != Modes.ShowHelp)
+        if (FileName == "" && mode != Modes.ShowHelp)
         {
-            Console.WriteLine("Must specify input filename in this case!");
+            Console.WriteLine("Must specify input FileName in this case!");
             return;
         }
         
@@ -95,43 +99,49 @@ internal static class Program
         switch (mode)
         {
             case Modes.ListResources:
-                new FpnSst(fileName).GenerateMagicNumbers();
+                new FpnSst(FileName).GenerateMagicNumbers();
                 break;
             case Modes.ShowFpc:
-                Console.Write(new FpnFpc(fileName).ToString());
+                Console.Write(new FpnFpc(FileName).ToString());
                 break;
             case Modes.ConvertXml:
-                new FpnFpc(fileName).GenerateXML().Save(outFile);
+                new FpnFpc(FileName).GenerateXML().Save(outFile);
                 break;
             case Modes.ShowSstToc:
-                new FpnSst(fileName).ListEntries();
+                new FpnSst(FileName).ListEntries();
                 break;
             case Modes.ShowGimmick:
-                new FpnSst(fileName).ShowGimmick(secondaryFileName);
+                new FpnSst(FileName).ShowGimmick(secondaryFileName);
                 break;
             case Modes.ShowMessages:
-                Console.WriteLine(SimpleOutput ? new FpnMsg(fileName).ToSimpleString() : new FpnMsg(fileName).ToString());
+                Console.WriteLine(SimpleOutput ? new FpnMsg(FileName).ToSimpleString() : new FpnMsg(FileName).ToString());
                 break;
             case Modes.ListPssStreams:
-                Pss.ListPss(fileName);
+                Pss.ListPss(FileName);
                 break;
             case Modes.ExtractPssStreams:
-                Pss.ListPss(fileName, true, outFile);
+                Pss.ListPss(FileName, true, outFile);
                 break;
             case Modes.ListBin:
-                BinFile.ListBin(fileName);
+                BinFile.ListBin(FileName);
                 break;
             case Modes.ExtractBin:
-                BinFile.ExtractBin(fileName, outFile);
+                BinFile.ExtractBin(FileName, outFile);
                 break;
             case Modes.ShowHelp:
                 Console.WriteLine(GetHelp());
                 break;
             case Modes.ShowLp4:
-                Console.WriteLine(new Lp4(File.ReadAllBytes(fileName)).ToString());
+                Console.WriteLine(new Lp4(File.ReadAllBytes(FileName)).ToString());
                 break;
             case Modes.ShowMlb:
-                Console.WriteLine(new FpnMlb(File.ReadAllBytes(fileName)).ToString());
+                Console.WriteLine(new FpnMlb(File.ReadAllBytes(FileName)).ToString());
+                break;
+            case Modes.ConvertTim2:
+                new Tim2(File.ReadAllBytes(FileName)).SaveBitmap(outFile);
+                break;
+            case Modes.ShowTim2:
+                Console.WriteLine(new Tim2(File.ReadAllBytes(FileName)).ToString());
                 break;
         }
     }
@@ -139,9 +149,9 @@ internal static class Program
     private static string GetHelp()
     {
         return $"""
-               Usage: {Process.GetCurrentProcess().ProcessName} [filename] [options]
+               Usage: {Process.GetCurrentProcess().ProcessName} [FileName] [options]
                
-               Specifying a filename without any option will run an action corresponding file format below highlighted with an asterisk (*).
+               Specifying a FileName without any option will run an action corresponding file format below highlighted with an asterisk (*).
                
                --input                    File to open
                --output                   File to write to
@@ -176,17 +186,22 @@ internal static class Program
                
                Resource files (*.LP4)
                
-               --show-lp4                 Display general information about the file
+               --show-lp4*                Display general information about the file
                
                Menu files (*.MLB)
                
-               --show-mlb                 Display all menu elements as a table
+               --show-mlb*                Display all menu elements as a table
+               
+               Texture files (*.TM2)
+               
+               --show-tim2*               Display information about a texture file
+               --convert-tim2             Converts a texture file to a bitmap (.BMP file)
                """;
     }
 
-    private static Modes GuessAction(string fileName)
+    private static Modes GuessAction(string FileName)
     {
-        return Path.GetExtension(fileName) switch
+        return Path.GetExtension(FileName) switch
         {
             ".FPC" => Modes.ShowFpc,
             ".SST" => Modes.ShowSstToc,
@@ -195,7 +210,13 @@ internal static class Program
             ".BIN" => Modes.ListBin,
             ".LP4" => Modes.ShowLp4,
             ".MLB" => Modes.ShowMlb,
+            ".TM2" => Modes.ShowTim2,
             _ => Modes.ShowHelp
         };
+    }
+
+    public static string GetFileName()
+    {
+        return FileName;
     }
 }
