@@ -230,7 +230,7 @@ internal static class Program
                 break;
             case Modes.GenerateMockup:
                 StaticUtils.GenerateEmptyBmp(outFile + "_", 640, Pal ? 512 : 480);
-                var root = new FileInfo(FileName).Directory?.FullName;
+                var root = new FileInfo(FileName).Directory?.FullName ?? ".";
                 var magickCommand = $"\"{outFile}_\" ";
                 foreach (var sect in new FpnMlb(File.ReadAllBytes(FileName)).Sections.Where(me => (MlbSect == "") || (me.Key == MlbSect)).SelectMany(me => me.Value))
                 {
@@ -280,24 +280,24 @@ internal static class Program
         {
             if (mono)
             {
-                interleavedDataL.AddRange(data.Skip(i).Take(0x400).ToArray());
-                interleavedDataR.AddRange(data.Skip(i).Take(0x400).ToArray());
+                interleavedDataL.AddRange([.. data.Skip(i).Take(0x400)]);
+                interleavedDataR.AddRange([.. data.Skip(i).Take(0x400)]);
                 continue;
             }
             if (i % 0x800 == 0)
             {
-                interleavedDataL.AddRange(data.Skip(i).Take(0x400).ToArray());
+                interleavedDataL.AddRange([.. data.Skip(i).Take(0x400)]);
             }
             else
             {
-                interleavedDataR.AddRange(data.Skip(i).Take(0x400).ToArray());
+                interleavedDataR.AddRange([.. data.Skip(i).Take(0x400)]);
             }
         }
         
         Console.Write("\r     Converting to PCM".PadRight(Console.WindowWidth, ' '));
         StaticUtils.PrintLoader();
-        using var msl = new MemoryStream(SonyVag.Decode(interleavedDataL.ToArray()));
-        using var msr = new MemoryStream(SonyVag.Decode(interleavedDataR.ToArray()));
+        using var msl = new MemoryStream(SonyVag.Decode([.. interleavedDataL]));
+        using var msr = new MemoryStream(SonyVag.Decode([.. interleavedDataR]));
         using var ms = new MemoryStream();
         
         {

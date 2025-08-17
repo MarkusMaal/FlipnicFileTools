@@ -9,7 +9,6 @@ public class BinFile
     {
         string[] colHeader = ["Path", "Offset", "Size"];
         List<string[]> rows = [];
-        var text_output = "";
         var folders = new Dictionary<string, long>();
         using Stream src = File.OpenRead(source);
         var buffer = new byte[64];
@@ -33,7 +32,7 @@ public class BinFile
                     continue;
                 }
                 pointer.Clear();
-                filename = buffer[..60].Where(b => b != 0x00).Aggregate("", (current, b) => current + Encoding.ASCII.GetString(new[] { b }));
+                filename = buffer[..60].Where(b => b != 0x00).Aggregate("", (current, b) => current + Encoding.ASCII.GetString([b]));
                 var bytes = buffer[60..];
                 var byteoffset = (long)(BitConverter.ToInt32(bytes, 0)) * 2048;
                 switch (filename)
@@ -109,7 +108,6 @@ public class BinFile
     private static Dictionary<string, long> GetFsEntries(string source)
     {
         var fsentries = new Dictionary<string, long>();
-        var folders = new Dictionary<string, long>();
         using Stream src = File.OpenRead(source);
         var buffer = new byte[64];
         var filename = "";
@@ -137,7 +135,7 @@ public class BinFile
                     {
                         continue;
                     }
-                    filename += Encoding.ASCII.GetString(new[] { b });
+                    filename += Encoding.ASCII.GetString([b]);
                     StaticUtils.PrintLoader();
                 }
                 var bytes = cache[60..];
@@ -191,7 +189,7 @@ public class BinFile
             var offset = 0;
             ulong finish = 0;
             var dnb = false;
-            byte[] memory = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+            byte[] memory = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
             var afiles = new List<string>();
             var lastfile = "";
             var content = new List<byte>();
@@ -215,13 +213,13 @@ public class BinFile
                     if (lastfile.EndsWith("/A") && (extract_subfolder))
                     {
                         fs_entries.Remove(lastfile);
-                        ExtractFolder(destination + "/" + lastfile, new FileInfo(destination + "/" + lastfile).DirectoryName);
+                        ExtractFolder(destination + "/" + lastfile, new FileInfo(destination + "/" + lastfile).DirectoryName ?? ".");
                         File.Delete(destination + "/" + lastfile);
                         lastfile = "";
                     }
                     foreach (KeyValuePair<string, long> kvp in fs_entries)
                     {
-                        if ((kvp.Value == loc) && (!kvp.Key.EndsWith("\\")))
+                        if ((kvp.Value == loc) && (!kvp.Key.EndsWith('\\')))
                         {
                             ulong min = (ulong)new FileInfo(source).Length;
                             foreach (KeyValuePair<string, long> kvp2 in fs_entries)
@@ -231,11 +229,12 @@ public class BinFile
                                     min = (ulong)kvp2.Value;
                                 }
                             }
-                            if (!Directory.Exists(new FileInfo(destination + "/" + kvp.Key).DirectoryName))
+                            var newDirName = new FileInfo(destination + "/" + kvp.Key).DirectoryName;
+                            if ((newDirName != null) && !Directory.Exists(newDirName))
                             {
                                 Console.Write(
-                                    $"\r     Creating folder: {new FileInfo(destination + "/" + kvp.Key).DirectoryName}");
-                                Directory.CreateDirectory(new FileInfo(destination + "/" + kvp.Key).DirectoryName);
+                                    $"\r     Creating folder: {newDirName}");
+                                Directory.CreateDirectory(newDirName);
                             }
                             finish = min;
                             lastfile = write_to;
@@ -271,7 +270,7 @@ public class BinFile
             if (lastfile.EndsWith("\\A"))
             {
                 fs_entries.Remove(lastfile);
-                ExtractFolder(destination + "/" + lastfile.Replace("\\", "/"), new FileInfo(destination + "/" + lastfile.Replace("\\", "/")).DirectoryName);
+                ExtractFolder(destination + "/" + lastfile.Replace("\\", "/"), new FileInfo(destination + "/" + lastfile.Replace("\\", "/")).DirectoryName ?? ".");
                 File.Delete(destination + "/" + lastfile.Replace("\\", "/"));
             }
         }
@@ -296,7 +295,7 @@ public class BinFile
         {
             content.AddRange(buffer);
         }
-        c2 = content.ToArray<byte>();
+        c2 = [.. content];
         var fs_values = new List<long>();
         var fs_keys = new List<string>();
         foreach (var kvp in fs_entries)
@@ -337,7 +336,7 @@ public class BinFile
 
     private static void CheckMissingDirs(string dirname, string target)
     {
-        if (!dirname.Contains("\\")) return;
+        if (!dirname.Contains('\\')) return;
         Directory.CreateDirectory(target + "/" + dirname.Split("\\")[0]);
     }
 
@@ -352,7 +351,7 @@ public class BinFile
         while ((offset = src.Read(buffer, 0, buffer.Length)) > 0)
         {
             var cache = buffer;
-            var filename = cache[..60].Where(b => b != 0x00).Aggregate("", (current, b) => current + Encoding.ASCII.GetString(new[] { b }));
+            var filename = cache[..60].Where(b => b != 0x00).Aggregate("", (current, b) => current + Encoding.ASCII.GetString([b]));
 
             if (filename == "*End Of Mem Data")
             {

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Globalization;
 using System.Xml;
 using System.Xml.Linq;
@@ -6,30 +7,30 @@ namespace FlipnicFileTool;
 
 public class FpnFpc
 {
-    List<float> SequenceXo = [];
-    List<float> SequenceYo = [];
-    List<float> SequenceZo = [];
-    
-    List<float> SequenceXt = [];
-    List<float> SequenceYt = [];
-    List<float> SequenceZt = [];
-    List<float> SequenceFov = [];
+    readonly List<float> SequenceXo = [];
+    readonly List<float> SequenceYo = [];
+    readonly List<float> SequenceZo = [];
 
-    private float FOV;
-    float OriginX;
-    float OriginY;
-    float OriginZ;
-    
-    float TargetX;
-    float TargetY;
-    float TargetZ;
+    readonly List<float> SequenceXt = [];
+    readonly List<float> SequenceYt = [];
+    readonly List<float> SequenceZt = [];
+    readonly List<float> SequenceFov = [];
 
-    private int TotalFrames;
+    private readonly float FOV;
+    readonly float OriginX;
+    readonly float OriginY;
+    readonly float OriginZ;
 
-    private byte[] Data;
+    readonly float TargetX;
+    readonly float TargetY;
+    readonly float TargetZ;
 
-    private int NumFrames;
-    private int NumSequences;
+    //private int TotalFrames;
+
+    private readonly byte[] Data;
+
+    private readonly int NumFrames;
+    private readonly int NumSequences;
 
     private enum ValueIDs : int
     {
