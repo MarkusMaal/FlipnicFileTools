@@ -4,7 +4,7 @@ namespace FlipnicFileTool;
 
 public class FpnMlb
 {
-    private Dictionary<string, MenuElement[]> Sections = new();
+    public Dictionary<string, MenuElement[]> Sections { get; set; } = new();
     
     public FpnMlb(byte[] data)
     {
@@ -38,7 +38,7 @@ public class FpnMlb
             rows.Select(row => row[2].Length + 1).Prepend(15).Max());
     }
 
-    private struct MenuElement(byte[] data)
+    public struct MenuElement(byte[] data)
     {
         public string Texture { get; set; } = StaticUtils.GetString(data.Take(0x20).ToArray());
 

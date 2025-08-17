@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using FlipnicFileTool.Vag;
 
 namespace FlipnicFileTool;
 
@@ -20,13 +21,22 @@ internal static class Program
         ShowLp4,
         ShowMlb,
         ShowTim2,
-        ConvertTim2
+        ConvertTim2,
+        GenerateMockup,
+        ConvertIpu,
+        ConvertInt,
+        ConvertPssMov,
+        ConvertSvag,
     }
 
     public static bool SimpleOutput = false;
     public static bool LowMem = false;
     private static string FileName = "";
     private static bool Grayscale = false;
+    public static bool Pal = false;
+    private static string MlbSect = "";
+    private static string MagickPath = "magick";
+    private static string FFmpegPath = "ffmpeg";
     
     public static void Main(string[] args)
     {
@@ -61,6 +71,11 @@ internal static class Program
                 "--show-mlb" => Modes.ShowMlb,
                 "--show-tim2" => Modes.ShowTim2,
                 "--convert-tim2" => Modes.ConvertTim2,
+                "--generate-mockup" => Modes.GenerateMockup,
+                "--convert-ipu" => Modes.ConvertIpu,
+                "--convert-int" => Modes.ConvertInt,
+                "--convert-pss-mov" => Modes.ConvertPssMov,
+                "--convert-svag" => Modes.ConvertSvag,
                 _ => mode
             };
             switch (arg)
@@ -74,6 +89,9 @@ internal static class Program
                 case "--grayscale":
                     Grayscale = true;
                     break;
+                case "--pal":
+                    Pal = true;
+                    break;
             }
 
             switch (lastPar)
@@ -81,11 +99,20 @@ internal static class Program
                 case "--show-gimmick":
                     secondaryFileName = arg;
                     break;
+                case "--mlb-section":
+                    MlbSect = arg;
+                    break;
                 case "--input":
                     FileName = arg;
                     break;
                 case "--output":
                     outFile = arg;
+                    break;
+                case "--magick-path":
+                    MagickPath = arg;
+                    break;
+                case "--ffmpeg-path":
+                    FFmpegPath = arg;
                     break;
                 default:
                     break;
@@ -144,9 +171,170 @@ internal static class Program
             case Modes.ConvertTim2:
                 new Tim2(File.ReadAllBytes(FileName), Grayscale).SaveBitmap(outFile);
                 break;
+            case Modes.ConvertIpu:
+                Ipu.IpuConvert(FileName, outFile, FFmpegPath);
+                break;
+            case Modes.ConvertInt:
+                ConvertAudio(outFile);
+                break;
+            case Modes.ConvertSvag:
+                ConvertAudio(outFile, true);
+                Console.WriteLine($"File saved as {outFile}");
+                break;
+            case Modes.ConvertPssMov:
+                Pss.ListPss(FileName, true, new FileInfo(outFile).Directory!.FullName);
+                var nf = Path.Combine(new FileInfo(outFile).Directory!.FullName, new FileInfo(FileName).Name);
+                Ipu.IpuConvert(nf + ".IPU", nf + ".TEMP.MOV", FFmpegPath);
+                var exist = true;
+                var streams = 0;
+                while (exist)
+                {
+                    if (File.Exists(
+                            nf +
+                            $".{++streams}.INT"))
+                    {
+                        FileName =
+                            nf +
+                            $".{streams}.INT";
+                        ConvertAudio(nf + $".{streams}.WAV");
+                        continue;
+                    }
+                    exist = false;
+                }
+
+                var ffmpegCommand = $"-i \"{nf}.TEMP.MOV\" -i ";
+                List<string> audioFiles = [];
+                for (var i = 1; i < streams; i++)
+                {
+                    audioFiles.Add($"\"{nf}.{i}.WAV\"");
+                }
+                ffmpegCommand += string.Join(" -i ", audioFiles);
+                ffmpegCommand += " -map 0";
+                for (var i = 1; i < streams; i++)
+                {
+                    ffmpegCommand += $" -map {i}:a";
+                }
+                ffmpegCommand += $" -c:v copy -shortest \"{outFile}\"";
+                StaticUtils.ProcessFFmpeg(FFmpegPath, ffmpegCommand);
+                File.Delete(nf + ".TEMP.MOV");
+                for (var i = 1; i <= streams; i++)
+                {
+                    File.Delete(nf + $".{i}.WAV");
+                    File.Delete(nf + $".{i}.INT");
+                }
+                File.Delete(nf + ".IPU");
+                Console.WriteLine($"\rFile saved as {outFile}");
+                break;
             case Modes.ShowTim2:
                 Console.WriteLine(new Tim2(File.ReadAllBytes(FileName)).ToString());
                 break;
+            case Modes.GenerateMockup:
+                StaticUtils.GenerateEmptyBmp(outFile + "_", 640, Pal ? 512 : 480);
+                var root = new FileInfo(FileName).Directory?.FullName;
+                var magickCommand = $"\"{outFile}_\" ";
+                foreach (var sect in new FpnMlb(File.ReadAllBytes(FileName)).Sections.Where(me => (MlbSect == "") || (me.Key == MlbSect)).SelectMany(me => me.Value))
+                {
+                    try
+                    {
+                        var textureFile = sect.Texture.Split('\\')[^1].ToUpper();
+                        new Tim2(File.ReadAllBytes(Path.Combine(root, textureFile)), Grayscale).SaveBitmap(
+                            Path.Combine(root, textureFile.Replace(".TM2", ".BMP")));
+
+                        magickCommand +=
+                            $" ( \"{Path.Combine(root, textureFile.Replace(".TM2", ".BMP"))}\" ) -geometry +{sect.PosX}+{sect.PosY} -composite ";
+                    }
+                    catch
+                    {
+                        // ignored
+                    }
+                }
+                magickCommand += $" \"{outFile}\"";
+                Console.WriteLine($"Executing shell command: magick {magickCommand}");
+                var p = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = MagickPath,
+                        Arguments = magickCommand.Replace("+−", "+"),
+                        UseShellExecute = true,
+                        CreateNoWindow = true,
+                    }
+                };
+                p.Start();
+                p.WaitForExit();
+                File.Delete(outFile + "_");
+                break;
+        }
+    }
+
+    private static void ConvertAudio(string outFile, bool mono = false)
+    {
+        Console.Write("     Loading sound file to memory".PadRight(Console.WindowWidth, ' '));
+        StaticUtils.PrintLoader();
+        var data = File.ReadAllBytes(FileName);
+        Console.Write("\r     Separating left and right channels".PadRight(Console.WindowWidth, ' '));
+        StaticUtils.PrintLoader();
+        List<byte> interleavedDataL = [];
+        List<byte> interleavedDataR = [];
+        for (var i = 0; i < data.Length; i += 0x400)
+        {
+            if (mono)
+            {
+                interleavedDataL.AddRange(data.Skip(i).Take(0x400).ToArray());
+                interleavedDataR.AddRange(data.Skip(i).Take(0x400).ToArray());
+                continue;
+            }
+            if (i % 0x800 == 0)
+            {
+                interleavedDataL.AddRange(data.Skip(i).Take(0x400).ToArray());
+            }
+            else
+            {
+                interleavedDataR.AddRange(data.Skip(i).Take(0x400).ToArray());
+            }
+        }
+        
+        Console.Write("\r     Converting to PCM".PadRight(Console.WindowWidth, ' '));
+        StaticUtils.PrintLoader();
+        using var msl = new MemoryStream(SonyVag.Decode(interleavedDataL.ToArray()));
+        using var msr = new MemoryStream(SonyVag.Decode(interleavedDataR.ToArray()));
+        using var ms = new MemoryStream();
+        
+        {
+            Console.Write("\r     Generating WAV file".PadRight(Console.WindowWidth, ' '));
+            var bufL = new byte[2]; // 16-bit, 2 channels = 2+2 bytes
+            var bufR = new byte[2];
+            var i = 0;
+            while (msl.Position < msl.Length)
+            {
+                try
+                {
+                    msl.ReadExactly(bufL, 0, bufL.Length);
+                    msr.ReadExactly(bufR, 0, bufR.Length);
+                    ms.Write(bufL);
+                    ms.Write(bufR);
+                    i++;
+                    if (i % 0x100 == 0)
+                    {
+                        StaticUtils.PrintLoader();
+                    }
+                }
+                catch (EndOfStreamException)
+                {
+                    break;
+                }
+            }
+            
+            // Stereo, Signed 16-bit, 44100Hz
+            Pcm.WriteWavHeader(ms, false, 2, 16, 44100, (int)ms.Length);
+        
+            Console.Write("\r     Saving WAV file".PadRight(Console.WindowWidth, ' '));
+            StaticUtils.PrintLoader();
+            // save WAV file
+            var fs = new FileStream(outFile, FileMode.Create);
+            ms.WriteTo(fs);
+            fs.Close();
+            Console.WriteLine($"\r   File saved as {outFile}".PadRight(Console.WindowWidth, ' '));
         }
     }
 
@@ -162,6 +350,8 @@ internal static class Program
                --help                     Display help
                --simple                   Use output that is easy to parse for computer programs
                --low-memory               Reduces performance to save on memory usage
+               --magick-path              Path to ImageMagick executable (may not be needed dep. on what you're trying to do)
+               --ffmpeg-path              Path to FFmpeg (for audio/video conversion operations)
                
                Flipnic Camera sequences (*.FPC)
                
@@ -182,6 +372,10 @@ internal static class Program
                
                --list-pss-streams*        List all available streams in a .PSS file
                --extract-pss-streams      Demux a .PSS file to .IPU and .INT files (output = folder)
+               --convert-ipu              Uses FFmpeg to convert .IPU file to .MOV
+               --convert-int              Convert .INT file to .WAV
+               --convert-pss-mov          Convert .PSS file directly to .MOV file with audio streams
+               --pal                      Force 25/50 frames per second when converting video files
                
                Blob files (*.BIN)
                
@@ -195,12 +389,19 @@ internal static class Program
                Menu files (*.MLB)
                
                --show-mlb*                Display all menu elements as a table
+               --generate-mockup          Combine texture files to create a mockup for the menu file (requires ImageMagick v7 or later)
+               --pal                      Use 512 lines instead of 480 for generated images
+               --mlb-section [name]       Combine only a specific section of the menu
                
                Texture files (*.TM2)
                
                --show-tim2*               Display information about a texture file
                --convert-tim2             Converts a texture file to a bitmap (.BMP file)
                --grayscale                Set palette to grayscale (black and white)
+               
+               Sound files (*.SVAG)
+               
+               --convert-svag             Converts a .SVAG file to .WAV
                """;
     }
 

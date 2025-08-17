@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 
@@ -131,5 +132,45 @@ public class StaticUtils
             > 1024 => $"{DotFloatString((float)Math.Round(bytes / 1024f, 2))} kiB",
             _ => $"{bytes} B"
         };
+    }
+
+    public static void GenerateEmptyBmp(string fileName, int width, int height)
+    {
+        List<byte> imageData = [];
+        var matrix = new byte[width * height * 4];
+        imageData.AddRange("BM"u8.ToArray());
+        imageData.AddRange(BitConverter.GetBytes(matrix.Length + 0x36));
+        imageData.AddRange([0, 0, 0, 0]);
+        imageData.AddRange([0x36, 0, 0, 0]);
+        imageData.AddRange(BitConverter.GetBytes(0x28));
+        imageData.AddRange(BitConverter.GetBytes(width));
+        imageData.AddRange(BitConverter.GetBytes(height));
+        imageData.AddRange([0x1, 0x00]);
+        imageData.AddRange([0x18, 0x00]);
+        for (var i = 0; i < 6; i++)
+        {
+            imageData.AddRange([0, 0, 0, 0]);   
+        }
+        
+        imageData.AddRange(matrix);
+        File.WriteAllBytes(fileName, imageData.ToArray());
+        
+    }
+
+    public static void ProcessFFmpeg(string ffmpegPath, string ffmpegCommand)
+    {
+        var p = new Process
+        {
+            StartInfo =
+            {
+                FileName = ffmpegPath,
+                Arguments = ffmpegCommand,
+                UseShellExecute = true,
+                CreateNoWindow = true,
+            }
+        };
+        Console.WriteLine($"Running shell command: {ffmpegPath} {ffmpegCommand}");
+        p.Start();
+        p.WaitForExit();
     }
 }
