@@ -26,6 +26,7 @@ internal static class Program
     public static bool SimpleOutput = false;
     public static bool LowMem = false;
     private static string FileName = "";
+    private static bool Grayscale = false;
     
     public static void Main(string[] args)
     {
@@ -69,6 +70,9 @@ internal static class Program
                     break;
                 case "--low-memory":
                     LowMem = true;
+                    break;
+                case "--grayscale":
+                    Grayscale = true;
                     break;
             }
 
@@ -138,7 +142,7 @@ internal static class Program
                 Console.WriteLine(new FpnMlb(File.ReadAllBytes(FileName)).ToString());
                 break;
             case Modes.ConvertTim2:
-                new Tim2(File.ReadAllBytes(FileName)).SaveBitmap(outFile);
+                new Tim2(File.ReadAllBytes(FileName), Grayscale).SaveBitmap(outFile);
                 break;
             case Modes.ShowTim2:
                 Console.WriteLine(new Tim2(File.ReadAllBytes(FileName)).ToString());
@@ -196,6 +200,7 @@ internal static class Program
                
                --show-tim2*               Display information about a texture file
                --convert-tim2             Converts a texture file to a bitmap (.BMP file)
+               --grayscale                Set palette to grayscale (black and white)
                """;
     }
 

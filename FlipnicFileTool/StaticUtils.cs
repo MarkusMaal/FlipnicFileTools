@@ -129,7 +129,7 @@ public class StaticUtils
             > 1073741824 => $"{DotFloatString((float)Math.Round(bytes / 1073741824f, 2))} GiB",
             > 1048576 => $"{DotFloatString((float)Math.Round(bytes / 1048576f, 2))} MiB",
             > 1024 => $"{DotFloatString((float)Math.Round(bytes / 1024f, 2))} kiB",
-            _ => $"{bytes} b"
+            _ => $"{bytes} B"
         };
     }
 }
