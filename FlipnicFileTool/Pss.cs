@@ -13,6 +13,8 @@ public class Pss
         Console.Write("Searching for video/audio streams...");
         IDictionary<string, long> streams = new Dictionary<string, long>();
         var extractCommands = new List<string>();
+        var audioChunks = 0;
+        var videoChunks = 0;
         using (Stream src = File.OpenRead(filename))
         {
             var buffer = new byte[16];
@@ -57,6 +59,7 @@ public class Pss
                     }
                     seek += gotoPointer + 0x10;
                     src.Seek(seek, 0);
+                    audioChunks++;
                     continue;
                 }
                 // video stream
@@ -95,6 +98,7 @@ public class Pss
                     }
                     seek += gotoPointer + 0x10;
                     src.Seek(seek, 0);
+                    videoChunks++;
                     continue;
                 }
                 // end of file
@@ -129,6 +133,11 @@ public class Pss
         else
         {
             Console.Write("\r");
+            var sizeRatio = streams["Audio 1"] / (float)streams["Video"] * 100f;
+            var chunkRatio = audioChunks/(float)videoChunks*100f;
+            Console.WriteLine($"Video chunks: {videoChunks}, Audio chunks: {audioChunks}".PadRight(Console.WindowWidth, ' '));
+            Console.WriteLine($"Size ratio: {Math.Round(sizeRatio, 2)}%, Chunk ratio: {Math.Round(chunkRatio, 2)}%".PadRight(Console.WindowWidth, ' '));
+            Console.WriteLine($"Multiplier: {Math.Round(chunkRatio/sizeRatio, 2)}x".PadRight(Console.WindowWidth, ' '));
             string[] colHeaders = ["Stream", "Size"];
             List<string[]> rows = [];
             rows.AddRange(streams.Select(kvp => (string[]) [kvp.Key, StaticUtils.GetFilesizeString(kvp.Value)]));
