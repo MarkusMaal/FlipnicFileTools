@@ -1,4 +1,5 @@
 using System.Drawing;
+using BigGustave;
 
 namespace FlipnicFileTool;
 
@@ -124,6 +125,30 @@ public class Tim2
             idx++;
         }
         return bitmapArray.ToArray();
+    }
+
+    public void SavePng(string fileName)
+    {
+        Console.Write("Converting...");
+        var builder = PngBuilder.Create(Width, Height, true);
+        List<Pixel> pixels = [];
+        for (var i = 0; i < pallette.Length; i += 4)
+        {
+            pixels.Add(new Pixel(pallette[i], pallette[i+1], pallette[i+2], pallette[i+3], false));
+        }
+
+        for (var y = 0; y < Height; y++)
+        {
+            for (var x = 0; x < Width; x++)
+            {
+                builder.SetPixel(pixels[bitmap[y * Width + x]], x, y);
+            }
+        }
+
+        using var fs = new FileStream(fileName, FileMode.Create);
+        builder.Save(fs);
+        fs.Close();
+        Console.WriteLine($"\rSaved as: {fileName}");
     }
 
     public void SaveBitmap(string fileName)

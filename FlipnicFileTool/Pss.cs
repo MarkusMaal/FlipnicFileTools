@@ -15,6 +15,8 @@ public class Pss
         var extractCommands = new List<string>();
         var audioChunks = 0;
         var videoChunks = 0;
+        var streamRows = new List<string[]>();
+        var relativeOffset = -0x99A0;
         using (Stream src = File.OpenRead(filename))
         {
             var buffer = new byte[16];
@@ -47,6 +49,7 @@ public class Pss
                     {
                         streams["Audio " + streamID] += streamSize;
                     }
+                    streamRows.Add([$"0x{relativeOffset:X}", $"0x{seek:X}", $"Audio {streamID}", StaticUtils.GetFilesizeString(gotoPointer), StaticUtils.GetFilesizeString(streamSize), gotoPointer.ToString("X"), streamSize.ToString("X")]);
                     if (extract)
                     {
                         long startRange = seek + 0x10;
@@ -58,6 +61,7 @@ public class Pss
                         extractCommands.Add(filename + "," + new FileInfo(filename).Name + $".{streamID}.INT" + "," + startRange + "," + endRange);
                     }
                     seek += gotoPointer + 0x10;
+                    relativeOffset += gotoPointer;
                     src.Seek(seek, 0);
                     audioChunks++;
                     continue;
@@ -70,8 +74,9 @@ public class Pss
                     byte[] nextpointer = { buffer[12], buffer[13], buffer[14], buffer[15] };
                     var streamSize = BitConverter.ToInt32(sizebytes, 0);
                     var gotoPointer = BitConverter.ToInt32(nextpointer, 0);
+                    streamRows.Add([$"0x{relativeOffset:X}",$"0x{seek:X}", "Video", StaticUtils.GetFilesizeString(gotoPointer), StaticUtils.GetFilesizeString(streamSize), gotoPointer.ToString("X"), streamSize.ToString("X")]);
                     var exists = false;
-                    foreach (string stream in streams.Keys)
+                    foreach (var stream in streams.Keys)
                     {
                         if (stream == "Video")
                         {
@@ -97,6 +102,7 @@ public class Pss
                         extractCommands.Add(filename + "," + new FileInfo(filename).Name + ".IPU" + "," + startRange + "," + endRange);
                     }
                     seek += gotoPointer + 0x10;
+                    relativeOffset += gotoPointer;
                     src.Seek(seek, 0);
                     videoChunks++;
                     continue;
@@ -104,6 +110,7 @@ public class Pss
                 // end of file
                 if ((buffer[0] == 0x45) && (buffer[1] == 0x4E) && (buffer[2] == 0x44) && (buffer[3] == 0x00))
                 {
+                    streamRows.Add([$"0x{relativeOffset:X}", $"0x{seek:X}", "End", StaticUtils.GetFilesizeString(0), StaticUtils.GetFilesizeString(0), "0", "0"]);
                     break;
                 }
 
@@ -135,13 +142,20 @@ public class Pss
             Console.Write("\r");
             var sizeRatio = streams["Audio 1"] / (float)streams["Video"] * 100f;
             var chunkRatio = audioChunks/(float)videoChunks*100f;
+            Console.WriteLine("Stream summary".PadRight(Console.WindowWidth, ' '));
+            string[] colHeaders = ["Stream", "Size", "Size (hex)"];
+            List<string[]> rows = [];
+            rows.AddRange(streams.Select(kvp => (string[]) [kvp.Key, StaticUtils.GetFilesizeString(kvp.Value), kvp.Value.ToString("X")]));
+            Console.Write(StaticUtils.GenerateTable(colHeaders, rows));
+            Console.WriteLine("\nChunk data\n");
             Console.WriteLine($"Video chunks: {videoChunks}, Audio chunks: {audioChunks}".PadRight(Console.WindowWidth, ' '));
             Console.WriteLine($"Size ratio: {Math.Round(sizeRatio, 2)}%, Chunk ratio: {Math.Round(chunkRatio, 2)}%".PadRight(Console.WindowWidth, ' '));
             Console.WriteLine($"Multiplier: {Math.Round(chunkRatio/sizeRatio, 2)}x".PadRight(Console.WindowWidth, ' '));
-            string[] colHeaders = ["Stream", "Size"];
-            List<string[]> rows = [];
-            rows.AddRange(streams.Select(kvp => (string[]) [kvp.Key, StaticUtils.GetFilesizeString(kvp.Value)]));
+            colHeaders = ["Relative offset", "Offset", "Stream", "Chunk size", "Buffer size", "Chunk s. (hex)", "Buffer s. (hex)"];
+            rows.Clear();
+            rows.AddRange(streamRows.ToArray());
             Console.Write(StaticUtils.GenerateTable(colHeaders, rows));
+            rows.Clear();
         }
     }
     

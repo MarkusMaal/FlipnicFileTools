@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using BigGustave;
 
 namespace FlipnicFileTool;
 
@@ -134,27 +135,21 @@ public class StaticUtils
         };
     }
 
-    public static void GenerateEmptyBmp(string fileName, int width, int height)
+    public static void GenerateEmptyPng(string fileName, int width, int height)
     {
-        List<byte> imageData = [];
-        var matrix = new byte[width * height * 4];
-        imageData.AddRange("BM"u8.ToArray());
-        imageData.AddRange(BitConverter.GetBytes(matrix.Length + 0x36));
-        imageData.AddRange([0, 0, 0, 0]);
-        imageData.AddRange([0x36, 0, 0, 0]);
-        imageData.AddRange(BitConverter.GetBytes(0x28));
-        imageData.AddRange(BitConverter.GetBytes(width));
-        imageData.AddRange(BitConverter.GetBytes(height));
-        imageData.AddRange([0x1, 0x00]);
-        imageData.AddRange([0x18, 0x00]);
-        for (var i = 0; i < 6; i++)
+        var builder = PngBuilder.Create(width, height, true);
+        var black = new Pixel(0, 0, 0, 0, false);
+        for (var y = 0; y < height; y++)
         {
-            imageData.AddRange([0, 0, 0, 0]);   
+            for (var x = 0; x < width; x++)
+            {
+                builder.SetPixel(black, x, y);
+            }
         }
-        
-        imageData.AddRange(matrix);
-        File.WriteAllBytes(fileName, imageData.ToArray());
-        
+
+        using var fs = new FileStream(fileName, FileMode.Create);
+        builder.Save(fs);
+        fs.Close();
     }
 
     public static void ProcessFFmpeg(string ffmpegPath, string ffmpegCommand)

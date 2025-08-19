@@ -37,6 +37,7 @@ internal static class Program
     private static string MlbSect = "";
     private static string MagickPath = "magick";
     private static string FFmpegPath = "ffmpeg";
+    private static bool UsePng = false;
     
     public static void Main(string[] args)
     {
@@ -91,6 +92,9 @@ internal static class Program
                     break;
                 case "--pal":
                     Pal = true;
+                    break;
+                case "--png":
+                    UsePng = true;
                     break;
             }
 
@@ -169,7 +173,13 @@ internal static class Program
                 Console.WriteLine(new FpnMlb(File.ReadAllBytes(FileName)).ToString());
                 break;
             case Modes.ConvertTim2:
-                new Tim2(File.ReadAllBytes(FileName), Grayscale).SaveBitmap(outFile);
+                var texture = new Tim2(File.ReadAllBytes(FileName), Grayscale);
+                if (UsePng)
+                {
+                    texture.SavePng(outFile);
+                    break;
+                }
+                texture.SaveBitmap(outFile);
                 break;
             case Modes.ConvertIpu:
                 Ipu.IpuConvert(FileName, outFile, FFmpegPath);
@@ -229,7 +239,7 @@ internal static class Program
                 Console.WriteLine(new Tim2(File.ReadAllBytes(FileName)).ToString());
                 break;
             case Modes.GenerateMockup:
-                StaticUtils.GenerateEmptyBmp(outFile + "_", 640, Pal ? 512 : 480);
+                StaticUtils.GenerateEmptyPng(outFile + "_", 640, Pal ? 512 : 480);
                 var root = new FileInfo(FileName).Directory?.FullName ?? ".";
                 var magickCommand = $"\"{outFile}_\" ";
                 foreach (var sect in new FpnMlb(File.ReadAllBytes(FileName)).Sections.Where(me => (MlbSect == "") || (me.Key == MlbSect)).SelectMany(me => me.Value))
@@ -237,11 +247,11 @@ internal static class Program
                     try
                     {
                         var textureFile = sect.Texture.Split('\\')[^1].ToUpper();
-                        new Tim2(File.ReadAllBytes(Path.Combine(root, textureFile)), Grayscale).SaveBitmap(
-                            Path.Combine(root, textureFile.Replace(".TM2", ".BMP")));
+                        new Tim2(File.ReadAllBytes(Path.Combine(root, textureFile)), Grayscale).SavePng(
+                            Path.Combine(root, textureFile.Replace(".TM2", ".TEMP.PNG")));
 
                         magickCommand +=
-                            $" ( \"{Path.Combine(root, textureFile.Replace(".TM2", ".BMP"))}\" ) -geometry +{sect.PosX}+{sect.PosY} -composite ";
+                            $" ( \"{Path.Combine(root, textureFile.Replace(".TM2", ".TEMP.PNG"))}\" ) -geometry +{sect.PosX}+{sect.PosY} -composite ";
                     }
                     catch
                     {
@@ -263,6 +273,13 @@ internal static class Program
                 p.Start();
                 p.WaitForExit();
                 File.Delete(outFile + "_");
+                foreach (var f in new FileInfo(outFile).Directory!.GetFiles())
+                {
+                    if (f.Name.EndsWith(".TEMP"))
+                    {
+                        f.Delete();
+                    }
+                }
                 break;
         }
     }
@@ -352,6 +369,7 @@ internal static class Program
                --low-memory               Reduces performance to save on memory usage
                --magick-path              Path to ImageMagick executable (may not be needed dep. on what you're trying to do)
                --ffmpeg-path              Path to FFmpeg (for audio/video conversion operations)
+               --png                      Use PNG instead of BMP (for transparency and smaller file sizes)
                
                Flipnic Camera sequences (*.FPC)
                
