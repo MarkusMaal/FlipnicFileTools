@@ -1,8 +1,8 @@
-namespace FlipnicFileTool;
+namespace FlipnicLib;
 
 public class Lp4(byte[] data)
 {
-    public enum FileType : int {
+    public enum FileType {
         VariableList,
         StaticModel,
         AnimatedModel,

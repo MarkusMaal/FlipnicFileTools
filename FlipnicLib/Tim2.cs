@@ -1,12 +1,12 @@
 using System.Drawing;
 using BigGustave;
 
-namespace FlipnicFileTool;
+namespace FlipnicLib;
 
 public class Tim2
 {
-    private byte[] bitmap;
-    private byte[] pallette;
+    private readonly byte[] _bitmap;
+    private readonly byte[] _pallette;
 
     private int Width { get; set; }
     private int Height { get; set; }
@@ -28,16 +28,16 @@ public class Tim2
         ColorType = (ColorMode)BitConverter.ToInt32(data, 0x23);
         this.Width = BitConverter.ToInt16(data, 0x24);
         this.Height = BitConverter.ToInt16(data, 0x26);
-        this.bitmap = data.Skip(0x10+headerSize).Take(bitmapSize).ToArray();
+        this._bitmap = data.Skip(0x10+headerSize).Take(bitmapSize).ToArray();
         if (ColorType == ColorMode.Tim4Bpp)
         {
             List<byte> actualBitmap = [];
-            foreach (var b in this.bitmap)
+            foreach (var b in this._bitmap)
             {
                 actualBitmap.Add((byte)(b % 0x10)); // second 4 bits
                 actualBitmap.Add((byte)(b / 0x10)); // first 4 bits (reverse order, because little-endian)
             }
-            this.bitmap = actualBitmap.ToArray();
+            this._bitmap = actualBitmap.ToArray();
         } else if (ColorType == ColorMode.TimMonochrome)
         {
             List<byte> shades = [];
@@ -47,32 +47,32 @@ public class Tim2
                 var c = (byte)(i * 16 - 1);
                 shades.AddRange([c, c, c, c]);
             }
-            this.pallette = shades.ToArray();
+            this._pallette = shades.ToArray();
             List<byte> actualBitmap = [];
-            for (var i = 0; i < bitmap.Length; i +=4)
+            for (var i = 0; i < _bitmap.Length; i +=4)
             {
-                actualBitmap.Add((byte)(bitmap[i] / 0x10));
+                actualBitmap.Add((byte)(_bitmap[i] / 0x10));
             }
-            for (var i = 3; i < bitmap.Length; i +=4)
+            for (var i = 3; i < _bitmap.Length; i +=4)
             {
-                actualBitmap.Add((byte)(bitmap[i] % 0x10));
+                actualBitmap.Add((byte)(_bitmap[i] % 0x10));
             }
 
             this.Height *= 2;
-            this.bitmap = actualBitmap.ToArray();
+            this._bitmap = actualBitmap.ToArray();
             return;
         }
-        this.pallette = data.Skip(0x10+headerSize + bitmapSize).Take(paletteSize).ToArray();
-        if (this.pallette.Length == 0)
+        this._pallette = data.Skip(0x10+headerSize + bitmapSize).Take(paletteSize).ToArray();
+        if (this._pallette.Length == 0)
         {
-            this.pallette = [255, 255, 255, 255, 0, 0, 0, 0];
+            this._pallette = [255, 255, 255, 255, 0, 0, 0, 0];
         }
         if (!grayscale) return;
         List<byte> grayscalePalette = [];
-        var increment = (byte)(255 / ((pallette.Length / 3) != 0 ? (pallette.Length / 3) : 1));
+        var increment = (byte)(255 / ((_pallette.Length / 3) != 0 ? (_pallette.Length / 3) : 1));
         if (increment == 255) increment = 1;
         byte pixel = 0x00;
-        for (var i = 0; i < pallette.Length; i+=3)
+        for (var i = 0; i < _pallette.Length; i+=3)
         {
             grayscalePalette.Add(pixel);
             grayscalePalette.Add(pixel);
@@ -84,17 +84,17 @@ public class Tim2
                 pixel = 0;
             }
         }
-        this.pallette = grayscalePalette.ToArray();
+        this._pallette = grayscalePalette.ToArray();
     }
 
     private string DisplayPalette()
     {
         string[] colHeaders = ["ID", "RGB", "Alpha"];
         List<string[]> rows = [];
-        for (var i = 0; i < this.pallette.Length; i += 4)
+        for (var i = 0; i < this._pallette.Length; i += 4)
         {
-            var pal = Color.FromArgb(this.pallette[i + 3], this.pallette[i], this.pallette[i + 1],
-                this.pallette[i + 2]);
+            var pal = Color.FromArgb(this._pallette[i + 3], this._pallette[i], this._pallette[i + 1],
+                this._pallette[i + 2]);
             rows.Add(["0x" + (i/4).ToString(ColorType == ColorMode.Tim8Bpp ? "X2" : "X"), $"#{pal.R:X2}{pal.G:X2}{pal.B:X2}", pal.A.ToString()]);
         }
         return "Palette:\n" + StaticUtils.GenerateTable(colHeaders, rows, 9);
@@ -103,14 +103,14 @@ public class Tim2
     private byte[] GenerateRgbaArray()
     {
         List<Color> paletteArray = [];
-        for (var i = 0; i < this.pallette.Length; i += 4)
+        for (var i = 0; i < this._pallette.Length; i += 4)
         {
-            paletteArray.Add(Color.FromArgb(this.pallette[i+3], this.pallette[i], this.pallette[i+1], this.pallette[i+2 ]));
+            paletteArray.Add(Color.FromArgb(this._pallette[i+3], this._pallette[i], this._pallette[i+1], this._pallette[i+2 ]));
         }
         List<byte> bitmapArray = [];
         List<byte> lineArray = [];
         int idx = 1;
-        foreach (var b in bitmap.Reverse())
+        foreach (var b in _bitmap.Reverse())
         {
             lineArray.Add(paletteArray[b].R);
             lineArray.Add(paletteArray[b].G);
@@ -132,16 +132,16 @@ public class Tim2
         Console.Write("Converting...");
         var builder = PngBuilder.Create(Width, Height, true);
         List<Pixel> pixels = [];
-        for (var i = 0; i < pallette.Length; i += 4)
+        for (var i = 0; i < _pallette.Length; i += 4)
         {
-            pixels.Add(new Pixel(pallette[i], pallette[i+1], pallette[i+2], pallette[i+3], false));
+            pixels.Add(new Pixel(_pallette[i], _pallette[i+1], _pallette[i+2], _pallette[i+3], false));
         }
 
         for (var y = 0; y < Height; y++)
         {
             for (var x = 0; x < Width; x++)
             {
-                builder.SetPixel(pixels[bitmap[y * Width + x]], x, y);
+                builder.SetPixel(pixels[_bitmap[y * Width + x]], x, y);
             }
         }
 
@@ -186,10 +186,10 @@ public class Tim2
         return $"""
                 TIM2 texture file
                 
-                Name: {new FileInfo(Program.GetFileName()).Name}
+                Name: {new FileInfo(StaticUtils.FileName).Name}
                 Width: {Width}
                 Height: {Height}
-                Colors: {pallette.Length}
+                Colors: {_pallette.Length}
                 Palette type: {ct}
                 
                 {DisplayPalette()}

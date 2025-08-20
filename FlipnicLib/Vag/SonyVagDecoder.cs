@@ -1,4 +1,4 @@
-﻿namespace FlipnicFileTool.Vag
+﻿namespace FlipnicLib.Vag
 {
     // Originally from: https://github.com/eurotools/es-ps2-vag-tool
     // basically just the bare minimum to get Sony VAG support going

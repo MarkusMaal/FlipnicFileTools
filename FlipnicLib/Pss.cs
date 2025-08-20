@@ -1,8 +1,8 @@
-namespace FlipnicFileTool;
+namespace FlipnicLib;
 
-public class Pss
+public abstract class Pss
 {
-    private static char Slash = OperatingSystem.IsWindows() ? '\\' : '/';
+    private static readonly char Slash = OperatingSystem.IsWindows() ? '\\' : '/';
     public static void ListPss(string filename, bool extract = false, string? outFile = null)
     {
         outFile ??= Directory.GetCurrentDirectory();

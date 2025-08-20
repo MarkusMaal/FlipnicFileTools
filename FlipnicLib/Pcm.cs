@@ -1,4 +1,4 @@
-namespace FlipnicFileTool;
+namespace FlipnicLib;
 
 
 public abstract class Pcm

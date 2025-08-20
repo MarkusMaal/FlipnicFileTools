@@ -9,9 +9,9 @@
         <Configurations>Debug;Release;Publish</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
-
+    
     <ItemGroup>
-      <PackageReference Include="BigGustave" Version="1.0.6" />
+        <ProjectReference Include="..\FlipnicLib\FlipnicLib.csproj" />
     </ItemGroup>
 
 </Project>

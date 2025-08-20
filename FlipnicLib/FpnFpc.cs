@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace FlipnicFileTool;
+namespace FlipnicLib;
 
 public class FpnFpc
 {
@@ -126,7 +126,7 @@ public class FpnFpc
                 ]);
             }
 
-            if (!Program.SimpleOutput)
+            if (!StaticUtils.SimpleOutput)
             {
                 o += StaticUtils.GenerateTable(colHeaders, rows);
             }
@@ -136,7 +136,7 @@ public class FpnFpc
                 {
                     for (var i = 0; i < colHeaders.Length; i++)
                     {
-                        if (Program.LowMem)
+                        if (StaticUtils.LowMem)
                         {
                             Console.Write(colHeaders[i] + ": " + row[i]);
                             if (i != colHeaders.Length - 1)
@@ -154,7 +154,7 @@ public class FpnFpc
                         }
                     }
 
-                    if (Program.LowMem)
+                    if (StaticUtils.LowMem)
                     {
                         Console.WriteLine();
                     }

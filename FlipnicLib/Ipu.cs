@@ -1,9 +1,8 @@
-using System.Diagnostics;
+namespace FlipnicLib;
 
-namespace FlipnicFileTool;
-
-public class Ipu
+public abstract class Ipu
 {
+    
     public static void IpuConvert(string fileName, string outFile, string ffmpegPath)
     {
         var header = new byte[0x10];
@@ -19,7 +18,7 @@ public class Ipu
         var width = StaticUtils.GetInt16(header, 0x8);
         var height = StaticUtils.GetInt16(header, 0xA);
         var lowRes = width <= 256;
-        var isPal = (!lowRes && height == 512) || Program.Pal;
+        var isPal = (!lowRes && height == 512) || StaticUtils.Pal;
 
         var frameRate = lowRes switch
         {

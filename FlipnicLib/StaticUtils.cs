@@ -2,10 +2,11 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using BigGustave;
+using FlipnicLib.Vag;
 
-namespace FlipnicFileTool;
+namespace FlipnicLib;
 
-public class StaticUtils
+public abstract class StaticUtils
 {
     private static char[] Loaders = ['/', '-', '\\', '|'];
     public static int LoadIdx = 0;
@@ -26,6 +27,12 @@ public class StaticUtils
         DPadDown,
         DPadLeft
     };
+    
+    public static bool LowMem { get; set; } = false;
+    
+    public static bool SimpleOutput { get; set; }
+    public static bool Pal { get; set; }
+    public static string FileName { get; set; }
 
     public static void PrintLoader()
     {
@@ -98,27 +105,27 @@ public class StaticUtils
 
         o += "\n";
         o += $"{sep}\n";
-        if (Program.LowMem)
+        if (LowMem)
         {
             Console.Write(o);
         }
         foreach (var row in rows)
         {
-            if (Program.LowMem)
+            if (LowMem)
             {
                 o = "";
             }
             o += "| ";
             var line = row.Aggregate("", (current, s) => current + s.PadRight(colSize) + " | ");
             o += line + "\n";
-            if (Program.LowMem)
+            if (LowMem)
             {
                 Console.Write(o);
             }
         }
 
         o += $"{sep}\n";
-        if (!Program.LowMem) return o;
+        if (!LowMem) return o;
         Console.Write(o);
         o = "";
         return o;
@@ -168,4 +175,76 @@ public class StaticUtils
         p.Start();
         p.WaitForExit();
     }
+
+    public static void ConvertAudio(string outFile, bool mono = false)
+    {
+        Console.Write("     Loading sound file to memory".PadRight(Console.WindowWidth, ' '));
+        StaticUtils.PrintLoader();
+        var data = File.ReadAllBytes(FileName);
+        Console.Write("\r     Separating left and right channels".PadRight(Console.WindowWidth, ' '));
+        StaticUtils.PrintLoader();
+        List<byte> interleavedDataL = [];
+        List<byte> interleavedDataR = [];
+        for (var i = 0; i < data.Length; i += 0x400)
+        {
+            if (mono)
+            {
+                interleavedDataL.AddRange([.. data.Skip(i).Take(0x400)]);
+                interleavedDataR.AddRange([.. data.Skip(i).Take(0x400)]);
+                continue;
+            }
+            if (i % 0x800 == 0)
+            {
+                interleavedDataL.AddRange([.. data.Skip(i).Take(0x400)]);
+            }
+            else
+            {
+                interleavedDataR.AddRange([.. data.Skip(i).Take(0x400)]);
+            }
+        }
+        
+        Console.Write("\r     Converting to PCM".PadRight(Console.WindowWidth, ' '));
+        StaticUtils.PrintLoader();
+        using var msl = new MemoryStream(SonyVag.Decode([.. interleavedDataL]));
+        using var msr = new MemoryStream(SonyVag.Decode([.. interleavedDataR]));
+        using var ms = new MemoryStream();
+        
+        {
+            Console.Write("\r     Generating WAV file".PadRight(Console.WindowWidth, ' '));
+            var bufL = new byte[2]; // 16-bit, 2 channels = 2+2 bytes
+            var bufR = new byte[2];
+            var i = 0;
+            while (msl.Position < msl.Length)
+            {
+                try
+                {
+                    msl.ReadExactly(bufL, 0, bufL.Length);
+                    msr.ReadExactly(bufR, 0, bufR.Length);
+                    ms.Write(bufL);
+                    ms.Write(bufR);
+                    i++;
+                    if (i % 0x100 == 0)
+                    {
+                        StaticUtils.PrintLoader();
+                    }
+                }
+                catch (EndOfStreamException)
+                {
+                    break;
+                }
+            }
+            
+            // Stereo, Signed 16-bit, 44100Hz
+            Pcm.WriteWavHeader(ms, false, 2, 16, 44100, (int)ms.Length);
+        
+            Console.Write("\r     Saving WAV file".PadRight(Console.WindowWidth, ' '));
+            StaticUtils.PrintLoader();
+            // save WAV file
+            var fs = new FileStream(outFile, FileMode.Create);
+            ms.WriteTo(fs);
+            fs.Close();
+            Console.WriteLine($"\r   File saved as {outFile}".PadRight(Console.WindowWidth, ' '));
+        }
+    }
+
 }

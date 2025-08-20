@@ -1,11 +1,12 @@
 ﻿using System.Diagnostics;
-using FlipnicFileTool.Vag;
+using FlipnicLib.Vag;
+using FlipnicLib;
 
 namespace FlipnicFileTool;
 
 internal static class Program
 {
-    private enum Modes : int
+    private enum Modes
     {
         ListResources,
         ShowFpc,
@@ -26,23 +27,20 @@ internal static class Program
         ConvertIpu,
         ConvertInt,
         ConvertPssMov,
-        ConvertSvag,
+        ConvertSvag
     }
 
-    public static bool SimpleOutput = false;
-    public static bool LowMem = false;
     private static string FileName = "";
-    private static bool Grayscale = false;
-    public static bool Pal = false;
+    private static bool Grayscale;
     private static string MlbSect = "";
     private static string MagickPath = "magick";
     private static string FFmpegPath = "ffmpeg";
-    private static bool UsePng = false;
+    private static bool UsePng;
     
     public static void Main(string[] args)
     {
         var secondaryFileName = "";
-        var outFile = "";
+        var outFile = ".";
         var lastPar = "";
         var mode = Modes.ShowHelp;
         if (args.Length > 0 && File.Exists(args[0]))
@@ -82,16 +80,16 @@ internal static class Program
             switch (arg)
             {
                 case "--simple":
-                    SimpleOutput = true;
+                    StaticUtils.SimpleOutput = true;
                     break;
                 case "--low-memory":
-                    LowMem = true;
+                    StaticUtils.LowMem = true;
                     break;
                 case "--grayscale":
                     Grayscale = true;
                     break;
                 case "--pal":
-                    Pal = true;
+                    StaticUtils.Pal = true;
                     break;
                 case "--png":
                     UsePng = true;
@@ -129,6 +127,17 @@ internal static class Program
             Console.WriteLine("Must specify input FileName in this case!");
             return;
         }
+        if (!File.Exists(FileName) && mode != Modes.ShowHelp)
+        {
+            Console.WriteLine("Error: Input file does not exist!");
+            return;
+        }
+
+        if (mode != Modes.ShowHelp && new FileInfo(FileName).IsReadOnly && outFile != "")
+        {
+            Console.WriteLine("Error: Read-only file system");
+            return;
+        }
         
         // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
         switch (mode)
@@ -149,7 +158,7 @@ internal static class Program
                 new FpnSst(FileName).ShowGimmick(secondaryFileName);
                 break;
             case Modes.ShowMessages:
-                Console.WriteLine(SimpleOutput ? new FpnMsg(FileName).ToSimpleString() : new FpnMsg(FileName).ToString());
+                Console.WriteLine(StaticUtils.SimpleOutput ? new FpnMsg(FileName).ToSimpleString() : new FpnMsg(FileName).ToString());
                 break;
             case Modes.ListPssStreams:
                 Pss.ListPss(FileName);
@@ -185,10 +194,10 @@ internal static class Program
                 Ipu.IpuConvert(FileName, outFile, FFmpegPath);
                 break;
             case Modes.ConvertInt:
-                ConvertAudio(outFile);
+                StaticUtils.ConvertAudio(outFile);
                 break;
             case Modes.ConvertSvag:
-                ConvertAudio(outFile, true);
+                StaticUtils.ConvertAudio(outFile, true);
                 Console.WriteLine($"File saved as {outFile}");
                 break;
             case Modes.ConvertPssMov:
@@ -206,7 +215,7 @@ internal static class Program
                         FileName =
                             nf +
                             $".{streams}.INT";
-                        ConvertAudio(nf + $".{streams}.WAV");
+                        StaticUtils.ConvertAudio(nf + $".{streams}.WAV");
                         continue;
                     }
                     exist = false;
@@ -239,7 +248,7 @@ internal static class Program
                 Console.WriteLine(new Tim2(File.ReadAllBytes(FileName)).ToString());
                 break;
             case Modes.GenerateMockup:
-                StaticUtils.GenerateEmptyPng(outFile + "_", 640, Pal ? 512 : 480);
+                StaticUtils.GenerateEmptyPng(outFile + "_", 640, StaticUtils.Pal ? 512 : 480);
                 var root = new FileInfo(FileName).Directory?.FullName ?? ".";
                 var magickCommand = $"\"{outFile}_\" ";
                 foreach (var sect in new FpnMlb(File.ReadAllBytes(FileName)).Sections.Where(me => (MlbSect == "") || (me.Key == MlbSect)).SelectMany(me => me.Value))
@@ -283,78 +292,6 @@ internal static class Program
                 break;
         }
     }
-
-    private static void ConvertAudio(string outFile, bool mono = false)
-    {
-        Console.Write("     Loading sound file to memory".PadRight(Console.WindowWidth, ' '));
-        StaticUtils.PrintLoader();
-        var data = File.ReadAllBytes(FileName);
-        Console.Write("\r     Separating left and right channels".PadRight(Console.WindowWidth, ' '));
-        StaticUtils.PrintLoader();
-        List<byte> interleavedDataL = [];
-        List<byte> interleavedDataR = [];
-        for (var i = 0; i < data.Length; i += 0x400)
-        {
-            if (mono)
-            {
-                interleavedDataL.AddRange([.. data.Skip(i).Take(0x400)]);
-                interleavedDataR.AddRange([.. data.Skip(i).Take(0x400)]);
-                continue;
-            }
-            if (i % 0x800 == 0)
-            {
-                interleavedDataL.AddRange([.. data.Skip(i).Take(0x400)]);
-            }
-            else
-            {
-                interleavedDataR.AddRange([.. data.Skip(i).Take(0x400)]);
-            }
-        }
-        
-        Console.Write("\r     Converting to PCM".PadRight(Console.WindowWidth, ' '));
-        StaticUtils.PrintLoader();
-        using var msl = new MemoryStream(SonyVag.Decode([.. interleavedDataL]));
-        using var msr = new MemoryStream(SonyVag.Decode([.. interleavedDataR]));
-        using var ms = new MemoryStream();
-        
-        {
-            Console.Write("\r     Generating WAV file".PadRight(Console.WindowWidth, ' '));
-            var bufL = new byte[2]; // 16-bit, 2 channels = 2+2 bytes
-            var bufR = new byte[2];
-            var i = 0;
-            while (msl.Position < msl.Length)
-            {
-                try
-                {
-                    msl.ReadExactly(bufL, 0, bufL.Length);
-                    msr.ReadExactly(bufR, 0, bufR.Length);
-                    ms.Write(bufL);
-                    ms.Write(bufR);
-                    i++;
-                    if (i % 0x100 == 0)
-                    {
-                        StaticUtils.PrintLoader();
-                    }
-                }
-                catch (EndOfStreamException)
-                {
-                    break;
-                }
-            }
-            
-            // Stereo, Signed 16-bit, 44100Hz
-            Pcm.WriteWavHeader(ms, false, 2, 16, 44100, (int)ms.Length);
-        
-            Console.Write("\r     Saving WAV file".PadRight(Console.WindowWidth, ' '));
-            StaticUtils.PrintLoader();
-            // save WAV file
-            var fs = new FileStream(outFile, FileMode.Create);
-            ms.WriteTo(fs);
-            fs.Close();
-            Console.WriteLine($"\r   File saved as {outFile}".PadRight(Console.WindowWidth, ' '));
-        }
-    }
-
     private static string GetHelp()
     {
         return $"""

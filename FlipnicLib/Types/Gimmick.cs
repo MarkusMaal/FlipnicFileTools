@@ -1,4 +1,4 @@
-namespace FlipnicFileTool.Types;
+namespace FlipnicLib.Types;
 
 public class Gimmick(byte[] data)
 {

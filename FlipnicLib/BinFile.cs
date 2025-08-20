@@ -1,8 +1,8 @@
 using System.Text;
 
-namespace FlipnicFileTool;
+namespace FlipnicLib;
 
-public class BinFile
+public abstract class BinFile
 {
     
     public static void ListBin(string source)
