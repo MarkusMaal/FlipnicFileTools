@@ -1,16 +1,17 @@
 using System.Text;
+using FlipnicLib.Types;
 
 namespace FlipnicLib;
 
 public abstract class BinFile
 {
-    
-    public static void ListBin(string source)
+    public static List<VirtualFile> FsEntries { get; set; } = [];
+    public static void ListBin(Stream src)
     {
+        FsEntries.Clear();
         string[] colHeader = ["Path", "Offset", "Size"];
         List<string[]> rows = [];
         var folders = new Dictionary<string, long>();
-        using Stream src = File.OpenRead(source);
         var buffer = new byte[64];
         var offset = 0;
         long loc = 0;
@@ -21,14 +22,16 @@ public abstract class BinFile
         var folder = "";
         long folder_loc = 0;
         List<long> Offsets = [];
+        StaticUtils.LiveLoadStatus = "Reading TOC data";
         while ((offset = src.Read(buffer, 0, buffer.Length)) > 0)
         {
             string filename;
             if (intoc)
             {
-                if (loc == end_of_toc)
+                if (loc >= end_of_toc)
                 {
                     intoc = false;
+                    if (folders.Count == 0) break;
                     continue;
                 }
                 pointer.Clear();
@@ -42,7 +45,23 @@ public abstract class BinFile
                         continue;
                     case "*End Of CD Data":
                         intoc = false;
-                        continue;
+                        break;
+                }
+
+                if (!intoc)
+                {
+                    if (folders.Count == 0) break;
+                    StaticUtils.LiveLoadStatus = "Searching for folders...";
+                    foreach (var kvp in folders.Where(kvp => loc < kvp.Value))
+                    {
+                        loc = kvp.Value;
+                        src.Seek(loc, SeekOrigin.Begin);
+                        insub = true;
+                        folder = kvp.Key;
+                        folder_loc = loc;
+                        StaticUtils.LiveLoadStatus = $"Processing folder {folder}";
+                        break;
+                    }
                 }
 
                 if (filename.EndsWith('\\'))
@@ -63,13 +82,25 @@ public abstract class BinFile
                 if (filename == "*End Of Mem Data")
                 {
                     insub = false;
-                } else
-                {
-                    rows.Add([$"\\{folder}{filename}", $"0x{byteoffset:X}"]);
-                    Offsets.Add(byteoffset);
+                    foreach (var kvp in folders.Where(kvp => kvp.Value >= loc))
+                    {
+                        loc = kvp.Value;
+                        src.Seek(loc, SeekOrigin.Begin);
+                        insub = true;
+                        folder = kvp.Key;
+                        folder_loc = loc;
+                        StaticUtils.LiveLoadStatus = $"Processing {folder}";
+                        break;
+                    }
+
+                    if (!insub) break;
+                    continue;
                 }
+
+                rows.Add([$"\\{folder}{filename}", $"0x{byteoffset:X}"]);
+                Offsets.Add(byteoffset);
             }
-            else
+            /*else
             {
                 foreach (var kvp in folders.Where(kvp => kvp.Value == loc))
                 {
@@ -86,12 +117,14 @@ public abstract class BinFile
                     rows.Add([$"\\{kvp.Key}{filename}", $"0x{byteoffset:X}"]);
                     Offsets.Add(byteoffset);
                 }
-            }
+            }*/
 
             loc += 64;
         }
 
-        Offsets.Add(new FileInfo(source).Length);
+
+        Offsets.Add(src.Length);
+        src.Close();
         List<long> Sizes = [];
         for (var i = 1; i < Offsets.Count; i++)
         {
@@ -99,6 +132,10 @@ public abstract class BinFile
         }
 
         List<string[]> realRows = [];
+        for (var i = 0; i < Sizes.Count; i++)
+        {
+            FsEntries.Add(new VirtualFile(rows[i][0], Offsets[i], Sizes[i]));
+        }
         realRows.AddRange(rows.Select((t, i) => (string[]) [t[0], t[1], StaticUtils.GetFilesizeString(Sizes[i])]));
         Console.Write(StaticUtils.GenerateTable(colHeader, realRows,
             realRows.Select(row => row[0].Length + 1).Prepend(15).Max()));

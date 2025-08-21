@@ -9,12 +9,12 @@ namespace FlipnicFileToolGUI;
 
 public class BitmapTools
 {
-    public Tim2 Image { get; init; }
+    public Tim2? Image { get; init; }
 
     public Bitmap ToBitmap()
     {
         var ms =  new MemoryStream();
-        Image.SaveBitmap(ms);
+        Image?.SavePng(ms);
         ms.Position = 0;
         return new Bitmap(ms);
     }

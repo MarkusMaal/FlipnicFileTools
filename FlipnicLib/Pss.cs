@@ -3,21 +3,22 @@ namespace FlipnicLib;
 public abstract class Pss
 {
     private static readonly char Slash = OperatingSystem.IsWindows() ? '\\' : '/';
-    public static void ListPss(string filename, bool extract = false, string? outFile = null)
+    public static string ListPss(Stream inFile, bool extract = false, string? outFile = null)
     {
         outFile ??= Directory.GetCurrentDirectory();
         if (!outFile.EndsWith(Slash))
         {
             outFile += Slash;
         }
-        Console.Write("Searching for video/audio streams...");
+        StaticUtils.LiveLoadStatus = "Searching for video/audio streams...";
+        Console.Write(StaticUtils.LiveLoadStatus);
         IDictionary<string, long> streams = new Dictionary<string, long>();
         var extractCommands = new List<string>();
         var audioChunks = 0;
         var videoChunks = 0;
         var streamRows = new List<string[]>();
         var relativeOffset = -0x99A0;
-        using (Stream src = File.OpenRead(filename))
+        using (var src = inFile)
         {
             var buffer = new byte[16];
 
@@ -54,11 +55,11 @@ public abstract class Pss
                     {
                         long startRange = seek + 0x10;
                         var endRange = startRange + streamSize - 1;
-                        if (File.Exists(outFile + new FileInfo(filename).Name + $".{streamID}.INT"))
+                        if (File.Exists(outFile + new FileInfo(StaticUtils.FileName).Name + $".{streamID}.INT"))
                         {
-                            File.Delete(outFile + new FileInfo(filename).Name + $".{streamID}.INT");
+                            File.Delete(outFile + new FileInfo(StaticUtils.FileName).Name + $".{streamID}.INT");
                         }
-                        extractCommands.Add(filename + "," + new FileInfo(filename).Name + $".{streamID}.INT" + "," + startRange + "," + endRange);
+                        extractCommands.Add(StaticUtils.FileName + "," + new FileInfo(StaticUtils.FileName).Name + $".{streamID}.INT" + "," + startRange + "," + endRange);
                     }
                     seek += gotoPointer + 0x10;
                     relativeOffset += gotoPointer;
@@ -95,11 +96,11 @@ public abstract class Pss
                     {
                         long startRange = seek + 0x10;
                         var endRange = startRange + streamSize - 1;
-                        if (File.Exists(outFile + new FileInfo(filename).Name + ".IPU"))
+                        if (File.Exists(outFile + new FileInfo(StaticUtils.FileName).Name + ".IPU"))
                         {
-                            File.Delete(outFile + new FileInfo(filename).Name + ".IPU");
+                            File.Delete(outFile + new FileInfo(StaticUtils.FileName).Name + ".IPU");
                         }
-                        extractCommands.Add(filename + "," + new FileInfo(filename).Name + ".IPU" + "," + startRange + "," + endRange);
+                        extractCommands.Add(StaticUtils.FileName + "," + new FileInfo(StaticUtils.FileName).Name + ".IPU" + "," + startRange + "," + endRange);
                     }
                     seek += gotoPointer + 0x10;
                     relativeOffset += gotoPointer;
@@ -119,7 +120,8 @@ public abstract class Pss
         }
         if (extract)
         {
-            Console.Write("\rPreparing to extract...");
+            StaticUtils.LiveLoadStatus = "Preparing to extract...";
+            Console.Write($"\r{StaticUtils.LiveLoadStatus}");
             List<string> OutputFilesList = [];
             foreach (var args in extractCommands.Select(cmd => cmd.Split(',')))
             {
@@ -136,33 +138,39 @@ public abstract class Pss
             {
                 Console.WriteLine(outf);
             }
+
+            return "";
         }
         else
         {
             Console.Write("\r");
+            var o = "";
             var sizeRatio = streams["Audio 1"] / (float)streams["Video"] * 100f;
             var chunkRatio = audioChunks/(float)videoChunks*100f;
-            Console.WriteLine("Stream summary".PadRight(Console.WindowWidth, ' '));
+            o += "Stream summary\n";
             string[] colHeaders = ["Stream", "Size", "Size (hex)"];
             List<string[]> rows = [];
             rows.AddRange(streams.Select(kvp => (string[]) [kvp.Key, StaticUtils.GetFilesizeString(kvp.Value), kvp.Value.ToString("X")]));
-            Console.Write(StaticUtils.GenerateTable(colHeaders, rows));
-            Console.WriteLine("\nChunk data\n");
-            Console.WriteLine($"Video chunks: {videoChunks}, Audio chunks: {audioChunks}".PadRight(Console.WindowWidth, ' '));
-            Console.WriteLine($"Size ratio: {Math.Round(sizeRatio, 2)}%, Chunk ratio: {Math.Round(chunkRatio, 2)}%".PadRight(Console.WindowWidth, ' '));
-            Console.WriteLine($"Multiplier: {Math.Round(chunkRatio/sizeRatio, 2)}x".PadRight(Console.WindowWidth, ' '));
+            o += StaticUtils.GenerateTable(colHeaders, rows);
+            /*
+            o += "\nChunk data\n";
+            o += $"Video chunks: {videoChunks}, Audio chunks: {audioChunks}\n";
+            o += $"Size ratio: {Math.Round(sizeRatio, 2)}%, Chunk ratio: {Math.Round(chunkRatio, 2)}%\n";
+            o += $"Multiplier: {Math.Round(chunkRatio/sizeRatio, 2)}x\n";
             colHeaders = ["Relative offset", "Offset", "Stream", "Chunk size", "Buffer size", "Chunk s. (hex)", "Buffer s. (hex)"];
             rows.Clear();
             rows.AddRange(streamRows.ToArray());
-            Console.Write(StaticUtils.GenerateTable(colHeaders, rows));
+            o += StaticUtils.GenerateTable(colHeaders, rows);*/
             rows.Clear();
+            return o;
         }
     }
     
     
     private static void CutFile(string sourceFilePath, string destinationFilePath, long startPosition, long endPosition)
     {
-        Console.Write($"\r     Extracting streams, please wait...".PadRight(Console.WindowWidth));
+        StaticUtils.LiveLoadStatus = "Extracting streams, please wait...";
+        Console.Write($"\r     {StaticUtils.LiveLoadStatus}".PadRight(Console.WindowWidth));
         StaticUtils.LoadIdx += 9;
         StaticUtils.PrintLoader();
         const FileMode fm = FileMode.Create;

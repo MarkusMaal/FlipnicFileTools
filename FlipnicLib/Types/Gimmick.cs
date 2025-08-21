@@ -3,7 +3,8 @@ namespace FlipnicLib.Types;
 public class Gimmick(byte[] data)
 {
     public enum GimmickTypes : byte {
-        Gate = 0x20,
+        Floor = 0x01,
+        Wall = 0x20,
         Slingshot,
         BlueCoin = 0x23,
         BallSavingBumper = 0x25,

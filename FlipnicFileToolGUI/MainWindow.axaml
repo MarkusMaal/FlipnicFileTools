@@ -2,31 +2,100 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:FlipnicFileToolGUI"
         mc:Ignorable="d" Width="700" Height="500"
+        x:DataType="vm:MainWindow"
         x:Class="FlipnicFileToolGUI.MainWindow"
-        Title="FlipnicFileToolGUI">
-    <DockPanel>
-        <Menu DockPanel.Dock="Top">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Open" Name="OpenMenuItem" Click="OpenMenuItem_OnClick"></MenuItem>
-                <MenuItem Header="_Exit"></MenuItem>
-            </MenuItem>
-            <MenuItem Header="_Options">
-                <MenuItem Header="_PAL mode" Click="PalMenuItem_OnClick"></MenuItem>
-            </MenuItem>
-        </Menu>
-        <Grid DockPanel.Dock="Bottom">
-            <TabControl TabStripPlacement="Left" Name="MainTabControl">
-                <TabItem Name="InfoTab" Header="Info" IsVisible="False">
-                    <TextBox Name="InfoBox" FontFamily="Consolas,Monospace" VerticalContentAlignment="Top" Background="Black" Foreground="Lime"></TextBox>
-                </TabItem>
-                <TabItem Name="ImagePreviewTab" Header="Preview" IsVisible="False">
-                    <Image Name="PreviewImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"></Image>
-                </TabItem>
-                <TabItem Name="StageGimmickTab" Header="Gimmicks" IsVisible="False">
-                    <TextBox Name="GimmickBox" FontFamily="Consolas,Monospace" VerticalContentAlignment="Top" Background="Black" Foreground="Lime"></TextBox>
-                </TabItem>
-            </TabControl>
+        Title="Flipnic file tool" Loaded="Window_Loaded">
+    <NativeMenu.Menu>
+        <NativeMenu>
+            <NativeMenuItem Header="File" IsVisible="true">
+                <NativeMenu>                    
+                    <NativeMenuItem Header="Open" Gesture="Meta+O" Click="OpenNativeMenuItem_OnClick"/>
+                </NativeMenu>
+            </NativeMenuItem>
+        </NativeMenu>
+    </NativeMenu.Menu>
+    <Grid>
+        <DockPanel Name="DockPanel1">
+            
+            <Menu DockPanel.Dock="Top" IsVisible="{OnPlatform True, macOS=False}">
+                <MenuItem Header="_File">
+                    <MenuItem Header="_New Window" Name="NewWindowMenuItem" Click="NewWindowMenuItem_OnClick"></MenuItem>
+                    <MenuItem Header="_Open" Name="OpenMenuItem" Click="OpenMenuItem_OnClick"></MenuItem>
+                    <MenuItem Header="_Exit" Name="ExitMenuItem" Click="ExitMenuItem_OnClick"></MenuItem>
+                </MenuItem>
+                <MenuItem Header="_Options">
+                    <MenuItem Header="_PAL mode" Click="PalMenuItem_OnClick"></MenuItem>
+                </MenuItem>
+            </Menu>
+            <Grid DockPanel.Dock="Bottom">
+                    <TabControl TabStripPlacement="Left" Name="MainTabControl">
+                    <TabItem Name="InfoTab" Header="Info" IsVisible="False">
+                        <TextBox Name="InfoBox" FontFamily="Cascadia Mono,Consolas,SF Mono,Menlo,DejaVu Sans Mono,Ubuntu Mono,Noto Mono,Courier New,Monospace" VerticalContentAlignment="Top" Background="Black" Foreground="Lime">
+                        </TextBox>
+                    </TabItem>
+                    <TabItem Name="ImagePreviewTab" Header="Preview" IsVisible="False">
+                        <Image Name="PreviewImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" RenderOptions.BitmapInterpolationMode="None"></Image>
+                    </TabItem>
+                    <TabItem Name="StageGimmickTab" Header="Gimmicks" IsVisible="False">
+                        <Grid RowDefinitions="30,*">
+                            <ComboBox Grid.Row="0" Name="GimmickCombobox" SelectionChanged="GimmickCombobox_OnSelectionChanged"></ComboBox>
+                            <TextBox Grid.Row="1" Name="GimmickBox" FontFamily="Cascadia Mono,Consolas,SF Mono,Menlo,DejaVu Sans Mono,Ubuntu Mono,Noto Mono,Courier New,Monospace" VerticalContentAlignment="Top" Background="Black" Foreground="Lime"></TextBox>
+                        </Grid>
+                    </TabItem>
+                    <TabItem Name="FileListTab" Header="Files" IsVisible="False">
+                        <Grid RowDefinitions="*,30">
+                            <DataGrid Grid.Row="0" Margin="0,0,0,10" GridLinesVisibility="All" ItemsSource="{Binding VirtualFiles}"
+                                      BorderThickness="1" BorderBrush="Gray" Name="FilesGrid"
+                                      CanUserResizeColumns="True"
+                                      CanUserReorderColumns="True"
+                                      CanUserSortColumns="True"
+                                      IsReadOnly="True"
+                                      SelectionChanged="DataGrid_OnSelectionChanged">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Path" Binding="{Binding Path}"></DataGridTextColumn>
+                                    <DataGridTextColumn Header="Offset" Binding="{Binding OffsetX}"></DataGridTextColumn>
+                                    <DataGridTextColumn Header="Size" Binding="{Binding LengthX}"></DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <StackPanel Name="FileActionButtons" Orientation="Horizontal" Grid.Row="1" Spacing="8">
+                                <Button Name="OpenButton" IsEnabled="False" Click="OpenButton_OnClick">Open</Button>
+                                <Button Name="ExtractButton" IsEnabled="False" Click="ExtractButton_OnClick">Extract</Button>
+                                <Button Name="ExtractAllButton" Click="ExtractAllButton_OnClick">Extract all</Button>
+                            </StackPanel>
+                        </Grid>
+                    </TabItem>
+                    <TabItem Name="ConvertTab" Header="Convert" IsVisible="False">
+                        <StackPanel Orientation="Vertical" Spacing="20" VerticalAlignment="Center">
+                            <StackPanel Orientation="Vertical" Spacing="8">
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
+                                    <Label Grid.Column="0" VerticalAlignment="Center">FFmpeg path:</Label>
+                                    <TextBox Name="FFmpegBox" Grid.Column="1" TextChanged="FFmpegBox_OnTextChanged" />
+                                    <Button Name="BrowseButtonFfmpeg" Click="BrowseButtonFfmpeg_OnClick" Grid.Column="2" Content="Browse…"></Button>
+                                </Grid>
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
+                                    <Label Grid.Column="0" VerticalAlignment="Center">Save to:</Label>
+                                    <TextBox Name="FileBox" Grid.Column="1" TextChanged="FFmpegBox_OnTextChanged" />
+                                    <Button Name="BrowsButtonPath" Click="BrowsButtonPath_OnClick" Grid.Column="2" Content="Browse…"></Button>
+                                </Grid>
+                                <CheckBox Margin="0,2, 0,-8" IsChecked="False" Content="Use PAL instead of NTSC" IsCheckedChanged="PalToggle_CheckedChanged">
+                                    <ToolTip.Tip>If the output is at the wrong framerate or video de-syncs with audio, you may need to check this option.</ToolTip.Tip>
+                                </CheckBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
+                                <Button Click="DemuxButton_OnClick" Name="DemuxButton">Demux</Button>
+                                <Button Click="ConvertMovAacButton_OnClick" Name="ConvertMovAacButton" IsEnabled="False">Convert to .MOV/.AAC</Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </TabItem>
+                </TabControl>
+            </Grid>
+        </DockPanel>
+        
+        <Grid Name="Loader" Margin="50" RowDefinitions="40,Auto" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="False">
+            <TextBlock Grid.Row="0" FontSize="20" Name="LoadStatus" TextAlignment="Left" >Please wait...</TextBlock>
+            <ProgressBar Name="LoadProgress" Grid.Row="1" IsIndeterminate="True" Width="300"></ProgressBar>
         </Grid>
-    </DockPanel>
+    </Grid>
 </Window>

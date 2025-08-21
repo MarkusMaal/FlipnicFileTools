@@ -34,10 +34,22 @@ public abstract class StaticUtils
     public static bool Pal { get; set; }
     public static string FileName { get; set; }
 
+    public static string LiveLoadStatus { get; set; }
+    
     public static void PrintLoader()
     {
-        Console.Write($"\r   {Loaders[LoadIdx++/1000]}");
-        if (LoadIdx / 1000 >= Loaders.Length) { LoadIdx = 0; }
+        try
+        {
+            Console.Write($"\r   {Loaders[LoadIdx++ / 1000]}");
+            if (LoadIdx / 1000 >= Loaders.Length)
+            {
+                LoadIdx = 0;
+            }
+        }
+        catch
+        {
+            LoadIdx = 0;
+        }
     }
     
     public static float GetFloat(byte[] data, int offset)

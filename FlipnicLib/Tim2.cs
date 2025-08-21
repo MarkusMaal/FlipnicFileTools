@@ -8,8 +8,8 @@ public class Tim2
     private readonly byte[] _bitmap;
     private readonly byte[] _pallette;
 
-    public int Width { get; set; }
-    public int Height { get; set; }
+    private int Width { get; }
+    private int Height { get; }
 
     private enum ColorMode : byte
     {
@@ -127,7 +127,7 @@ public class Tim2
         return bitmapArray.ToArray();
     }
 
-    public void SavePng(string fileName)
+    public void SavePng(Stream output)
     {
         Console.Write("Converting...");
         var builder = PngBuilder.Create(Width, Height, true);
@@ -145,10 +145,14 @@ public class Tim2
             }
         }
 
-        using var fs = new FileStream(fileName, FileMode.Create);
-        builder.Save(fs);
-        fs.Close();
-        Console.WriteLine($"\rSaved as: {fileName}");
+        builder.Save(output);
+        if (output is not FileStream fs)
+        {
+            Console.WriteLine($"\rStream written to memory");
+            return;
+        }
+        Console.WriteLine($"\rSaved as: {fs.Name}");
+        output.Close();
     }
 
     public void SaveBitmap(Stream output)
@@ -196,7 +200,7 @@ public class Tim2
                 Name: {new FileInfo(StaticUtils.FileName).Name}
                 Width: {Width}
                 Height: {Height}
-                Colors: {_pallette.Length}
+                Colors: {_pallette.Length/4}
                 Palette type: {ct}
                 
                 {DisplayPalette()}

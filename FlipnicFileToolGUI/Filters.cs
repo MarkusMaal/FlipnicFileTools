@@ -37,4 +37,13 @@ public class Filters
     {
         Patterns = ["*.TM2"]
     };
+
+    public static FilePickerFileType Executable { get; } = new("Executables")
+    {
+        MimeTypes =
+        [
+            "application/x-mach-binary", "application/vnd.microsoft.portable-executable", "application/x-pie-executable"
+        ],
+        AppleUniformTypeIdentifiers = ["public.unix-executable"]
+    };
 }

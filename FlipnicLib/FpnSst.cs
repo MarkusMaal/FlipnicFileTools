@@ -5,38 +5,39 @@ namespace FlipnicLib;
 public class FpnSst
 {
     private readonly byte[] _data;
-    private readonly Dictionary<string, TocEntry> _tableOfContents =  new();
+    public readonly Dictionary<string, TocEntry> TableOfContents =  new();
     private int _count;
     
-    public FpnSst(string filename)
+    public FpnSst(Stream stream)
     {
-        _data = File.ReadAllBytes(filename);
+        _data = new byte[stream.Length];
+        stream.ReadExactly(_data, 0, (int)stream.Length);
         _count = StaticUtils.GetInt32(_data, 0x08);
         GenerateToc(StaticUtils.GetInt32(_data, 0x0C));
     }
 
-    public void GenerateMagicNumbers()
+    public string GenerateMagicNumbers()
     {
         string[] colHeaders = ["TOC name", "Index", "Value"];
         List<string[]> rows = [];
-        foreach (var entry in _tableOfContents.Where(entry => entry.Key.EndsWith('N') || entry.Key.EndsWith("NAME")))
+        foreach (var entry in TableOfContents.Where(entry => entry.Key.EndsWith('N') || entry.Key.EndsWith("NAME")))
         {
             var subEntries = GetSubentries(entry.Value.Offset, entry.Value.EntrySize, entry.Value.Count);
             rows.AddRange(subEntries.Select((t, i) => (string[]) [entry.Key, "0x" + i.ToString("X").PadLeft(2, '0'), StaticUtils.GetString(t)]));
         }
-        Console.Write(StaticUtils.GenerateTable(colHeaders, rows, rows.Select(row => row[2].Length + 1).Prepend(15).Max()));
+        return StaticUtils.GenerateTable(colHeaders, rows, rows.Select(row => row[2].Length + 1).Prepend(15).Max());
     }
     
     public string ListEntries()
     {
         string[] colHeaders = ["Name", "Offset", "Entry count", "Entry size"];
-        var rows = _tableOfContents.Select(entry => (string[]) [entry.Key, $"0x{entry.Value.Offset:X}", entry.Value.Count.ToString(), $"0x{entry.Value.EntrySize:X}"]).ToList();
+        var rows = TableOfContents.Select(entry => (string[]) [entry.Key, $"0x{entry.Value.Offset:X}", entry.Value.Count.ToString(), $"0x{entry.Value.EntrySize:X}"]).ToList();
         return StaticUtils.GenerateTable(colHeaders, rows);
     }
 
     public void ShowGimmick(string name)
     {
-        var tocEntry = _tableOfContents[name];
+        var tocEntry = TableOfContents[name];
         var gimmickData = _data.Skip(tocEntry.Offset).Take(tocEntry.EntrySize * tocEntry.Count).ToArray();
         List<Gimmick> gimmicks = [];
         for (var i = 0; i < tocEntry.Count; i++)
@@ -51,10 +52,10 @@ public class FpnSst
             rows.Select(row => row[0].Length).Prepend(15).Max()));
     }
 
-    public List<Gimmick[]> GetGimmicks()
+    public Dictionary<string, Gimmick[]>? GetGimmicks()
     {
-        List<Gimmick[]> gimmicks = [];
-        foreach (var (key, tocEntry) in _tableOfContents)
+        Dictionary<string, Gimmick[]>? gimmicks = [];
+        foreach (var (key, tocEntry) in TableOfContents)
         {
             if (!key.StartsWith("GMK")) continue;
             var gimmickData = _data.Skip(tocEntry.Offset).Take(tocEntry.EntrySize * tocEntry.Count).ToArray();
@@ -64,7 +65,7 @@ public class FpnSst
                 gmk.Add(new Gimmick(gimmickData.Skip(i * tocEntry.EntrySize).Take(tocEntry.EntrySize).ToArray()));
             }
             var g = gmk.ToArray();
-            gimmicks.Add(g);
+            gimmicks.Add(key, g);
         }
         return gimmicks;
     }
@@ -84,7 +85,7 @@ public class FpnSst
         for (var i = 0x10; i < end; i+=0x10)
         {
             var name = StaticUtils.GetStringAt(_data, i);
-            while (_tableOfContents.ContainsKey(name))
+            while (TableOfContents.ContainsKey(name))
             {
                 name += "_";
             }
@@ -93,7 +94,12 @@ public class FpnSst
             {
                 name =  name[..8];
             }
-            _tableOfContents.Add(name, new TocEntry
+
+            while (TableOfContents.ContainsKey(name))
+            {
+                name += "_";
+            }
+            TableOfContents.Add(name, new TocEntry
             {
                 Count = StaticUtils.GetInt16(_data, i+8),
                 EntrySize = StaticUtils.GetInt16(_data, i+10),
