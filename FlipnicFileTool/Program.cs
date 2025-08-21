@@ -152,7 +152,7 @@ internal static class Program
                 new FpnFpc(FileName).GenerateXML().Save(outFile);
                 break;
             case Modes.ShowSstToc:
-                new FpnSst(FileName).ListEntries();
+                Console.Write(new FpnSst(FileName).ListEntries());
                 break;
             case Modes.ShowGimmick:
                 new FpnSst(FileName).ShowGimmick(secondaryFileName);
@@ -188,7 +188,8 @@ internal static class Program
                     texture.SavePng(outFile);
                     break;
                 }
-                texture.SaveBitmap(outFile);
+                var fs = new FileStream(outFile, FileMode.Create);
+                texture.SaveBitmap(fs);
                 break;
             case Modes.ConvertIpu:
                 Ipu.IpuConvert(FileName, outFile, FFmpegPath);

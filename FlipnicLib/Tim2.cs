@@ -8,8 +8,8 @@ public class Tim2
     private readonly byte[] _bitmap;
     private readonly byte[] _pallette;
 
-    private int Width { get; set; }
-    private int Height { get; set; }
+    public int Width { get; set; }
+    public int Height { get; set; }
 
     private enum ColorMode : byte
     {
@@ -99,8 +99,8 @@ public class Tim2
         }
         return "Palette:\n" + StaticUtils.GenerateTable(colHeaders, rows, 9);
     }
-    
-    private byte[] GenerateRgbaArray()
+
+    public byte[] GenerateRgbaArray()
     {
         List<Color> paletteArray = [];
         for (var i = 0; i < this._pallette.Length; i += 4)
@@ -151,7 +151,7 @@ public class Tim2
         Console.WriteLine($"\rSaved as: {fileName}");
     }
 
-    public void SaveBitmap(string fileName)
+    public void SaveBitmap(Stream output)
     {
         Console.Write("Converting...");
         List<byte> imageData = [0x42, 0x4D];
@@ -171,8 +171,15 @@ public class Tim2
         
         imageData.AddRange(matrix);
 
-        File.WriteAllBytes(fileName, imageData.ToArray());
-        Console.WriteLine($"\rSaved as: {fileName}");
+        output.Write(imageData.ToArray(), 0, imageData.Count);
+        if (output is not FileStream fs)
+        {
+            Console.WriteLine($"\rStream written to memory");
+            return;
+        }
+
+        Console.WriteLine($"\rSaved as: {fs.Name}");
+        output.Close();
     }
 
     public override string ToString()

@@ -1,0 +1,32 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" Width="700" Height="500"
+        x:Class="FlipnicFileToolGUI.MainWindow"
+        Title="FlipnicFileToolGUI">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open" Name="OpenMenuItem" Click="OpenMenuItem_OnClick"></MenuItem>
+                <MenuItem Header="_Exit"></MenuItem>
+            </MenuItem>
+            <MenuItem Header="_Options">
+                <MenuItem Header="_PAL mode" Click="PalMenuItem_OnClick"></MenuItem>
+            </MenuItem>
+        </Menu>
+        <Grid DockPanel.Dock="Bottom">
+            <TabControl TabStripPlacement="Left" Name="MainTabControl">
+                <TabItem Name="InfoTab" Header="Info" IsVisible="False">
+                    <TextBox Name="InfoBox" FontFamily="Consolas,Monospace" VerticalContentAlignment="Top" Background="Black" Foreground="Lime"></TextBox>
+                </TabItem>
+                <TabItem Name="ImagePreviewTab" Header="Preview" IsVisible="False">
+                    <Image Name="PreviewImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"></Image>
+                </TabItem>
+                <TabItem Name="StageGimmickTab" Header="Gimmicks" IsVisible="False">
+                    <TextBox Name="GimmickBox" FontFamily="Consolas,Monospace" VerticalContentAlignment="Top" Background="Black" Foreground="Lime"></TextBox>
+                </TabItem>
+            </TabControl>
+        </Grid>
+    </DockPanel>
+</Window>

@@ -27,11 +27,11 @@ public class FpnSst
         Console.Write(StaticUtils.GenerateTable(colHeaders, rows, rows.Select(row => row[2].Length + 1).Prepend(15).Max()));
     }
     
-    public void ListEntries()
+    public string ListEntries()
     {
         string[] colHeaders = ["Name", "Offset", "Entry count", "Entry size"];
         var rows = _tableOfContents.Select(entry => (string[]) [entry.Key, $"0x{entry.Value.Offset:X}", entry.Value.Count.ToString(), $"0x{entry.Value.EntrySize:X}"]).ToList();
-        Console.Write(StaticUtils.GenerateTable(colHeaders, rows));
+        return StaticUtils.GenerateTable(colHeaders, rows);
     }
 
     public void ShowGimmick(string name)
@@ -49,6 +49,24 @@ public class FpnSst
         rows.AddRange(gimmicks.Select(entry => (string[]) [entry.Label, entry.Type.ToString(), entry.Button.ToString(), entry.SoundEffect.ToString(), StaticUtils.DotFloatString(entry.FlipperStrength), StaticUtils.DotFloatString(entry.Knockback), StaticUtils.DotFloatString(entry.Bounciness)]));
         Console.Write(StaticUtils.GenerateTable(colHeaders, rows,
             rows.Select(row => row[0].Length).Prepend(15).Max()));
+    }
+
+    public List<Gimmick[]> GetGimmicks()
+    {
+        List<Gimmick[]> gimmicks = [];
+        foreach (var (key, tocEntry) in _tableOfContents)
+        {
+            if (!key.StartsWith("GMK")) continue;
+            var gimmickData = _data.Skip(tocEntry.Offset).Take(tocEntry.EntrySize * tocEntry.Count).ToArray();
+            List<Gimmick> gmk = [];
+            for (var i = 0; i < tocEntry.Count; i++)
+            {
+                gmk.Add(new Gimmick(gimmickData.Skip(i * tocEntry.EntrySize).Take(tocEntry.EntrySize).ToArray()));
+            }
+            var g = gmk.ToArray();
+            gimmicks.Add(g);
+        }
+        return gimmicks;
     }
 
     private List<byte[]> GetSubentries(int offset, int entrySize, int count)

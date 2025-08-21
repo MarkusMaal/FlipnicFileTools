@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlipnicFileTool", "FlipnicF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlipnicLib", "FlipnicLib\FlipnicLib.csproj", "{024AF38E-044B-420F-948B-F9FAC2AAC80A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlipnicFileToolGUI", "FlipnicFileToolGUI\FlipnicFileToolGUI.csproj", "{7C1AB497-78D4-4F27-B203-E4400C185B85}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,11 @@ Global
 		{024AF38E-044B-420F-948B-F9FAC2AAC80A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{024AF38E-044B-420F-948B-F9FAC2AAC80A}.Publish|Any CPU.ActiveCfg = Debug|Any CPU
 		{024AF38E-044B-420F-948B-F9FAC2AAC80A}.Publish|Any CPU.Build.0 = Debug|Any CPU
+		{7C1AB497-78D4-4F27-B203-E4400C185B85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C1AB497-78D4-4F27-B203-E4400C185B85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C1AB497-78D4-4F27-B203-E4400C185B85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C1AB497-78D4-4F27-B203-E4400C185B85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C1AB497-78D4-4F27-B203-E4400C185B85}.Publish|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C1AB497-78D4-4F27-B203-E4400C185B85}.Publish|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 EndGlobal
