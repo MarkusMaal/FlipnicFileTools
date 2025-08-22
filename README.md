@@ -238,3 +238,27 @@ Model count: 2
 Has embedded resources: Yes
 Is 2D animation: No
 ```
+
+## VAB header files (*.HD)
+
+These files contain information about VAB soundbank file pairs (.HD/.BD), used mainly for background music, but sometimes also sound effects.
+
+Example: `FlipnicFileTool --input NATURE_1.HD --show-hd`
+
+Outputs:
+```
+Programme 1
+Count: 2
+BaseVolume: 63, Pan: 64
+LfoTableIndex: 127
+StartNoteRange: CNeg1, EndNoteRange: CNeg1
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+| Volume          | Pan             | Note min.       | Note max.       | Base note       | Karaoke         | LFO table idx   | Reverb          | SD_VA_SSA       | SD_VP_ADSR1     | SD_VP_ADSR2     | 
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+| 77              | 12              | CNeg1           | A4              | B4              | −8              | 129             | 70              | C980FF          | 4FAC            | 5A00            | 
+| 79              | 12              | ASharp4         | G9              | F5              | −9              | 129             | 1               | D580FF          | 4FAC            | 5A00            | 
++-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
+
+
+...
+```
