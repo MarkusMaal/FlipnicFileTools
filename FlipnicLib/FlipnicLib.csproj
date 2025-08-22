@@ -8,6 +8,11 @@
 
     <ItemGroup>
       <PackageReference Include="BigGustave" Version="1.0.6" />
+      <PackageReference Include="Syroot.BinaryData" Version="5.2.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Jam\Se\" />
     </ItemGroup>
 
 </Project>

@@ -11,18 +11,21 @@
         <NativeMenu>
             <NativeMenuItem Header="File" IsVisible="true">
                 <NativeMenu>                    
-                    <NativeMenuItem Header="Open" Gesture="Meta+O" Click="OpenNativeMenuItem_OnClick"/>
+                    <NativeMenuItem Header="Open" Gesture="Meta+O" Click="OpenNativeMenuItem_OnClick"/> 
+                    <NativeMenuItemSeparator />
+                    <NativeMenuItem Header="Close" Gesture="Meta+W" Click="CloseNativeMenuItem_Click" />
                 </NativeMenu>
             </NativeMenuItem>
         </NativeMenu>
     </NativeMenu.Menu>
     <Grid>
         <DockPanel Name="DockPanel1">
-            
             <Menu DockPanel.Dock="Top" IsVisible="{OnPlatform True, macOS=False}">
                 <MenuItem Header="_File">
                     <MenuItem Header="_New Window" Name="NewWindowMenuItem" Click="NewWindowMenuItem_OnClick"></MenuItem>
                     <MenuItem Header="_Open" Name="OpenMenuItem" Click="OpenMenuItem_OnClick"></MenuItem>
+                    <Separator/>
+                    <MenuItem Header="_Close window" Name="CloseMenuItem" Click="CloseMenuItem_OnClick"></MenuItem>
                     <MenuItem Header="_Exit" Name="ExitMenuItem" Click="ExitMenuItem_OnClick"></MenuItem>
                 </MenuItem>
                 <MenuItem Header="_Options">

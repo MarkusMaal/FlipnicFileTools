@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using FlipnicLib.Vag;
 using FlipnicLib;
+using FlipnicLib.Jam;
+using Syroot.BinaryData;
 
 namespace FlipnicFileTool;
 
@@ -27,7 +29,8 @@ internal static class Program
         ConvertIpu,
         ConvertInt,
         ConvertPssMov,
-        ConvertSvag
+        ConvertSvag,
+        ShowHd
     }
 
     private static bool Grayscale;
@@ -68,6 +71,7 @@ internal static class Program
                 "--show-lp4" => Modes.ShowLp4,
                 "--show-mlb" => Modes.ShowMlb,
                 "--show-tim2" => Modes.ShowTim2,
+                "--show-hd" => Modes.ShowHd,
                 "--convert-tim2" => Modes.ConvertTim2,
                 "--generate-mockup" => Modes.GenerateMockup,
                 "--convert-ipu" => Modes.ConvertIpu,
@@ -170,6 +174,11 @@ internal static class Program
                 break;
             case Modes.ExtractBin:
                 BinFile.ExtractBin(StaticUtils.FileName, outFile);
+                break;
+            case Modes.ShowHd:
+                var jh = new JamHeader();
+                jh.Read(new BinaryStream(new FileStream(StaticUtils.FileName, FileMode.Open, FileAccess.Read)));
+                Console.Write(jh.ToString());
                 break;
             case Modes.ShowHelp:
                 Console.WriteLine(GetHelp());
@@ -357,6 +366,10 @@ internal static class Program
                Sound files (*.SVAG)
                
                --convert-svag             Converts a .SVAG file to .WAV
+               
+               VAB header files (*.HD)
+               
+               --show-hd                  List programs in the .HD file
                """;
     }
 
@@ -372,6 +385,7 @@ internal static class Program
             ".LP4" => Modes.ShowLp4,
             ".MLB" => Modes.ShowMlb,
             ".TM2" => Modes.ShowTim2,
+            ".HD"  => Modes.ShowHd,
             _ => Modes.ShowHelp
         };
     }

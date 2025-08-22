@@ -532,4 +532,14 @@ public partial class MainWindow : Window
         if (sender is null) return;
         StaticUtils.Pal = ((CheckBox)sender).IsChecked ?? false;
     }
+
+    private void CloseNativeMenuItem_Click(object? sender, EventArgs e)
+    {
+        Close();
+    }
+
+    private void CloseMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        Close();
+    }
 }
