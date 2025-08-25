@@ -34,13 +34,14 @@ internal static class Program
         ShowHd,
         ShowMidi,
         ConvertSf2,
+        ShowVsd,
     }
 
-    private static bool Grayscale;
-    private static string MlbSect = "";
-    private static string MagickPath = "magick";
-    private static string FFmpegPath = "ffmpeg";
-    private static bool UsePng;
+    private static bool _grayscale;
+    private static string _mlbSect = "";
+    private static string _magickPath = "magick";
+    private static string _fFmpegPath = "ffmpeg";
+    private static bool _usePng;
     
     public static void Main(string[] args)
     {
@@ -76,6 +77,7 @@ internal static class Program
                 "--show-tim2" => Modes.ShowTim2,
                 "--show-hd" => Modes.ShowHd,
                 "--show-midi" => Modes.ShowMidi,
+                "--show-vsd" => Modes.ShowVsd,
                 "--convert-tim2" => Modes.ConvertTim2,
                 "--generate-mockup" => Modes.GenerateMockup,
                 "--convert-ipu" => Modes.ConvertIpu,
@@ -94,13 +96,13 @@ internal static class Program
                     StaticUtils.LowMem = true;
                     break;
                 case "--grayscale":
-                    Grayscale = true;
+                    _grayscale = true;
                     break;
                 case "--pal":
                     StaticUtils.Pal = true;
                     break;
                 case "--png":
-                    UsePng = true;
+                    _usePng = true;
                     break;
             }
 
@@ -110,7 +112,7 @@ internal static class Program
                     secondaryFileName = arg;
                     break;
                 case "--mlb-section":
-                    MlbSect = arg;
+                    _mlbSect = arg;
                     break;
                 case "--input":
                     StaticUtils.FileName = arg;
@@ -119,10 +121,10 @@ internal static class Program
                     outFile = arg;
                     break;
                 case "--magick-path":
-                    MagickPath = arg;
+                    _magickPath = arg;
                     break;
                 case "--ffmpeg-path":
-                    FFmpegPath = arg;
+                    _fFmpegPath = arg;
                     break;
                 default:
                     break;
@@ -200,8 +202,8 @@ internal static class Program
                 Console.WriteLine(new FpnMlb(File.ReadAllBytes(StaticUtils.FileName)).ToString());
                 break;
             case Modes.ConvertTim2:
-                var texture = new Tim2(File.ReadAllBytes(StaticUtils.FileName), Grayscale);
-                if (UsePng)
+                var texture = new Tim2(File.ReadAllBytes(StaticUtils.FileName), _grayscale);
+                if (_usePng)
                 {
                     texture.SavePng(new FileStream(outFile,  FileMode.Create));
                     break;
@@ -210,7 +212,7 @@ internal static class Program
                 texture.SaveBitmap(fs);
                 break;
             case Modes.ConvertIpu:
-                Ipu.IpuConvert(StaticUtils.FileName, outFile, FFmpegPath);
+                Ipu.IpuConvert(StaticUtils.FileName, outFile, _fFmpegPath);
                 break;
             case Modes.ConvertSf2:
                 Converter.InstrumentToSoundFont2(StaticUtils.FileName[..^3] + ".MID", StaticUtils.FileName, StaticUtils.FileName[..^2] + "BD");
@@ -222,10 +224,14 @@ internal static class Program
                 StaticUtils.ConvertAudio(outFile, true);
                 Console.WriteLine($"File saved as {outFile}");
                 break;
+            case Modes.ShowVsd:
+                var vsd = new FpnVsd(File.OpenRead(StaticUtils.FileName));
+                Console.WriteLine($"Vibration Strength Data\n{vsd}");
+                break;
             case Modes.ConvertPssMov:
                 Pss.ListPss(File.OpenRead(StaticUtils.FileName), true, new FileInfo(outFile).Directory!.FullName);
                 var nf = Path.Combine(new FileInfo(outFile).Directory!.FullName, new FileInfo(StaticUtils.FileName).Name);
-                Ipu.IpuConvert(nf + ".IPU", nf + ".TEMP.MOV", FFmpegPath);
+                Ipu.IpuConvert(nf + ".IPU", nf + ".TEMP.MOV", _fFmpegPath);
                 var exist = true;
                 var streams = 0;
                 while (exist)
@@ -256,7 +262,7 @@ internal static class Program
                     ffmpegCommand += $" -map {i}:a";
                 }
                 ffmpegCommand += $" -c:v copy -shortest \"{outFile}\"";
-                StaticUtils.ProcessFFmpeg(FFmpegPath, ffmpegCommand);
+                StaticUtils.ProcessFFmpeg(_fFmpegPath, ffmpegCommand);
                 File.Delete(nf + ".TEMP.MOV");
                 for (var i = 1; i <= streams; i++)
                 {
@@ -273,12 +279,12 @@ internal static class Program
                 StaticUtils.GenerateEmptyPng(outFile + "_", 640, StaticUtils.Pal ? 512 : 480);
                 var root = new FileInfo(StaticUtils.FileName).Directory?.FullName ?? ".";
                 var magickCommand = $"\"{outFile}_\" ";
-                foreach (var sect in new FpnMlb(File.ReadAllBytes(StaticUtils.FileName)).Sections.Where(me => (MlbSect == "") || (me.Key == MlbSect)).SelectMany(me => me.Value))
+                foreach (var sect in new FpnMlb(File.ReadAllBytes(StaticUtils.FileName)).Sections.Where(me => (_mlbSect == "") || (me.Key == _mlbSect)).SelectMany(me => me.Value))
                 {
                     try
                     {
                         var textureFile = sect.Texture.Split('\\')[^1].ToUpper();
-                        new Tim2(File.ReadAllBytes(Path.Combine(root, textureFile)), Grayscale).SavePng(
+                        new Tim2(File.ReadAllBytes(Path.Combine(root, textureFile)), _grayscale).SavePng(
                             new FileStream(Path.Combine(root, textureFile.Replace(".TM2", ".TEMP.PNG")), FileMode.Create));
 
                         magickCommand +=
@@ -295,7 +301,7 @@ internal static class Program
                 {
                     StartInfo = new ProcessStartInfo
                     {
-                        FileName = MagickPath,
+                        FileName = _magickPath,
                         Arguments = magickCommand.Replace("+−", "+"),
                         UseShellExecute = true,
                         CreateNoWindow = true,
@@ -388,6 +394,10 @@ internal static class Program
                MIDI sequences (*.MID)
                
                --show-midi*               List MIDI events
+               
+               Vibration data (*.VSD)
+               
+               --show-vsd*                Display vibration strength values
                """;
     }
 
@@ -405,6 +415,7 @@ internal static class Program
             ".TM2" => Modes.ShowTim2,
             ".HD"  => Modes.ShowHd,
             ".MID" => Modes.ShowMidi,
+            ".VSD" => Modes.ShowVsd,
             _ => Modes.ShowHelp
         };
     }
