@@ -12,7 +12,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Jam\Se\" />
+      <ProjectReference Include="..\meltysynth\MeltySynth\MeltySynth.csproj" />
+      <ProjectReference Include="..\SoundFont2\SoundFont2\SoundFont2.csproj" />
     </ItemGroup>
 
 </Project>

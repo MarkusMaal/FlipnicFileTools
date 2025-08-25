@@ -45,6 +45,7 @@ public class JamHeader
 
     public void Read(BinaryStream bs)
     {
+        bs.Position = 0;
         long basePos = bs.Position;
 
         uint jamHeaderSize = bs.ReadUInt32();
@@ -72,10 +73,16 @@ public class JamHeader
 
             for (int i = 0; i < chunkCount + 1; i++)
             {
-                if (chunkOffsets[i] == -1) continue;
+                JamProgChunk chunk;
+                if (chunkOffsets[i] == -1)
+                {
+                    chunk = new JamProgChunk();
+                    ProgramChunks.Add(null);
+                    continue;
+                }
                 bs.Position = baseChunkPos + chunkOffsets[i] - 1;
 
-                var chunk = new JamProgChunk();
+                chunk = new JamProgChunk();
                 chunk.Read(bs);
                 ProgramChunks.Add(chunk);
             }

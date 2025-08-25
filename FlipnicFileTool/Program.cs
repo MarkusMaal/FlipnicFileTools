@@ -2,6 +2,7 @@
 using FlipnicLib.Vag;
 using FlipnicLib;
 using FlipnicLib.Jam;
+using FlipnicLib.Midi;
 using Syroot.BinaryData;
 
 namespace FlipnicFileTool;
@@ -30,7 +31,9 @@ internal static class Program
         ConvertInt,
         ConvertPssMov,
         ConvertSvag,
-        ShowHd
+        ShowHd,
+        ShowMidi,
+        ConvertSf2,
     }
 
     private static bool Grayscale;
@@ -72,12 +75,14 @@ internal static class Program
                 "--show-mlb" => Modes.ShowMlb,
                 "--show-tim2" => Modes.ShowTim2,
                 "--show-hd" => Modes.ShowHd,
+                "--show-midi" => Modes.ShowMidi,
                 "--convert-tim2" => Modes.ConvertTim2,
                 "--generate-mockup" => Modes.GenerateMockup,
                 "--convert-ipu" => Modes.ConvertIpu,
                 "--convert-int" => Modes.ConvertInt,
                 "--convert-pss-mov" => Modes.ConvertPssMov,
                 "--convert-svag" => Modes.ConvertSvag,
+                "--convert-sf2" => Modes.ConvertSf2,
                 _ => mode
             };
             switch (arg)
@@ -180,6 +185,11 @@ internal static class Program
                 jh.Read(new BinaryStream(new FileStream(StaticUtils.FileName, FileMode.Open, FileAccess.Read)));
                 Console.Write(jh.ToString());
                 break;
+            case Modes.ShowMidi:
+                var midi = new Midi();
+                midi.Read(StaticUtils.FileName);
+                Console.Write(midi.ToString());
+                break;
             case Modes.ShowHelp:
                 Console.WriteLine(GetHelp());
                 break;
@@ -201,6 +211,9 @@ internal static class Program
                 break;
             case Modes.ConvertIpu:
                 Ipu.IpuConvert(StaticUtils.FileName, outFile, FFmpegPath);
+                break;
+            case Modes.ConvertSf2:
+                Converter.InstrumentToSoundFont2(StaticUtils.FileName[..^3] + ".MID", StaticUtils.FileName, StaticUtils.FileName[..^2] + "BD");
                 break;
             case Modes.ConvertInt:
                 StaticUtils.ConvertAudio(outFile);
@@ -369,7 +382,12 @@ internal static class Program
                
                VAB header files (*.HD)
                
-               --show-hd                  List programs in the .HD file
+               --show-hd*                 List programs in the .HD file
+               --convert-sf2              Allows you to convert soundbank to .SF2 (specify .HD file as input)
+               
+               MIDI sequences (*.MID)
+               
+               --show-midi*               List MIDI events
                """;
     }
 
@@ -386,6 +404,7 @@ internal static class Program
             ".MLB" => Modes.ShowMlb,
             ".TM2" => Modes.ShowTim2,
             ".HD"  => Modes.ShowHd,
+            ".MID" => Modes.ShowMidi,
             _ => Modes.ShowHelp
         };
     }

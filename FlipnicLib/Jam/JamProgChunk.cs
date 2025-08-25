@@ -194,7 +194,7 @@ public class JamSplitChunk
         SD_VP_ADSR1 = bs.ReadInt16();
         SD_VP_ADSR2 = bs.ReadInt16();
         Volume = bs.Read1Byte();
-        Pan = bs.Read1Byte();
+        Pan = (byte)(bs.Read1Byte() + 0xC);
         UnkPitchRelated_0x0E = bs.Read1Byte();
         LfoTableIndex = bs.Read1Byte();
         Reverb = bs.Read1Byte();
@@ -235,7 +235,14 @@ public class JamSplitChunk
         }
 
         bs.Position = absoluteSsaOffset;
-        return bs.ReadBytes(0x10 * (int)(lastSampleIndex + 1));
+        try
+        {
+            return bs.ReadBytes(0x10 * (int)(lastSampleIndex + 1));
+        }
+        catch (EndOfStreamException)
+        {
+            return [];
+        }
     }
 
     public override string ToString()
