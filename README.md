@@ -198,6 +198,31 @@ Outputs:
 +-----------------+-----------------+-----------------+-----------------+
 ```
 
+You can also see the event script in human-readable format by running: `FlipnicFileTool --input ISEKI_1.SST --msg-path ../JA.MSG --get-pseudo-code`
+
+Outputs:
+```
+func START ()                                                        @ 0x7B30
+nop
+
+func GAME_EVENT (Balls: [5, 3, 3], Credits: [4, 1, 0])               @ 0x7B70
+        GameEvent (SetMission, MASTER, Status::Started)
+        SequenceEvent (BgmEvent, Filename: SOUNDDATA\ISEKI_0.MID)
+        GameEvent (5, ???: 0, ???: 0)
+        GameEvent (SetSpawn, AreaCode: 21160)
+        SequenceEvent (ScreenFade, FadeOut: false, Ticks: 60)
+        BallEvent (15, ???: 3, ???: 16)
+        SequenceEvent (CameraSequence, Filename: CAM_CR_EVNT01.FPC)
+do
+        SequenceEvent (CameraSequence, Filename: CAM_Y2.FPC:NEG)
+        BallEvent (15, ???: 3, ???: 15)
+end
+
+
+func RESET_EVENT ()                 
+...
+```
+
 ## Message files (*.MSG)
 
 These files store text strings, which may be referenced by IDs elsewhere (basically just that just helps save disc space).
@@ -262,3 +287,19 @@ StartNoteRange: CNeg1, EndNoteRange: CNeg1
 
 ...
 ```
+
+## Layout files (*.LAY)
+
+Determines where things are placed on the stage and how they are scaled/skewed.
+
+Example: `FlipnicFileTool --input LAY_13_14.LAY --show-lay`
+
+Outputs:
+````
++--------------------------------------+--------------------------------------+--------------------------------------+--------------------------------------+
+| Label                                | Size                                 | Skew                                 | Position                             | 
++--------------------------------------+--------------------------------------+--------------------------------------+--------------------------------------+
+| LAY_13_14                            | 1/1/1                                | 0/0/0                                | 0/0/0                                |
+| PIN1_BMP_SHADOW_                     | 1/1/1                                | 0/0/0                                | 480.3896/-3.5159056/522.5597         |
+...
+````
