@@ -170,7 +170,7 @@ public abstract class Pss
     private static void CutFile(string sourceFilePath, string destinationFilePath, long startPosition, long endPosition)
     {
         StaticUtils.LiveLoadStatus = "Extracting streams, please wait...";
-        Console.Write($"\r     {StaticUtils.LiveLoadStatus}".PadRight(Console.WindowWidth));
+        Console.Write($"\r     {StaticUtils.LiveLoadStatus}".PadRight(StaticUtils.WindowWidth));
         StaticUtils.LoadIdx += 9;
         StaticUtils.PrintLoader();
         const FileMode fm = FileMode.Create;

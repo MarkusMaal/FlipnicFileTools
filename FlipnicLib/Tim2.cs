@@ -69,19 +69,21 @@ public class Tim2
         }
         if (!grayscale) return;
         List<byte> grayscalePalette = [];
-        var increment = (byte)(255 / ((_pallette.Length / 3) != 0 ? (_pallette.Length / 3) : 1));
-        if (increment == 255) increment = 1;
+        var increment = (255 / ((_pallette.Length / 3) != 0 ? (_pallette.Length / 3) : 1));
+        if (increment >= 255) increment = 1;
+        increment = 1;
         byte pixel = 0x00;
+        var r = new Random();
         for (var i = 0; i < _pallette.Length; i+=3)
         {
             grayscalePalette.Add(pixel);
             grayscalePalette.Add(pixel);
             grayscalePalette.Add(pixel);
-            grayscalePalette.Add(pixel);
-            pixel += increment;
-            if (pixel == 255)
+            grayscalePalette.Add(255);
+            pixel = (byte)(pixel + increment);
+            if (((increment == 1) && (pixel == 255)) || (increment == -1) && (pixel == 0))
             {
-                pixel = 0;
+                increment = -increment;
             }
         }
         this._pallette = grayscalePalette.ToArray();

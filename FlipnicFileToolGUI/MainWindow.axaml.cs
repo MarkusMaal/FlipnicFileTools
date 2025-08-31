@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
@@ -57,6 +58,16 @@ public partial class MainWindow : Window
         Title = "Flipnic file tool - " + new FileInfo(Uri.UnescapeDataString(files[0].Path.AbsolutePath)).Name;
     }
 
+    private void WindowDropped(object? sender, DragEventArgs e)
+    {
+        if (e.Data.GetFiles()?.First() != null)
+        {
+            var fullPath = Uri.UnescapeDataString(e.Data.GetFiles()!.First().Path.AbsolutePath);
+            StaticUtils.FileName = fullPath;
+            LoadFromData(new FileStream(fullPath, FileMode.Open, FileAccess.Read), fullPath[^3..]);
+            Title = "Flipnic file tool - " + new FileInfo(fullPath).Name;
+        }
+    }
 
     private void LoadFromData(Stream ds, string ext)
     {
@@ -186,7 +197,8 @@ public partial class MainWindow : Window
                        Flipnic file tools
                        ---------------------------------
                        No file loaded, open a file by clicking File > Open
-                       
+                       or drag a file to this window.
+
                        """;
         
         var p = new Process();

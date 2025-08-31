@@ -35,11 +35,17 @@ public abstract class StaticUtils
     public static string FileName { get; set; }
 
     public static string LiveLoadStatus { get; set; }
+
+    public static int WindowWidth { get; set; }
+
+    public static string MsgFile { get; set; } = "";
     
     public static void PrintLoader()
     {
+        
         try
         {
+            WindowWidth = Console.WindowWidth;
             Console.Write($"\r   {Loaders[LoadIdx++ / 1000]}");
             if (LoadIdx / 1000 >= Loaders.Length)
             {
@@ -190,10 +196,10 @@ public abstract class StaticUtils
 
     public static void ConvertAudio(string outFile, bool mono = false)
     {
-        Console.Write("     Loading sound file to memory".PadRight(Console.WindowWidth, ' '));
+        Console.Write("     Loading sound file to memory".PadRight(StaticUtils.WindowWidth, ' '));
         StaticUtils.PrintLoader();
         var data = File.ReadAllBytes(FileName);
-        Console.Write("\r     Separating left and right channels".PadRight(Console.WindowWidth, ' '));
+        Console.Write("\r     Separating left and right channels".PadRight(StaticUtils.WindowWidth, ' '));
         StaticUtils.PrintLoader();
         List<byte> interleavedDataL = [];
         List<byte> interleavedDataR = [];
@@ -215,14 +221,14 @@ public abstract class StaticUtils
             }
         }
         
-        Console.Write("\r     Converting to PCM".PadRight(Console.WindowWidth, ' '));
+        Console.Write("\r     Converting to PCM".PadRight(StaticUtils.WindowWidth, ' '));
         StaticUtils.PrintLoader();
         using var msl = new MemoryStream(SonyVag.Decode([.. interleavedDataL]));
         using var msr = new MemoryStream(SonyVag.Decode([.. interleavedDataR]));
         using var ms = new MemoryStream();
         
         {
-            Console.Write("\r     Generating WAV file".PadRight(Console.WindowWidth, ' '));
+            Console.Write("\r     Generating WAV file".PadRight(StaticUtils.WindowWidth, ' '));
             var bufL = new byte[2]; // 16-bit, 2 channels = 2+2 bytes
             var bufR = new byte[2];
             var i = 0;
@@ -249,13 +255,13 @@ public abstract class StaticUtils
             // Stereo, Signed 16-bit, 44100Hz
             Pcm.WriteWavHeader(ms, false, 2, 16, 44100, (int)ms.Length);
         
-            Console.Write("\r     Saving WAV file".PadRight(Console.WindowWidth, ' '));
+            Console.Write("\r     Saving WAV file".PadRight(StaticUtils.WindowWidth, ' '));
             StaticUtils.PrintLoader();
             // save WAV file
             var fs = new FileStream(outFile, FileMode.Create);
             ms.WriteTo(fs);
             fs.Close();
-            Console.WriteLine($"\r   File saved as {outFile}".PadRight(Console.WindowWidth, ' '));
+            Console.WriteLine($"\r   File saved as {outFile}".PadRight(StaticUtils.WindowWidth, ' '));
         }
     }
 

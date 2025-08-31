@@ -17,6 +17,11 @@ public class FpnMsg
         }
     }
 
+    public string GetMessageById(int id)
+    {
+        return id == -1 ? "MASTER" : _messages[id];
+    }
+
     public override string ToString()
     {
         return $"Magic: {_magic}\nEntries: {_messages.Count}\n" + StaticUtils.GenerateTable(["ID", "Message"],

@@ -230,7 +230,7 @@ public abstract class BinFile
             var afiles = new List<string>();
             var lastfile = "";
             var content = new List<byte>();
-            Console.Write("\r     Loading file to memory...".PadRight(Console.WindowWidth));
+            Console.Write("\r     Loading file to memory...".PadRight(StaticUtils.WindowWidth));
             while ((offset = src.Read(buffer, 0, buffer.Length)) > 0)
             {
                 StaticUtils.PrintLoader();
@@ -279,12 +279,12 @@ public abstract class BinFile
                             {
                                 afiles.Add(kvp.Key);
                                 Console.Write(
-                                    $"\r     Extracting {kvp.Key} ({StaticUtils.GetFilesizeString((long)finish - loc)})".PadRight(Console.WindowWidth));
+                                    $"\r     Extracting {kvp.Key} ({StaticUtils.GetFilesizeString((long)finish - loc)})".PadRight(StaticUtils.WindowWidth));
                             }
                             else
                             {
                                 Console.Write(
-                                    $"\r     Extracting {kvp.Key[0..^1]} ({StaticUtils.GetFilesizeString((long)finish - loc)})".PadRight(Console.WindowWidth));
+                                    $"\r     Extracting {kvp.Key[0..^1]} ({StaticUtils.GetFilesizeString((long)finish - loc)})".PadRight(StaticUtils.WindowWidth));
                             }
                             write_to = kvp.Key.Replace("\\", "/");
                             CheckMissingDirs(kvp.Key, destination);
@@ -311,22 +311,22 @@ public abstract class BinFile
                 File.Delete(destination + "/" + lastfile.Replace("\\", "/"));
             }
         }
-        Console.WriteLine($"\r   Files have been extracted to: {destination}".PadRight(Console.WindowWidth));
+        Console.WriteLine($"\r   Files have been extracted to: {destination}".PadRight(StaticUtils.WindowWidth));
 
     }
 
     static int ExtractFolder(string source, string destination)
     {
-        Console.Write($"\r     Extracting from subfolder at {new DirectoryInfo(source).Name}\\".PadRight(Console.WindowWidth));
+        Console.Write($"\r     Extracting from subfolder at {new DirectoryInfo(source).Name}\\".PadRight(StaticUtils.WindowWidth));
 
-        Console.Write("\r     Interpreting subfolder TOC data...".PadRight(Console.WindowWidth));
+        Console.Write("\r     Interpreting subfolder TOC data...".PadRight(StaticUtils.WindowWidth));
         var fs_entries = GetSubEntries(destination + "\\A");
         using Stream src = File.OpenRead(source);
         var buffer = new byte[1];
         var offset = 0;
         byte[] c2;
         var content = new List<byte>();
-        Console.Write("\r     Loading subfolder to memory...".PadRight(Console.WindowWidth));
+        Console.Write("\r     Loading subfolder to memory...".PadRight(StaticUtils.WindowWidth));
         StaticUtils.PrintLoader();
         while ((offset = src.Read(buffer, 0, buffer.Length)) > 0)
         {
@@ -351,7 +351,7 @@ public abstract class BinFile
             try
             {
                 var entry = new byte[end - start];
-                Console.Write($"\r     Extracting {fs_keys[i]} ({StaticUtils.GetFilesizeString(end - start)})".PadRight(Console.WindowWidth));
+                Console.Write($"\r     Extracting {fs_keys[i]} ({StaticUtils.GetFilesizeString(end - start)})".PadRight(StaticUtils.WindowWidth));
                 try
                 {
                     Buffer.BlockCopy(c2, Convert.ToInt32(start), entry, 0, (int)(end - start));

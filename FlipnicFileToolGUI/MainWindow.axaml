@@ -4,9 +4,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:FlipnicFileToolGUI"
         mc:Ignorable="d" Width="700" Height="500"
-        x:DataType="vm:MainWindow"
+        x:DataType="vm:MainWindow" DragDrop.AllowDrop="True"
         x:Class="FlipnicFileToolGUI.MainWindow"
-        Title="Flipnic file tool" Loaded="Window_Loaded">
+        Title="Flipnic file tool" Loaded="Window_Loaded"
+        DragDrop.Drop="WindowDropped">
     <NativeMenu.Menu>
         <NativeMenu>
             <NativeMenuItem Header="File" IsVisible="true">

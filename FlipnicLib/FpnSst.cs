@@ -27,6 +27,31 @@ public class FpnSst
         }
         return StaticUtils.GenerateTable(colHeaders, rows, rows.Select(row => row[2].Length + 1).Prepend(15).Max());
     }
+
+    public string GetStringById(string listName, int id)
+    {
+        foreach (var entry in TableOfContents.Where(entry => entry.Key.Equals(listName)))
+        {
+            var subEntries = GetSubentries(entry.Value.Offset, entry.Value.EntrySize, entry.Value.Count);
+            var stop = false;
+            if (id < 0)
+            {
+                id *= -1;
+                id -= 1;
+                stop = true;
+            }
+            try
+            {
+                return StaticUtils.GetString(subEntries[id]) + (stop ? ":NEG" : "");
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return $"out of range, ID: {id:X}";
+            }
+        }
+
+        return "(null)";
+    }
     
     public string ListEntries()
     {
@@ -78,6 +103,20 @@ public class FpnSst
             subentries.Add(_data.Skip(offset+i*entrySize).Take(entrySize).ToArray());
         }
         return subentries;
+    }
+
+    public string GeneratePseudoCode()
+    {
+        StaticUtils.WindowWidth = Console.WindowWidth;
+        var o = "";
+        var sOffset = TableOfContents["EVENT"].Offset;
+        var eSize = TableOfContents["EVENT"].EntrySize;
+        var eCount = TableOfContents["EVENT"].Count;
+        for (var i = sOffset; i < sOffset + eSize * eCount; i += eSize)
+        {
+            o += new Event(_data.Skip(i).Take(eSize).ToArray()).GetPseudoCodeLine(this, i, StaticUtils.MsgFile != "" ? new FpnMsg(StaticUtils.MsgFile) : null);
+        }
+        return o;
     }
 
     private void GenerateToc(int end)

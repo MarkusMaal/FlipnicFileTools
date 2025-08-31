@@ -35,6 +35,8 @@ internal static class Program
         ShowMidi,
         ConvertSf2,
         ShowVsd,
+        ShowLay,
+        ShowPseudoCode
     }
 
     private static bool _grayscale;
@@ -85,6 +87,8 @@ internal static class Program
                 "--convert-pss-mov" => Modes.ConvertPssMov,
                 "--convert-svag" => Modes.ConvertSvag,
                 "--convert-sf2" => Modes.ConvertSf2,
+                "--show-lay" => Modes.ShowLay,
+                "--get-pseudo-code" => Modes.ShowPseudoCode,
                 _ => mode
             };
             switch (arg)
@@ -126,6 +130,9 @@ internal static class Program
                 case "--ffmpeg-path":
                     _fFmpegPath = arg;
                     break;
+                case "--msg-path":
+                    StaticUtils.MsgFile = arg;
+                    break;
                 default:
                     break;
             }
@@ -163,6 +170,9 @@ internal static class Program
                 break;
             case Modes.ShowSstToc:
                 Console.Write(new FpnSst(File.OpenRead(StaticUtils.FileName)).ListEntries());
+                break;
+            case Modes.ShowPseudoCode:
+                Console.Write(new FpnSst(File.OpenRead(StaticUtils.FileName)).GeneratePseudoCode());
                 break;
             case Modes.ShowGimmick:
                 new FpnSst(File.OpenRead(StaticUtils.FileName)).ShowGimmick(secondaryFileName);
@@ -275,6 +285,9 @@ internal static class Program
             case Modes.ShowTim2:
                 Console.WriteLine(new Tim2(File.ReadAllBytes(StaticUtils.FileName)).ToString());
                 break;
+            case Modes.ShowLay:
+                Console.Write(new FpnLay(File.ReadAllBytes(StaticUtils.FileName)));
+                break;
             case Modes.GenerateMockup:
                 StaticUtils.GenerateEmptyPng(outFile + "_", 640, StaticUtils.Pal ? 512 : 480);
                 var root = new FileInfo(StaticUtils.FileName).Directory?.FullName ?? ".";
@@ -334,6 +347,7 @@ internal static class Program
                --low-memory               Reduces performance to save on memory usage
                --magick-path              Path to ImageMagick executable (may not be needed dep. on what you're trying to do)
                --ffmpeg-path              Path to FFmpeg (for audio/video conversion operations)
+               --msg-path                 Path to JA.MSG file (optional)
                --png                      Use PNG instead of BMP (for transparency and smaller file sizes)
                
                Flipnic Camera sequences (*.FPC)
@@ -346,6 +360,7 @@ internal static class Program
                --show-sst-resources       Display all resources referenced by SST file
                --show-sst-toc*            Display table of contents of the SST file
                --show-gimmick [name]      Display a gimmick (name from TOC)
+               --get-pseudo-code          Transform stage event into something that's somewhat human-readable
                
                Message file (JA.MSG)
                
@@ -398,6 +413,10 @@ internal static class Program
                Vibration data (*.VSD)
                
                --show-vsd*                Display vibration strength values
+               
+               Layout files (*.LAY)
+               
+               --show-lay*                List layout data in human-readable format
                """;
     }
 
@@ -416,6 +435,7 @@ internal static class Program
             ".HD"  => Modes.ShowHd,
             ".MID" => Modes.ShowMidi,
             ".VSD" => Modes.ShowVsd,
+            ".LAY" => Modes.ShowLay,
             _ => Modes.ShowHelp
         };
     }
