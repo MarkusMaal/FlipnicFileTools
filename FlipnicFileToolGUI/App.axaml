@@ -1,6 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="FlipnicFileToolGUI.App"
+             xmlns:sukiUi="clr-namespace:SukiUI;assembly=SukiUI"
              Name="Flipnic file tool">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
@@ -12,7 +13,6 @@
     </NativeMenu.Menu>
              
     <Application.Styles>
-        <RomzetronTheme ColorTheme="DeepPurple"/>
-        <RomzetronThemeDataGrid />
+        <sukiUi:SukiTheme ThemeColor="Blue"  />
     </Application.Styles>
 </Application>

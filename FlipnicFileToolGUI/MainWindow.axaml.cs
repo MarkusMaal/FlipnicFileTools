@@ -9,14 +9,19 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using FlipnicLib;
 using FlipnicLib.Types;
+using SukiUI;
+using SukiUI.Controls;
+using SukiUI.Models;
 
 namespace FlipnicFileToolGUI;
 
-public partial class MainWindow : Window
+public partial class MainWindow : SukiWindow
 {
     private Dictionary<string, Gimmick[]>? Gimmicks { get; set; }
     
@@ -29,12 +34,18 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = this;
+        ApplyCustomTheme();
+    }
+
+    private void ApplyCustomTheme()
+    {
+        SukiTheme.GetInstance().ChangeColorTheme(App.AppTheme);
     }
 
     private void PalMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
-        ((MenuItem?)sender)!.IsChecked = !((MenuItem?)sender)!.IsChecked;
-        StaticUtils.Pal = ((MenuItem?)sender)!.IsChecked;
+        SukiTheme.GetInstance().SwitchBaseTheme();
+        ApplyCustomTheme();
     }
     
     private void OpenMenuItem_OnClick(object? sender, RoutedEventArgs e)
@@ -73,7 +84,7 @@ public partial class MainWindow : Window
     {
         foreach (var t in MainTabControl.Items)
         {
-            ((TabItem)t!)!.IsVisible = false;
+            ((SukiSideMenuItem)t!)!.IsVisible = false;
         }
 
         DockPanel1.IsVisible = false;
@@ -94,7 +105,6 @@ public partial class MainWindow : Window
                         ImagePreviewTab.IsVisible = true;
                         PreviewImage.Source = bt.ToBitmap();
                         InfoBox.Text = img.ToString();
-                        MainTabControl.SelectedIndex = 0;
                     });
                     break;
                 case "SST":
@@ -112,7 +122,6 @@ public partial class MainWindow : Window
                         }
 
                         GimmickCombobox.SelectedIndex = 0;
-                        MainTabControl.SelectedIndex = 0;
                     });
                     break;
                 case "BIN":
@@ -125,7 +134,6 @@ public partial class MainWindow : Window
                         FileListTab.IsVisible = true;
                         DataContext = this;
                         FilesGrid.ItemsSource = VirtualFiles;
-                        MainTabControl.SelectedIndex = 3; 
                     });
                     break;
                 case "PSS":
@@ -135,7 +143,6 @@ public partial class MainWindow : Window
                         InfoTab.IsVisible = true;
                         InfoBox.Text = pssInfo;
                         ConvertTab.IsVisible = true;
-                        MainTabControl.SelectedIndex = 0; 
                     });
                     break;
                 default:
