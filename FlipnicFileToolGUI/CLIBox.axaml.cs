@@ -49,6 +49,7 @@ public partial class CLIBox : UserControl
         if (file is null) return;
         
         await System.IO.File.WriteAllTextAsync(Uri.UnescapeDataString(file.Path.AbsolutePath), Text, Encoding.UTF8);
-        MainWindow.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
+        
+        ((MainWindow?)topLevel)?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
     }
 }

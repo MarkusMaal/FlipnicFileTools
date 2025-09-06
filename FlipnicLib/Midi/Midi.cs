@@ -1,4 +1,5 @@
 ﻿
+using System.Runtime.CompilerServices;
 using Syroot.BinaryData;
 using FlipnicLib.Midi.Meta;
 using FlipnicLib.Jam;
@@ -15,7 +16,11 @@ public class Midi
 
     public void Read(string fileName)
     {
-        using var fs = new FileStream(fileName, FileMode.Open);
+        Read(File.OpenRead(fileName));
+    }
+    public void Read(Stream stream)
+    {
+        using var fs = stream;
         using var bs = new BinaryStream(fs, ByteConverter.Little);
 
         var sssq = new MTrk();

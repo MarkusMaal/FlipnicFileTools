@@ -1,0 +1,70 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:FlipnicFileToolGUI"
+             mc:Ignorable="d" d:DesignWidth="512" d:DesignHeight="512"
+             DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             x:Class="FlipnicFileToolGUI.MenuMockup">
+    <Grid ColumnDefinitions="300,*">
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <StackPanel Spacing="10" Margin="10">
+                <TextBlock Margin="0 5">Textures:</TextBlock>
+                <ItemsControl ItemsSource="{Binding MenuElementSource}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Spacing="10" Orientation="Vertical" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:MenuElementViewModel">
+                            <CheckBox IsChecked="{Binding IsVisible}"
+                                      Content="{Binding MenuElement.Texture}"
+                                      Click="ToggleButton_OnIsCheckedChanged">
+                            </CheckBox>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+        <Viewbox Grid.Column="1" >
+            <Grid MinWidth="{Binding Width}" MinHeight="{Binding Height}">
+                <Grid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Save as..." Click="SaveAsMenuItem_OnClick"></MenuItem>
+                    </ContextMenu>
+                </Grid.ContextMenu>
+                <ItemsControl ItemsSource="{Binding MenuElementSource}">
+
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+		                
+                    <ItemsControl.ItemContainerTheme>
+                        <ControlTheme x:DataType="vm:MenuElementViewModel" TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Left" Value="{Binding MenuElement.PosX}" />
+                            <Setter Property="Canvas.Top" Value="{Binding MenuElement.PosY}" />
+                        </ControlTheme>
+                    </ItemsControl.ItemContainerTheme>
+
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:MenuElementViewModel">
+                            <Image Source="{Binding ImageSource}"
+                                   Width="{Binding MenuElement.Width}"
+                                   Height="{Binding MenuElement.Height}"
+                                   ZIndex="{Binding MenuElement.Dipth}"
+                                   IsVisible="{Binding IsVisible}"
+                                   VerticalAlignment="Top"
+                                   HorizontalAlignment="Left"
+                                   RenderOptions.BitmapInterpolationMode="None">
+                            </Image>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+
+                </ItemsControl>
+            </Grid>
+        </Viewbox>
+    </Grid>
+</UserControl>

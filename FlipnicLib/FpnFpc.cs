@@ -42,10 +42,13 @@ public class FpnFpc
         TargetZ,
         Fov = 0x07
     }
+    
+    public FpnFpc(string filename) : this(File.OpenRead(filename)) {}
 
-    public FpnFpc(string filename)
+    public FpnFpc(Stream stream)
     {
-        Data = File.ReadAllBytes(filename);
+        Data = new byte[stream.Length];
+        stream.ReadExactly(Data, 0, Data.Length);
         NumSequences = StaticUtils.GetInt32(Data, 0x4);
         NumFrames = StaticUtils.GetInt32(Data, 0xC);
         OriginX = StaticUtils.GetFloat(Data, 0x10);

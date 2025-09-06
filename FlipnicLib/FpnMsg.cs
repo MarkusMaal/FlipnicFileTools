@@ -4,9 +4,13 @@ public class FpnMsg
 {
     private readonly List<string> _messages = [];
     private readonly string _magic;
-    public FpnMsg(string filename)
+
+    public FpnMsg(string filename) : this(File.OpenRead(filename)) {}
+    
+    public FpnMsg(Stream stream)
     {
-        var data = File.ReadAllBytes(filename);
+        var data = new byte[stream.Length];
+        stream.ReadExactly(data, 0, data.Length);
         _magic = StaticUtils.GetString(data.Take(8).ToArray());
         var tocOffset = StaticUtils.GetInt32(data, 0x08);
         var entries = StaticUtils.GetInt32(data, 0x0C);

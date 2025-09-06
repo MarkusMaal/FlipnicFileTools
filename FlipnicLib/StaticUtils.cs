@@ -195,7 +195,7 @@ public abstract class StaticUtils
         p.Start();
         p.WaitForExit();
     }
-
+    
     public static void ConvertAudio(string outFile, bool mono = false)
     {
         Console.Write("     Loading sound file to memory".PadRight(StaticUtils.WindowWidth, ' '));

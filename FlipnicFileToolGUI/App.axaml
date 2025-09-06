@@ -6,9 +6,10 @@
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <NativeMenu.Menu>
-        <NativeMenu>
+        <NativeMenu Opening="NativeMenu_OnOpening">
             <NativeMenuItem Header="New window" Gesture="Meta+N" Click="NewWindowMenuItem_OnClick"></NativeMenuItem>
             <NativeMenuItem Header="Quit" Gesture="Meta+Q" Click="NativeMenuItem_OnClick"></NativeMenuItem>
+            <NativeMenuItem Header="About" Click="AboutNativeMenu_OnClick"></NativeMenuItem>
         </NativeMenu>
     </NativeMenu.Menu>
              

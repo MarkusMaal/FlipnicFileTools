@@ -30,4 +30,26 @@ public abstract class Ipu
         var ffmpegCommand = $"-r {frameRate} -i \"{fileName}\" -vf bwdif -c:v qtrle -pix_fmt rgb24 \"{outFile}\"";
         StaticUtils.ProcessFFmpeg(ffmpegPath, ffmpegCommand);
     }
+
+    public static string GetInfoAsString(Stream stream)
+    {
+        var header = new byte[0x10];
+        using var reader = new BinaryReader(stream);
+        reader.BaseStream.Seek(0, SeekOrigin.Begin);
+        var readBytes = reader.Read(header, 0x0, 0x10);
+        if (readBytes < 10) return "Not IPU file";
+        
+        var magic = StaticUtils.GetString(header.Take(0x4).ToArray());
+        var width = StaticUtils.GetInt16(header, 0x8);
+        var height = StaticUtils.GetInt16(header, 0xA);
+        var frames = StaticUtils.GetInt32(header, 0xC);
+        return $"""
+                IPU video stream
+                
+                Magic: {magic}
+                Width: {width}
+                Height: {height}
+                Frames: {frames}
+                """;
+    }
 }

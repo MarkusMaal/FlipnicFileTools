@@ -9,7 +9,7 @@
         Title="Flipnic file tool" Loaded="Window_Loaded" BackgroundStyle="Bubble"
         IsMenuVisible="{OnPlatform True, macOS=False}">
     <sukiUi:SukiWindow.RightWindowTitleBarControls>
-        <Label Name="FileTypeLabel" Content="Ready"></Label>
+        <Label Name="FileTypeLabel" Content="Ready" VerticalContentAlignment="Center" VerticalAlignment="Center"></Label>
     </sukiUi:SukiWindow.RightWindowTitleBarControls>
     <sukiUi:SukiWindow.Hosts>
         <sukiUi:SukiDialogHost Name="DialogHost"/>
@@ -21,6 +21,11 @@
                     <NativeMenuItem Header="Open" Gesture="Meta+O" Click="OpenNativeMenuItem_OnClick"/> 
                     <NativeMenuItemSeparator />
                     <NativeMenuItem Header="Close" Gesture="Meta+W" Click="CloseNativeMenuItem_Click" />
+                </NativeMenu>
+            </NativeMenuItem>
+            <NativeMenuItem Header="Options">
+                <NativeMenu>                    
+                    <NativeMenuItem Header="Toggle dark theme" Click="ToggleDarkNative" />
                 </NativeMenu>
             </NativeMenuItem>
         </NativeMenu>
@@ -36,7 +41,7 @@
         <MenuItem Header="Options">
             <MenuItem Header="Toggle dark theme" Click="PalMenuItem_OnClick"></MenuItem>
         </MenuItem>
-        <MenuItem Header="About" Click="AboutClick">
+        <MenuItem Name="AboutMenu1" Header="About" Click="AboutClick">
             
         </MenuItem>
     </sukiUi:SukiWindow.MenuItems>
@@ -71,6 +76,23 @@
                                 </Grid>
                             </sukiUi:SukiSideMenuItem.PageContent>
                         </sukiUi:SukiSideMenuItem>
+                        <sukiUi:SukiSideMenuItem Name="SoundPlayerTab" Header="Sound player" IsVisible="False">
+                            <sukiUi:SukiSideMenuItem.Icon>
+                                <vm:CircleDot ColorA="Cyan" ColorB="DarkCyan" Text="▶"></vm:CircleDot>
+                            </sukiUi:SukiSideMenuItem.Icon>
+                            <sukiUi:SukiSideMenuItem.PageContent>
+                                <sukiUi:GlassCard VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="20, 0">
+                                    <StackPanel Spacing="10">
+                                        <Label Name="AudioFilename">Filename: N/A</Label>
+                                        <Label Name="PlaybackStateLabel">Stopped</Label>
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <Button Name="PlayButton" Content="Play" Click="PlayButton_OnClick"></Button>
+                                            <Button Name="SaveSoundAsButton" Content="Save as.." Click="SaveSoundAsButton_OnClick"></Button>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </sukiUi:GlassCard>
+                            </sukiUi:SukiSideMenuItem.PageContent>
+                        </sukiUi:SukiSideMenuItem>
                         <sukiUi:SukiSideMenuItem Name="PseudoCodeTab" Header="Event script" IsVisible="False">
                             <sukiUi:SukiSideMenuItem.Icon>
                                 <vm:CircleDot ColorA="Red" ColorB="#210" Text="⌘"></vm:CircleDot>
@@ -81,13 +103,21 @@
                         </sukiUi:SukiSideMenuItem>
                         <sukiUi:SukiSideMenuItem Name="StageGimmickTab" Header="Gimmicks" IsVisible="False">
                             <sukiUi:SukiSideMenuItem.Icon>
-                                <vm:CircleDot ColorA="Gray" ColorB="Black" Text="⚙️"></vm:CircleDot>
+                                <vm:CircleDot ColorA="Gray" ColorB="Black" Text="⚙"></vm:CircleDot>
                             </sukiUi:SukiSideMenuItem.Icon>
                             <sukiUi:SukiSideMenuItem.PageContent>
-                                <Grid RowDefinitions="30,*">
+                                <Grid RowDefinitions="Auto, *">
                                     <ComboBox Grid.Row="0" Name="GimmickCombobox" SelectionChanged="GimmickCombobox_OnSelectionChanged"></ComboBox>                                        
                                     <vm:CLIBox Grid.Row="1" Name="GimmickBox" />
                                 </Grid>
+                            </sukiUi:SukiSideMenuItem.PageContent>
+                        </sukiUi:SukiSideMenuItem>
+                        <sukiUi:SukiSideMenuItem Name="MenuMockupTab" Header="Menu mockup" IsVisible="False">
+                            <sukiUi:SukiSideMenuItem.Icon>
+                                <vm:CircleDot ColorA="DeepPink" ColorB="DarkViolet" Text="M"></vm:CircleDot>
+                            </sukiUi:SukiSideMenuItem.Icon>
+                            <sukiUi:SukiSideMenuItem.PageContent>
+                                <vm:MenuMockup Name="MenuMockup" MenuElementSource="{Binding MenuElements}" Width="640" Height="480"></vm:MenuMockup>
                             </sukiUi:SukiSideMenuItem.PageContent>
                         </sukiUi:SukiSideMenuItem>
                         <sukiUi:SukiSideMenuItem Name="FileListTab" Header="Files" IsVisible="False">
@@ -142,6 +172,7 @@
                                         <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
                                             <Button Click="DemuxButton_OnClick" Name="DemuxButton">Demux</Button>
                                             <Button Click="ConvertMovAacButton_OnClick" Name="ConvertMovAacButton" IsEnabled="False">Convert to .MOV/.AAC</Button>
+                                            <Button Click="ConvertMovButton_OnClick" Name="ConvertMovButton" IsEnabled="False">Convert to .MOV</Button>
                                         </StackPanel>
                                     </StackPanel>
                                 </sukiUi:GlassCard>
@@ -150,6 +181,7 @@
                     </sukiUi:SukiSideMenu.Items>
             </sukiUi:SukiSideMenu>
         </Grid>
+    
         
         <Grid Name="Loader" Margin="50" RowDefinitions="40,Auto" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="False">
             <TextBlock Grid.Row="0" FontSize="20" Name="LoadStatus" TextAlignment="Left" >Please wait...</TextBlock>

@@ -6,7 +6,7 @@ public class Filters
 {
     public static FilePickerFileType AllSupported { get; } = new("All supported file formats")
     {
-        Patterns = ["*.BIN", "*.FPC", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.VSD"]
+        Patterns = ["*.BIN", "*.FPC", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.SVAG", "*.INT", "*.VAG", "*.VSD"]
     };
     
     public static FilePickerFileType BinFile { get; } = new("BIN files")
@@ -54,6 +54,17 @@ public class Filters
     {
         Patterns = ["*.VSD"]
     };
+    public static FilePickerFileType SvagFile { get; } = new("Sony Compressed ADPCM audio")
+    {
+        Patterns = ["*.SVAG", "*.VAG", "*.INT"]
+    };
+    
+    public static FilePickerFileType IpuFile { get; } = new("IPU video stream")
+    {
+        Patterns = ["*.IPU"]
+    };
+    
+    
 
     public static FilePickerFileType TxtFile { get; } = new("Text files")
     {
@@ -67,6 +78,13 @@ public class Filters
         Patterns = ["*.PNG"],
         MimeTypes = ["image/png"],
         AppleUniformTypeIdentifiers = ["public.png"]
+    };
+
+    public static FilePickerFileType WavFile { get; } = new("Wave file")
+    {
+        Patterns = ["*.WAV"],
+        MimeTypes = ["audio/wav"],
+        AppleUniformTypeIdentifiers = ["com.microsoft.waveform-audio"]
     };
 
     public static FilePickerFileType Executable { get; } = new("Executables")

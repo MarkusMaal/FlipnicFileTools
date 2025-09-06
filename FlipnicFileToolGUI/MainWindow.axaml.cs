@@ -17,6 +17,7 @@ using FlipnicLib;
 using FlipnicLib.Jam;
 using FlipnicLib.Midi;
 using FlipnicLib.Types;
+using FlipnicLib.Vag;
 using SukiUI;
 using SukiUI.Controls;
 using SukiUI.Dialogs;
@@ -30,22 +31,32 @@ public partial class MainWindow : SukiWindow
     
     public ObservableCollection<VirtualFile>? VirtualFiles { get; set; }
     
+    List<MenuElementViewModel> _menu = [];
+
+    public ObservableCollection<MenuElementViewModel> MenuElements { get; set; }
+    
     private static int Progress { get; set; }
     private static int ProgressMax { get; set; }
     
     private const string FTypeFormat = "Type: {0}";
+
+    private byte[] pcmData { get; set; }
     
-    public static ISukiDialogManager DialogManager = new SukiDialogManager();
+    public ISukiDialogManager DialogManager = new SukiDialogManager();
     
     public MainWindow()
     {
         InitializeComponent();
+        MenuElements = new ObservableCollection<MenuElementViewModel>(_menu);
         DataContext = this;
         ApplyCustomTheme();
         DialogHost.Manager = DialogManager;
+        
         DragDrop.SetAllowDrop(this, true);
         AddHandler(DragDrop.DragOverEvent, DragOver);
         AddHandler(DragDrop.DropEvent, WindowDropped);
+        
+        
     }
 
     private static void DragOver(object? sender, DragEventArgs e)
@@ -63,7 +74,7 @@ public partial class MainWindow : SukiWindow
         SukiTheme.GetInstance().ChangeColorTheme(App.AppTheme);
     }
 
-    private void PalMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    private void PalMenuItem_OnClick(object? sender, RoutedEventArgs? e)
     {
         SukiTheme.GetInstance().SwitchBaseTheme();
         ApplyCustomTheme();
@@ -82,7 +93,7 @@ public partial class MainWindow : SukiWindow
             Title = "Open file",
             AllowMultiple = false,
             FileTypeFilter = [Filters.AllSupported, Filters.BinFile, Filters.FpnFpc, Filters.FpnSst, Filters.FpnLp4, Filters.FpnMlb,
-                Filters.SonyPss, Filters.SonyTim2, Filters.MidiFile, Filters.HdFile, Filters.VsdFile]
+                Filters.SonyPss, Filters.SonyTim2, Filters.MidiFile, Filters.HdFile, Filters.VsdFile, Filters.SvagFile]
         });
 
         if (files.Count <= 0) return;
@@ -141,37 +152,99 @@ public partial class MainWindow : SukiWindow
                     break;
                 case "MID":
                     var midi = new Midi();
-                    midi.Read(StaticUtils.FileName);
+                    midi.Read(ds);
                     LoadAsString(midi, "General MIDI");
                     break;
                 case ".HD":
                     var jh = new JamHeader();
-                    jh.Read(new BinaryStream(new FileStream(StaticUtils.FileName, FileMode.Open, FileAccess.Read)));
+                    jh.Read(new BinaryStream(ds));
                     LoadAsString(jh, "JAM header");
                     break;
                 case "VSD":
-                    var vsd = new FpnVsd(File.OpenRead(StaticUtils.FileName));
+                    var vsd = new FpnVsd(ds);
                     LoadAsString(vsd, "Vibration Strength Data");
                     break;
+                case "INT":
+                case "VAG":
+                    var va = new byte[ds.Length];
+                    ds.ReadExactly(va);
+                    pcmData = SonyVag.Decode(va);
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        SoundPlayerTab.IsVisible = true;
+                        AudioFilename.Content = "Filename: " + Path.GetFileName(StaticUtils.FileName);
+                        FileTypeLabel.Content = string.Format(FTypeFormat, "Compressed Sony ADPCM Audio " + (StaticUtils.FileName.EndsWith("INT") ? "(Stereo)" : "(Mono)"));
+                    });
+                    break;
                 case "MLB":
-                    var mlb = new FpnMlb(File.ReadAllBytes(StaticUtils.FileName));
+                    var mlbDa = new byte[ds.Length];
+                    ds.ReadExactly(mlbDa);
+                    var mlb = new FpnMlb(mlbDa);
+                    StaticUtils.LiveLoadStatus = "Generating menu...";
+                    _menu.Clear();
+                    var menuIndex = 0;
+                    Dispatcher.UIThread.Post(() => LoadProgress.IsIndeterminate = false);
+                    Dispatcher.UIThread.Post(() => LoadProgress.Maximum = mlb.Sections.Count);
+                    foreach (var sect in mlb.Sections)
+                    {
+                        try
+                        {
+                            _menu.AddRange(from ima in sect.Value
+                                let p =
+                                    Path.Combine(Path.GetDirectoryName(StaticUtils.FileName) ?? string.Empty,
+                                        ima.Texture.Split('\\')[^1])
+                                let bmp = new BitmapTools { Image = new Tim2(File.ReadAllBytes(p)), }.ToBitmap()
+                                select new MenuElementViewModel
+                                    { Layer = sect.Key, MenuElement = ima, ImageSource = bmp });
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("ERROR: " + ex.Message);
+                        }
+
+                        Dispatcher.UIThread.Post(() => LoadProgress.Value = ++menuIndex);
+                    }
+                    Dispatcher.UIThread.Post(() => LoadProgress.IsIndeterminate = true);
+                    StaticUtils.LiveLoadStatus = "Please wait...";
+                    
+
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        MenuMockupTab.IsVisible = true;
+                        MenuMockup.MenuElementSource = new ObservableCollection<MenuElementViewModel>(_menu);
+                    });
                     LoadAsString(mlb, "Menu layout file");
                     break;
                 case "LP4":
-                    var lp4 = new Lp4(File.ReadAllBytes(StaticUtils.FileName));
+                    var lp4Da =  new byte[ds.Length];
+                    ds.ReadExactly(lp4Da);
+                    var lp4 = new Lp4(lp4Da);
                     LoadAsString(lp4, "Flipnic resource file");
                     Dispatcher.UIThread.Post(() => ModelTab.IsVisible = true);
                     break;
+                case "IPU":
+                    var ipu = Ipu.GetInfoAsString(ds);
+                    LoadAsString(ipu, "IPU video stream");
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        ConvertTab.IsVisible = true;
+                        ConvertMovButton.IsVisible = true;
+                        ConvertMovAacButton.IsVisible = false;
+                        DemuxButton.IsVisible = false;
+                    });
+                    break;
                 case "LAY":
-                    var lay = new FpnLay(File.ReadAllBytes(StaticUtils.FileName));
+                    var da = new byte[ds.Length];
+                    ds.ReadExactly(da);
+                    var lay = new FpnLay(da);
                     LoadAsString(lay, "Stage layout file");
                     break;
                 case "MSG":
-                    var msg = new FpnMsg(StaticUtils.FileName);
+                    var msg = new FpnMsg(ds);
                     LoadAsString(msg, "Message table");
                     break;
                 case "FPC":
-                    var fpc = new FpnFpc(StaticUtils.FileName);
+                    var fpc = new FpnFpc(ds);
                     LoadAsString(fpc, "Camera sequence");
                     break;
                 case "SST":
@@ -219,6 +292,9 @@ public partial class MainWindow : SukiWindow
                         ConvertTab.IsVisible = true;
                         InfoTab.IsVisible = true;
                         FileTypeLabel.Content = string.Format(FTypeFormat, "Interleaved video/audio streams");
+                        ConvertMovButton.IsVisible = false;
+                        ConvertMovAacButton.IsVisible = true;
+                        DemuxButton.IsVisible = true;
                     });
                     break;
                 default:
@@ -258,6 +334,25 @@ public partial class MainWindow : SukiWindow
                 Thread.Sleep(100);
             }
         }).Start();
+    }
+
+    private void Play()
+    {
+        var outPath = Path.GetTempPath() + "/temp.wav";
+        StaticUtils.ConvertAudio(outPath,  StaticUtils.FileName.EndsWith("VAG"));
+        var player = new NetCoreAudio.Player();
+        PlayButton.IsEnabled = false;
+        player.Play(outPath);
+        PlaybackStateLabel.Content = "Now playing";
+        player.PlaybackFinished += (_, _) =>
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                PlaybackStateLabel.Content = "Stopped";
+                PlayButton.IsEnabled = true;
+            });
+            File.Delete(outPath);
+        };
     }
     
     private void GimmickCombobox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -306,9 +401,6 @@ public partial class MainWindow : SukiWindow
         p.StartInfo.Arguments = "ffmpeg";
         p.Start();
         DetectFromOutput(p, FFmpegBox , "FFmpeg");
-        p.StartInfo.Arguments = "magick";
-        p.Start();
-        DetectFromOutput(p, null, "ImageMagick");
     }
 
     private void DetectFromOutput(Process p, TextBox? textBox, string friendlyName)
@@ -504,6 +596,7 @@ public partial class MainWindow : SukiWindow
         var exist2 = new DirectoryInfo(FileBox?.Text ?? "/no.where").Exists;
         DemuxButton.IsEnabled = exist2;
         ConvertMovAacButton.IsEnabled = exist && exist2;
+        ConvertMovButton.IsEnabled = exist && exist2;
     }
 
     private async void BrowseButtonFfmpeg_OnClick(object? sender, RoutedEventArgs e)
@@ -652,14 +745,14 @@ public partial class MainWindow : SukiWindow
         Close();
     }
 
-    private void AboutClick(object? sender, RoutedEventArgs e)
+    public void AboutClick(object? sender, RoutedEventArgs? e)
     {
         ShowDialog("Flipnic file tools",
-            $"Created by Markus Maal\n\nPowered by Avalonia UI using the SukiUI theme\nFlipnicLib version: {StaticUtils.DotFloatString(StaticUtils.LibVersion)}",
+            Program.AboutText,
             NotificationType.Information);
     }
 
-    public static void ShowDialog(string title, string content, NotificationType type)
+    public void ShowDialog(string title, string content, NotificationType type)
     {
         DialogManager.CreateDialog()
             .WithTitle(title)
@@ -682,5 +775,65 @@ public partial class MainWindow : SukiWindow
         
         ((Bitmap?)PreviewImage.Source)?.Save(Uri.UnescapeDataString(file.Path.AbsolutePath));
         ShowDialog("Flipnic file tools", "File saved successfully!", NotificationType.Success);
+    }
+
+    private void ToggleDarkNative(object? sender, EventArgs e)
+    {
+        PalMenuItem_OnClick(sender, null);
+    }
+
+    private void NativeAboutClick(object? sender, EventArgs e)
+    {
+        AboutClick(sender, null);
+    }
+
+    private void PlayButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        Play();
+    }
+
+    private async void SaveSoundAsButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = GetTopLevel(this);
+        var file = await topLevel!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions()
+        {
+            Title = "Save file",
+            FileTypeChoices = [Filters.WavFile]
+        });
+
+        if (file is null) return;
+        var outPath = Uri.UnescapeDataString(file.Path.AbsolutePath);
+        StaticUtils.ConvertAudio(outPath, StaticUtils.FileName.EndsWith("VAG"));
+        ShowDialog("Flipnic file tools", "File saved successfully!", NotificationType.Success);
+    }
+
+    private void ConvertMovButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        DockPanel1.IsVisible = false;
+        Loader.IsVisible = true;
+        var outPut = (FileBox.Text ?? "") + new FileInfo(StaticUtils.FileName).Name + ".MOV";
+        var ffMpegPath = FFmpegBox.Text ?? "";
+        var originalFileName = StaticUtils.FileName;
+        new Thread(() =>
+        {
+            StaticUtils.LiveLoadStatus = "Converting IPU to MOV";
+            Ipu.IpuConvert(originalFileName, outPut, ffMpegPath);
+            Dispatcher.UIThread.Post(() =>
+            {
+                DockPanel1.IsVisible = true;
+                Loader.IsVisible = false;
+                StaticUtils.FileName = originalFileName;
+            });
+        }).Start();
+        new Thread(() =>
+        {
+            Thread.Sleep(100);
+            while (true)
+            {
+                if (StaticUtils.LiveLoadStatus == "") break;
+                Dispatcher.UIThread.Post(() => LoadStatus.Text = StaticUtils.LiveLoadStatus);
+                Thread.Sleep(100);
+            }
+        }).Start();
     }
 }

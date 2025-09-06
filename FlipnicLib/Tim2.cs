@@ -150,7 +150,7 @@ public class Tim2
         builder.Save(output);
         if (output is not FileStream fs)
         {
-            Console.WriteLine($"\rStream written to memory");
+            Console.WriteLine($"\rLoaded image data to memory ({StaticUtils.GetFilesizeString(output.Length)})");
             return;
         }
         Console.WriteLine($"\rSaved as: {fs.Name}");
@@ -180,7 +180,7 @@ public class Tim2
         output.Write(imageData.ToArray(), 0, imageData.Count);
         if (output is not FileStream fs)
         {
-            Console.WriteLine($"\rStream written to memory");
+            Console.WriteLine($"\rLoaded image data to ({StaticUtils.GetFilesizeString(output.Length)})");
             return;
         }
 

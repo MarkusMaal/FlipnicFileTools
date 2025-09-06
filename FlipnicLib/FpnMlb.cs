@@ -41,7 +41,9 @@ public class FpnMlb
 
     public struct MenuElement(byte[] data)
     {
-        public string Texture { get; set; } = StaticUtils.GetString(data.Take(0x20).ToArray());
+        public string Texture { get; set; } = StaticUtils.GetString(data.Take(0x30).ToArray());
+
+        public bool BgItem { get; set; } = data[0x51] > 0;
 
         public int PosX { get; set; } = StaticUtils.GetInt32(data, 0x40);
         public int PosY { get; set; } =  StaticUtils.GetInt32(data, 0x44);
@@ -52,7 +54,5 @@ public class FpnMlb
         public int Dipth { get; set; } = StaticUtils.GetInt32(data, 0x54);
         public int Blend { get; set; } = StaticUtils.GetInt32(data, 0x58);
         public int Index { get; set; } = StaticUtils.GetInt32(data, 0x5C);
-
-        public bool BgItem { get; set; } = data[0x51] > 0;
     }
 }
