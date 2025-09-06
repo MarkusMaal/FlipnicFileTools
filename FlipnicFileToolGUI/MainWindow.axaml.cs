@@ -5,19 +5,22 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
-using Avalonia.Styling;
 using Avalonia.Threading;
+using FlipnicFileTool;
 using FlipnicLib;
+using FlipnicLib.Jam;
+using FlipnicLib.Midi;
 using FlipnicLib.Types;
 using SukiUI;
 using SukiUI.Controls;
-using SukiUI.Models;
+using SukiUI.Dialogs;
+using Syroot.BinaryData;
 
 namespace FlipnicFileToolGUI;
 
@@ -30,13 +33,31 @@ public partial class MainWindow : SukiWindow
     private static int Progress { get; set; }
     private static int ProgressMax { get; set; }
     
+    private const string FTypeFormat = "Type: {0}";
+    
+    public static ISukiDialogManager DialogManager = new SukiDialogManager();
+    
     public MainWindow()
     {
         InitializeComponent();
         DataContext = this;
         ApplyCustomTheme();
+        DialogHost.Manager = DialogManager;
+        DragDrop.SetAllowDrop(this, true);
+        AddHandler(DragDrop.DragOverEvent, DragOver);
+        AddHandler(DragDrop.DropEvent, WindowDropped);
     }
 
+    private static void DragOver(object? sender, DragEventArgs e)
+    {
+        e.DragEffects &= (DragDropEffects.Copy | DragDropEffects.Link);
+
+        if (!e.Data.Contains(DataFormats.Files))
+        {
+            e.DragEffects = DragDropEffects.None;
+        }
+    }
+    
     private void ApplyCustomTheme()
     {
         SukiTheme.GetInstance().ChangeColorTheme(App.AppTheme);
@@ -56,11 +77,12 @@ public partial class MainWindow : SukiWindow
     private async void OpenFile()
     {
         var topLevel = GetTopLevel(this);
-        var files = await topLevel!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions()
+        var files = await topLevel!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = "Open file",
             AllowMultiple = false,
-            FileTypeFilter = [Filters.BinFile, Filters.FpnFpc, Filters.FpnSst, Filters.FpnLp4, Filters.FpnMlb, Filters.SonyPss, Filters.SonyTim2]
+            FileTypeFilter = [Filters.AllSupported, Filters.BinFile, Filters.FpnFpc, Filters.FpnSst, Filters.FpnLp4, Filters.FpnMlb,
+                Filters.SonyPss, Filters.SonyTim2, Filters.MidiFile, Filters.HdFile, Filters.VsdFile]
         });
 
         if (files.Count <= 0) return;
@@ -71,17 +93,27 @@ public partial class MainWindow : SukiWindow
 
     private void WindowDropped(object? sender, DragEventArgs e)
     {
-        if (e.Data.GetFiles()?.First() != null)
+        if (!e.Data.Contains(DataFormats.Files)) return;
+        if (e.Data.GetFiles()?.First() == null) return;
+        var fullPath = Uri.UnescapeDataString(e.Data.GetFiles()!.First().Path.AbsolutePath);
+        StaticUtils.FileName = fullPath;
+        LoadFromData(new FileStream(fullPath, FileMode.Open, FileAccess.Read), fullPath[^3..]);
+        Title = "Flipnic file tool - " + new FileInfo(fullPath).Name;
+    }
+
+    private void LoadAsString(object? sender, string type)
+    {
+        Dispatcher.UIThread.Post(() =>
         {
-            var fullPath = Uri.UnescapeDataString(e.Data.GetFiles()!.First().Path.AbsolutePath);
-            StaticUtils.FileName = fullPath;
-            LoadFromData(new FileStream(fullPath, FileMode.Open, FileAccess.Read), fullPath[^3..]);
-            Title = "Flipnic file tool - " + new FileInfo(fullPath).Name;
-        }
+            InfoBox.Text = sender?.ToString() ?? "";
+            InfoTab.IsVisible = true;
+            FileTypeLabel.Content = string.Format(FTypeFormat, type);
+        });
     }
 
     private void LoadFromData(Stream ds, string ext)
     {
+        FileTypeLabel.Content = "Please wait...";
         foreach (var t in MainTabControl.Items)
         {
             ((SukiSideMenuItem)t!)!.IsVisible = false;
@@ -89,6 +121,7 @@ public partial class MainWindow : SukiWindow
 
         DockPanel1.IsVisible = false;
         Loader.IsVisible = true;
+        
         new Thread(() =>
         {
             switch (ext)
@@ -99,19 +132,52 @@ public partial class MainWindow : SukiWindow
                     ds.Position = 0;
                     var img = new Tim2(data);
                     var bt = new BitmapTools { Image = img };
+                    LoadAsString(img, "PlayStation 2 texture file");
                     Dispatcher.UIThread.Post(() =>
                     {
-                        InfoTab.IsVisible = true;
                         ImagePreviewTab.IsVisible = true;
                         PreviewImage.Source = bt.ToBitmap();
-                        InfoBox.Text = img.ToString();
                     });
+                    break;
+                case "MID":
+                    var midi = new Midi();
+                    midi.Read(StaticUtils.FileName);
+                    LoadAsString(midi, "General MIDI");
+                    break;
+                case ".HD":
+                    var jh = new JamHeader();
+                    jh.Read(new BinaryStream(new FileStream(StaticUtils.FileName, FileMode.Open, FileAccess.Read)));
+                    LoadAsString(jh, "JAM header");
+                    break;
+                case "VSD":
+                    var vsd = new FpnVsd(File.OpenRead(StaticUtils.FileName));
+                    LoadAsString(vsd, "Vibration Strength Data");
+                    break;
+                case "MLB":
+                    var mlb = new FpnMlb(File.ReadAllBytes(StaticUtils.FileName));
+                    LoadAsString(mlb, "Menu layout file");
+                    break;
+                case "LP4":
+                    var lp4 = new Lp4(File.ReadAllBytes(StaticUtils.FileName));
+                    LoadAsString(lp4, "Flipnic resource file");
+                    Dispatcher.UIThread.Post(() => ModelTab.IsVisible = true);
+                    break;
+                case "LAY":
+                    var lay = new FpnLay(File.ReadAllBytes(StaticUtils.FileName));
+                    LoadAsString(lay, "Stage layout file");
+                    break;
+                case "MSG":
+                    var msg = new FpnMsg(StaticUtils.FileName);
+                    LoadAsString(msg, "Message table");
+                    break;
+                case "FPC":
+                    var fpc = new FpnFpc(StaticUtils.FileName);
+                    LoadAsString(fpc, "Camera sequence");
                     break;
                 case "SST":
                     var sst = new FpnSst(ds);
                     Dispatcher.UIThread.Post(() =>
                     {
-                        InfoTab.IsVisible = true;
                         InfoBox.Text = $"Entries\n{sst.ListEntries()}\n\nResources\n{sst.GenerateMagicNumbers()}";
                         Gimmicks = sst.GetGimmicks();
                         StageGimmickTab.IsVisible = Gimmicks?.Count > 0;
@@ -120,13 +186,21 @@ public partial class MainWindow : SukiWindow
                         {
                             GimmickCombobox.Items.Add(key);
                         }
+                        PseudoCodeTab.IsVisible = sst.TableOfContents.ContainsKey("EVENT");
+                        if (PseudoCodeTab.IsVisible)
+                        {
+                            EventBox.Text = sst.GeneratePseudoCode();
+                        }
 
                         GimmickCombobox.SelectedIndex = 0;
+                        InfoTab.IsVisible = true;
+                        FileTypeLabel.Content = string.Format(FTypeFormat, "Stage information file");
                     });
                     break;
                 case "BIN":
                     BinFile.FsEntries.Clear();
                     BinFile.ListBin(ds);
+                    
                     var fsEntries = BinFile.FsEntries.ToList();
                     Dispatcher.UIThread.Post(() =>
                     {
@@ -134,19 +208,26 @@ public partial class MainWindow : SukiWindow
                         FileListTab.IsVisible = true;
                         DataContext = this;
                         FilesGrid.ItemsSource = VirtualFiles;
+                        FileTypeLabel.Content = string.Format(FTypeFormat, "Blob file");
                     });
                     break;
                 case "PSS":
                     var pssInfo = Pss.ListPss(ds);
                     Dispatcher.UIThread.Post(() =>
                     {
-                        InfoTab.IsVisible = true;
                         InfoBox.Text = pssInfo;
                         ConvertTab.IsVisible = true;
+                        InfoTab.IsVisible = true;
+                        FileTypeLabel.Content = string.Format(FTypeFormat, "Interleaved video/audio streams");
                     });
                     break;
                 default:
-                    Dispatcher.UIThread.Post(() => InfoBox.Text = "Unrecognized file type");
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        InfoBox.Text = "Unrecognized file type";
+                        FileTypeLabel.Content = string.Format(FTypeFormat, "Unknown");
+                        InfoTab.IsVisible = true;
+                    });
                     break;
             }
             ds.Close();
@@ -156,8 +237,17 @@ public partial class MainWindow : SukiWindow
             {
                 DockPanel1.IsVisible = true;
                 Loader.IsVisible = false;
+                // switch to first visible tab
+                MainTabControl.UnselectAll();
+                foreach (SukiSideMenuItem? sSmi in MainTabControl.Items)
+                {
+                    if (sSmi is not { IsVisible: true }) continue;
+                    sSmi.IsSelected = true;
+                    break;
+                }
             });
         }).Start();
+        // display loading screen if applicable
         new Thread(() =>
         {
             Thread.Sleep(100);
@@ -560,5 +650,37 @@ public partial class MainWindow : SukiWindow
     private void CloseMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
         Close();
+    }
+
+    private void AboutClick(object? sender, RoutedEventArgs e)
+    {
+        ShowDialog("Flipnic file tools",
+            $"Created by Markus Maal\n\nPowered by Avalonia UI using the SukiUI theme\nFlipnicLib version: {StaticUtils.DotFloatString(StaticUtils.LibVersion)}",
+            NotificationType.Information);
+    }
+
+    public static void ShowDialog(string title, string content, NotificationType type)
+    {
+        DialogManager.CreateDialog()
+            .WithTitle(title)
+            .WithContent(content)
+            .WithActionButton("OK", _ => {}, true)
+            .OfType(type)
+            .TryShow();
+    }
+
+    private async void SaveImgAsBtn_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = GetTopLevel(this);
+        var file = await topLevel!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions()
+        {
+            Title = "Save file",
+            FileTypeChoices = [Filters.PngFile]
+        });
+
+        if (file is null) return;
+        
+        ((Bitmap?)PreviewImage.Source)?.Save(Uri.UnescapeDataString(file.Path.AbsolutePath));
+        ShowDialog("Flipnic file tools", "File saved successfully!", NotificationType.Success);
     }
 }

@@ -35,6 +35,7 @@ internal static class Program
         ShowMidi,
         ConvertSf2,
         ShowVsd,
+        ShowFpd,
         ShowLay,
         ShowPseudoCode
     }
@@ -89,6 +90,7 @@ internal static class Program
                 "--convert-sf2" => Modes.ConvertSf2,
                 "--show-lay" => Modes.ShowLay,
                 "--get-pseudo-code" => Modes.ShowPseudoCode,
+                "--show-fpd" => Modes.ShowFpd,
                 _ => mode
             };
             switch (arg)

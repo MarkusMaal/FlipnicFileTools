@@ -61,23 +61,23 @@ public class Event(byte[] data)
     /// <summary>
     /// May call a function
     /// </summary>
-    public string Label { get; set; } = StaticUtils.GetString(data.Skip(4).Take(0x1C).ToArray());
+    private string Label { get; set; } = StaticUtils.GetString(data.Skip(4).Take(0x1C).ToArray());
 
     /// <summary>
     /// Defines event type
     /// </summary>
-    public int EventMagic { get; set; } = StaticUtils.GetInt32(data, 0);
+    private int EventMagic { get; set; } = StaticUtils.GetInt32(data, 0);
 
     /// <summary>
     /// Arguments for specific function if Label is not empty
     /// </summary>
-    public int[] FuncArgs { get; set; } = [StaticUtils.GetInt32(data, 0x20), StaticUtils.GetInt32(data, 0x24),
+    private int[] FuncArgs { get; set; } = [StaticUtils.GetInt32(data, 0x20), StaticUtils.GetInt32(data, 0x24),
         StaticUtils.GetInt32(data, 0x28), StaticUtils.GetInt32(data, 0x2C)];
 
     /// <summary>
     /// Arguments for the event (if event magic is not 0)
     /// </summary>
-    public int[] EventArgs { get; set; } =
+    private int[] EventArgs { get; set; } =
     [
         StaticUtils.GetInt32(data, 0x30), StaticUtils.GetInt32(data, 0x34),
         StaticUtils.GetInt32(data, 0x38), StaticUtils.GetInt32(data, 0x3C)

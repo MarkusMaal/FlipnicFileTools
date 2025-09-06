@@ -2,20 +2,23 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:vm="clr-namespace:FlipnicFileToolGUI"
+             mc:Ignorable="d" d:DesignWidth="256" d:DesignHeight="256"
              DataContext="{Binding RelativeSource={RelativeSource Self}}"
              x:Class="FlipnicFileToolGUI.CircleDot">
-    <Grid>
-        <Ellipse Opacity="0.75">
-            <Ellipse.Fill>
-                <LinearGradientBrush>
-                    <LinearGradientBrush.GradientStops>
-                        <GradientStop Color="{Binding ColorA}" Offset="0"></GradientStop>
-                        <GradientStop Color="{Binding ColorB}" Offset="1"></GradientStop>
-                    </LinearGradientBrush.GradientStops>
-                </LinearGradientBrush>
-            </Ellipse.Fill>
-        </Ellipse>
-        <TextBlock Text="{Binding Text}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-    </Grid>
+    <Viewbox>
+        <Grid Width="24" Height="24">
+            <Ellipse Opacity="0.75">
+                <Ellipse.Fill>
+                    <LinearGradientBrush>
+                        <LinearGradientBrush.GradientStops>
+                            <GradientStop Color="{Binding ColorA}" Offset="0"></GradientStop>
+                            <GradientStop Color="{Binding ColorB}" Offset="1"></GradientStop>
+                        </LinearGradientBrush.GradientStops>
+                    </LinearGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            <TextBlock FontSize="15" Text="{Binding Text}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
+        </Grid>
+    </Viewbox>
 </UserControl>

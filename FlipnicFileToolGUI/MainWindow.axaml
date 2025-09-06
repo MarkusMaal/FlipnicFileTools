@@ -5,10 +5,15 @@
         xmlns:vm="clr-namespace:FlipnicFileToolGUI"
         mc:Ignorable="d" Width="700" Height="500"
         xmlns:sukiUi="clr-namespace:SukiUI.Controls;assembly=SukiUI"
-        x:DataType="vm:MainWindow" DragDrop.AllowDrop="True"
-        x:Class="FlipnicFileToolGUI.MainWindow"
-        Title="Flipnic file tool" Loaded="Window_Loaded"
-        DragDrop.Drop="WindowDropped">
+        x:DataType="vm:MainWindow" x:Class="FlipnicFileToolGUI.MainWindow"
+        Title="Flipnic file tool" Loaded="Window_Loaded" BackgroundStyle="Bubble"
+        IsMenuVisible="{OnPlatform True, macOS=False}">
+    <sukiUi:SukiWindow.RightWindowTitleBarControls>
+        <Label Name="FileTypeLabel" Content="Ready"></Label>
+    </sukiUi:SukiWindow.RightWindowTitleBarControls>
+    <sukiUi:SukiWindow.Hosts>
+        <sukiUi:SukiDialogHost Name="DialogHost"/>
+    </sukiUi:SukiWindow.Hosts>
     <NativeMenu.Menu>
         <NativeMenu>
             <NativeMenuItem Header="File" IsVisible="true">
@@ -20,82 +25,104 @@
             </NativeMenuItem>
         </NativeMenu>
     </NativeMenu.Menu>
+    <sukiUi:SukiWindow.MenuItems>
+        <MenuItem Header="File">
+            <MenuItem Header="New Window" Name="NewWindowMenuItem" Click="NewWindowMenuItem_OnClick"></MenuItem>
+            <MenuItem Header="Open" Name="OpenMenuItem" Click="OpenMenuItem_OnClick"></MenuItem>
+            <Separator/>
+            <MenuItem Header="Close window" Name="CloseMenuItem" Click="CloseMenuItem_OnClick"></MenuItem>
+            <MenuItem Header="Exit" Name="ExitMenuItem" Click="ExitMenuItem_OnClick"></MenuItem>
+        </MenuItem>
+        <MenuItem Header="Options">
+            <MenuItem Header="Toggle dark theme" Click="PalMenuItem_OnClick"></MenuItem>
+        </MenuItem>
+        <MenuItem Header="About" Click="AboutClick">
+            
+        </MenuItem>
+    </sukiUi:SukiWindow.MenuItems>
     <Grid>
-        <DockPanel Name="DockPanel1">
-            <Menu DockPanel.Dock="Top" IsVisible="{OnPlatform True, macOS=False}">
-                <MenuItem Header="File">
-                    <MenuItem Header="New Window" Name="NewWindowMenuItem" Click="NewWindowMenuItem_OnClick"></MenuItem>
-                    <MenuItem Header="Open" Name="OpenMenuItem" Click="OpenMenuItem_OnClick"></MenuItem>
-                    <Separator/>
-                    <MenuItem Header="Close window" Name="CloseMenuItem" Click="CloseMenuItem_OnClick"></MenuItem>
-                    <MenuItem Header="Exit" Name="ExitMenuItem" Click="ExitMenuItem_OnClick"></MenuItem>
-                </MenuItem>
-                <MenuItem Header="Options">
-                    <MenuItem Header="Toggle dark theme" Click="PalMenuItem_OnClick"></MenuItem>
-                </MenuItem>
-            </Menu>
-            <Grid DockPanel.Dock="Bottom">
-                    <sukiUi:SukiSideMenu IsSearchEnabled="False" IsMenuExpanded="False" Name="MainTabControl">
-                        <sukiUi:SukiSideMenu.Items>
-                            <sukiUi:SukiSideMenuItem Name="InfoTab" Header="Info" IsVisible="False">
-                                <sukiUi:SukiSideMenuItem.Icon>
-                                    <vm:CircleDot ColorA="DeepSkyBlue" ColorB="DarkBlue" Text="i"></vm:CircleDot>
-                                </sukiUi:SukiSideMenuItem.Icon>
-                                <sukiUi:SukiSideMenuItem.PageContent>
-                                    <vm:CLIBox Name="InfoBox" />
-                                </sukiUi:SukiSideMenuItem.PageContent>
-                            </sukiUi:SukiSideMenuItem>
-                            <sukiUi:SukiSideMenuItem Name="ImagePreviewTab" Header="Preview" IsVisible="False">
-                                <sukiUi:SukiSideMenuItem.Icon>
-                                    <vm:CircleDot ColorA="Violet" ColorB="MidnightBlue" Text="🖼️"></vm:CircleDot>
-                                </sukiUi:SukiSideMenuItem.Icon>
-                                <sukiUi:SukiSideMenuItem.PageContent>
+        <Grid Name="DockPanel1">
+                <sukiUi:SukiSideMenu IsSearchEnabled="False" IsMenuExpanded="False" Name="MainTabControl" SelectionMode="AlwaysSelected">
+                    <sukiUi:SukiSideMenu.Items>
+                        <sukiUi:SukiSideMenuItem Name="InfoTab" Header="Info">
+                            <sukiUi:SukiSideMenuItem.Icon>
+                                <vm:CircleDot ColorA="DeepSkyBlue" ColorB="DarkBlue" Text="i"></vm:CircleDot>
+                            </sukiUi:SukiSideMenuItem.Icon>
+                            <sukiUi:SukiSideMenuItem.PageContent>
+                                <vm:CLIBox Name="InfoBox" />
+                            </sukiUi:SukiSideMenuItem.PageContent>
+                        </sukiUi:SukiSideMenuItem>
+                        <sukiUi:SukiSideMenuItem Name="ModelTab" Header="Models" IsVisible="False">
+                            <sukiUi:SukiSideMenuItem.Icon>
+                                <vm:CircleDot ColorA="Orange" ColorB="Brown" Text="⬡"></vm:CircleDot>
+                            </sukiUi:SukiSideMenuItem.Icon>
+                            <sukiUi:SukiSideMenuItem.PageContent>
+                                <Grid></Grid>
+                            </sukiUi:SukiSideMenuItem.PageContent>
+                        </sukiUi:SukiSideMenuItem>
+                        <sukiUi:SukiSideMenuItem Name="ImagePreviewTab" Header="Preview" IsVisible="False">
+                            <sukiUi:SukiSideMenuItem.Icon>
+                                <vm:CircleDot ColorA="Violet" ColorB="MidnightBlue" Text="🖼️"></vm:CircleDot>
+                            </sukiUi:SukiSideMenuItem.Icon>
+                            <sukiUi:SukiSideMenuItem.PageContent>
+                                <Grid RowDefinitions="*,Auto">
                                     <Image Name="PreviewImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" RenderOptions.BitmapInterpolationMode="None"></Image>
-                                </sukiUi:SukiSideMenuItem.PageContent>
-                            </sukiUi:SukiSideMenuItem>
-                            <sukiUi:SukiSideMenuItem Name="StageGimmickTab" Header="Gimmicks" IsVisible="False">
-                                <sukiUi:SukiSideMenuItem.Icon>
-                                    <vm:CircleDot ColorA="Gray" ColorB="Black" Text="⚙️"></vm:CircleDot>
-                                </sukiUi:SukiSideMenuItem.Icon>
-                                <sukiUi:SukiSideMenuItem.PageContent>
-                                    <Grid RowDefinitions="30,*">
-                                        <ComboBox Grid.Row="0" Name="GimmickCombobox" SelectionChanged="GimmickCombobox_OnSelectionChanged"></ComboBox>                                        
-                                        <vm:CLIBox Grid.Row="1" Name="GimmickBox" />
-                                    </Grid>
-                                </sukiUi:SukiSideMenuItem.PageContent>
-                            </sukiUi:SukiSideMenuItem>
-                            <sukiUi:SukiSideMenuItem Name="FileListTab" Header="Files" IsVisible="False">
-                                <sukiUi:SukiSideMenuItem.Icon>
-                                    <vm:CircleDot ColorA="Lime" ColorB="DarkSlateGray" Text="📁"></vm:CircleDot>
-                                </sukiUi:SukiSideMenuItem.Icon>
-                                <sukiUi:SukiSideMenuItem.PageContent>
-                                    <Grid RowDefinitions="*,Auto">
-                                        <DataGrid Grid.Row="0" Margin="0,0,0,10" GridLinesVisibility="All" ItemsSource="{Binding VirtualFiles}"
-                                                  BorderThickness="1" BorderBrush="Gray" Name="FilesGrid"
-                                                  CanUserResizeColumns="True"
-                                                  CanUserReorderColumns="True"
-                                                  CanUserSortColumns="True"
-                                                  IsReadOnly="True"
-                                                  SelectionChanged="DataGrid_OnSelectionChanged">
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header="Path" Binding="{Binding Path}"></DataGridTextColumn>
-                                                <DataGridTextColumn Header="Offset" Binding="{Binding OffsetX}"></DataGridTextColumn>
-                                                <DataGridTextColumn Header="Size" Binding="{Binding LengthX}"></DataGridTextColumn>
-                                            </DataGrid.Columns>
-                                        </DataGrid>
-                                        <StackPanel Name="FileActionButtons" Orientation="Horizontal" Grid.Row="1" Spacing="8" Margin="0,0,0,10">
-                                            <Button Name="OpenButton" IsEnabled="False" Click="OpenButton_OnClick">Open</Button>
-                                            <Button Name="ExtractButton" IsEnabled="False" Click="ExtractButton_OnClick">Extract</Button>
-                                            <Button Name="ExtractAllButton" Click="ExtractAllButton_OnClick">Extract all</Button>
-                                        </StackPanel>
-                                    </Grid>
-                                </sukiUi:SukiSideMenuItem.PageContent>
-                            </sukiUi:SukiSideMenuItem>
-                            <sukiUi:SukiSideMenuItem Name="ConvertTab" Header="Convert" IsVisible="False">
-                                <sukiUi:SukiSideMenuItem.Icon>
-                                    <vm:CircleDot ColorA="Yellow" ColorB="OrangeRed" Text="⋗"></vm:CircleDot>
-                                </sukiUi:SukiSideMenuItem.Icon>
-                                <sukiUi:SukiSideMenuItem.PageContent>
+                                    <Button Name="SaveImgAsBtn" Grid.Row="1" Margin="10" Content="Save as.." Click="SaveImgAsBtn_OnClick" />
+                                </Grid>
+                            </sukiUi:SukiSideMenuItem.PageContent>
+                        </sukiUi:SukiSideMenuItem>
+                        <sukiUi:SukiSideMenuItem Name="PseudoCodeTab" Header="Event script" IsVisible="False">
+                            <sukiUi:SukiSideMenuItem.Icon>
+                                <vm:CircleDot ColorA="Red" ColorB="#210" Text="⌘"></vm:CircleDot>
+                            </sukiUi:SukiSideMenuItem.Icon>
+                            <sukiUi:SukiSideMenuItem.PageContent>
+                                <vm:CLIBox Name="EventBox" />
+                            </sukiUi:SukiSideMenuItem.PageContent>
+                        </sukiUi:SukiSideMenuItem>
+                        <sukiUi:SukiSideMenuItem Name="StageGimmickTab" Header="Gimmicks" IsVisible="False">
+                            <sukiUi:SukiSideMenuItem.Icon>
+                                <vm:CircleDot ColorA="Gray" ColorB="Black" Text="⚙️"></vm:CircleDot>
+                            </sukiUi:SukiSideMenuItem.Icon>
+                            <sukiUi:SukiSideMenuItem.PageContent>
+                                <Grid RowDefinitions="30,*">
+                                    <ComboBox Grid.Row="0" Name="GimmickCombobox" SelectionChanged="GimmickCombobox_OnSelectionChanged"></ComboBox>                                        
+                                    <vm:CLIBox Grid.Row="1" Name="GimmickBox" />
+                                </Grid>
+                            </sukiUi:SukiSideMenuItem.PageContent>
+                        </sukiUi:SukiSideMenuItem>
+                        <sukiUi:SukiSideMenuItem Name="FileListTab" Header="Files" IsVisible="False">
+                            <sukiUi:SukiSideMenuItem.Icon>
+                                <vm:CircleDot ColorA="Lime" ColorB="DarkSlateGray" Text="📁"></vm:CircleDot>
+                            </sukiUi:SukiSideMenuItem.Icon>
+                            <sukiUi:SukiSideMenuItem.PageContent>
+                                <Grid RowDefinitions="*,Auto">
+                                    <DataGrid Grid.Row="0" Margin="0,0,0,10" GridLinesVisibility="All" ItemsSource="{Binding VirtualFiles}"
+                                              BorderThickness="1" BorderBrush="Gray" Name="FilesGrid"
+                                              CanUserResizeColumns="True"
+                                              CanUserReorderColumns="True"
+                                              CanUserSortColumns="True"
+                                              IsReadOnly="True"
+                                              SelectionChanged="DataGrid_OnSelectionChanged">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Path" Binding="{Binding Path}"></DataGridTextColumn>
+                                            <DataGridTextColumn Header="Offset" Binding="{Binding OffsetX}"></DataGridTextColumn>
+                                            <DataGridTextColumn Header="Size" Binding="{Binding LengthX}"></DataGridTextColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                    <StackPanel Name="FileActionButtons" Orientation="Horizontal" Grid.Row="1" Spacing="8" Margin="0,0,0,10">
+                                        <Button Name="OpenButton" IsEnabled="False" Click="OpenButton_OnClick">Open</Button>
+                                        <Button Name="ExtractButton" IsEnabled="False" Click="ExtractButton_OnClick">Extract</Button>
+                                        <Button Name="ExtractAllButton" Click="ExtractAllButton_OnClick">Extract all</Button>
+                                    </StackPanel>
+                                </Grid>
+                            </sukiUi:SukiSideMenuItem.PageContent>
+                        </sukiUi:SukiSideMenuItem>
+                        <sukiUi:SukiSideMenuItem Name="ConvertTab" Header="Convert" IsVisible="False">
+                            <sukiUi:SukiSideMenuItem.Icon>
+                                <vm:CircleDot ColorA="Yellow" ColorB="OrangeRed" Text="⋗"></vm:CircleDot>
+                            </sukiUi:SukiSideMenuItem.Icon>
+                            <sukiUi:SukiSideMenuItem.PageContent>
+                                <sukiUi:GlassCard VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="30,0">
                                     <StackPanel Orientation="Vertical" Spacing="20" VerticalAlignment="Center">
                                         <StackPanel Orientation="Vertical" Spacing="8">
                                             <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
@@ -117,12 +144,12 @@
                                             <Button Click="ConvertMovAacButton_OnClick" Name="ConvertMovAacButton" IsEnabled="False">Convert to .MOV/.AAC</Button>
                                         </StackPanel>
                                     </StackPanel>
-                                </sukiUi:SukiSideMenuItem.PageContent>
-                            </sukiUi:SukiSideMenuItem>
-                        </sukiUi:SukiSideMenu.Items>
-                </sukiUi:SukiSideMenu>
-            </Grid>
-        </DockPanel>
+                                </sukiUi:GlassCard>
+                            </sukiUi:SukiSideMenuItem.PageContent>
+                        </sukiUi:SukiSideMenuItem>
+                    </sukiUi:SukiSideMenu.Items>
+            </sukiUi:SukiSideMenu>
+        </Grid>
         
         <Grid Name="Loader" Margin="50" RowDefinitions="40,Auto" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="False">
             <TextBlock Grid.Row="0" FontSize="20" Name="LoadStatus" TextAlignment="Left" >Please wait...</TextBlock>

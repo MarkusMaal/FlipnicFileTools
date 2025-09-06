@@ -30,11 +30,11 @@ public partial class CircleDot : UserControl
         set => SetValue(TextProperty, value);
     }
     
-    public static readonly StyledProperty<string> TextProperty = AvaloniaProperty.Register<CircleDot, string>(nameof(Text), defaultValue: "");
+    public static readonly StyledProperty<string> TextProperty = AvaloniaProperty.Register<CircleDot, string>(nameof(Text), defaultValue: "?");
     
     public static readonly StyledProperty<Color> ColorAProperty =
-        AvaloniaProperty.Register<CircleDot, Color>(nameof(ColorA), defaultValue: Colors.Black);
+        AvaloniaProperty.Register<CircleDot, Color>(nameof(ColorA), defaultValue: Colors.MediumBlue);
     
     public static readonly StyledProperty<Color> ColorBProperty =
-        AvaloniaProperty.Register<CircleDot, Color>(nameof(ColorB), defaultValue: Colors.Black);
+        AvaloniaProperty.Register<CircleDot, Color>(nameof(ColorB), defaultValue: Color.FromRgb(0,0,50));
 }

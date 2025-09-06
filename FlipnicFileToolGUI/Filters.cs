@@ -4,6 +4,11 @@ namespace FlipnicFileToolGUI;
 
 public class Filters
 {
+    public static FilePickerFileType AllSupported { get; } = new("All supported file formats")
+    {
+        Patterns = ["*.BIN", "*.FPC", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.VSD"]
+    };
+    
     public static FilePickerFileType BinFile { get; } = new("BIN files")
     {
         Patterns = ["*.BIN"]
@@ -36,6 +41,32 @@ public class Filters
     public static FilePickerFileType SonyTim2 { get; } = new("PlayStation texture files")
     {
         Patterns = ["*.TM2"]
+    };
+    public static FilePickerFileType MidiFile { get; } = new("General MIDI")
+    {
+        Patterns = ["*.MID"]
+    };
+    public static FilePickerFileType HdFile { get; } = new("VAB soundbank headers")
+    {
+        Patterns = ["*.HD"]
+    };
+    public static FilePickerFileType VsdFile { get; } = new("Vibration strength data")
+    {
+        Patterns = ["*.VSD"]
+    };
+
+    public static FilePickerFileType TxtFile { get; } = new("Text files")
+    {
+        Patterns = ["*.TXT"],
+        MimeTypes = ["text/plain"],
+        AppleUniformTypeIdentifiers = ["public.text"]
+    };
+
+    public static FilePickerFileType PngFile { get; } = new("Portable Network Graphics")
+    {
+        Patterns = ["*.PNG"],
+        MimeTypes = ["image/png"],
+        AppleUniformTypeIdentifiers = ["public.png"]
     };
 
     public static FilePickerFileType Executable { get; } = new("Executables")
