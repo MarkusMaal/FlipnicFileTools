@@ -63,7 +63,7 @@ public class JamProgChunk
 
     public List<JamSplitChunk> SplitChunks { get; set; } = new List<JamSplitChunk>();
 
-    public void Read(BinaryStream bs)
+    public void Read(BinaryStream bs, int headerSize)
     {
         CountOrFlag = bs.Read1Byte();
         BaseVolume = bs.Read1Byte();
@@ -77,7 +77,8 @@ public class JamProgChunk
         for (var i = 0; i < cnt; i++)
         {
             var splitChunk = new JamSplitChunk();
-            splitChunk.Read(bs);
+            splitChunk.Read(bs, headerSize);
+            if (splitChunk.SampleOffset >= 0xFFFF) continue;
             SplitChunks.Add(splitChunk);
         }
     }
@@ -98,8 +99,8 @@ public class JamProgChunk
         ];
         List<string[]> rows = [];
         rows.AddRange(SplitChunks.Select(s => (string[]) [s.Volume.ToString(), s.Pan.ToString(),
-            s.NoteMin.ToString(), s.NoteMax.ToString(), s.BaseNote.ToString(), s.UnkPitch.ToString(), s.LfoTableIndex.ToString(),
-            s.Reverb.ToString(), s.SD_VA_SSA.ToString("X"), s.SD_VP_ADSR1.ToString("X"), s.SD_VP_ADSR2.ToString("X")]));
+            s.NoteMin.ToString(), s.NoteMax.ToString(), s.BaseNote.ToString(), s.FineTunePitch.ToString(), s.LfoTableIndex.ToString(),
+            s.Reverb.ToString(), s.SampleOffset.ToString("X"), s.SD_VP_ADSR1.ToString("X"), s.SD_VP_ADSR2.ToString("X")]));
         return o+StaticUtils.GenerateTable(colHeaders, rows);
     }
 }
@@ -113,7 +114,7 @@ public class JamSplitChunk
     /// <summary>
     /// Pitch correction? No idea, but very important.
     /// </summary>
-    public sbyte UnkPitch { get; set; }
+    public sbyte FineTunePitch { get; set; }
 
     /* 0x01 = ?? 
      * 0x02 = SetNoiseShiftFrequency, // SE only
@@ -136,7 +137,7 @@ public class JamSplitChunk
     /// This is sent through PDISPU2 with:
     /// <code>sceSdSetAddr(coreAndVoice | 0x2040, ADJ(voice)->SD_VA_SSA)</code>
     /// </summary>
-    public uint SD_VA_SSA { get; set; }
+    public uint SampleOffset { get; set; }
 
     /// <summary>
     /// <b>Envelope (data 1)</b><br/>
@@ -173,7 +174,7 @@ public class JamSplitChunk
     /// <summary>
     /// Unknown, pitch related? Only used if <see cref="Flags"/> has 0x10, otherwise <see cref="JamProgChunk.UnkPitchRelated_0x04"/> is used.
     /// </summary>
-    public byte UnkPitchRelated_0x0E { get; set; }
+    public byte PitchBend { get; set; }
 
     /// <summary>
     /// Lfo table index. Only used if <see cref="Flags"/> does NOT have 0x40, otherwise <see cref="JamProgChunk.LfoTableIndex"/> is used. <br />
@@ -183,22 +184,21 @@ public class JamSplitChunk
 
     public byte Reverb { get; set; }
 
-    public void Read(BinaryStream bs)
+    public void Read(BinaryStream bs, int headerSize)
     {
         NoteMin = (Note)bs.Read1Byte();
         NoteMax = (Note)bs.Read1Byte();
         BaseNote = (Note)bs.Read1Byte();
-        UnkPitch = bs.ReadSByte();
-        Flags = bs.Read1Byte();
-        SD_VA_SSA = (uint)((bs.Read1Byte() << 16) | bs.ReadUInt16()); // Game code refers to the offset to audio as Ssa
+        FineTunePitch = bs.ReadSByte();
+        SampleOffset = (uint)(bs.ReadInt16()) & 0xFFFF;
         SD_VP_ADSR1 = bs.ReadInt16();
         SD_VP_ADSR2 = bs.ReadInt16();
+        bs.Position++; // skip the Volume Override
         Volume = bs.Read1Byte();
         Pan = (byte)(bs.Read1Byte() + 0xC);
-        UnkPitchRelated_0x0E = bs.Read1Byte();
+        PitchBend = bs.Read1Byte();
         LfoTableIndex = bs.Read1Byte();
-        Reverb = bs.Read1Byte();
-        bs.Position -= 0x1;
+        Flags = bs.Read1Byte();
     }
 
     public byte[] GetData(BinaryStream bs, out uint loopStart, out uint loopEnd)

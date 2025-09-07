@@ -46,7 +46,8 @@ public abstract class Converter
             foreach (SqMessage msg in ssqt.Track.Messages)
             {
                 if (msg.Event is not SqProgramEvent progChangeEvent) continue;
-                channelToPrograms.Add((msg.Event.ProgramID, (byte)(progChangeEvent.Program)));
+                byte channel = (byte)(msg.Status & 0x0F);
+                channelToPrograms.Add((channel, progChangeEvent.Program));
                 _i++;
             }
             
@@ -55,76 +56,6 @@ public abstract class Converter
             var sf2 = new SF2();
 
             ms.Position = headerSize;
-
-            var rawSamples = new List<byte[]>();
-            var loopStarts = new List<uint>();
-            var loopEnds = new List<uint>();
-            var lengths = new List<int>();
-
-            while (ms.CanRead)
-            {
-
-                var breakAll = false;
-                for (var j = channelToPrograms.Count - 1; j >= 0; j--)
-                {
-                    if (instrument.ProgramChunks[channelToPrograms[j].Program] is null) continue;
-                    var prog = instrument.ProgramChunks[channelToPrograms[j].Program];
-                    foreach (var splitChunk in prog.SplitChunks)
-                    {
-                        if ((byte)splitChunk.NoteMin == 0xFF && (byte)splitChunk.NoteMax == 0xFF)
-                            continue;
-
-                        var bs = new BinaryStream(ms);
-                        if (bs.Position >= bodySize + headerSize)
-                        {
-                            breakAll = true;
-                            break;
-                        }
-
-                        var vag = splitChunk.GetData(bs, out var loopStart, out var loopEnd);
-                        rawSamples.Add(vag);
-                        loopStarts.Add(loopStart);
-                        loopEnds.Add(loopEnd);
-                        lengths.Add(vag.Length);
-                    }
-
-                    if (breakAll)
-                    {
-                        break;
-                    }
-                }
-
-                if (breakAll) break;
-            }
-            
-            rawSamples.Reverse();
-            loopStarts.Reverse();
-            loopEnds.Reverse();
-            lengths.Reverse();
-            try
-            {
-                var pad16 = rawSamples[18];
-                var pad17 = rawSamples[17];
-                var xylo1 = rawSamples[11];
-                var xylo2 = rawSamples[11];
-                (rawSamples[10], rawSamples[1]) = (rawSamples[1], rawSamples[10]);
-                rawSamples[1] = xylo2;
-                (rawSamples[9], rawSamples[10]) = (rawSamples[10], rawSamples[9]);
-                (rawSamples[22], rawSamples[2]) = (rawSamples[2], rawSamples[22]);
-                (rawSamples[28], rawSamples[3]) = (rawSamples[3], rawSamples[28]);
-                (rawSamples[18], rawSamples[4]) = (rawSamples[4], rawSamples[18]);
-                (rawSamples[7], rawSamples[5]) = (rawSamples[5], rawSamples[7]);
-                (rawSamples[14], rawSamples[6]) = (rawSamples[6], rawSamples[14]);
-                rawSamples[7] = xylo1;
-                (rawSamples[17], rawSamples[8]) = (rawSamples[8], rawSamples[17]);
-                (rawSamples[33], rawSamples[9]) = (rawSamples[9], rawSamples[33]);
-                rawSamples[13] = pad16;
-                rawSamples[14] = pad17;
-            }
-            catch
-            {
-                // ignored
-            }
 
             // First find all samples in the instrument file by navigating through program chunks
             var vagSamples = new Dictionary<uint, SampleInfo>();
@@ -142,28 +73,34 @@ public abstract class Converter
                         continue;
 
                     // May refer to same sample so offset
-                    if (vagSamples.ContainsKey(splitChunk.SD_VA_SSA))
+                    if (vagSamples.ContainsKey(splitChunk.SampleOffset))
                     {
                         continue;
                     }
 
-                    idx++;
-                    var sI = j;
-                    vagSamples.Add(splitChunk.SD_VA_SSA, new SampleInfo(rawSamples[channelToPrograms[sI].Program], (ushort)vagSamples.Count));
+                    // muted, so skip this one
+                    if (headerSize + splitChunk.SampleOffset * 8 > ms.Length) continue;
+
+
+                    ms.Seek( headerSize + splitChunk.SampleOffset * 8,  SeekOrigin.Begin);
+
+                    byte[] vag = splitChunk.GetData(new BinaryStream(ms), out uint loopStart, out uint loopEnd);
+                    
+                    vagSamples.Add(splitChunk.SampleOffset, new SampleInfo(vag, (ushort)vagSamples.Count));
 
                     // Decode sony vag format into regular waveform (PCM16)
-                    byte[] decoded = SonyVag.Decode(rawSamples[channelToPrograms[sI].Program]);
+                    byte[] decoded = SonyVag.Decode(vag);
                     Span<short> pcm16 = MemoryMarshal.Cast<byte, short>(decoded);
 
-                    bool looping = loopStarts[channelToPrograms[sI].Program] != 0 && loopEnds[channelToPrograms[sI].Program] != 0;
+                    bool looping = loopStart != 0 && loopEnd != 0;
 
                     Console.WriteLine($"SF2: vag{j} (base note: {splitChunk.BaseNote}) - looping: {looping}");
 
                     uint wavLoopStart = 0;
                     if (looping)
                     {
-                        double a = ((double)pcm16.Length / ((double)lengths[channelToPrograms[sI].Program] / 0x10));
-                        wavLoopStart = (uint)(a * loopStarts[channelToPrograms[sI].Program]);
+                        double a = ((double)pcm16.Length / (vag.Length / 0x10));
+                        wavLoopStart = (uint)(a * loopStart);
                     }
 
                     // Add the sample to the sound bank. Instruments will then pick which sample to use.
@@ -221,8 +158,8 @@ public abstract class Converter
                         sf2.AddInstrumentGenerator(SF2Generator.KeyRange, new SF2GeneratorAmount { LowByte = (byte)(prog.StartNoteRange + k), HighByte = (byte)(prog.StartNoteRange + k) });
                     else
                         sf2.AddInstrumentGenerator(SF2Generator.KeyRange, new SF2GeneratorAmount { LowByte = (byte)prog.SplitChunks[k].NoteMin, HighByte = (byte)prog.SplitChunks[k].NoteMax });
-
-                    sf2.AddInstrumentGenerator(SF2Generator.SampleID, new SF2GeneratorAmount { UAmount = vagSamples[splitChunk.SD_VA_SSA].SampleID });
+                    if (splitChunk.SampleOffset >= 0xFFFF) continue;
+                    sf2.AddInstrumentGenerator(SF2Generator.SampleID, new SF2GeneratorAmount { UAmount = vagSamples[splitChunk.SampleOffset].SampleID });
                 }
             }
 

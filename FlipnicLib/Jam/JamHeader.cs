@@ -48,8 +48,9 @@ public class JamHeader
         bs.Position = 0;
         long basePos = bs.Position;
 
-        uint jamHeaderSize = bs.ReadUInt32();
+        int jamHeaderSize = bs.ReadInt32();
         uint bdSize = bs.ReadUInt32(); // Body size
+        var physicalStart = (int)(bs.Length - bdSize);
         bs.Position += 0x04;
 
         uint spuStreamHeaderMagic = bs.ReadUInt32(); // 'SShd'
@@ -83,7 +84,7 @@ public class JamHeader
                 bs.Position = baseChunkPos + chunkOffsets[i] - 1;
 
                 chunk = new JamProgChunk();
-                chunk.Read(bs);
+                chunk.Read(bs, physicalStart);
                 ProgramChunks.Add(chunk);
             }
         }
@@ -118,7 +119,7 @@ public class JamHeader
                 bs.Position = baseChunkPos + chunkOffsets[i];
 
                 var chunk = new JamProgChunk();
-                chunk.Read(bs);
+                chunk.Read(bs, physicalStart);
                 SeProgramChunks.Add(chunk);
             }
         }
