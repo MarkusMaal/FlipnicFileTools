@@ -55,8 +55,16 @@
                     // expand 4bit -> 8bit
                     for (var j = 0; j < VagSampleBytes; j++)
                     {
-                        samples[j * 2] = vc.Sample[j] & 0xF;
-                        samples[j * 2 + 1] = (vc.Sample[j] & 0xF0) >> 4;
+                        try
+                        {
+                            samples[j * 2] = vc.Sample[j] & 0xF;
+                            samples[j * 2 + 1] = (vc.Sample[j] & 0xF0) >> 4;
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            samples[j * 2] = vc.Sample[0] & 0xF;
+                            samples[j * 2 + 1] = (vc.Sample[0] & 0xF0) >> 4; 
+                        }
                     }
 
                     //Decode samples

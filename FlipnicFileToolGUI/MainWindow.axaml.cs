@@ -31,6 +31,8 @@ public partial class MainWindow : SukiWindow
     
     public ObservableCollection<VirtualFile>? VirtualFiles { get; set; }
     
+    public ObservableCollection<SampleColl> Samples { get; set; }
+    
     List<MenuElementViewModel> _menu = [];
 
     public ObservableCollection<MenuElementViewModel> MenuElements { get; set; }
@@ -82,21 +84,29 @@ public partial class MainWindow : SukiWindow
     
     private void OpenMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
-        OpenFile();
+        if (sender is MenuItem menu)
+        {
+            OpenMenuFromStr(menu.Header?.ToString() ?? "");
+        }
     }
 
-    private async void OpenFile()
+    private async void OpenFile(bool jaMsg = false)
     {
         var topLevel = GetTopLevel(this);
         var files = await topLevel!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = "Open file",
             AllowMultiple = false,
-            FileTypeFilter = [Filters.AllSupported, Filters.BinFile, Filters.FpnFpc, Filters.FpnSst, Filters.FpnLp4, Filters.FpnMlb,
+            FileTypeFilter = jaMsg ? [Filters.FpnMsg] : [Filters.AllSupported, Filters.BinFile, Filters.FpnFpc, Filters.FpnSst, Filters.FpnLp4, Filters.FpnMlb,
                 Filters.SonyPss, Filters.SonyTim2, Filters.MidiFile, Filters.HdFile, Filters.VsdFile, Filters.SvagFile]
         });
 
         if (files.Count <= 0) return;
+        if (jaMsg)
+        {
+            StaticUtils.MsgFile = Uri.UnescapeDataString(files[0].Path.AbsolutePath);
+            return;
+        }
         StaticUtils.FileName = Uri.UnescapeDataString(files[0].Path.AbsolutePath);
         LoadFromData(new FileStream(Uri.UnescapeDataString(files[0].Path.AbsolutePath), FileMode.Open, FileAccess.Read), files[0].Path.AbsolutePath[^3..]);
         Title = "Flipnic file tool - " + new FileInfo(Uri.UnescapeDataString(files[0].Path.AbsolutePath)).Name;
@@ -155,10 +165,47 @@ public partial class MainWindow : SukiWindow
                     midi.Read(ds);
                     LoadAsString(midi, "General MIDI");
                     break;
+                case "BD": 
+                case ".BD":
+                    Samples = [];
+                    var s = new Samples(ds);
+                    var samples = new List<SampleColl>();
+                    var offset = 0;
+                    for (var i = 0; i < s.RawSamples.Count; i++)
+                    {
+                        samples.Add(new SampleColl
+                        {
+                            Data = s.RawSamples[i],
+                            Id = i,
+                            Offset = (int)offset,
+                            LoopStart = s.LoopStarts[i],
+                            LoopEnd = s.LoopEnds[i],
+                        });
+                        offset += s.Lengths[i];
+                    }
+
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        Samples = new ObservableCollection<SampleColl>(samples);
+                        BdSampleTab.IsVisible = true;
+                        FileTypeLabel.Content = string.Format(FTypeFormat, "JAM body");
+                    });
+                    break;
+                case "HD":
                 case ".HD":
                     var jh = new JamHeader();
                     jh.Read(new BinaryStream(ds));
                     LoadAsString(jh, "JAM header");
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        ConvertTab.IsVisible = true;
+                        FfmpegBrowserGrid.IsVisible = false;
+                        PalToggle.IsVisible = false;
+                        ConvertSf2Button.IsVisible = true;
+                        ConvertMovAacButton.IsVisible = false;
+                        ConvertMovButton.IsVisible = false;
+                        DemuxButton.IsVisible = false;
+                    });
                     break;
                 case "VSD":
                     var vsd = new FpnVsd(ds);
@@ -230,6 +277,9 @@ public partial class MainWindow : SukiWindow
                         ConvertTab.IsVisible = true;
                         ConvertMovButton.IsVisible = true;
                         ConvertMovAacButton.IsVisible = false;
+                        FfmpegBrowserGrid.IsVisible = true;
+                        PalToggle.IsVisible = true;
+                        ConvertSf2Button.IsVisible = false;
                         DemuxButton.IsVisible = false;
                     });
                     break;
@@ -295,6 +345,9 @@ public partial class MainWindow : SukiWindow
                         ConvertMovButton.IsVisible = false;
                         ConvertMovAacButton.IsVisible = true;
                         DemuxButton.IsVisible = true;
+                        FfmpegBrowserGrid.IsVisible = true;
+                        PalToggle.IsVisible = true;
+                        ConvertSf2Button.IsVisible = false;
                     });
                     break;
                 default:
@@ -340,8 +393,15 @@ public partial class MainWindow : SukiWindow
     {
         var outPath = Path.GetTempPath() + "/temp.wav";
         StaticUtils.ConvertAudio(outPath,  StaticUtils.FileName.EndsWith("VAG"));
+        JustPlay();
+    }
+
+    private void JustPlay()
+    {
+        var outPath = Path.GetTempPath() + "/temp.wav";
         var player = new NetCoreAudio.Player();
         PlayButton.IsEnabled = false;
+        PlaySampleButton.IsEnabled = false;
         player.Play(outPath);
         PlaybackStateLabel.Content = "Now playing";
         player.PlaybackFinished += (_, _) =>
@@ -350,6 +410,7 @@ public partial class MainWindow : SukiWindow
             {
                 PlaybackStateLabel.Content = "Stopped";
                 PlayButton.IsEnabled = true;
+                PlaySampleButton.IsEnabled = true;
             });
             File.Delete(outPath);
         };
@@ -372,9 +433,25 @@ public partial class MainWindow : SukiWindow
            rows.Select(row => row[0].Length).Prepend(15).Max());
     }
 
+    private void OpenMenuFromStr(string header)
+    {
+        switch (header)
+        {
+            case "Open":
+                OpenFile();
+                break;
+            case "Import JA.MSG":
+                OpenFile(true);
+                break;
+        }
+    }
+
     private void OpenNativeMenuItem_OnClick(object? sender, EventArgs e)
     {
-        OpenFile();
+        if (sender is NativeMenuItem menu)
+        {
+            OpenMenuFromStr(menu.Header ?? "");
+        }
     }
     
     private void ExitMenuItem_OnClick(object? sender, RoutedEventArgs e)
@@ -835,5 +912,79 @@ public partial class MainWindow : SukiWindow
                 Thread.Sleep(100);
             }
         }).Start();
+    }
+
+    private void ConvertSf2Button_OnClick(object? sender, RoutedEventArgs e)
+    {
+        DockPanel1.IsVisible = false;
+        Loader.IsVisible = true;
+        var outFile = FileBox.Text;
+        new Thread(() =>
+        {
+            StaticUtils.LiveLoadStatus = "Converting JAM to SF2";
+            var fileDirectory = new FileInfo(StaticUtils.FileName).Directory?.FullName ?? "";
+            var extension = Path.GetExtension(StaticUtils.FileName);
+            var fileName = new FileInfo(StaticUtils.FileName).Name.Replace(extension, "");
+            Converter.InstrumentToSoundFont2(Path.Combine(fileDirectory, fileName) + ".MID",
+                StaticUtils.FileName, Path.Combine(fileDirectory, fileName) + ".BD", Path.Combine(outFile ?? "", fileName) + ".SF2");
+            Dispatcher.UIThread.Post(() =>
+            {
+                DockPanel1.IsVisible = true;
+                Loader.IsVisible = false; 
+            });
+        }).Start();
+        ShowDialog("Flipnic file tools", "File converted successfully!\n\nNote: JAM to SF2 conversion is kind of borked currently...", NotificationType.Success);
+    }
+
+    private async void ExtractSampleButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button) return;
+        var filePath = Path.GetTempPath() + "/temp.wav";
+        if ((button.Content?.ToString() ?? "") != "Play")
+        {
+            var topLevel = GetTopLevel(this);
+            var file = await topLevel!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions()
+            {
+                Title = "Open FFmpeg binary",
+                FileTypeChoices = [Filters.WavFile]
+            });
+
+            if (file is null) return;
+            filePath = file.Path.AbsolutePath;
+        }
+
+        var ms = new MemoryStream();
+        var loopStart = Samples[SamplesGrid.SelectedIndex].LoopStart;
+        var loopEnd = Samples[SamplesGrid.SelectedIndex].LoopEnd;
+        switch (button.Content)
+        {
+            case "Extract looping":
+                ms.Write(Samples[SamplesGrid.SelectedIndex].Data.Take((int)loopStart).ToArray());
+                for (int i = 0; i < 100; i++)
+                {
+                    ms.Write(Samples[SamplesGrid.SelectedIndex].Data.Skip((int)loopStart)
+                        .Take((int)(loopEnd - loopStart)).ToArray());
+                }
+                ms.Write(Samples[SamplesGrid.SelectedIndex].Data.Skip((int)loopEnd).ToArray());
+                break;
+            case "Extract sample":
+            case "Play":
+                ms.Write(Samples[SamplesGrid.SelectedIndex].Data.ToArray());
+                break;
+        }
+        ms.Position = 0;
+        var decodedData = SonyVag.Decode(ms.ToArray());
+        ms = new MemoryStream();
+        ms.Write(decodedData);
+        Pcm.WriteWavHeader(ms, false, 1, 16, 32000, (int)ms.Length);
+        var fs = new FileStream(Uri.UnescapeDataString(filePath), FileMode.Create, FileAccess.Write);
+        fs.Write(ms.ToArray(), 0, (int)ms.Length);
+        fs.Close();
+        JustPlay();
+    }
+
+    private void SampleGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        ExtractLoopButton.IsEnabled = Samples[SamplesGrid.SelectedIndex].LoopStart != Samples[SamplesGrid.SelectedIndex].LoopEnd;
     }
 }

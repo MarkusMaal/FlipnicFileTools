@@ -6,7 +6,7 @@ public class Filters
 {
     public static FilePickerFileType AllSupported { get; } = new("All supported file formats")
     {
-        Patterns = ["*.BIN", "*.FPC", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.SVAG", "*.INT", "*.VAG", "*.VSD"]
+        Patterns = ["*.BIN", "*.FPC", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD"]
     };
     
     public static FilePickerFileType BinFile { get; } = new("BIN files")
@@ -49,6 +49,10 @@ public class Filters
     public static FilePickerFileType HdFile { get; } = new("VAB soundbank headers")
     {
         Patterns = ["*.HD"]
+    };
+    public static FilePickerFileType BdFile { get; } = new("VAB soundbank body")
+    {
+        Patterns = ["*.BD"]
     };
     public static FilePickerFileType VsdFile { get; } = new("Vibration strength data")
     {

@@ -14,7 +14,7 @@ public abstract class Converter
     /// Converts a .hd/.bd (audio bank)'s instruments to a sound font 2 file.
     /// </summary>
     /// <param name="path"></param>
-    public static void InstrumentToSoundFont2(string midiFile, string hdFilePath, string bdFilePath)
+    public static void InstrumentToSoundFont2(string midiFile, string hdFilePath, string bdFilePath, string outputFilePath)
     {
         // We need the sqt to find out which instrument should be percussion banks
         // Why? Because channel 10 (index 9) is treated differently SF2 wise
@@ -226,7 +226,7 @@ public abstract class Converter
                 }
             }
 
-            sf2.Save(hdFilePath[..^2] + $".sf2");
+            sf2.Save(outputFilePath);
         }
     }
 

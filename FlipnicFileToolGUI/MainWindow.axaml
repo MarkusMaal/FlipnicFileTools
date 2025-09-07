@@ -27,6 +27,8 @@
             <NativeMenuItem Header="Options">
                 <NativeMenu>                    
                     <NativeMenuItem Header="Toggle dark theme" Click="ToggleDarkNative" />
+                    <NativeMenuItemSeparator/>
+                    <NativeMenuItem Header="Import JA.MSG" Click="OpenNativeMenuItem_OnClick"></NativeMenuItem>
                 </NativeMenu>
             </NativeMenuItem>
         </NativeMenu>
@@ -41,6 +43,8 @@
         </MenuItem>
         <MenuItem Header="Options">
             <MenuItem Header="Toggle dark theme" Click="PalMenuItem_OnClick"></MenuItem>
+            <Separator/>
+            <MenuItem Header="Import JA.MSG" Click="OpenMenuItem_OnClick"></MenuItem>
         </MenuItem>
         <MenuItem Name="AboutMenu1" Header="About" Click="AboutClick">
             
@@ -121,6 +125,33 @@
                                 <vm:MenuMockup Name="MenuMockup" MenuElementSource="{Binding MenuElements}" Width="640" Height="480"></vm:MenuMockup>
                             </sukiUi:SukiSideMenuItem.PageContent>
                         </sukiUi:SukiSideMenuItem>
+                        <sukiUi:SukiSideMenuItem Name="BdSampleTab" Header="Samples" IsVisible="False">
+                            <sukiUi:SukiSideMenuItem.Icon>
+                                <vm:CircleDot ColorA="Salmon" ColorB="SaddleBrown" Text="S" />
+                            </sukiUi:SukiSideMenuItem.Icon>
+                            <sukiUi:SukiSideMenuItem.PageContent>
+                                <Grid RowDefinitions="*,Auto">
+                                    <DataGrid Grid.Row="0" Margin="0,0,0,10" GridLinesVisibility="All" ItemsSource="{Binding Samples}"
+                                              BorderThickness="1" BorderBrush="Gray" Name="SamplesGrid"
+                                              CanUserResizeColumns="True"
+                                              CanUserReorderColumns="True" SelectionChanged="SampleGridSelectionChanged"
+                                              CanUserSortColumns="True"
+                                              IsReadOnly="True">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Id" Binding="{Binding Id}"></DataGridTextColumn>
+                                            <DataGridTextColumn Header="Offset" Binding="{Binding OffsetX}"></DataGridTextColumn>
+                                            <DataGridTextColumn Header="Loop start" Binding="{Binding LoopStartX}"></DataGridTextColumn>
+                                            <DataGridTextColumn Header="Loop end" Binding="{Binding LoopEndX}"></DataGridTextColumn>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                    <StackPanel Name="SamplesActionsButtons" Orientation="Horizontal" Grid.Row="1" Spacing="8" Margin="0,0,0,10">
+                                        <Button Name="ExtractLoopButton" IsVisible="False" Click="ExtractSampleButton_OnClick">Extract looping</Button>
+                                        <Button Name="ExtractSampleButton" Click="ExtractSampleButton_OnClick">Extract sample</Button>
+                                        <Button Name="PlaySampleButton" Click="ExtractSampleButton_OnClick">Play</Button>
+                                    </StackPanel>
+                                </Grid>
+                            </sukiUi:SukiSideMenuItem.PageContent>
+                        </sukiUi:SukiSideMenuItem>
                         <sukiUi:SukiSideMenuItem Name="FileListTab" Header="Files" IsVisible="False">
                             <sukiUi:SukiSideMenuItem.Icon>
                                 <vm:CircleDot ColorA="Lime" ColorB="DarkSlateGray" Text="📁"></vm:CircleDot>
@@ -156,7 +187,7 @@
                                 <sukiUi:GlassCard VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="30,0">
                                     <StackPanel Orientation="Vertical" Spacing="20" VerticalAlignment="Center">
                                         <StackPanel Orientation="Vertical" Spacing="8">
-                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
+                                            <Grid Name="FfmpegBrowserGrid" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
                                                 <Label Grid.Column="0" VerticalAlignment="Center">FFmpeg path:</Label>
                                                 <TextBox Name="FFmpegBox" Grid.Column="1" TextChanged="FFmpegBox_OnTextChanged" />
                                                 <Button Name="BrowseButtonFfmpeg" Click="BrowseButtonFfmpeg_OnClick" Grid.Column="2" Content="Browse…"></Button>
@@ -166,7 +197,7 @@
                                                 <TextBox Name="FileBox" Grid.Column="1" TextChanged="FFmpegBox_OnTextChanged" />
                                                 <Button Name="BrowsButtonPath" Click="BrowsButtonPath_OnClick" Grid.Column="2" Content="Browse…"></Button>
                                             </Grid>
-                                            <CheckBox Margin="0,2, 0,-8" IsChecked="False" Content="Use PAL instead of NTSC" IsCheckedChanged="PalToggle_CheckedChanged">
+                                            <CheckBox Name="PalToggle" Margin="0,2, 0,-8" IsChecked="False" Content="Use PAL instead of NTSC" IsCheckedChanged="PalToggle_CheckedChanged">
                                                 <ToolTip.Tip>If the output is at the wrong framerate or video de-syncs with audio, you may need to check this option.</ToolTip.Tip>
                                             </CheckBox>
                                         </StackPanel>
@@ -174,6 +205,7 @@
                                             <Button Click="DemuxButton_OnClick" Name="DemuxButton">Demux</Button>
                                             <Button Click="ConvertMovAacButton_OnClick" Name="ConvertMovAacButton" IsEnabled="False">Convert to .MOV/.AAC</Button>
                                             <Button Click="ConvertMovButton_OnClick" Name="ConvertMovButton" IsEnabled="False">Convert to .MOV</Button>
+                                            <Button Click="ConvertSf2Button_OnClick" Name="ConvertSf2Button" IsEnabled="True">Convert to .SF2</Button>
                                         </StackPanel>
                                     </StackPanel>
                                 </sukiUi:GlassCard>

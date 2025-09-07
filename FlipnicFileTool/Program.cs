@@ -227,7 +227,7 @@ internal static class Program
                 Ipu.IpuConvert(StaticUtils.FileName, outFile, _fFmpegPath);
                 break;
             case Modes.ConvertSf2:
-                Converter.InstrumentToSoundFont2(StaticUtils.FileName[..^3] + ".MID", StaticUtils.FileName, StaticUtils.FileName[..^2] + "BD");
+                Converter.InstrumentToSoundFont2(StaticUtils.FileName[..^3] + ".MID", StaticUtils.FileName, StaticUtils.FileName[..^2] + "BD", outFile);
                 break;
             case Modes.ConvertInt:
                 StaticUtils.ConvertAudio(outFile);
