@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -6,6 +8,8 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Styling;
+using Avalonia.Threading;
+using FlipnicLib;
 using SukiUI;
 using SukiUI.Models;
 
@@ -26,7 +30,17 @@ public class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             if (OperatingSystem.IsMacOS()) desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-            desktop.MainWindow = new MainWindow();
+            var mw = new MainWindow();
+            desktop.MainWindow = mw;
+            if (desktop.Args?.Length > 0)
+            {
+                new Thread(() =>
+                {
+                    Thread.Sleep(500);
+                    StaticUtils.FileName = desktop.Args[0];
+                    Dispatcher.UIThread.Post(() => mw.LoadFromData(File.OpenRead(desktop.Args[0]), Path.GetExtension(desktop.Args[0])[1..]));
+                }).Start();
+            }
         }
 
         base.OnFrameworkInitializationCompleted();

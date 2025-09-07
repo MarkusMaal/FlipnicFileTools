@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:FlipnicFileToolGUI"
         mc:Ignorable="d" Width="700" Height="500"
+        Icon="Assets\F.PNG"
         xmlns:sukiUi="clr-namespace:SukiUI.Controls;assembly=SukiUI"
         x:DataType="vm:MainWindow" x:Class="FlipnicFileToolGUI.MainWindow"
         Title="Flipnic file tool" Loaded="Window_Loaded" BackgroundStyle="Bubble"

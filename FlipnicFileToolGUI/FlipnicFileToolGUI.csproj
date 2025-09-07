@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
+        <ApplicationIcon>Assets\F.ico</ApplicationIcon>
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
@@ -20,5 +21,8 @@
         <PackageReference Include="SukiUI" Version="6.0.3" />
 
         <ProjectReference Include="..\FlipnicLib\FlipnicLib.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <AvaloniaResource Include="Assets\**"/>
     </ItemGroup>
 </Project>

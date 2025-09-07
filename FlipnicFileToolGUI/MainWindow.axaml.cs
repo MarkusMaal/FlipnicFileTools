@@ -122,7 +122,7 @@ public partial class MainWindow : SukiWindow
         });
     }
 
-    private void LoadFromData(Stream ds, string ext)
+    internal void LoadFromData(Stream ds, string ext)
     {
         FileTypeLabel.Content = "Please wait...";
         foreach (var t in MainTabControl.Items)
