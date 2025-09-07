@@ -5,7 +5,7 @@ Several command line tools for various file formats used by Flipnic. GUI version
 Prerequisites:
 
 * [FFmpeg](https://ffmpeg.org/) - required for some video related operations
-* [ImageMagick](https://imagemagick.org/) - required for creating BMP mock-ups from menu files
+* [ImageMagick](https://imagemagick.org/) - required for creating BMP mock-ups from menu files (when using the CLI version)
 
 ## Command line syntax
 
