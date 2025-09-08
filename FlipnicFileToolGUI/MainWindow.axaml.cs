@@ -5,7 +5,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Notifications;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -45,6 +47,8 @@ public partial class MainWindow : SukiWindow
     private byte[] pcmData { get; set; }
     
     public ISukiDialogManager DialogManager = new SukiDialogManager();
+
+    public static bool ErrorDisplayed = false;
     
     public MainWindow()
     {
@@ -478,6 +482,14 @@ public partial class MainWindow : SukiWindow
         p.StartInfo.Arguments = "ffmpeg";
         p.Start();
         DetectFromOutput(p, FFmpegBox , "FFmpeg");
+
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop) return;
+        if (desktop.Args?.Length == 0) return;
+        if (ErrorDisplayed || desktop.Args?[0] != "-e") return;
+        ShowDialog("Flipnic file tools",
+            $"Uh oh, it looks like this program was restarted because of a problem. Details below:\n\nException: {desktop.Args[1]}\n\nStack trace:\n{desktop.Args[2]}",
+            NotificationType.Error);
+        ErrorDisplayed = true;
     }
 
     private void DetectFromOutput(Process p, TextBox? textBox, string friendlyName)

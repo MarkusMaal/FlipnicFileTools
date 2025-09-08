@@ -99,7 +99,7 @@ public class JamProgChunk
         List<string[]> rows = [];
         rows.AddRange(SplitChunks.Select(s => (string[]) [s.Volume + "%", s.Pan.ToString(),
             s.NoteMin.ToString(), s.NoteMax.ToString(), s.BaseNote.ToString(), s.FineTunePitch.ToString(), s.LfoTableIndex.ToString(),
-            s.Flags.ToString("X"), s.SampleOffset.ToString("X"), s.SD_VP_ADSR1.ToString("X") + s.SD_VP_ADSR2.ToString("X")]));
+            s.Flags.ToString("X"), s.SampleOffset.ToString("X"), $"{s.Attack:X}:{s.Delay:X}:{s.Sustain:X}:{s.Release:X}"]));
         return o+StaticUtils.GenerateTable(colHeaders, rows);
     }
 }
@@ -139,28 +139,6 @@ public class JamSplitChunk
     public uint SampleOffset { get; set; }
 
     /// <summary>
-    /// <b>Envelope (data 1)</b><br/>
-    /// <br/>
-    /// PlayStation 2 IOP Library Reference Release 3.0.2 - Sound Libraries<br />
-    /// "Low-Level Sound Library - Register Macros" Page 67, SD_VP_ADSR1.<br />
-    /// <br />
-    /// This is sent through PDISPU2 with:
-    /// <code>sceSdSetParam(coreAndVoice | 0x300, (unsigned __int16)ADJ(voice)->SD_VP_ADSR1)</code>
-    /// </summary>
-    public short SD_VP_ADSR1 { get; set; }
-
-    /// <summary>
-    /// <b>Envelope (data 2)</b><br/>
-    /// <br/>
-    /// PlayStation 2 IOP Library Reference Release 3.0.2 - Sound Libraries<br />
-    /// "Low-Level Sound Library - Register Macros" Page 68, SD_VP_ADSR2.<br />
-    /// <br />
-    /// This is sent through PDISPU2 with:
-    /// <code>sceSdSetParam(coreAndVoice | 0x400, ADJ(voice)->SD_VP_ADSR2);</code>
-    /// </summary>
-    public short SD_VP_ADSR2 { get; set; }
-
-    /// <summary>
     /// In %. 100 is default
     /// </summary>
     public byte Volume { get; set; }
@@ -180,8 +158,19 @@ public class JamSplitChunk
     /// 0x7F = no lfo in use
     /// </summary>
     public byte LfoTableIndex { get; set; }
+    
+    public byte Attack { get; set; }
+    public byte Delay { get; set; }
+    public byte Sustain { get; set; }
+    public byte Release { get; set; }
 
-    public byte Reverb { get; set; }
+    // Flags
+    public bool HighPriority => (Flags & 0x80) != 0;
+    public bool Noise => (Flags & 0x40) != 0;
+    public bool EnablePitchBend => (Flags & 0x08) != 0;
+    public bool Modulation => (Flags & 0x04) != 0;
+    public bool BreathWaveFromProg => (Flags & 0x02) != 0;
+    public bool Reverb => (Flags & 0x01) != 0;
 
     public void Read(BinaryStream bs, int headerSize)
     {
@@ -190,8 +179,10 @@ public class JamSplitChunk
         BaseNote = (Note)bs.Read1Byte();
         FineTunePitch = bs.ReadSByte();
         SampleOffset = (uint)(bs.ReadInt16()) & 0xFFFF;
-        SD_VP_ADSR1 = bs.ReadInt16();
-        SD_VP_ADSR2 = bs.ReadInt16();
+        Attack = bs.Read1Byte();
+        Delay = bs.Read1Byte();
+        Sustain = bs.Read1Byte();
+        Release = bs.Read1Byte();
         bs.Position++; // skip the Volume Override
         Volume = (byte)(Math.Ceiling(bs.Read1Byte() / 128f * 100f));
         Pan = (byte)(bs.Read1Byte() + 0xC);
