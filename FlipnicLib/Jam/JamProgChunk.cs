@@ -94,13 +94,12 @@ public class JamProgChunk
                  """;
         string[] colHeaders =
         [
-            "Volume", "Pan", "Note min.", "Note max.", "Base note", "Karaoke", "LFO table idx", "Reverb", "SD_VA_SSA",
-            "SD_VP_ADSR1", "SD_VP_ADSR2"
+            "Volume", "Pan", "Note min.", "Note max.", "Base note", "Fine tune pitch", "LFO table idx", "Flags", "Sample offset","ADSR"
         ];
         List<string[]> rows = [];
-        rows.AddRange(SplitChunks.Select(s => (string[]) [s.Volume.ToString(), s.Pan.ToString(),
+        rows.AddRange(SplitChunks.Select(s => (string[]) [s.Volume + "%", s.Pan.ToString(),
             s.NoteMin.ToString(), s.NoteMax.ToString(), s.BaseNote.ToString(), s.FineTunePitch.ToString(), s.LfoTableIndex.ToString(),
-            s.Reverb.ToString(), s.SampleOffset.ToString("X"), s.SD_VP_ADSR1.ToString("X"), s.SD_VP_ADSR2.ToString("X")]));
+            s.Flags.ToString("X"), s.SampleOffset.ToString("X"), s.SD_VP_ADSR1.ToString("X") + s.SD_VP_ADSR2.ToString("X")]));
         return o+StaticUtils.GenerateTable(colHeaders, rows);
     }
 }
@@ -194,7 +193,7 @@ public class JamSplitChunk
         SD_VP_ADSR1 = bs.ReadInt16();
         SD_VP_ADSR2 = bs.ReadInt16();
         bs.Position++; // skip the Volume Override
-        Volume = bs.Read1Byte();
+        Volume = (byte)(Math.Ceiling(bs.Read1Byte() / 128f * 100f));
         Pan = (byte)(bs.Read1Byte() + 0xC);
         PitchBend = bs.Read1Byte();
         LfoTableIndex = bs.Read1Byte();
