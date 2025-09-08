@@ -38,18 +38,13 @@ public abstract class Converter
         instrument.Read(new BinaryStream(ms));
         List<(byte Channel, byte Program)> channelToPrograms = new List<(byte Channel, byte Program)>();
         byte _i = 1;
-        /*foreach (SqMessage msg in ssqt.Track.Messages)
+        foreach (SqMessage msg in ssqt.Track.Messages)
         {
             if (msg.Event is not SqProgramEvent progChangeEvent) continue;
             byte channel = (byte)(msg.Status & 0x0F);
             channelToPrograms.Add((channel, progChangeEvent.Program));
             _i++;
-        }*/
-        channelToPrograms.Add((0, 0));
-        channelToPrograms.Add((1, 1));
-        channelToPrograms.Add((2, 1));
-        channelToPrograms.Add((3, 9));
-        channelToPrograms.Add((4, 8));
+        }
         
 
         // Start by adding all the instruments/samples to the sf2
