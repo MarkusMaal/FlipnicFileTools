@@ -13,6 +13,7 @@ public class Samples
 
     public Samples(Stream s)
     {
+        s.Position = 0;
         while (s.Position < s.Length)
         {
             var vag = GetVag(s, out var loopStart, out var loopEnd);
@@ -56,13 +57,10 @@ public class Samples
         }
 
         bs.Position = absoluteSsaOffset;
-        try
+        if (bs.Position + 0x10 * (int)(lastSampleIndex + 1) > bs.Length)
         {
-            return bs.ReadBytes(0x10 * (int)(lastSampleIndex + 1));
+            return bs.ReadBytes((int)(bs.Length - bs.Position));
         }
-        catch (EndOfStreamException)
-        {
-            return [];
-        }
+        return bs.ReadBytes(0x10 * (int)(lastSampleIndex + 1));
     }
 }

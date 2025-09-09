@@ -74,6 +74,11 @@ public class JamProgChunk
         StartNoteRange = (Note)bs.Read1Byte();
         EndNoteRange = (Note)bs.Read1Byte();
         var cnt = (CountOrFlag > 0x10) ? (CountOrFlag - 0x80) + 1 : CountOrFlag + 1; 
+        if (cnt == 0)
+        {
+            cnt = (int)StartNoteRange - 0x1F; // sound effects
+            bs.Position--;
+        }
         for (var i = 0; i < cnt; i++)
         {
             var splitChunk = new JamSplitChunk();
@@ -99,7 +104,7 @@ public class JamProgChunk
         List<string[]> rows = [];
         rows.AddRange(SplitChunks.Select(s => (string[]) [s.Volume + "%", s.Pan.ToString(),
             s.NoteMin.ToString(), s.NoteMax.ToString(), s.BaseNote.ToString(), s.FineTunePitch.ToString(), s.LfoTableIndex.ToString(),
-            s.Flags.ToString("X"), s.SampleOffset.ToString("X"), $"{s.Attack:X}:{s.Delay:X}:{s.Sustain:X}:{s.Release:X}"]));
+            s.FlagsAsString(), s.SampleOffset.ToString("X"), $"{s.Attack:X}:{s.Delay:X}:{s.Sustain:X}:{s.Release:X}"]));
         return o+StaticUtils.GenerateTable(colHeaders, rows);
     }
 }
@@ -111,7 +116,7 @@ public class JamSplitChunk
     public Note BaseNote { get; set; }
 
     /// <summary>
-    /// Pitch correction? No idea, but very important.
+    /// Fine tune pitch adjustment
     /// </summary>
     public sbyte FineTunePitch { get; set; }
 
@@ -149,7 +154,7 @@ public class JamSplitChunk
     public byte Pan { get; set; }
 
     /// <summary>
-    /// Unknown, pitch related? Only used if <see cref="Flags"/> has 0x10, otherwise <see cref="JamProgChunk.UnkPitchRelated_0x04"/> is used.
+    /// Unknown, pitch related? Only used if <see cref="Flags"/> has 0x10, otherwise <see cref="JamProgChunk.FineTunePitch"/> is used.
     /// </summary>
     public byte PitchBend { get; set; }
 
@@ -189,6 +194,11 @@ public class JamSplitChunk
         PitchBend = bs.Read1Byte();
         LfoTableIndex = bs.Read1Byte();
         Flags = bs.Read1Byte();
+    }
+
+    public string FlagsAsString()
+    {
+        return (HighPriority ? "P" : "-") + (Noise ? "N" : "-") + (EnablePitchBend ? "B" : "-") + (Modulation ? "M" : "-") + (BreathWaveFromProg ? "W" : "-") + (Reverb ? "R" : "-");
     }
 
     public byte[] GetData(BinaryStream bs, out uint loopStart, out uint loopEnd)

@@ -34,6 +34,7 @@ public class App : Application
             desktop.MainWindow = mw;
             if (desktop.Args?.Length > 0)
             {
+                if (desktop.Args[0] == "-e") return;
                 new Thread(() =>
                 {
                     Thread.Sleep(500);

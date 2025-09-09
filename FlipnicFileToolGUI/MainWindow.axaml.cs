@@ -1,10 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -24,6 +17,14 @@ using SukiUI;
 using SukiUI.Controls;
 using SukiUI.Dialogs;
 using Syroot.BinaryData;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading;
 
 namespace FlipnicFileToolGUI;
 
@@ -49,7 +50,8 @@ public partial class MainWindow : SukiWindow
     public ISukiDialogManager DialogManager = new SukiDialogManager();
 
     public static bool ErrorDisplayed = false;
-    
+    public bool DevMode { get; set; }
+
     public MainWindow()
     {
         InitializeComponent();
@@ -61,8 +63,7 @@ public partial class MainWindow : SukiWindow
         DragDrop.SetAllowDrop(this, true);
         AddHandler(DragDrop.DragOverEvent, DragOver);
         AddHandler(DragDrop.DropEvent, WindowDropped);
-        
-        
+
     }
 
     private static void DragOver(object? sender, DragEventArgs e)
@@ -102,7 +103,7 @@ public partial class MainWindow : SukiWindow
             Title = "Open file",
             AllowMultiple = false,
             FileTypeFilter = jaMsg ? [Filters.FpnMsg] : [Filters.AllSupported, Filters.BinFile, Filters.FpnFpc, Filters.FpnSst, Filters.FpnLp4, Filters.FpnMlb,
-                Filters.SonyPss, Filters.SonyTim2, Filters.MidiFile, Filters.HdFile, Filters.VsdFile, Filters.SvagFile]
+                Filters.SonyPss, Filters.SonyTim2, Filters.MidiFile, Filters.HdFile, Filters.VsdFile, Filters.SvagFile, Filters.TxtFile, Filters.CsvFile, Filters.XmlFile]
         });
 
         if (files.Count <= 0) return;
@@ -149,7 +150,7 @@ public partial class MainWindow : SukiWindow
         
         new Thread(() =>
         {
-            switch (ext)
+            switch (ext.ToUpper())
             {
                 case "TM2":
                     var data = new byte[ds.Length];
@@ -181,7 +182,7 @@ public partial class MainWindow : SukiWindow
                         {
                             Data = s.RawSamples[i],
                             Id = i,
-                            Offset = (int)offset,
+                            Offset = (int)offset + 0x10,
                             LoopStart = s.LoopStarts[i],
                             LoopEnd = s.LoopEnds[i],
                         });
@@ -198,11 +199,24 @@ public partial class MainWindow : SukiWindow
                 case "HD":
                 case ".HD":
                     var jh = new JamHeader();
-                    jh.Read(new BinaryStream(ds));
+                    try { 
+                        jh.Read(new BinaryStream(ds));
+                    } catch (InvalidDataException)
+                    {
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            ShowDialog("Flipnic File Tools", "Cannot parse this file, because it's missing the SShd header. The file may be corrupt or incompatible with this program.", NotificationType.Error);
+                            InfoTab.IsVisible = true;
+                            InfoBox.Text = "Error opening file!";
+                            FileTypeLabel.Content = "Ready";
+                            this.Title = "Flipnic file tool";
+                        });
+                        break;
+                    }
                     LoadAsString(jh, "JAM header");
                     Dispatcher.UIThread.Post(() =>
                     {
-                        ConvertTab.IsVisible = true;
+                        ConvertTab.IsVisible = jh.ProgramChunks.Count > 0;
                         FfmpegBrowserGrid.IsVisible = false;
                         PalToggle.IsVisible = false;
                         ConvertSf2Button.IsVisible = true;
@@ -211,9 +225,11 @@ public partial class MainWindow : SukiWindow
                         DemuxButton.IsVisible = false;
                     });
                     break;
-                case "VSD":
-                    var vsd = new FpnVsd(ds);
-                    LoadAsString(vsd, "Vibration Strength Data");
+                case "CSV":
+                case "TXT":
+                case "XML":
+                    var txt = Encoding.UTF8.GetString(ds.ReadBytes((int)ds.Length));
+                    LoadAsString(txt, (ext == "CSV") ? "Comma Separated Values" : ((ext == "XML") ? "eXtensible Markup Language" : "Plain Text"));
                     break;
                 case "INT":
                 case "VAG":
@@ -396,30 +412,55 @@ public partial class MainWindow : SukiWindow
     private void Play()
     {
         var outPath = Path.GetTempPath() + "/temp.wav";
-        StaticUtils.ConvertAudio(outPath,  StaticUtils.FileName.EndsWith("VAG"));
-        JustPlay();
+        PlayButton.IsEnabled = false;
+        PlaybackStateLabel.Content = "Buffering";
+        new Thread(() =>
+        {
+            StaticUtils.ConvertAudio(outPath, StaticUtils.FileName.EndsWith("VAG"));
+            Dispatcher.UIThread.Post(() => JustPlay());
+        }).Start();
     }
 
     private void JustPlay()
     {
         var outPath = Path.GetTempPath() + "/temp.wav";
         var player = new NetCoreAudio.Player();
-        PlayButton.IsEnabled = false;
-        PlaySampleButton.IsEnabled = false;
         player.Play(outPath);
-        PlaybackStateLabel.Content = "Now playing";
+        Dispatcher.UIThread.Post(() => {
+            PlaySampleButton.IsEnabled = false;
+            PlaybackStateLabel.Content = "Now playing";
+        });
         player.PlaybackFinished += (_, _) =>
         {
+            Dispatcher.UIThread.Post(() =>
+            {
+                PlaybackStateLabel.Content = "Cleaning";
+            });
+            while (IsFileLocked(new FileInfo(outPath))) { Thread.Sleep(100); } // prevent race errors
+            File.Delete(outPath);
             Dispatcher.UIThread.Post(() =>
             {
                 PlaybackStateLabel.Content = "Stopped";
                 PlayButton.IsEnabled = true;
                 PlaySampleButton.IsEnabled = true;
             });
-            File.Delete(outPath);
         };
     }
-    
+
+    protected virtual bool IsFileLocked(FileInfo file)
+    {
+        try
+        {
+            using FileStream stream = file.Open(FileMode.Open, FileAccess.Read, FileShare.None);
+            stream.Close();
+        }
+        catch (IOException)
+        {
+            return true;
+        }
+        return false;
+    }
+
     private void GimmickCombobox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
        var val = ((ComboBox)sender!).SelectedValue?.ToString();
@@ -482,13 +523,20 @@ public partial class MainWindow : SukiWindow
         p.StartInfo.Arguments = "ffmpeg";
         p.Start();
         DetectFromOutput(p, FFmpegBox , "FFmpeg");
-
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop) return;
         if (desktop.Args?.Length == 0) return;
         if (ErrorDisplayed || desktop.Args?[0] != "-e") return;
-        ShowDialog("Flipnic file tools",
-            $"Uh oh, it looks like this program was restarted because of a problem. Details below:\n\nException: {desktop.Args[1]}\n\nStack trace:\n{desktop.Args[2]}",
-            NotificationType.Error);
+
+        InfoBox.Text = $"""
+            ---------------------------------
+            Flipnic file tools
+            ---------------------------------
+            The app was restarted because of a problem.
+            If this keeps re-occuring, please report it to the developer!
+
+            {desktop.Args[1]}
+            {string.Join(" ", desktop.Args.Skip(3).ToArray())}
+            """;
         ErrorDisplayed = true;
     }
 
@@ -945,7 +993,7 @@ public partial class MainWindow : SukiWindow
                 Loader.IsVisible = false; 
             });
         }).Start();
-        ShowDialog("Flipnic file tools", "File converted successfully!\n\nNote: JAM to SF2 conversion is kind of borked currently...", NotificationType.Success);
+        ShowDialog("Flipnic file tools", "File converted successfully!", NotificationType.Success);
     }
 
     private async void ExtractSampleButton_OnClick(object? sender, RoutedEventArgs e)
@@ -968,21 +1016,9 @@ public partial class MainWindow : SukiWindow
         var ms = new MemoryStream();
         var loopStart = Samples[SamplesGrid.SelectedIndex].LoopStart;
         var loopEnd = Samples[SamplesGrid.SelectedIndex].LoopEnd;
-        switch (button.Content)
+        if (button.Content is "Extract sample" or "Play")
         {
-            case "Extract looping":
-                ms.Write(Samples[SamplesGrid.SelectedIndex].Data.Take((int)loopStart).ToArray());
-                for (int i = 0; i < 100; i++)
-                {
-                    ms.Write(Samples[SamplesGrid.SelectedIndex].Data.Skip((int)loopStart)
-                        .Take((int)(loopEnd - loopStart)).ToArray());
-                }
-                ms.Write(Samples[SamplesGrid.SelectedIndex].Data.Skip((int)loopEnd).ToArray());
-                break;
-            case "Extract sample":
-            case "Play":
-                ms.Write(Samples[SamplesGrid.SelectedIndex].Data.ToArray());
-                break;
+            ms.Write(Samples[SamplesGrid.SelectedIndex].Data.ToArray());
         }
         ms.Position = 0;
         var decodedData = SonyVag.Decode(ms.ToArray());
@@ -999,4 +1035,17 @@ public partial class MainWindow : SukiWindow
     {
         ExtractLoopButton.IsEnabled = Samples[SamplesGrid.SelectedIndex].LoopStart != Samples[SamplesGrid.SelectedIndex].LoopEnd;
     }
+
+    private void CrashTestMenuItem_Click(object? sender, System.EventArgs e)
+    {
+        throw new Exception("End-user manually initiated the crash");
+    }
+
+    private void CrashMenuItem_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        throw new Exception("End-user manually initiated the crash");
+    }
+
+
+    public static readonly StyledProperty<bool> DevModeProperty = AvaloniaProperty.Register<MainWindow, bool>(nameof(DevMode), defaultValue: true);
 }

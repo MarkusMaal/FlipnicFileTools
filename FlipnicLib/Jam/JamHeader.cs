@@ -22,25 +22,24 @@ namespace FlipnicLib.Jam;
  * Note that the magic is the same and not at position 0 either
  * 
  */
-// GTSOUNDINSTRUMENTJAM::open (GT4O US: 0x2E20B0)
-// SDDRV::Jam::open (GT4O US: 0x2E20B0)
-// SDDRV::Jam::bdLink (GT4O US: 0x533998)
+
 public class JamHeader
 {
     /// <summary>
     /// Program chunks for SqSequencer (sqt files)
     /// </summary>
-    // SDDRV::Jam::getProgChunk (GT4O US: 0x533878)
     public List<JamProgChunk> ProgramChunks { get; set; } = new List<JamProgChunk>();
 
     /// <summary>
     /// Program chunks for SeSequencer
     /// </summary>
-    // SDDRV::Jam::getSeProgChunk (GT4O US: 0x533678)
     public List<JamProgChunk> SeProgramChunks { get; set; } = new List<JamProgChunk>();
 
-    // SDDRV::Jam::getLfoTable (GT4O US: 0x5337F0)
-    // SDDRV::Jam::getVelocity (GT4O US: 0x533760)
+    /// <summary>
+    /// Sequence chunks for SeSequencer
+    /// </summary>
+    public List<(short, short Offset)> SeSeqChunks { get; set; } = [];
+
     public byte[] VelocityTable { get; set; } = new byte[128];
 
     public void Read(BinaryStream bs)
@@ -96,13 +95,11 @@ public class JamHeader
             long baseChunkPos = bs.Position;
             short chunkCount = bs.ReadInt16();
             short[] chunkOffsets = bs.ReadInt16s(chunkCount + 1);
-
-            List<(short, short Offset)> entries = new List<(short, short)>();
             for (int i = 0; i < chunkCount + 1; i++)
             {
                 bs.Position = baseChunkPos + chunkOffsets[i];
 
-                entries.Add((bs.ReadInt16(), bs.ReadInt16()));
+                SeSeqChunks.Add((bs.ReadInt16(), bs.ReadInt16()));
             }
         }
 
@@ -110,7 +107,7 @@ public class JamHeader
         {
             bs.Position = basePos + seProgChunkPhysicalOffset;
 
-            long baseChunkPos = bs.Position;
+            long baseChunkPos = bs.Position + 0x1;
             short chunkCount = bs.ReadInt16();
             short[] chunkOffsets = bs.ReadInt16s(chunkCount + 1);
 
@@ -140,9 +137,20 @@ public class JamHeader
         var o = "";
         for (var i = 0; i < ProgramChunks.Count; i++)
         {
-            o += $"Programme {i+1}\n{ProgramChunks[i]}\n\n";
+            o += $"Programme {i + 1}\n{ProgramChunks[i]}\n\n";
+        }
+        for (var i = 0; i < SeProgramChunks.Count; i++)
+        {
+            o += $"SFX Programme {i + 1}\n{SeProgramChunks[i]}\n\n";
         }
 
+        for (var i = 0; i < SeSeqChunks.Count; i++)
+        {
+            if (SeSeqChunks[i].Item1 != 0x7F7F)
+            {
+                o += $"SFX Sequence {SeSeqChunks[i].Item1} @ {SeSeqChunks[i].Offset:X} \n";
+            }
+        }
         return o;
     }
 }

@@ -8,6 +8,7 @@
         xmlns:sukiUi="clr-namespace:SukiUI.Controls;assembly=SukiUI"
         x:DataType="vm:MainWindow" x:Class="FlipnicFileToolGUI.MainWindow"
         Title="Flipnic file tool" Loaded="Window_Loaded" BackgroundStyle="Bubble"
+        DataContext="{Binding RelativeSource={RelativeSource Self}}"
         IsMenuVisible="{OnPlatform True, macOS=False}">
     <sukiUi:SukiWindow.RightWindowTitleBarControls>
         <Label Name="FileTypeLabel" Content="Ready" VerticalContentAlignment="Center" VerticalAlignment="Center"></Label>
@@ -29,6 +30,7 @@
                     <NativeMenuItem Header="Toggle dark theme" Click="ToggleDarkNative" />
                     <NativeMenuItemSeparator/>
                     <NativeMenuItem Header="Import JA.MSG" Click="OpenNativeMenuItem_OnClick"></NativeMenuItem>
+                    <NativeMenuItem Header="Crash test" Click="CrashTestMenuItem_Click" IsVisible="{Binding DevMode}"></NativeMenuItem>
                 </NativeMenu>
             </NativeMenuItem>
         </NativeMenu>
@@ -44,7 +46,8 @@
         <MenuItem Header="Options">
             <MenuItem Header="Toggle dark theme" Click="PalMenuItem_OnClick"></MenuItem>
             <Separator/>
-            <MenuItem Header="Import JA.MSG" Click="OpenMenuItem_OnClick"></MenuItem>
+          <MenuItem Header="Import JA.MSG" Click="OpenMenuItem_OnClick"></MenuItem>
+          <MenuItem Header="Crash test" Click="CrashMenuItem_Click" IsVisible="{Binding DevMode}"></MenuItem>
         </MenuItem>
         <MenuItem Name="AboutMenu1" Header="About" Click="AboutClick">
             

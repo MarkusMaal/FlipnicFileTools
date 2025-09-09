@@ -107,7 +107,13 @@ public class FpnSst
 
     public string GeneratePseudoCode()
     {
-        StaticUtils.WindowWidth = Console.WindowWidth;
+        try
+        {
+            StaticUtils.WindowWidth = Console.WindowWidth;
+        } catch (IOException)
+        {
+            StaticUtils.WindowWidth = 200;
+        }
         var o = "";
         var sOffset = TableOfContents["EVENT"].Offset;
         var eSize = TableOfContents["EVENT"].EntrySize;

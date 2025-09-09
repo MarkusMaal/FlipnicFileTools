@@ -23,7 +23,7 @@ class Program
             BuildAvaloniaApp()
                 .StartWithClassicDesktopLifetime(args);
         }
-        catch (Exception e)
+        catch (Exception e) when (!Debugger.IsAttached)
         {
             Restart(e);
         }

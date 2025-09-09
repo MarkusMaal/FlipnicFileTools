@@ -6,10 +6,6 @@ using FlipnicLib.Jam;
 
 namespace FlipnicLib.Midi;
 
-// Sqt is handled by game code through one of the two sequencers - SqSequencer, for menu bgm.
-// Sq is somewhat named in the JAM sdk docs.
-
-// Spu sequence Table? Sound sequence table?
 public class Midi
 {
     public MTrk Track { get; set; }
@@ -56,7 +52,7 @@ public class Midi
         rows.AddRange(Track.Messages.Select(m => (string[])
         [
             m.Delta.ToString(),
-            ((m.Event.ToString() != null ? m.Event.ToString() : "") ?? string.Empty),
+            ((m.Event.ToString() != null ? m.Event.ToString()?.Replace("FlipnicLib.Midi.", "") : "") ?? string.Empty),
             m.Status.ToString(),
             m.Event.ProgramID.ToString()
         ]));
@@ -76,11 +72,9 @@ public class MTrk
         bs.Seek(0xC);
         var d1 = bs.Read1Byte();
         var d2 = bs.Read1Byte(); // reverse bytes, because BE
-        TicksPerBeat = BitConverter.ToUInt16([d2, d1]); // should always be 480 for Flipnic .MID files
+        TicksPerBeat = BitConverter.ToUInt16([d2, d1]); // should always be 480d for Flipnic .MID files
         bs.Seek(0x16, SeekOrigin.Begin);
 
-        
-        // Starting from here, closely matches midi format specification
         byte lastStatus = 0;
         while (true)
         {

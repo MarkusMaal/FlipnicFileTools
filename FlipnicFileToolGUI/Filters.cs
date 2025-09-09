@@ -6,7 +6,7 @@ public class Filters
 {
     public static FilePickerFileType AllSupported { get; } = new("All supported file formats")
     {
-        Patterns = ["*.BIN", "*.FPC", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD"]
+        Patterns = ["*.BIN", "*.FPC", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML"]
     };
     
     public static FilePickerFileType BinFile { get; } = new("BIN files")
@@ -67,14 +67,28 @@ public class Filters
     {
         Patterns = ["*.IPU"]
     };
-    
-    
 
     public static FilePickerFileType TxtFile { get; } = new("Text files")
     {
         Patterns = ["*.TXT"],
         MimeTypes = ["text/plain"],
         AppleUniformTypeIdentifiers = ["public.text"]
+    };
+
+
+
+    public static FilePickerFileType XmlFile { get; } = new("Extensible Markup Language files")
+    {
+        Patterns = ["*.XML"],
+        MimeTypes = ["text/xml", "application/xml"],
+        AppleUniformTypeIdentifiers = ["public.xml"]
+    };
+
+    public static FilePickerFileType CsvFile { get; } = new("Comma Separated Values")
+    {
+        Patterns = ["*.CSV"],
+        MimeTypes = ["text/csv"],
+        AppleUniformTypeIdentifiers = ["public.comma-separated-values-text"]
     };
 
     public static FilePickerFileType PngFile { get; } = new("Portable Network Graphics")
