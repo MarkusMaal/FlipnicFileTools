@@ -7,6 +7,12 @@ Prerequisites:
 * [FFmpeg](https://ffmpeg.org/) - required for some video related operations
 * [ImageMagick](https://imagemagick.org/) - required for creating BMP mock-ups from menu files (when using the CLI version)
 
+## GUI version
+
+There's also a graphical front-end for this CLI tool, which is easier to use, but also gives you better preview for stuff like textures, audio samples, stuff like that without having to type down a bunch of commands with the disadvantages being lack of automation options and in some cases compatibility.
+
+![Screenshot of GUI version](preview.png)
+
 ## Command line syntax
 
 To see command line syntax at any time, you can run: `FlipnicFileTool --help`
@@ -303,3 +309,8 @@ Outputs:
 | PIN1_BMP_SHADOW_                     | 1/1/1                                | 0/0/0                                | 480.3896/-3.5159056/522.5597         |
 ...
 ````
+
+
+## FlipnicLib
+
+If you want to work with Flipnic file formats on your own projects, you can add FlipnicLib as a dependancy to your project. Both the GUI and CLI of FlipnicFileTool are just front-ends to this library.
