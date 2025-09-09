@@ -184,10 +184,10 @@ public class JamSplitChunk
         BaseNote = (Note)bs.Read1Byte();
         FineTunePitch = bs.ReadSByte();
         SampleOffset = (uint)(bs.ReadInt16()) & 0xFFFF;
-        Attack = bs.Read1Byte();
-        Delay = bs.Read1Byte();
-        Sustain = bs.Read1Byte();
         Release = bs.Read1Byte();
+        Sustain = bs.Read1Byte();
+        Delay = bs.Read1Byte();
+        Attack = bs.Read1Byte();
         bs.Position++; // skip the Volume Override
         Volume = (byte)(Math.Ceiling(bs.Read1Byte() / 128f * 100f));
         Pan = (byte)(bs.Read1Byte() + 0xC);

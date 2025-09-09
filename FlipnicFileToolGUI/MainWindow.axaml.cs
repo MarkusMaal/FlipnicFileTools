@@ -97,6 +97,7 @@ public partial class MainWindow : SukiWindow
 
     private async void OpenFile(bool jaMsg = false)
     {
+        if (Design.IsDesignMode) return;
         var topLevel = GetTopLevel(this);
         var files = await topLevel!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
@@ -218,11 +219,21 @@ public partial class MainWindow : SukiWindow
                     {
                         ConvertTab.IsVisible = jh.ProgramChunks.Count > 0;
                         FfmpegBrowserGrid.IsVisible = false;
+                        BdBrowserGrid.IsVisible = true;
+                        MidiBrowserGrid.IsVisible = true;
                         PalToggle.IsVisible = false;
                         ConvertSf2Button.IsVisible = true;
                         ConvertMovAacButton.IsVisible = false;
                         ConvertMovButton.IsVisible = false;
                         DemuxButton.IsVisible = false;
+
+                        var fileDirectory = new FileInfo(StaticUtils.FileName).Directory?.FullName ?? "";
+                        var extension = Path.GetExtension(StaticUtils.FileName);
+                        var fileName = new FileInfo(StaticUtils.FileName).Name.Replace(extension, "");
+                        var bdPath = Path.Combine(fileDirectory, fileName) + ".BD";
+                        var midPath = Path.Combine(fileDirectory, fileName) + ".MID";
+                        if (File.Exists(bdPath)) BdBox.Text = bdPath;
+                        if (File.Exists(midPath)) MidiBox.Text = midPath;
                     });
                     break;
                 case "CSV":
@@ -301,6 +312,8 @@ public partial class MainWindow : SukiWindow
                         PalToggle.IsVisible = true;
                         ConvertSf2Button.IsVisible = false;
                         DemuxButton.IsVisible = false;
+                        BdBrowserGrid.IsVisible = false;
+                        MidiBrowserGrid.IsVisible = false;
                     });
                     break;
                 case "LAY":
@@ -368,6 +381,8 @@ public partial class MainWindow : SukiWindow
                         FfmpegBrowserGrid.IsVisible = true;
                         PalToggle.IsVisible = true;
                         ConvertSf2Button.IsVisible = false;
+                        BdBrowserGrid.IsVisible = false;
+                        MidiBrowserGrid.IsVisible = false;
                     });
                     break;
                 default:
@@ -411,6 +426,7 @@ public partial class MainWindow : SukiWindow
 
     private void Play()
     {
+        if (Design.IsDesignMode) return;
         var outPath = Path.GetTempPath() + "/temp.wav";
         PlayButton.IsEnabled = false;
         PlaybackStateLabel.Content = "Buffering";
@@ -423,6 +439,7 @@ public partial class MainWindow : SukiWindow
 
     private void JustPlay()
     {
+        if (Design.IsDesignMode) return;
         var outPath = Path.GetTempPath() + "/temp.wav";
         var player = new NetCoreAudio.Player();
         player.Play(outPath);
@@ -501,11 +518,24 @@ public partial class MainWindow : SukiWindow
     
     private void ExitMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
+        if (Design.IsDesignMode) return;
         this.Close();
     }
 
     private void Window_Loaded(object? sender, RoutedEventArgs e)
     {
+        if (Design.IsDesignMode)
+        {
+            FileTypeLabel.Content = "Design mode";
+            foreach (var tab in MainTabControl.Items)
+            {
+                if (tab is SukiSideMenuItem ssmi)
+                {
+                    ssmi.IsVisible = true;
+                }
+            }
+            return;
+        }
         InfoBox.Text = """
                        ---------------------------------
                        Flipnic file tools
@@ -557,6 +587,7 @@ public partial class MainWindow : SukiWindow
     
     private void NewWindowMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
+        if (Design.IsDesignMode) return;
         new MainWindow().Show();
     }
 
@@ -734,6 +765,7 @@ public partial class MainWindow : SukiWindow
         DemuxButton.IsEnabled = exist2;
         ConvertMovAacButton.IsEnabled = exist && exist2;
         ConvertMovButton.IsEnabled = exist && exist2;
+        MidiBdBox_TextChanged(sender, e);
     }
 
     private async void BrowseButtonFfmpeg_OnClick(object? sender, RoutedEventArgs e)
@@ -766,6 +798,7 @@ public partial class MainWindow : SukiWindow
 
     private void DemuxButton_OnClick(object? sender, RoutedEventArgs e)
     {
+        if (Design.IsDesignMode) return;
         DockPanel1.IsVisible = false;
         Loader.IsVisible = true;
         var outPut = FileBox.Text ?? "";
@@ -879,6 +912,7 @@ public partial class MainWindow : SukiWindow
 
     private void CloseMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
+        if (Design.IsDesignMode) return;
         Close();
     }
 
@@ -891,6 +925,7 @@ public partial class MainWindow : SukiWindow
 
     public void ShowDialog(string title, string content, NotificationType type)
     {
+        if (Design.IsDesignMode) return;
         DialogManager.CreateDialog()
             .WithTitle(title)
             .WithContent(content)
@@ -976,17 +1011,20 @@ public partial class MainWindow : SukiWindow
 
     private void ConvertSf2Button_OnClick(object? sender, RoutedEventArgs e)
     {
+        if (Design.IsDesignMode) return;
         DockPanel1.IsVisible = false;
         Loader.IsVisible = true;
         var outFile = FileBox.Text;
+        var midiFile = MidiBox.Text ?? "/no.where";
+        var bdFile = BdBox.Text ?? "/no.where";
         new Thread(() =>
         {
             StaticUtils.LiveLoadStatus = "Converting JAM to SF2";
             var fileDirectory = new FileInfo(StaticUtils.FileName).Directory?.FullName ?? "";
             var extension = Path.GetExtension(StaticUtils.FileName);
             var fileName = new FileInfo(StaticUtils.FileName).Name.Replace(extension, "");
-            Converter.InstrumentToSoundFont2(Path.Combine(fileDirectory, fileName) + ".MID",
-                StaticUtils.FileName, Path.Combine(fileDirectory, fileName) + ".BD", Path.Combine(outFile ?? "", fileName) + ".SF2");
+            Converter.InstrumentToSoundFont2(midiFile ?? "",
+                StaticUtils.FileName, bdFile ?? "", Path.Combine(outFile ?? "", fileName) + ".SF2");
             Dispatcher.UIThread.Post(() =>
             {
                 DockPanel1.IsVisible = true;
@@ -998,7 +1036,7 @@ public partial class MainWindow : SukiWindow
 
     private async void ExtractSampleButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is not Button button) return;
+        if (Design.IsDesignMode || sender is not Button button) return;
         var filePath = Path.GetTempPath() + "/temp.wav";
         if ((button.Content?.ToString() ?? "") != "Play")
         {
@@ -1048,4 +1086,31 @@ public partial class MainWindow : SukiWindow
 
 
     public static readonly StyledProperty<bool> DevModeProperty = AvaloniaProperty.Register<MainWindow, bool>(nameof(DevMode), defaultValue: true);
+
+    private async void BrowseButtonBdMidi_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (Design.IsDesignMode || sender is not Button button) return;
+        bool bdB = button.Name == "BrowseButtonBd";
+        var loadFiles = await StorageProvider.OpenFilePickerAsync(
+            new FilePickerOpenOptions
+            {
+                Title = "Select " + (bdB ? "BD": "MIDI") + " file",
+                FileTypeFilter = [bdB ? Filters.BdFile : Filters.MidiFile]
+            });
+        if (loadFiles.Count == 0) return;
+
+        var fileName = Uri.UnescapeDataString(loadFiles[0].Path.AbsolutePath);
+        if (bdB)
+        {
+            BdBox.Text = fileName;
+        } else
+        {
+            MidiBox.Text = fileName;
+        }
+    }
+
+    private void MidiBdBox_TextChanged(object? sender, TextChangedEventArgs e)
+    {
+        ConvertSf2Button.IsEnabled = File.Exists(BdBox.Text) && File.Exists(MidiBox.Text) && Directory.Exists(FileBox.Text);
+    }
 }

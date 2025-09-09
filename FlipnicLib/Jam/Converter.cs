@@ -140,15 +140,15 @@ public abstract class Converter
 
                 var pan = splitChunk.Pan - 64;
                 sf2.AddInstrumentGenerator(SF2Generator.Pan, new SF2GeneratorAmount { Amount = (short)(pan) });
-                sf2.AddInstrumentGenerator(SF2Generator.FineTune, new SF2GeneratorAmount { Amount = (short)((splitChunk.EnablePitchBend ? splitChunk.PitchBend : splitChunk.FineTunePitch) * 6 )});
-                
+                sf2.AddInstrumentGenerator(SF2Generator.FineTune, new SF2GeneratorAmount { Amount = (short)((splitChunk.EnablePitchBend ? splitChunk.PitchBend * 0x50 : splitChunk.FineTunePitch * 6.5) )});
+
                 sf2.AddInstrumentGenerator(SF2Generator.DelayModEnv, new SF2GeneratorAmount { Amount = (short)(splitChunk.Delay * 8) });
                 sf2.AddInstrumentGenerator(SF2Generator.SustainModEnv, new SF2GeneratorAmount { Amount = (short)(splitChunk.Sustain * 600) });
                 sf2.AddInstrumentGenerator(SF2Generator.ReleaseModEnv, new SF2GeneratorAmount { Amount = (short)(splitChunk.Release * 8) });
 
                 if (splitChunk.Reverb)
                 {
-                    sf2.AddInstrumentGenerator(SF2Generator.ReverbEffectsSend, new SF2GeneratorAmount { Amount = 300 });
+                    sf2.AddInstrumentGenerator(SF2Generator.ReverbEffectsSend, new SF2GeneratorAmount { Amount = 800 });
                 }
 
                 if (prog.CountOrFlag == 0xFF)

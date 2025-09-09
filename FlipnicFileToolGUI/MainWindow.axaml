@@ -3,7 +3,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:FlipnicFileToolGUI"
-        mc:Ignorable="d" Width="700" Height="500"
+        mc:Ignorable="d"
+        d:DesignWidth="800" d:DesignHeight="800"
+        Width="700" Height="500"
         Icon="Assets\F.PNG"
         xmlns:sukiUi="clr-namespace:SukiUI.Controls;assembly=SukiUI"
         x:DataType="vm:MainWindow" x:Class="FlipnicFileToolGUI.MainWindow"
@@ -36,14 +38,14 @@
         </NativeMenu>
     </NativeMenu.Menu>
     <sukiUi:SukiWindow.MenuItems>
-        <MenuItem Header="File">
+        <MenuItem Header="File" Name="FileMenu1">
             <MenuItem Header="New Window" Name="NewWindowMenuItem" Click="NewWindowMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Open" Name="OpenMenuItem" Click="OpenMenuItem_OnClick"></MenuItem>
             <Separator/>
             <MenuItem Header="Close window" Name="CloseMenuItem" Click="CloseMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Exit" Name="ExitMenuItem" Click="ExitMenuItem_OnClick"></MenuItem>
         </MenuItem>
-        <MenuItem Header="Options">
+        <MenuItem Header="Options" Name="OptionMenu1">
             <MenuItem Header="Toggle dark theme" Click="PalMenuItem_OnClick"></MenuItem>
             <Separator/>
           <MenuItem Header="Import JA.MSG" Click="OpenMenuItem_OnClick"></MenuItem>
@@ -75,7 +77,7 @@
                         </sukiUi:SukiSideMenuItem>
                         <sukiUi:SukiSideMenuItem Name="ImagePreviewTab" Header="Preview" IsVisible="False">
                             <sukiUi:SukiSideMenuItem.Icon>
-                                <vm:CircleDot ColorA="Violet" ColorB="MidnightBlue" Text="🖼️"></vm:CircleDot>
+                                <vm:CircleDot ColorA="Violet" ColorB="MidnightBlue" Text="🖼"></vm:CircleDot>
                             </sukiUi:SukiSideMenuItem.Icon>
                             <sukiUi:SukiSideMenuItem.PageContent>
                                 <Grid RowDefinitions="*,Auto">
@@ -195,6 +197,24 @@
                                                 <TextBox Name="FFmpegBox" Grid.Column="1" TextChanged="FFmpegBox_OnTextChanged" />
                                                 <Button Name="BrowseButtonFfmpeg" Click="BrowseButtonFfmpeg_OnClick" Grid.Column="2" Content="Browse…"></Button>
                                             </Grid>
+                                          <Grid Name="MidiBrowserGrid" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
+                                            <Label Grid.Column="0" VerticalAlignment="Center">MIDI file:</Label>
+                                            <TextBox Name="MidiBox" Grid.Column="1" TextChanged="MidiBdBox_TextChanged">
+                                              <ToolTip.Tip>
+                                                <Label>A MIDI file is required to determine which channel each program should correspond to</Label>
+                                              </ToolTip.Tip>
+                                            </TextBox>
+                                            <Button Name="BrowseButtonMidi" Click="BrowseButtonBdMidi_OnClick" Grid.Column="2" Content="Browse…"></Button>
+                                          </Grid>
+                                          <Grid Name="BdBrowserGrid" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
+                                            <Label Grid.Column="0" VerticalAlignment="Center">JAM body file (.BD):</Label>
+                                            <TextBox Name="BdBox" Grid.Column="1" TextChanged="MidiBdBox_TextChanged">
+                                              <ToolTip.Tip>
+                                                <Label>The .BD fie contains samples and it should be paired with a corresponding .HD file</Label>
+                                              </ToolTip.Tip>
+                                            </TextBox>
+                                            <Button Name="BrowseButtonBd" Click="BrowseButtonBdMidi_OnClick" Grid.Column="2" Content="Browse…"></Button>
+                                          </Grid>
                                             <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
                                                 <Label Grid.Column="0" VerticalAlignment="Center">Save to:</Label>
                                                 <TextBox Name="FileBox" Grid.Column="1" TextChanged="FFmpegBox_OnTextChanged" />
@@ -208,7 +228,7 @@
                                             <Button Click="DemuxButton_OnClick" Name="DemuxButton">Demux</Button>
                                             <Button Click="ConvertMovAacButton_OnClick" Name="ConvertMovAacButton" IsEnabled="False">Convert to .MOV/.AAC</Button>
                                             <Button Click="ConvertMovButton_OnClick" Name="ConvertMovButton" IsEnabled="False">Convert to .MOV</Button>
-                                            <Button Click="ConvertSf2Button_OnClick" Name="ConvertSf2Button" IsEnabled="True">Convert to .SF2</Button>
+                                            <Button Click="ConvertSf2Button_OnClick" Name="ConvertSf2Button" IsEnabled="False">Convert to .SF2</Button>
                                         </StackPanel>
                                     </StackPanel>
                                 </sukiUi:GlassCard>
