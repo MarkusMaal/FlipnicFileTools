@@ -1,6 +1,6 @@
 # Flipnic file tools
 
-Several command line tools for various file formats used by Flipnic. GUI version maybe released in the future (or when someone else decides to make it).
+Several command line tools with a GUI front-end for various file formats used by Flipnic.
 
 Prerequisites:
 
