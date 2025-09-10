@@ -298,7 +298,19 @@ public partial class MainWindow : SukiWindow
                     ds.ReadExactly(lp4Da);
                     var lp4 = new Lp4(lp4Da);
                     LoadAsString(lp4, "Flipnic resource file");
-                    Dispatcher.UIThread.Post(() => ModelTab.IsVisible = true);
+                    StaticUtils.LiveLoadStatus = "Initializing OpenGL";
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        ModelTab.IsSelected = true;
+                        InfoTab.IsSelected = false;
+                    });
+                    Thread.Sleep(1000);
+                    Dispatcher.UIThread.Post(() => {
+                        GlControl.ImportLP4(lp4);
+                        Init3DStuff();
+                        ModelTab.IsSelected = false;
+                        ModelTab.IsVisible = true;
+                    });
                     break;
                 case "IPU":
                     var ipu = Ipu.GetInfoAsString(ds);
@@ -568,6 +580,24 @@ public partial class MainWindow : SukiWindow
             {string.Join(" ", desktop.Args.Skip(3).ToArray())}
             """;
         ErrorDisplayed = true;
+    }
+
+    private void Init3DStuff()
+    {
+        DispatcherTimer dpt = new();
+        dpt.Interval = TimeSpan.FromMilliseconds(100);
+        dpt.Tick += (_, _) =>
+        {
+            FPSLabel.Content = GlControl.GetInfo();
+            MoreInfoLabel.Content = GlControl.GetInfo(true);
+        };
+        dpt.Start();
+        foreach (var s in GlControl.GetVertices().Split("\n"))
+        {
+            Vertices.Items.Add(s);
+        }
+
+        GlControl.Focus();
     }
 
     private void DetectFromOutput(Process p, TextBox? textBox, string friendlyName)
@@ -1112,5 +1142,19 @@ public partial class MainWindow : SukiWindow
     private void MidiBdBox_TextChanged(object? sender, TextChangedEventArgs e)
     {
         ConvertSf2Button.IsEnabled = File.Exists(BdBox.Text) && File.Exists(MidiBox.Text) && Directory.Exists(FileBox.Text);
+    }
+
+    private async void ExportModelButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var topLevel = GetTopLevel(this);
+        var file = await topLevel!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions()
+        {
+            Title = "Save file",
+            FileTypeChoices = [Filters.ObjFile]
+        });
+
+        if (file is null) return;
+        GlControl.SaveAs(Uri.UnescapeDataString(file.Path.AbsolutePath));
+        ShowDialog("Flipnic file tools", "File saved successfully", NotificationType.Success);
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Avalonia;
+using FlipnicLib;
 using System;
 using System.Diagnostics;
-using FlipnicLib;
 
 namespace FlipnicFileToolGUI;
 
@@ -55,11 +55,8 @@ class Program
     // Avalonia configuration, don't remove; also used by visual designer.
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
-            .UsePlatformDetect().With(new MacOSPlatformOptions
-            {
-                DisableDefaultApplicationMenuItems = true
-            })
+            .UsePlatformDetect().With(new MacOSPlatformOptions { DisableDefaultApplicationMenuItems = true })
             .WithInterFont()
-            
+            .With(new Win32PlatformOptions { RenderingMode = [Win32RenderingMode.Wgl] }) // remove this one if you don't care about OpenGL support
             .LogToTrace();
 }

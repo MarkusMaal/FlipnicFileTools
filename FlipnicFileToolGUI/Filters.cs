@@ -105,6 +105,13 @@ public class Filters
         AppleUniformTypeIdentifiers = ["com.microsoft.waveform-audio"]
     };
 
+    public static FilePickerFileType ObjFile { get; } = new("Wavefront OBJ")
+    {
+        Patterns = ["*.OBJ"],
+        MimeTypes = ["model/obj", "application/prs.wavefront-obj", "application/x-tgif"],
+        AppleUniformTypeIdentifiers = ["public.text"]
+    };
+
     public static FilePickerFileType Executable { get; } = new("Executables")
     {
         MimeTypes =

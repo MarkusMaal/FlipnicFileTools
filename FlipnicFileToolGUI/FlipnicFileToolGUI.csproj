@@ -10,19 +10,32 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia" Version="11.3.4" />
-        <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.4" />
+        <PackageReference Include="Avalonia" Version="11.3.5" />
+        <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.5" />
         <PackageReference Include="Avalonia.Controls.ItemsRepeater" Version="11.1.5" />
-        <PackageReference Include="Avalonia.Desktop" Version="11.3.4" />
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.4" />
+        <PackageReference Include="Avalonia.Desktop" Version="11.3.5" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.5" />
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.3.4" />
+        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.3.5" />
         <PackageReference Include="NetCoreAudio" Version="2.0.0" />
+        <PackageReference Include="OpenTK" Version="4.9.4" />
+        <PackageReference Include="OpenTK.Graphics" Version="4.9.4" />
+        <PackageReference Include="OpenTKAvalonia" Version="1.0.0" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
         <PackageReference Include="SukiUI" Version="6.0.3" />
 
         <ProjectReference Include="..\FlipnicLib\FlipnicLib.csproj" />
     </ItemGroup>
+  <ItemGroup>
+    <None Remove=".gitignore" />
+    <None Update="Shaders\shader.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\shader.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
     <ItemGroup>
-        <AvaloniaResource Include="Assets\**"/>
+        <AvaloniaResource Include="Assets\**" />
     </ItemGroup>
 </Project>
