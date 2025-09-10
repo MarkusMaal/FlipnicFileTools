@@ -18,4 +18,12 @@ public class BitmapTools
         ms.Position = 0;
         return new Bitmap(ms);
     }
+
+    public byte[] ToMemoryStream()
+    {
+        var ms = new MemoryStream();
+        Image?.SaveBitmap(ms);
+        ms.Position = 0;
+        return ms.ToArray();
+    }
 }

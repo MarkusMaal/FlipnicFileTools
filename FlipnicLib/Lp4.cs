@@ -21,6 +21,10 @@ public class Lp4(byte[] data)
     public bool Is2dAnimation { get; set; } = data[0x13] == 0x01;
     private List<float[]> verticies = new();
 
+    private string TexturePath { get; set; } = "";
+    
+    public Tim2? Texture { get; set; }
+
     public override string ToString()
     {
         var er = HasEmbeddedResources ? "Yes" : "No";
@@ -49,34 +53,45 @@ public class Lp4(byte[] data)
         var i = 0;
         while (i < data.Length - 0x20)
         {
-            float f, f2, f3, f4;
-            f = BitConverter.ToSingle([.. data.Skip(i).Take(4)], 0);
-            f2 = BitConverter.ToSingle([.. data.Skip(i + 0x4).Take(4)], 0);
-            f3 = BitConverter.ToSingle([.. data.Skip(i + 0xc).Take(4)], 0);
-            f4 = BitConverter.ToSingle([.. data.Skip(i + 0x1c).Take(4)], 0);
-            if ((f == f2) && (f == f3) && (f4 == 1f))
+            int f, f2, f3, f4;
+            f = BitConverter.ToInt32([.. data.Skip(i).Take(4)], 0);
+            f2 = BitConverter.ToInt32([.. data.Skip(i + 0x10).Take(4)], 0);
+            f3 = BitConverter.ToInt32([.. data.Skip(i + 0x14).Take(4)], 0);
+            f4 = BitConverter.ToInt32([.. data.Skip(i + 0x1c).Take(4)], 0);
+            if ((f > 0) && (f2 == f3) && (f3 == f4))
             {
-                var len = BitConverter.ToInt32(data.Skip(i - 0x10).Take(4).ToArray());
+                var len = f2;
                 if ((len > 0) && (len < data.Length))
                 {
-                    AppendVerticies(i);
-                    i += len * 0x10;
+                    AppendVerticies(i+0x20, len);
+                    i += 2*len * 0x10 + 0xA0;
+                    break;
+                    i += (f2 + f3 + f4) * 0x10;
                 }
             }
             i += 0x10;
         }
+
+        TexturePath = StaticUtils.GetString(data.Skip(i).Take(0x20).ToArray());
+        if (!File.Exists(Path.Combine(new FileInfo(StaticUtils.FileName).Directory?.FullName ?? "/",
+                TexturePath.ToUpper()))) return;
+        var fs = File.OpenRead(Path.Combine(new FileInfo(StaticUtils.FileName).Directory?.FullName ?? "/",
+            TexturePath.ToUpper()));
+        var d = new byte[fs.Length];
+        fs.ReadExactly(d, 0, d.Length);
+        Texture = new Tim2(d);
     }
 
     private void AppendVerticies(int offset, int forced_length = -1)
     {
         var len = forced_length == -1 ? BitConverter.ToInt32(data, offset) + 1 : forced_length;
 
-        for (var i = offset + 0x10; i < offset + len * 0x10 + 0x10; i += 0x10)
+        float x, y, z;
+        for (var i = offset; i < offset + len * 0x10; i += 0x10)
         {
-            var x = BitConverter.ToSingle(data.Skip(i).Take(4).ToArray(), 0);
-            var y = BitConverter.ToSingle(data.Skip(i + 4).Take(4).ToArray(), 0);
-            var z = BitConverter.ToSingle(data.Skip(i + 8).Take(4).ToArray(), 0);
-            var w = BitConverter.ToSingle(data.Skip(i + 12).Take(4).ToArray(), 0);
+            x = BitConverter.ToSingle(data.Skip(i).Take(4).ToArray(), 0);
+            y = BitConverter.ToSingle(data.Skip(i + 4).Take(4).ToArray(), 0);
+            z = BitConverter.ToSingle(data.Skip(i + 8).Take(4).ToArray(), 0);
             verticies.Add([x, y, z]);
         }
     }
@@ -103,6 +118,7 @@ public class Lp4(byte[] data)
             result.Add(vertex[0]);
             result.Add(vertex[1]);
             result.Add(vertex[2]);
+            result.Add(1f);
         }
         return result.ToArray();
     }

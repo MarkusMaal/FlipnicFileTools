@@ -72,17 +72,15 @@
                                 <vm:CircleDot ColorA="Orange" ColorB="Brown" Text="⬡"></vm:CircleDot>
                             </sukiUi:SukiSideMenuItem.Icon>
                             <sukiUi:SukiSideMenuItem.PageContent>
-                              <Grid RowDefinitions="*,100" Background="DarkBlue">
+                              <Grid RowDefinitions="*,100">
                                 <TextBlock Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center">OpenGL error</TextBlock>
                                 <vm:CubeRenderingTkOpenGlControl  Focusable="True" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="GlControl"></vm:CubeRenderingTkOpenGlControl>
                                 <Button Margin="10" VerticalAlignment="Top" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>
-                                <StackPanel Grid.Row="1" Background="Black">
-                                  <StackPanel Orientation="Horizontal">
+                                  <StackPanel Orientation="Horizontal" Grid.Row="1">
                                     <Label Margin="5" Name="FPSLabel">No info</Label>
                                     <Label Margin="5" Name="MoreInfoLabel">No info</Label>
                                     <ListBox Margin="5" Name="Vertices" Width="500"></ListBox>
                                   </StackPanel>
-                                </StackPanel>
                                </Grid>
                             </sukiUi:SukiSideMenuItem.PageContent>
                         </sukiUi:SukiSideMenuItem>

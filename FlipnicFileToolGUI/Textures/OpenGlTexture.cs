@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using FlipnicLib;
 using OpenTK.Graphics.OpenGL;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -18,9 +20,9 @@ namespace FlipnicFileToolGUI.Textures
             _handle = GL.GenTexture();
         }
 
-        public void LoadFromFile(string? path)
+        public void LoadFromFile(Tim2? texture)
         {
-            var image = (path != null) ? Image.Load<Rgba32>(path) : null;
+            var image = (texture != null) ? Image.Load<Rgba32>(new BitmapTools { Image = texture }.ToMemoryStream()) : null;
             byte[] rndCol = [(byte)r.Next(0, 255), (byte)r.Next(0, 255), (byte)r.Next(0, 255)];
             List<byte> pixels = [];
             if (image != null)
@@ -30,7 +32,7 @@ namespace FlipnicFileToolGUI.Textures
                 image.Mutate(x => x.Flip(FlipMode.Vertical));
 
                 //Convert ImageSharp's format into a byte array, so we can use it with OpenGL.
-                pixels = new(4 * image.Width * image.Height);
+                pixels = new List<byte>(4 * image.Width * image.Height);
 
                 for (var y = 0; y < image.Height; y++)
                 {

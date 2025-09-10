@@ -35,6 +35,7 @@ namespace FlipnicFileToolGUI
         private Point _lastPos;
 
         private const float Speed = 0.015f;
+        private Tim2? _texture;
 
         private float[] _vertices = [-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.5f, 0.5f, -0.5f, 1.0f, 1.0f, -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 0.5f, 0.5f, 0.5f, 1.0f, 1.0f, -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, -0.5f, 0.5f, 0.5f, 1.0f, 0.0f, -0.5f, 0.5f, -0.5f, 1.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, -0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.5f, -0.5f, 0.5f, 1.0f, 0.0f, -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f, 0.0f, -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, -0.5f, 0.5f, -0.5f, 0.0f, 1.0f];
         private readonly uint[] _indices =
@@ -59,7 +60,7 @@ namespace FlipnicFileToolGUI
         public string GetVertices()
         {
             StringBuilder sb = new();
-            for (int i = 0; i < _vertices.Length; i += 3)
+            for (int i = 0; i < _vertices.Length; i += 4)
             {
                 sb.Append($"X={_vertices[i]},Y={_vertices[i + 1]},Z={_vertices[i + 2]}\n");
             }
@@ -70,10 +71,15 @@ namespace FlipnicFileToolGUI
 
         public void ImportLP4(Lp4 lp4)
         {
+            lp4.Read();
+            _texture = null;
+            if (lp4.Texture != null)
+            {
+                _texture = lp4.Texture;
+            }
             OpenTkInit();
             GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            lp4.Read();
             _vertices = lp4.GetVerticies();
             
             GL.GenBuffer();
@@ -101,7 +107,7 @@ namespace FlipnicFileToolGUI
             //Load textures
             _brickTexture = new();
             _brickTexture.Use();
-            _brickTexture.LoadFromFile(null);
+            _brickTexture.LoadFromFile(_texture);
 
             //Set textures in shaders
             _shader.Use();
@@ -122,16 +128,17 @@ namespace FlipnicFileToolGUI
 
             //Copy triangle vertices to the buffer
             GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+            
 
             //Configure structure of the vertices
             //					  (position parameter in vertex shader, 3 points, data is stored as floats, non-normalized, 5 floats/point, first point at offset 0 in data array)
-            GL.VertexAttribPointer(_shader.GetAttribLocation("aPosition"), 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.VertexAttribPointer(_shader.GetAttribLocation("aPosition"), 3, VertexAttribPointerType.Float, true, 4 * sizeof(float), 0);
             GL.EnableVertexAttribArray(_shader.GetAttribLocation("aPosition"));
 
 
             //Configure texture coordinate structure
             var texCoordLocation = _shader.GetAttribLocation("aTexCoord");
-            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 4 * sizeof(float));
             GL.EnableVertexAttribArray(texCoordLocation);
 
             //Set up the EBO

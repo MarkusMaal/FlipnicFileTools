@@ -180,7 +180,7 @@ public class Tim2
         output.Write(imageData.ToArray(), 0, imageData.Count);
         if (output is not FileStream fs)
         {
-            Console.WriteLine($"\rLoaded image data to ({StaticUtils.GetFilesizeString(output.Length)})");
+            Console.WriteLine($"\rLoaded image data to memory ({StaticUtils.GetFilesizeString(output.Length)})");
             return;
         }
 
