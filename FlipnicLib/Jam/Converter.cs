@@ -38,11 +38,12 @@ public abstract class Converter
         instrument.Read(new BinaryStream(ms));
         List<(byte Channel, byte Program)> channelToPrograms = new List<(byte Channel, byte Program)>();
         byte _i = 1;
+        var preset = 0;
         foreach (SqMessage msg in ssqt.Track.Messages)
         {
             if (msg.Event is not SqProgramEvent progChangeEvent) continue;
-            byte channel = (byte)(msg.Status & 0x0F);
-            channelToPrograms.Add((channel, progChangeEvent.Program));
+            var channel = (byte)((msg.Status & 0x0F));
+            channelToPrograms.Add((channel, (byte)(progChangeEvent.Program)));
             _i++;
         }
         
@@ -59,8 +60,9 @@ public abstract class Converter
         var idx = 0;
         for (var j = 0; j < channelToPrograms.Count; j++)
         {
+            if (channelToPrograms[j].Program >= instrument.ProgramChunks.Count) continue;
             var prog = instrument.ProgramChunks[channelToPrograms[j].Program];
-            if (prog is null) continue;
+            if (prog == null) continue;
             foreach (var splitChunk in prog.SplitChunks)
             {
                 // May refer to same sample so offset
@@ -80,7 +82,7 @@ public abstract class Converter
                 byte[] decoded = SonyVag.Decode(vag);
                 Span<short> pcm16 = MemoryMarshal.Cast<byte, short>(decoded);
 
-                bool looping = loopStart != 0 && loopEnd != 0;
+                bool looping = loopStart != 0 && loopEnd != 0 && loopStart < loopEnd && loopStart != loopEnd;
 
                 Console.WriteLine($"SF2: vag{j} (base note: {splitChunk.BaseNote}) - looping: {looping}");
 
@@ -90,9 +92,8 @@ public abstract class Converter
                     double a = (pcm16.Length / ((double)vag.Length / 0x10));
                     wavLoopStart = (uint)(a * loopStart);
                 }
-
                 // Add the sample to the sound bank. Instruments will then pick which sample to use.
-                uint sampleId = sf2.AddSample(pcm16, $"sample{sampleIdx++}", looping, wavLoopStart, 44100, (byte)splitChunk.BaseNote, splitChunk.FineTunePitch);
+                uint sampleId = sf2.AddSample(pcm16, $"sample{sampleIdx++}", true, looping ? wavLoopStart : 0, 44100, (byte)splitChunk.BaseNote, 0);
 
                 // Dump instrument noises (debug)
                 /*WaveFormat waveFormat = new WaveFormat(44100, 16, 1);
@@ -129,7 +130,7 @@ public abstract class Converter
             //    sf2.AddPresetGenerator(SF2Generator.KeyRange, new SF2GeneratorAmount { LowByte = prog.FullRangeMin, HighByte = prog.FullRangeMax });
 
             sf2.AddPresetGenerator(SF2Generator.Instrument, new SF2GeneratorAmount { Amount = (short)sf2.AddInstrument(name) });
-            
+            long offset = 0;
             for (int k = 0; k < prog.SplitChunks.Count; k++)
             {
                 var splitChunk = prog.SplitChunks[k];
@@ -140,11 +141,22 @@ public abstract class Converter
 
                 var pan = splitChunk.Pan - 64;
                 sf2.AddInstrumentGenerator(SF2Generator.Pan, new SF2GeneratorAmount { Amount = (short)(pan) });
-                sf2.AddInstrumentGenerator(SF2Generator.FineTune, new SF2GeneratorAmount { Amount = (short)((splitChunk.EnablePitchBend ? splitChunk.PitchBend * 0x50 : splitChunk.FineTunePitch * 6.5) )});
-
-                sf2.AddInstrumentGenerator(SF2Generator.DelayModEnv, new SF2GeneratorAmount { Amount = (short)(splitChunk.Delay * 8) });
-                sf2.AddInstrumentGenerator(SF2Generator.SustainModEnv, new SF2GeneratorAmount { Amount = (short)(splitChunk.Sustain * 600) });
-                sf2.AddInstrumentGenerator(SF2Generator.ReleaseModEnv, new SF2GeneratorAmount { Amount = (short)(splitChunk.Release * 8) });
+                sf2.AddInstrumentGenerator(SF2Generator.FineTune, new SF2GeneratorAmount { Amount = (short)((splitChunk.EnablePitchBend ? 0 : splitChunk.FineTunePitch * 6.5) )});
+                if (StaticUtils.AltSf2Method)
+                {
+                    (splitChunk.Attack, splitChunk.Decay) = (splitChunk.Decay, splitChunk.Attack);
+                }
+                if (StaticUtils.ExportEnvelopes)
+                {
+                    sf2.AddInstrumentGenerator(SF2Generator.AttackVolEnv,
+                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Attack * 125f - 4000f) });
+                    sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
+                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Decay * 125f - 4000f) });
+                    sf2.AddInstrumentGenerator(SF2Generator.SustainVolEnv,
+                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Volume * 11.25f) });
+                    sf2.AddInstrumentGenerator(SF2Generator.ReleaseVolEnv,
+                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Release * 125f - 4000f) });
+                }
 
                 if (splitChunk.Reverb)
                 {
@@ -156,6 +168,7 @@ public abstract class Converter
                 else
                     sf2.AddInstrumentGenerator(SF2Generator.KeyRange, new SF2GeneratorAmount { LowByte = (byte)prog.SplitChunks[k].NoteMin, HighByte = (byte)prog.SplitChunks[k].NoteMax });
                 sf2.AddInstrumentGenerator(SF2Generator.SampleID, new SF2GeneratorAmount { UAmount = vagSamples[splitChunk.SampleOffset].SampleID });
+                offset += vagSamples[splitChunk.SampleOffset].SampleData.Length;
             }
         }
 

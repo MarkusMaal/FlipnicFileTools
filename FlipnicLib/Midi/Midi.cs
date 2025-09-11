@@ -115,7 +115,7 @@ public class SqMessage
         }
         else
         {
-            Status = lastStatus;
+            status = lastStatus;
             bs.Position -= 1;
         }
 
@@ -249,8 +249,9 @@ public class SqProgramEvent : ISqEvent
 
     public void Read(BinaryStream bs)
     {
-        Program = (byte)(bs.Read1Byte() & 0x0F);
+        Program = (byte)(bs.Read1Byte());
         Console.Write("");
+        bs.Position--;
     }
 }
 
@@ -262,6 +263,7 @@ public class SqPitchBendEvent : ISqEvent
     public void Read(BinaryStream bs)
     {
         Lsb = bs.Read1Byte();
+        bs.Position--;
     }
 }
 

@@ -41,6 +41,10 @@ public abstract class StaticUtils
     public static int WindowWidth { get; set; }
 
     public static string MsgFile { get; set; } = "";
+
+    public static bool ExportEnvelopes { get; set; } = true;
+
+    public static bool AltSf2Method { get; set; } = false;
     
     public static void PrintLoader()
     {

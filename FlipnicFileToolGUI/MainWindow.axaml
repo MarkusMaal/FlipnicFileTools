@@ -232,6 +232,9 @@
                                             <CheckBox Name="PalToggle" Margin="0,2, 0,-8" IsChecked="False" Content="Use PAL instead of NTSC" IsCheckedChanged="PalToggle_CheckedChanged">
                                                 <ToolTip.Tip>If the output is at the wrong framerate or video de-syncs with audio, you may need to check this option.</ToolTip.Tip>
                                             </CheckBox>
+                                            <CheckBox Name="EnvelopeToggle" Margin="0,2, 0,-8" IsChecked="True" Content="Export envelopes" IsCheckedChanged="PalToggle_CheckedChanged">
+                                                <ToolTip.Tip>Tries to create the soundfont with proper envelopes (attack, decay, sustain, release). Uncheck this if you don't want that.</ToolTip.Tip>
+                                            </CheckBox>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
                                             <Button Click="DemuxButton_OnClick" Name="DemuxButton">Demux</Button>

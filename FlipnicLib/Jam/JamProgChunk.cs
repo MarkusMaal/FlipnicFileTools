@@ -104,7 +104,7 @@ public class JamProgChunk
         List<string[]> rows = [];
         rows.AddRange(SplitChunks.Select(s => (string[]) [s.Volume + "%", s.Pan.ToString(),
             s.NoteMin.ToString(), s.NoteMax.ToString(), s.BaseNote.ToString(), s.FineTunePitch.ToString(), s.LfoTableIndex.ToString(),
-            s.FlagsAsString(), s.SampleOffset.ToString("X"), $"{s.Attack:X}:{s.Delay:X}:{s.Sustain:X}:{s.Release:X}"]));
+            s.FlagsAsString(), s.SampleOffset.ToString("X"), $"{s.Attack:X}:{s.Decay:X}:{s.Sustain:X}:{s.Release:X}"]));
         return o+StaticUtils.GenerateTable(colHeaders, rows);
     }
 }
@@ -164,10 +164,10 @@ public class JamSplitChunk
     /// </summary>
     public byte LfoTableIndex { get; set; }
     
-    public byte Attack { get; set; }
-    public byte Delay { get; set; }
+    public sbyte Attack { get; set; }
+    public sbyte Decay { get; set; }
     public byte Sustain { get; set; }
-    public byte Release { get; set; }
+    public sbyte Release { get; set; }
 
     // Flags
     public bool HighPriority => (Flags & 0x80) != 0;
@@ -184,10 +184,10 @@ public class JamSplitChunk
         BaseNote = (Note)bs.Read1Byte();
         FineTunePitch = bs.ReadSByte();
         SampleOffset = (uint)(bs.ReadInt16()) & 0xFFFF;
-        Release = bs.Read1Byte();
         Sustain = bs.Read1Byte();
-        Delay = bs.Read1Byte();
-        Attack = bs.Read1Byte();
+        Attack = bs.ReadSByte();
+        Release = bs.ReadSByte();
+        Decay = bs.ReadSByte();
         bs.Position++; // skip the Volume Override
         Volume = (byte)(Math.Ceiling(bs.Read1Byte() / 128f * 100f));
         Pan = (byte)(bs.Read1Byte() + 0xC);

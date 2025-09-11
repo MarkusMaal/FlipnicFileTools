@@ -135,6 +135,9 @@ internal static class Program
                 case "--msg-path":
                     StaticUtils.MsgFile = arg;
                     break;
+                case "--no-envelopes":
+                    StaticUtils.ExportEnvelopes = false;
+                    break;
                 default:
                     break;
             }
@@ -407,6 +410,7 @@ internal static class Program
                
                --show-hd*                 List programs in the .HD file
                --convert-sf2              Allows you to convert soundbank to .SF2 (specify .HD file as input)
+               --no-envelopes             Doesn't export envelopes (attack, decay, sustain, release)
                
                MIDI sequences (*.MID)
                

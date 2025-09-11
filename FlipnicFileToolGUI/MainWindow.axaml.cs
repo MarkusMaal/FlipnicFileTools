@@ -222,6 +222,7 @@ public partial class MainWindow : SukiWindow
                         BdBrowserGrid.IsVisible = true;
                         MidiBrowserGrid.IsVisible = true;
                         PalToggle.IsVisible = false;
+                        EnvelopeToggle.IsVisible = true;
                         ConvertSf2Button.IsVisible = true;
                         ConvertMovAacButton.IsVisible = false;
                         ConvertMovButton.IsVisible = false;
@@ -322,6 +323,7 @@ public partial class MainWindow : SukiWindow
                         ConvertMovAacButton.IsVisible = false;
                         FfmpegBrowserGrid.IsVisible = true;
                         PalToggle.IsVisible = true;
+                        EnvelopeToggle.IsVisible = false;
                         ConvertSf2Button.IsVisible = false;
                         DemuxButton.IsVisible = false;
                         BdBrowserGrid.IsVisible = false;
@@ -392,6 +394,7 @@ public partial class MainWindow : SukiWindow
                         DemuxButton.IsVisible = true;
                         FfmpegBrowserGrid.IsVisible = true;
                         PalToggle.IsVisible = true;
+                        EnvelopeToggle.IsVisible = false;
                         ConvertSf2Button.IsVisible = false;
                         BdBrowserGrid.IsVisible = false;
                         MidiBrowserGrid.IsVisible = false;
@@ -790,6 +793,7 @@ public partial class MainWindow : SukiWindow
     private void FFmpegBox_OnTextChanged(object? sender, TextChangedEventArgs e)
     {
         if (FFmpegBox?.Text?.Length == 0) return;
+        if (FileBox?.Text?.Length == 0) return;
         var exist = new FileInfo(FFmpegBox?.Text ?? "/no.where").Exists;
         var exist2 = new DirectoryInfo(FileBox?.Text ?? "/no.where").Exists;
         DemuxButton.IsEnabled = exist2;
@@ -931,8 +935,16 @@ public partial class MainWindow : SukiWindow
 
     private void PalToggle_CheckedChanged(object? sender, RoutedEventArgs e)
     {
-        if (sender is null) return;
-        StaticUtils.Pal = ((CheckBox)sender).IsChecked ?? false;
+        if (sender is not CheckBox cb) return;
+        switch (cb.Name)
+        {
+            case "PalToggle":
+                StaticUtils.Pal = cb.IsChecked ?? false;
+                break;
+            case "EnvelopeToggle":
+                StaticUtils.ExportEnvelopes = cb.IsChecked ?? false;
+                break;
+        }
     }
 
     private void CloseNativeMenuItem_Click(object? sender, EventArgs e)
