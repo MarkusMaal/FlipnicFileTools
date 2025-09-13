@@ -22,7 +22,7 @@
         <NativeMenu>
             <NativeMenuItem Header="File" IsVisible="true">
                 <NativeMenu>                    
-                    <NativeMenuItem Header="Open" Gesture="Meta+O" Click="OpenNativeMenuItem_OnClick"/> 
+                    <NativeMenuItem Header="Open" Gesture="Meta+O" Click="OpenNativeMenuItem_OnClick"/>
                     <NativeMenuItemSeparator />
                     <NativeMenuItem Header="Close" Gesture="Meta+W" Click="CloseNativeMenuItem_Click" />
                 </NativeMenu>
@@ -41,6 +41,7 @@
         <MenuItem Header="File" Name="FileMenu1">
             <MenuItem Header="New Window" Name="NewWindowMenuItem" Click="NewWindowMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Open" Name="OpenMenuItem" Click="OpenMenuItem_OnClick"></MenuItem>
+            <MenuItem Header="Open from clipboard" Name="PasteMenuItem" IsVisible="{OnPlatform False, Linux=True}" HotKey="Ctrl+Alt+V" Click="PasteMenuItem_OnClick"></MenuItem>
             <Separator/>
             <MenuItem Header="Close window" Name="CloseMenuItem" Click="CloseMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Exit" Name="ExitMenuItem" Click="ExitMenuItem_OnClick"></MenuItem>
@@ -136,7 +137,7 @@
                                 <vm:CircleDot ColorA="DeepPink" ColorB="DarkViolet" Text="M"></vm:CircleDot>
                             </sukiUi:SukiSideMenuItem.Icon>
                             <sukiUi:SukiSideMenuItem.PageContent>
-                                <vm:MenuMockup Name="MenuMockup" MenuElementSource="{Binding MenuElements}" Width="640" Height="480"></vm:MenuMockup>
+                                <vm:MenuMockup Name="MenuMockup" Width="640" Height="480"></vm:MenuMockup>
                             </sukiUi:SukiSideMenuItem.PageContent>
                         </sukiUi:SukiSideMenuItem>
                         <sukiUi:SukiSideMenuItem Name="BdSampleTab" Header="Samples" IsVisible="False">

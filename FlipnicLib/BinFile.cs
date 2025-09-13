@@ -3,10 +3,11 @@ using FlipnicLib.Types;
 
 namespace FlipnicLib;
 
-public abstract class BinFile
+public class BinFile
 {
-    public static List<VirtualFile> FsEntries { get; set; } = [];
-    public static void ListBin(Stream src)
+    public BinFile() {}
+    public List<VirtualFile> FsEntries { get; set; } = [];
+    public void ListBin(Stream src)
     {
         FsEntries.Clear();
         string[] colHeader = ["Path", "Offset", "Size"];
@@ -142,7 +143,7 @@ public abstract class BinFile
     }
 
 
-    private static Dictionary<string, long> GetFsEntries(string source)
+    private Dictionary<string, long> GetFsEntries(string source)
     {
         var fsentries = new Dictionary<string, long>();
         using Stream src = File.OpenRead(source);
@@ -202,7 +203,7 @@ public abstract class BinFile
         return fsentries;
     }
 
-    public static void ExtractBin(string source, string destination, bool extract_subfolder = true)
+    public void ExtractBin(string source, string destination, bool extract_subfolder = true)
     {
         if (Directory.Exists(destination))
         {

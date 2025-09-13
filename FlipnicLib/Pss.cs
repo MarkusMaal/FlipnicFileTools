@@ -1,9 +1,10 @@
 namespace FlipnicLib;
 
-public abstract class Pss
+public class Pss(string fileName)
 {
+    private string FileName { get; set; } = fileName;
     private static readonly char Slash = OperatingSystem.IsWindows() ? '\\' : '/';
-    public static string ListPss(Stream inFile, bool extract = false, string? outFile = null)
+    public string ListPss(Stream inFile, bool extract = false, string? outFile = null)
     {
         outFile ??= Directory.GetCurrentDirectory();
         if (!outFile.EndsWith(Slash))
@@ -55,11 +56,11 @@ public abstract class Pss
                     {
                         long startRange = seek + 0x10;
                         var endRange = startRange + streamSize - 1;
-                        if (File.Exists(outFile + new FileInfo(StaticUtils.FileName).Name + $".{streamID}.INT"))
+                        if (File.Exists(outFile + new FileInfo(FileName).Name + $".{streamID}.INT"))
                         {
-                            File.Delete(outFile + new FileInfo(StaticUtils.FileName).Name + $".{streamID}.INT");
+                            File.Delete(outFile + new FileInfo(FileName).Name + $".{streamID}.INT");
                         }
-                        extractCommands.Add(StaticUtils.FileName + "," + new FileInfo(StaticUtils.FileName).Name + $".{streamID}.INT" + "," + startRange + "," + endRange);
+                        extractCommands.Add(FileName + "," + new FileInfo(FileName).Name + $".{streamID}.INT" + "," + startRange + "," + endRange);
                     }
                     seek += gotoPointer + 0x10;
                     relativeOffset += gotoPointer;
@@ -96,11 +97,11 @@ public abstract class Pss
                     {
                         long startRange = seek + 0x10;
                         var endRange = startRange + streamSize - 1;
-                        if (File.Exists(outFile + new FileInfo(StaticUtils.FileName).Name + ".IPU"))
+                        if (File.Exists(outFile + new FileInfo(FileName).Name + ".IPU"))
                         {
-                            File.Delete(outFile + new FileInfo(StaticUtils.FileName).Name + ".IPU");
+                            File.Delete(outFile + new FileInfo(FileName).Name + ".IPU");
                         }
-                        extractCommands.Add(StaticUtils.FileName + "," + new FileInfo(StaticUtils.FileName).Name + ".IPU" + "," + startRange + "," + endRange);
+                        extractCommands.Add(FileName + "," + new FileInfo(FileName).Name + ".IPU" + "," + startRange + "," + endRange);
                     }
                     seek += gotoPointer + 0x10;
                     relativeOffset += gotoPointer;
@@ -167,7 +168,7 @@ public abstract class Pss
     }
     
     
-    private static void CutFile(string sourceFilePath, string destinationFilePath, long startPosition, long endPosition)
+    private void CutFile(string sourceFilePath, string destinationFilePath, long startPosition, long endPosition)
     {
         StaticUtils.LiveLoadStatus = "Extracting streams, please wait...";
         Console.Write($"\r     {StaticUtils.LiveLoadStatus}".PadRight(StaticUtils.WindowWidth));

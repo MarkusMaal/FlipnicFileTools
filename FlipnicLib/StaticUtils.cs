@@ -34,8 +34,7 @@ public abstract class StaticUtils
     
     public static bool SimpleOutput { get; set; }
     public static bool Pal { get; set; }
-    public static string FileName { get; set; }
-
+    
     public static string LiveLoadStatus { get; set; }
 
     public static int WindowWidth { get; set; }
@@ -200,11 +199,11 @@ public abstract class StaticUtils
         p.WaitForExit();
     }
     
-    public static void ConvertAudio(string outFile, bool mono = false)
+    public static void ConvertAudio(string outFile, string fileName, bool mono = false)
     {
         Console.Write("     Loading sound file to memory".PadRight(StaticUtils.WindowWidth, ' '));
         StaticUtils.PrintLoader();
-        var data = File.ReadAllBytes(FileName);
+        var data = File.ReadAllBytes(fileName);
         Console.Write("\r     Separating left and right channels".PadRight(StaticUtils.WindowWidth, ' '));
         StaticUtils.PrintLoader();
         List<byte> interleavedDataL = [];

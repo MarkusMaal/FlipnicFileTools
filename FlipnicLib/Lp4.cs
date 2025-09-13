@@ -4,7 +4,7 @@ using System.Text;
 
 namespace FlipnicLib;
 
-public class Lp4(byte[] data)
+public class Lp4(byte[] data, string fileName)
 {
     public enum FileType {
         VariableList,
@@ -22,6 +22,8 @@ public class Lp4(byte[] data)
     private List<float[]> verticies = new();
 
     private string TexturePath { get; set; } = "";
+    
+    private string FileName { get; set; } = fileName;
     
     public Tim2? Texture { get; set; }
 
@@ -73,13 +75,13 @@ public class Lp4(byte[] data)
         }
 
         TexturePath = StaticUtils.GetString(data.Skip(i).Take(0x20).ToArray());
-        if (!File.Exists(Path.Combine(new FileInfo(StaticUtils.FileName).Directory?.FullName ?? "/",
+        if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
                 TexturePath.ToUpper()))) return;
-        var fs = File.OpenRead(Path.Combine(new FileInfo(StaticUtils.FileName).Directory?.FullName ?? "/",
+        var fs = File.OpenRead(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
             TexturePath.ToUpper()));
         var d = new byte[fs.Length];
         fs.ReadExactly(d, 0, d.Length);
-        Texture = new Tim2(d);
+        Texture = new Tim2(d, TexturePath);
     }
 
     private void AppendVerticies(int offset, int forced_length = -1)

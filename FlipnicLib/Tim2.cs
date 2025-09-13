@@ -19,9 +19,12 @@ public class Tim2
     }
     
     private ColorMode ColorType { get; set; }
+
+    private string? FileName { get; set; }
     
-    public Tim2(byte[] data, bool grayscale = false)
+    public Tim2(byte[] data, string fileName, bool grayscale = false)
     {
+        this.FileName = fileName;
         var headerSize = BitConverter.ToInt16(data, 0x1C);
         var bitmapSize = BitConverter.ToInt32(data, 0x18);
         var paletteSize = BitConverter.ToInt32(data, 0x14);
@@ -196,10 +199,11 @@ public class Tim2
             ColorMode.Tim4Bpp => "4 bpp",
             _ => "Monochrome"
         };
+        var fn = FileName != null ? new FileInfo(FileName).Name : "???";
         return $"""
                 TIM2 texture file
                 
-                Name: {new FileInfo(StaticUtils.FileName).Name}
+                Name: {fn}
                 Width: {Width}
                 Height: {Height}
                 Colors: {_pallette.Length/4}

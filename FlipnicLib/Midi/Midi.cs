@@ -6,11 +6,12 @@ using FlipnicLib.Jam;
 
 namespace FlipnicLib.Midi;
 
-public class Midi
+public class Midi(string fileName)
 {
     public MTrk Track { get; set; }
+    private string? FileName { get; } = fileName;
 
-    public void Read(string fileName)
+    public void Read()
     {
         Read(File.OpenRead(fileName));
     }
@@ -44,7 +45,8 @@ public class Midi
     {
         string[] colHeaders = ["Delta", "Event", "Status", "Channel"];
         List<string[]> rows = [];
-        var o = $"MIDI sequence\nName: {new FileInfo(StaticUtils.FileName).Name}";
+        var fn = FileName != null ? new FileInfo(FileName).Name : "???";
+        var o = $"MIDI sequence\nName: {fn}";
         o += $"\n\n{Track.TicksPerBeat} ticks/beat, {Track.Messages?.Count} messages\n";
         rows.Clear();
         if (Track.Messages == null) return o;

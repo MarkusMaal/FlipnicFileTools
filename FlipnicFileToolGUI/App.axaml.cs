@@ -38,7 +38,12 @@ public class App : Application
                 new Thread(() =>
                 {
                     Thread.Sleep(500);
-                    StaticUtils.FileName = desktop.Args[0];
+                    if (!File.Exists(desktop.Args[0]))
+                    {
+                        Dispatcher.UIThread.Post(() => mw.ShowDialog("Error", "The specified file does not exist!", NotificationType.Error));
+                        return;
+                    } 
+                    mw.FileName = desktop.Args[0];
                     Dispatcher.UIThread.Post(() => mw.LoadFromData(File.OpenRead(desktop.Args[0]), Path.GetExtension(desktop.Args[0])[1..]));
                 }).Start();
             }

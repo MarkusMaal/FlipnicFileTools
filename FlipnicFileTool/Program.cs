@@ -45,6 +45,7 @@ internal static class Program
     private static string _magickPath = "magick";
     private static string _fFmpegPath = "ffmpeg";
     private static bool _usePng;
+    private static string FileName { get; set; }
     
     public static void Main(string[] args)
     {
@@ -57,7 +58,7 @@ internal static class Program
             mode = GuessAction(args[0]);
             if (mode != Modes.ShowHelp)
             {
-                StaticUtils.FileName = args[0];
+                FileName = args[0];
             }
         }
         foreach (var arg in args)
@@ -121,7 +122,7 @@ internal static class Program
                     _mlbSect = arg;
                     break;
                 case "--input":
-                    StaticUtils.FileName = arg;
+                    FileName = arg;
                     break;
                 case "--output":
                     outFile = arg;
@@ -144,18 +145,18 @@ internal static class Program
             lastPar = arg;
         }
 
-        if (StaticUtils.FileName == "" && mode != Modes.ShowHelp)
+        if (FileName == "" && mode != Modes.ShowHelp)
         {
             Console.WriteLine("Must specify input FileName in this case!");
             return;
         }
-        if (!File.Exists(StaticUtils.FileName) && mode != Modes.ShowHelp)
+        if (!File.Exists(FileName) && mode != Modes.ShowHelp)
         {
             Console.WriteLine("Error: Input file does not exist!");
             return;
         }
 
-        if (mode != Modes.ShowHelp && new FileInfo(StaticUtils.FileName).IsReadOnly && outFile != "")
+        if (mode != Modes.ShowHelp && new FileInfo(FileName).IsReadOnly && outFile != "")
         {
             Console.WriteLine("Error: Read-only file system");
             return;
@@ -165,59 +166,59 @@ internal static class Program
         switch (mode)
         {
             case Modes.ListResources:
-                Console.Write(new FpnSst(File.OpenRead(StaticUtils.FileName)).GenerateMagicNumbers());
+                Console.Write(new FpnSst(File.OpenRead(FileName)).GenerateMagicNumbers());
                 break;
             case Modes.ShowFpc:
-                Console.Write(new FpnFpc(StaticUtils.FileName).ToString());
+                Console.Write(new FpnFpc(FileName).ToString());
                 break;
             case Modes.ConvertXml:
-                new FpnFpc(StaticUtils.FileName).GenerateXML().Save(outFile);
+                new FpnFpc(FileName).GenerateXML().Save(outFile);
                 break;
             case Modes.ShowSstToc:
-                Console.Write(new FpnSst(File.OpenRead(StaticUtils.FileName)).ListEntries());
+                Console.Write(new FpnSst(File.OpenRead(FileName)).ListEntries());
                 break;
             case Modes.ShowPseudoCode:
-                Console.Write(new FpnSst(File.OpenRead(StaticUtils.FileName)).GeneratePseudoCode());
+                Console.Write(new FpnSst(File.OpenRead(FileName)).GeneratePseudoCode());
                 break;
             case Modes.ShowGimmick:
-                new FpnSst(File.OpenRead(StaticUtils.FileName)).ShowGimmick(secondaryFileName);
+                new FpnSst(File.OpenRead(FileName)).ShowGimmick(secondaryFileName);
                 break;
             case Modes.ShowMessages:
-                Console.WriteLine(StaticUtils.SimpleOutput ? new FpnMsg(StaticUtils.FileName).ToSimpleString() : new FpnMsg(StaticUtils.FileName).ToString());
+                Console.WriteLine(StaticUtils.SimpleOutput ? new FpnMsg(FileName).ToSimpleString() : new FpnMsg(FileName).ToString());
                 break;
             case Modes.ListPssStreams:
-                Console.WriteLine(Pss.ListPss(File.OpenRead(StaticUtils.FileName)));
+                Console.WriteLine(new Pss(FileName).ListPss(File.OpenRead(FileName)));
                 break;
             case Modes.ExtractPssStreams:
-                Pss.ListPss(File.OpenRead(StaticUtils.FileName), true, outFile);
+                new Pss(FileName).ListPss(File.OpenRead(FileName), true, outFile);
                 break;
             case Modes.ListBin:
-                BinFile.ListBin(File.OpenRead(StaticUtils.FileName));
+                new BinFile().ListBin(File.OpenRead(FileName));
                 break;
             case Modes.ExtractBin:
-                BinFile.ExtractBin(StaticUtils.FileName, outFile);
+                new BinFile().ExtractBin(FileName, outFile);
                 break;
             case Modes.ShowHd:
                 var jh = new JamHeader();
-                jh.Read(new BinaryStream(new FileStream(StaticUtils.FileName, FileMode.Open, FileAccess.Read)));
+                jh.Read(new BinaryStream(new FileStream(FileName, FileMode.Open, FileAccess.Read)));
                 Console.Write(jh.ToString());
                 break;
             case Modes.ShowMidi:
-                var midi = new Midi();
-                midi.Read(StaticUtils.FileName);
+                var midi = new Midi(FileName);
+                midi.Read();
                 Console.Write(midi.ToString());
                 break;
             case Modes.ShowHelp:
                 Console.WriteLine(GetHelp());
                 break;
             case Modes.ShowLp4:
-                Console.WriteLine(new Lp4(File.ReadAllBytes(StaticUtils.FileName)).ToString());
+                Console.WriteLine(new Lp4(File.ReadAllBytes(FileName), FileName).ToString());
                 break;
             case Modes.ShowMlb:
-                Console.WriteLine(new FpnMlb(File.ReadAllBytes(StaticUtils.FileName)).ToString());
+                Console.WriteLine(new FpnMlb(File.ReadAllBytes(FileName)).ToString());
                 break;
             case Modes.ConvertTim2:
-                var texture = new Tim2(File.ReadAllBytes(StaticUtils.FileName), _grayscale);
+                var texture = new Tim2(File.ReadAllBytes(FileName), FileName, _grayscale);
                 if (_usePng)
                 {
                     texture.SavePng(new FileStream(outFile,  FileMode.Create));
@@ -227,25 +228,25 @@ internal static class Program
                 texture.SaveBitmap(fs);
                 break;
             case Modes.ConvertIpu:
-                Ipu.IpuConvert(StaticUtils.FileName, outFile, _fFmpegPath);
+                Ipu.IpuConvert(FileName, outFile, _fFmpegPath);
                 break;
             case Modes.ConvertSf2:
-                Converter.InstrumentToSoundFont2(StaticUtils.FileName[..^3] + ".MID", StaticUtils.FileName, StaticUtils.FileName[..^2] + "BD", outFile);
+                Converter.InstrumentToSoundFont2(FileName[..^3] + ".MID", FileName, FileName[..^2] + "BD", outFile);
                 break;
             case Modes.ConvertInt:
-                StaticUtils.ConvertAudio(outFile);
+                StaticUtils.ConvertAudio(outFile, FileName);
                 break;
             case Modes.ConvertSvag:
-                StaticUtils.ConvertAudio(outFile, true);
+                StaticUtils.ConvertAudio(outFile, FileName, true);
                 Console.WriteLine($"File saved as {outFile}");
                 break;
             case Modes.ShowVsd:
-                var vsd = new FpnVsd(File.OpenRead(StaticUtils.FileName));
+                var vsd = new FpnVsd(File.OpenRead(FileName));
                 Console.WriteLine($"Vibration Strength Data\n{vsd}");
                 break;
             case Modes.ConvertPssMov:
-                Pss.ListPss(File.OpenRead(StaticUtils.FileName), true, new FileInfo(outFile).Directory!.FullName);
-                var nf = Path.Combine(new FileInfo(outFile).Directory!.FullName, new FileInfo(StaticUtils.FileName).Name);
+                new Pss(FileName).ListPss(File.OpenRead(FileName), true, new FileInfo(outFile).Directory!.FullName);
+                var nf = Path.Combine(new FileInfo(outFile).Directory!.FullName, new FileInfo(FileName).Name);
                 Ipu.IpuConvert(nf + ".IPU", nf + ".TEMP.MOV", _fFmpegPath);
                 var exist = true;
                 var streams = 0;
@@ -255,10 +256,10 @@ internal static class Program
                             nf +
                             $".{++streams}.INT"))
                     {
-                        StaticUtils.FileName =
+                        FileName =
                             nf +
                             $".{streams}.INT";
-                        StaticUtils.ConvertAudio(nf + $".{streams}.WAV");
+                        StaticUtils.ConvertAudio(nf + $".{streams}.WAV", FileName);
                         continue;
                     }
                     exist = false;
@@ -288,21 +289,21 @@ internal static class Program
                 Console.WriteLine($"\rFile saved as {outFile}");
                 break;
             case Modes.ShowTim2:
-                Console.WriteLine(new Tim2(File.ReadAllBytes(StaticUtils.FileName)).ToString());
+                Console.WriteLine(new Tim2(File.ReadAllBytes(FileName), FileName).ToString());
                 break;
             case Modes.ShowLay:
-                Console.Write(new FpnLay(File.ReadAllBytes(StaticUtils.FileName)));
+                Console.Write(new FpnLay(File.ReadAllBytes(FileName)));
                 break;
             case Modes.GenerateMockup:
                 StaticUtils.GenerateEmptyPng(outFile + "_", 640, StaticUtils.Pal ? 512 : 480);
-                var root = new FileInfo(StaticUtils.FileName).Directory?.FullName ?? ".";
+                var root = new FileInfo(FileName).Directory?.FullName ?? ".";
                 var magickCommand = $"\"{outFile}_\" ";
-                foreach (var sect in new FpnMlb(File.ReadAllBytes(StaticUtils.FileName)).Sections.Where(me => (_mlbSect == "") || (me.Key == _mlbSect)).SelectMany(me => me.Value))
+                foreach (var sect in new FpnMlb(File.ReadAllBytes(FileName)).Sections.Where(me => (_mlbSect == "") || (me.Key == _mlbSect)).SelectMany(me => me.Value))
                 {
                     try
                     {
                         var textureFile = sect.Texture.Split('\\')[^1].ToUpper();
-                        new Tim2(File.ReadAllBytes(Path.Combine(root, textureFile)), _grayscale).SavePng(
+                        new Tim2(File.ReadAllBytes(Path.Combine(root, textureFile)), Path.Combine(root, textureFile), _grayscale).SavePng(
                             new FileStream(Path.Combine(root, textureFile.Replace(".TM2", ".TEMP.PNG")), FileMode.Create));
 
                         magickCommand +=
@@ -448,6 +449,6 @@ internal static class Program
 
     public static string GetFileName()
     {
-        return StaticUtils.FileName;
+        return FileName;
     }
 }

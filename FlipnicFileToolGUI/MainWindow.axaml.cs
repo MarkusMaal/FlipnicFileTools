@@ -51,16 +51,25 @@ public partial class MainWindow : SukiWindow
 
     public static bool ErrorDisplayed = false;
     public bool DevMode { get; set; }
+    
+    internal string FileName { get; set; }
+    
+    private BinFile Fs { get; set; }
 
     public MainWindow()
     {
         InitializeComponent();
+
         MenuElements = new ObservableCollection<MenuElementViewModel>(_menu);
         DataContext = this;
         ApplyCustomTheme();
         DialogHost.Manager = DialogManager;
         
         DragDrop.SetAllowDrop(this, true);
+        AddHandler(DragDrop.DragLeaveEvent, (_, e) =>
+        {
+            e.DragEffects = DragDropEffects.None;
+        });
         AddHandler(DragDrop.DragOverEvent, DragOver);
         AddHandler(DragDrop.DropEvent, WindowDropped);
 
@@ -113,7 +122,7 @@ public partial class MainWindow : SukiWindow
             StaticUtils.MsgFile = Uri.UnescapeDataString(files[0].Path.AbsolutePath);
             return;
         }
-        StaticUtils.FileName = Uri.UnescapeDataString(files[0].Path.AbsolutePath);
+        FileName = Uri.UnescapeDataString(files[0].Path.AbsolutePath);
         LoadFromData(new FileStream(Uri.UnescapeDataString(files[0].Path.AbsolutePath), FileMode.Open, FileAccess.Read), files[0].Path.AbsolutePath[^3..]);
         Title = "Flipnic file tool - " + new FileInfo(Uri.UnescapeDataString(files[0].Path.AbsolutePath)).Name;
     }
@@ -123,7 +132,7 @@ public partial class MainWindow : SukiWindow
         if (!e.Data.Contains(DataFormats.Files)) return;
         if (e.Data.GetFiles()?.First() == null) return;
         var fullPath = Uri.UnescapeDataString(e.Data.GetFiles()!.First().Path.AbsolutePath);
-        StaticUtils.FileName = fullPath;
+        FileName = fullPath;
         LoadFromData(new FileStream(fullPath, FileMode.Open, FileAccess.Read), fullPath[^3..]);
         Title = "Flipnic file tool - " + new FileInfo(fullPath).Name;
     }
@@ -157,7 +166,7 @@ public partial class MainWindow : SukiWindow
                     var data = new byte[ds.Length];
                     ds.ReadExactly(data);
                     ds.Position = 0;
-                    var img = new Tim2(data);
+                    var img = new Tim2(data, FileName);
                     var bt = new BitmapTools { Image = img };
                     LoadAsString(img, "PlayStation 2 texture file");
                     Dispatcher.UIThread.Post(() =>
@@ -167,7 +176,7 @@ public partial class MainWindow : SukiWindow
                     });
                     break;
                 case "MID":
-                    var midi = new Midi();
+                    var midi = new Midi(FileName);
                     midi.Read(ds);
                     LoadAsString(midi, "General MIDI");
                     break;
@@ -228,9 +237,9 @@ public partial class MainWindow : SukiWindow
                         ConvertMovButton.IsVisible = false;
                         DemuxButton.IsVisible = false;
 
-                        var fileDirectory = new FileInfo(StaticUtils.FileName).Directory?.FullName ?? "";
-                        var extension = Path.GetExtension(StaticUtils.FileName);
-                        var fileName = new FileInfo(StaticUtils.FileName).Name.Replace(extension, "");
+                        var fileDirectory = new FileInfo(FileName).Directory?.FullName ?? "";
+                        var extension = Path.GetExtension(FileName);
+                        var fileName = new FileInfo(FileName).Name.Replace(extension, "");
                         var bdPath = Path.Combine(fileDirectory, fileName) + ".BD";
                         var midPath = Path.Combine(fileDirectory, fileName) + ".MID";
                         if (File.Exists(bdPath)) BdBox.Text = bdPath;
@@ -243,6 +252,7 @@ public partial class MainWindow : SukiWindow
                     var txt = Encoding.UTF8.GetString(ds.ReadBytes((int)ds.Length));
                     LoadAsString(txt, (ext == "CSV") ? "Comma Separated Values" : ((ext == "XML") ? "eXtensible Markup Language" : "Plain Text"));
                     break;
+                case "SVAG":
                 case "INT":
                 case "VAG":
                     var va = new byte[ds.Length];
@@ -251,8 +261,8 @@ public partial class MainWindow : SukiWindow
                     Dispatcher.UIThread.Post(() =>
                     {
                         SoundPlayerTab.IsVisible = true;
-                        AudioFilename.Content = "Filename: " + Path.GetFileName(StaticUtils.FileName);
-                        FileTypeLabel.Content = string.Format(FTypeFormat, "Compressed Sony ADPCM Audio " + (StaticUtils.FileName.EndsWith("INT") ? "(Stereo)" : "(Mono)"));
+                        AudioFilename.Content = "Filename: " + Path.GetFileName(FileName);
+                        FileTypeLabel.Content = string.Format(FTypeFormat, "Compressed Sony ADPCM Audio " + (FileName.EndsWith("INT") ? "(Stereo)" : "(Mono)"));
                     });
                     break;
                 case "MLB":
@@ -270,9 +280,9 @@ public partial class MainWindow : SukiWindow
                         {
                             _menu.AddRange(from ima in sect.Value
                                 let p =
-                                    Path.Combine(Path.GetDirectoryName(StaticUtils.FileName) ?? string.Empty,
-                                        ima.Texture.Split('\\')[^1])
-                                let bmp = new BitmapTools { Image = new Tim2(File.ReadAllBytes(p)), }.ToBitmap()
+                                    Path.Combine(Path.GetDirectoryName(FileName) ?? string.Empty,
+                                        ima.Texture.Split('\\')[^1].ToUpper())
+                                let bmp = new BitmapTools { Image = new Tim2(File.ReadAllBytes(p), FileName), }.ToBitmap()
                                 select new MenuElementViewModel
                                     { Layer = sect.Key, MenuElement = ima, ImageSource = bmp });
                         }
@@ -297,7 +307,7 @@ public partial class MainWindow : SukiWindow
                 case "LP4":
                     var lp4Da =  new byte[ds.Length];
                     ds.ReadExactly(lp4Da);
-                    var lp4 = new Lp4(lp4Da);
+                    var lp4 = new Lp4(lp4Da, FileName);
                     LoadAsString(lp4, "Flipnic resource file");
                     StaticUtils.LiveLoadStatus = "Initializing OpenGL";
                     Dispatcher.UIThread.Post(() =>
@@ -368,10 +378,11 @@ public partial class MainWindow : SukiWindow
                     });
                     break;
                 case "BIN":
-                    BinFile.FsEntries.Clear();
-                    BinFile.ListBin(ds);
+                    Fs = new BinFile();
+                    Fs.FsEntries.Clear();
+                    Fs.ListBin(ds);
                     
-                    var fsEntries = BinFile.FsEntries.ToList();
+                    var fsEntries = Fs.FsEntries.ToList();
                     Dispatcher.UIThread.Post(() =>
                     {
                         VirtualFiles = new ObservableCollection<VirtualFile>(fsEntries);
@@ -382,7 +393,7 @@ public partial class MainWindow : SukiWindow
                     });
                     break;
                 case "PSS":
-                    var pssInfo = Pss.ListPss(ds);
+                    var pssInfo = new Pss(FileName).ListPss(ds);
                     Dispatcher.UIThread.Post(() =>
                     {
                         InfoBox.Text = pssInfo;
@@ -447,7 +458,7 @@ public partial class MainWindow : SukiWindow
         PlaybackStateLabel.Content = "Buffering";
         new Thread(() =>
         {
-            StaticUtils.ConvertAudio(outPath, StaticUtils.FileName.EndsWith("VAG"));
+            StaticUtils.ConvertAudio(outPath, FileName, FileName.EndsWith("VAG"));
             Dispatcher.UIThread.Post(() => JustPlay());
         }).Start();
     }
@@ -551,14 +562,24 @@ public partial class MainWindow : SukiWindow
             }
             return;
         }
-        InfoBox.Text = """
-                       ---------------------------------
-                       Flipnic file tools
-                       ---------------------------------
-                       No file loaded, open a file by clicking File > Open
-                       or drag a file to this window.
 
-                       """;
+        InfoBox.Text = !OperatingSystem.IsLinux()
+            ? """
+              ---------------------------------
+              Flipnic file tools
+              ---------------------------------
+              No file loaded, open a file by clicking File > Open
+              or drag a file to this window.
+
+              """
+            : """
+              ---------------------------------
+              Flipnic file tools
+              ---------------------------------
+              No file loaded, open a file by clicking File > Open
+              or press Ctrl+Alt+V to paste a file.
+              
+              """;
         
         var p = new Process();
         
@@ -636,14 +657,15 @@ public partial class MainWindow : SukiWindow
         var myTitle = Title;
         var mw = new MainWindow()
         {
-            Title = myTitle + vf!.Path
+            Title = myTitle + vf!.Path,
+            FileName = vf!.Path
         };
         DockPanel1.IsVisible = false;
         Loader.IsVisible = true;
         new Thread(() =>
         {
             StaticUtils.LiveLoadStatus = "Reading data...";
-            var fs = new FileStream(StaticUtils.FileName, FileMode.Open, FileAccess.Read);
+            var fs = new FileStream(FileName, FileMode.Open, FileAccess.Read);
             var ms = new MemoryStream();
             var buffer = new byte[vf!.Length];
             fs.Seek(vf.Offset, SeekOrigin.Begin);
@@ -704,10 +726,10 @@ public partial class MainWindow : SukiWindow
         }).Start();
     }
 
-    private static void SaveFile(VirtualFile vf, string file)
+    private void SaveFile(VirtualFile vf, string file)
     {
         if (file.Contains('*')) return;
-        var fs = new FileStream(StaticUtils.FileName, FileMode.Open, FileAccess.Read);
+        var fs = new FileStream(FileName, FileMode.Open, FileAccess.Read);
         var os = new FileStream(file, FileMode.Create, FileAccess.Write);
         fs.Seek(vf.Offset, SeekOrigin.Begin);
         for (var i = 0; i < vf.Length / 2048; i += 1)
@@ -763,7 +785,7 @@ public partial class MainWindow : SukiWindow
         }).Start();
         new Thread(() =>
         {
-            foreach (var vf in BinFile.FsEntries)
+            foreach (var vf in Fs.FsEntries)
             {
                 if (vf.Path[1..].Contains('\\') && !Directory.Exists(outputDir + vf.Path.Split('\\')[1]))
                 {
@@ -838,7 +860,7 @@ public partial class MainWindow : SukiWindow
         var outPut = FileBox.Text ?? "";
         new Thread(() =>
         {
-            Pss.ListPss(File.OpenRead(StaticUtils.FileName), true, outPut);
+            new Pss(FileName).ListPss(File.OpenRead(FileName), true, outPut);
             StaticUtils.LiveLoadStatus = "";
             Dispatcher.UIThread.Post(() =>
             {
@@ -862,15 +884,15 @@ public partial class MainWindow : SukiWindow
     {
         DockPanel1.IsVisible = false;
         Loader.IsVisible = true;
-        var outPut = (FileBox.Text ?? "") + new FileInfo(StaticUtils.FileName).Name + ".MOV";
+        var outPut = (FileBox.Text ?? "") + new FileInfo(FileName).Name + ".MOV";
         var ffMpegPath = FFmpegBox.Text ?? "";
-        var originalFileName = StaticUtils.FileName;
+        var originalFileName = FileName;
         new Thread(() =>
         {
             StaticUtils.LiveLoadStatus = "Stage 1/4: Demuxing";
-            Pss.ListPss(File.OpenRead(StaticUtils.FileName), true, new FileInfo(outPut).Directory!.FullName);
+            new Pss(FileName).ListPss(File.OpenRead(FileName), true, new FileInfo(outPut).Directory!.FullName);
             StaticUtils.LiveLoadStatus = "Stage 2/4: Converting extracted IPU to MOV";
-            var nf = Path.Combine(new FileInfo(outPut).Directory!.FullName, new FileInfo(StaticUtils.FileName).Name);
+            var nf = Path.Combine(new FileInfo(outPut).Directory!.FullName, new FileInfo(FileName).Name);
             Ipu.IpuConvert(nf + ".IPU", nf + ".TEMP.MOV", ffMpegPath);
             var exist = true;
             var streams = 0;
@@ -881,10 +903,10 @@ public partial class MainWindow : SukiWindow
                         nf +
                         $".{++streams}.INT"))
                 {
-                    StaticUtils.FileName =
+                    FileName =
                         nf +
                         $".{streams}.INT";
-                    StaticUtils.ConvertAudio(nf + $".{streams}.WAV");
+                    StaticUtils.ConvertAudio(nf + $".{streams}.WAV", FileName);
                     continue;
                 }
                 exist = false;
@@ -918,7 +940,7 @@ public partial class MainWindow : SukiWindow
             {
                 DockPanel1.IsVisible = true;
                 Loader.IsVisible = false;
-                StaticUtils.FileName = originalFileName;
+                FileName = originalFileName;
             });
         }).Start();
         new Thread(() =>
@@ -1017,7 +1039,7 @@ public partial class MainWindow : SukiWindow
 
         if (file is null) return;
         var outPath = Uri.UnescapeDataString(file.Path.AbsolutePath);
-        StaticUtils.ConvertAudio(outPath, StaticUtils.FileName.EndsWith("VAG"));
+        StaticUtils.ConvertAudio(outPath, FileName, FileName.EndsWith("VAG"));
         ShowDialog("Flipnic file tools", "File saved successfully!", NotificationType.Success);
     }
 
@@ -1025,9 +1047,9 @@ public partial class MainWindow : SukiWindow
     {
         DockPanel1.IsVisible = false;
         Loader.IsVisible = true;
-        var outPut = (FileBox.Text ?? "") + new FileInfo(StaticUtils.FileName).Name + ".MOV";
+        var outPut = (FileBox.Text ?? "") + new FileInfo(FileName).Name + ".MOV";
         var ffMpegPath = FFmpegBox.Text ?? "";
-        var originalFileName = StaticUtils.FileName;
+        var originalFileName = FileName;
         new Thread(() =>
         {
             StaticUtils.LiveLoadStatus = "Converting IPU to MOV";
@@ -1036,7 +1058,6 @@ public partial class MainWindow : SukiWindow
             {
                 DockPanel1.IsVisible = true;
                 Loader.IsVisible = false;
-                StaticUtils.FileName = originalFileName;
             });
         }).Start();
         new Thread(() =>
@@ -1061,19 +1082,32 @@ public partial class MainWindow : SukiWindow
         var bdFile = BdBox.Text ?? "/no.where";
         new Thread(() =>
         {
-            StaticUtils.LiveLoadStatus = "Converting JAM to SF2";
-            var fileDirectory = new FileInfo(StaticUtils.FileName).Directory?.FullName ?? "";
-            var extension = Path.GetExtension(StaticUtils.FileName);
-            var fileName = new FileInfo(StaticUtils.FileName).Name.Replace(extension, "");
-            Converter.InstrumentToSoundFont2(midiFile ?? "",
-                StaticUtils.FileName, bdFile ?? "", Path.Combine(outFile ?? "", fileName) + ".SF2");
+            Exception? error = null;
+            try
+            {
+                StaticUtils.LiveLoadStatus = "Converting JAM to SF2";
+                var extension = Path.GetExtension(FileName);
+                var fileName = new FileInfo(FileName).Name.Replace(extension, "");
+                Converter.InstrumentToSoundFont2(midiFile ?? "",
+                    FileName, bdFile ?? "", Path.Combine(outFile ?? "", fileName) + ".SF2");
+            }
+            catch (Exception ex) when (!Debugger.IsAttached)
+            {
+                error = ex;
+            }
+
             Dispatcher.UIThread.Post(() =>
             {
                 DockPanel1.IsVisible = true;
-                Loader.IsVisible = false; 
+                Loader.IsVisible = false;
+                if (error is null)
+                {
+                    ShowDialog("Flipnic file tools", "File converted successfully!", NotificationType.Success);
+                    return;
+                }
+                ShowDialog("Flipnic file tools", "Failed to convert file. Make sure that the correct BD file was selected.\n\n" + error.Message, NotificationType.Error);
             });
         }).Start();
-        ShowDialog("Flipnic file tools", "File converted successfully!", NotificationType.Success);
     }
 
     private async void ExtractSampleButton_OnClick(object? sender, RoutedEventArgs e)
@@ -1168,5 +1202,46 @@ public partial class MainWindow : SukiWindow
         if (file is null) return;
         GlControl.SaveAs(Uri.UnescapeDataString(file.Path.AbsolutePath));
         ShowDialog("Flipnic file tools", "File saved successfully", NotificationType.Success);
+    }
+
+    private async void PasteMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var clipboard = GetTopLevel(this)?.Clipboard;
+        if (clipboard == null) return;
+        var types = await clipboard.GetFormatsAsync();
+        foreach (var type in types)
+        {
+            if (type != "text/uri-list") continue; 
+            var data = await clipboard.GetDataAsync(type);
+            if (data is not byte[] bytes) continue;
+            var names = Encoding.UTF8.GetString(bytes).Replace("\r\n", "\n").Split('\n');
+            var path = Uri.UnescapeDataString(new Uri(names[0]).AbsolutePath);
+            FileName = path;
+            var ext = new FileInfo(path).Extension;
+            if (ext != "")
+            {
+                ext = ext[1..];
+            }
+            LoadFromData(new FileStream(path, FileMode.Open, FileAccess.Read), ext);
+            Title = "Flipnic file tool - " + new FileInfo(path).Name;
+            if (names.Length == 1) break;
+            foreach (var name in names[1..])
+            {
+                if (name == "")  continue;
+                path = Uri.UnescapeDataString(new Uri(name).AbsolutePath);
+                var nw = new MainWindow();
+                nw.Title = "Flipnic file tool - " + new FileInfo(path).Name;
+                nw.FileName = path;
+                ext = new FileInfo(path).Extension;
+                if (ext != "")
+                {
+                    ext = ext[1..];
+                }
+                nw.LoadFromData(new FileStream(path, FileMode.Open, FileAccess.Read), ext);
+                nw.Show();
+            }
+
+            break;
+        }
     }
 }

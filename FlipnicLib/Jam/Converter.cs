@@ -18,8 +18,8 @@ public abstract class Converter
     {
         // We need the MIDI to find out which instrument should be percussion banks
         // Why? Because channel 10 (index 9) is treated differently SF2 wise
-        var ssqt = new Midi.Midi();
-        ssqt.Read(midiFile);
+        var ssqt = new Midi.Midi(midiFile);
+        ssqt.Read();
 
         // combine .hd/.bd files
         var hdS = new FileStream(hdFilePath, FileMode.Open);
