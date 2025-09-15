@@ -1,0 +1,32 @@
+echo "Building for Intel..."
+APP=FlipnicFileToolGUI
+APPP=${APP}.app
+APPI=${APP}_Intel.app
+APPA=${APP}_Apple.app
+T=I
+PL=osx-x64
+J=0
+while [ $J -le 1 ]; do
+    CLI=FlipnicFileTool
+    PROJECT=FlipnicFileToolGUI
+    CONFIG="-c Release -o out -p:PublishReadyToRun=true -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugSymbols=false"
+    mkdir out/$APPP
+    mkdir out/$APPP/Contents
+    mkdir out/$APPP/Contents/MacOS
+    mkdir out/$APPP/Contents/Resources
+    cp $PROJECT/Assets/F.icns out/$APPP/Contents/Resources/icon.icns
+    cp $PROJECT/Assets/Info.plist out/$APPP/Contents/Info.plist
+    dotnet publish $APP -r $PL $CONFIG
+    dotnet publish $CLI -r $PL $CONFIG
+    rm -r out/$APPP/Contents/MacOS
+    mkdir out/$APPP/Contents/MacOS
+    mv out/*.dylib out/$APPP/Contents/MacOS/
+    mv out/FlipnicFileToolGUI out/$APPP/Contents/MacOS/
+    mv out/$APPP out/${APP}_$PL.app
+    mv out/$CLI out/${CLI}_$PL
+    echo "Building for Apple Silicon..."
+    PL=osx-arm64
+    T=A
+    J=$(( J + 1 ))
+done
+echo "Done!"

@@ -28,12 +28,6 @@
     </ItemGroup>
   <ItemGroup>
     <None Remove=".gitignore" />
-    <None Update="Shaders\shader.frag">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Shaders\shader.vert">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
     <ItemGroup>
         <AvaloniaResource Include="Assets\**" />

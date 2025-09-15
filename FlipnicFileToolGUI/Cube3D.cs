@@ -98,12 +98,66 @@ namespace FlipnicFileToolGUI
             }
         }
 
+        private void DefaultShaders()
+        {
+            DeleteShadersIfExist();
+            Directory.CreateDirectory(Path.GetTempPath() + "Shaders");
+            const string frag = """
+                                #version 330 core
+                                out vec4 outputColor;
+
+                                in vec2 texCoord;
+
+                                uniform sampler2D texture0;
+
+                                void main()
+                                {
+                                    outputColor = texture(texture0, texCoord);
+                                } 
+                                """;
+            const string vert = """
+                                #version 330 core
+                                in vec3 aPosition;
+                                in vec2 aTexCoord;
+
+                                out vec2 texCoord;
+
+                                uniform mat4 model;
+                                uniform mat4 view;
+                                uniform mat4 projection;
+
+                                void main()
+                                {
+                                    texCoord = aTexCoord;
+                                    gl_Position = vec4(aPosition, 1.0) * model * view * projection;
+                                }
+                                """;
+            var str = File.OpenWrite(Path.GetTempPath() + "Shaders/shader.vert");
+            var buffer = Encoding.UTF8.GetBytes(vert);
+            str.Write(buffer, 0, buffer.Length);
+            str.Close();
+            str = File.OpenWrite(Path.GetTempPath() + "Shaders/shader.frag");
+            buffer = Encoding.UTF8.GetBytes(frag);
+            str.Write(buffer, 0, buffer.Length);
+            str.Close();
+        }
+
+        private void DeleteShadersIfExist()
+        {
+            var pfx = Path.GetTempPath() + "Shaders/";
+            if (Directory.Exists(pfx))
+            {
+                Directory.Delete(pfx, true);
+            }
+        }
+        
         //OpenTkInit is called once when the control is created
         protected override void OpenTkInit()
         {
+            DefaultShaders();
             //Compile shaders
-            _shader = new("Shaders/shader.vert", "Shaders/shader.frag");
-
+            _shader = new(Path.GetTempPath() + "Shaders/shader.vert", Path.GetTempPath() + "Shaders/shader.frag");
+            DeleteShadersIfExist();
             //Load textures
             _brickTexture = new();
             _brickTexture.Use();
