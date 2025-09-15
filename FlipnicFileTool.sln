@@ -8,8 +8,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlipnicFileToolGUI", "Flipn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SoundFont2", "SoundFont2\SoundFont2\SoundFont2.csproj", "{94F894B0-867A-4FAF-BA9E-7CD4D7E1684A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MeltySynth", "meltysynth\MeltySynth\MeltySynth.csproj", "{3945B9BC-A3C3-4CD0-9DD2-524501C7921D}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,11 +40,5 @@ Global
 		{94F894B0-867A-4FAF-BA9E-7CD4D7E1684A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{94F894B0-867A-4FAF-BA9E-7CD4D7E1684A}.Publish|Any CPU.ActiveCfg = Release|Any CPU
 		{94F894B0-867A-4FAF-BA9E-7CD4D7E1684A}.Publish|Any CPU.Build.0 = Release|Any CPU
-		{3945B9BC-A3C3-4CD0-9DD2-524501C7921D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3945B9BC-A3C3-4CD0-9DD2-524501C7921D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3945B9BC-A3C3-4CD0-9DD2-524501C7921D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3945B9BC-A3C3-4CD0-9DD2-524501C7921D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3945B9BC-A3C3-4CD0-9DD2-524501C7921D}.Publish|Any CPU.ActiveCfg = Debug|Any CPU
-		{3945B9BC-A3C3-4CD0-9DD2-524501C7921D}.Publish|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 EndGlobal
