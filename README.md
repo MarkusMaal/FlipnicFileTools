@@ -2,6 +2,8 @@
 
 Several command line tools with a GUI front-end for various file formats used by Flipnic.
 
+Build instructions: [BUILD.md](BUILD.md)
+
 Prerequisites:
 
 * [FFmpeg](https://ffmpeg.org/) - required for some video related operations
