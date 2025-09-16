@@ -8,6 +8,7 @@
         Width="700" Height="500"
         Icon="Assets\F.PNG"
         xmlns:sukiUi="clr-namespace:SukiUI.Controls;assembly=SukiUI"
+        xmlns:types="clr-namespace:FlipnicLib.Types;assembly=FlipnicLib"
         x:DataType="vm:MainWindow" x:Class="FlipnicFileToolGUI.MainWindow"
         Title="Flipnic file tool" Loaded="Window_Loaded" BackgroundStyle="Bubble"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
@@ -245,6 +246,212 @@
                                         </StackPanel>
                                     </StackPanel>
                                 </sukiUi:GlassCard>
+                            </sukiUi:SukiSideMenuItem.PageContent>
+                        </sukiUi:SukiSideMenuItem>
+                        <sukiUi:SukiSideMenuItem Header="Save file editor" IsVisible="False" Name="SaveEditor">
+                            <sukiUi:SukiSideMenuItem.Icon>
+                                <vm:CircleDot ColorA="DodgerBlue" ColorB="DarkBlue" Text="💾"></vm:CircleDot>
+                            </sukiUi:SukiSideMenuItem.Icon>
+                            <sukiUi:SukiSideMenuItem.PageContent>
+                                <TabControl Name="SaveEditorTabControl" Margin="10">
+                                    <TabItem Header="Information" >
+                                        <Grid Name="SaveEditorInfoTab" RowDefinitions="30,30,30,30,30,30,45" Margin="10" DataContext="{Binding SaveData}">
+                                            <Grid ColumnDefinitions="200,200">
+                                                <Label>Primary checksum:</Label>
+                                                <Label Name="SaveEditorPrimaryChecksumLabel" Grid.Column="1" Content="{Binding ChecksumPrimary, TargetNullValue=Not loaded}"></Label>
+                                            </Grid>
+                                            <Grid Grid.Row="1" ColumnDefinitions="200,200">
+                                                <Label>Secondary checksum:</Label>
+                                                <Label Name="SaveEditorSecondaryChecksumLabel" Grid.Column="1" Content="{Binding ChecksumSecondary, TargetNullValue=Not loaded}"></Label>
+                                            </Grid>
+                                            <Grid Grid.Row="2" ColumnDefinitions="200,200">
+                                                <Label>Current score:</Label>
+                                                <Label Grid.Column="1" Content="{Binding Score, TargetNullValue=0}"></Label>
+                                            </Grid>
+                                            <Grid Grid.Row="3" ColumnDefinitions="200,200">
+                                                <Label>Original game difficulty:</Label>
+                                                <Label Grid.Column="1" Content="{Binding CurrentDifficulty, TargetNullValue=Easy}"></Label>
+                                            </Grid>
+                                            <Grid Grid.Row="4" ColumnDefinitions="200,200">
+                                                <Label>Current stage:</Label>
+                                                <Label Grid.Column="1" Content="{Binding CurrentStage, TargetNullValue=Biology A}"></Label>
+                                            </Grid>
+                                            <Grid Grid.Row="5" ColumnDefinitions="200,200">
+                                                <Label>Last stage played:</Label>
+                                                <Label Grid.Column="1" Content="{Binding LastStage, TargetNullValue=N/A}"></Label>
+                                            </Grid>
+                                            <StackPanel Grid.Row="6" Orientation="Horizontal" Spacing="10">
+                                                <Button Name="UpdateChecksumButton" Content="Update checksums" Click="UpdateChecksumButton_OnClick"></Button>
+                                                <Button Name="DiagnoseSaveFileButton" Content="Diagnose save file" Click="DiagnoseSaveFileButton_OnClick"></Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </TabItem>
+                                    <TabItem Header="Ranking">
+                                        <Grid RowDefinitions="30,30,*" Margin="10" DataContext="{Binding SaveData}">
+                                            <Label>Ranking data</Label>
+                                            <ComboBox Grid.Row="1" SelectedIndex="{Binding LeaderboardId}" SelectionChanged="ScoreGrid_SelectionChanged">
+                                                <ComboBoxItem>Original game</ComboBoxItem>
+                                                <ComboBoxItem>Biology A</ComboBoxItem>
+                                                <ComboBoxItem>Biology B</ComboBoxItem>
+                                                <ComboBoxItem>Metallurgy A</ComboBoxItem>
+                                                <ComboBoxItem>Metallurgy B</ComboBoxItem>
+                                                <ComboBoxItem>Optics A</ComboBoxItem>
+                                                <ComboBoxItem>Optics B</ComboBoxItem>
+                                                <ComboBoxItem>Geometry A</ComboBoxItem>
+                                                <ComboBoxItem>Biology A (Time Attack)</ComboBoxItem>
+                                                <ComboBoxItem>Biology B (Time Attack)</ComboBoxItem>
+                                                <ComboBoxItem>Metallurgy A (Time Attack)</ComboBoxItem>
+                                                <ComboBoxItem>Metallurgy B (Time Attack)</ComboBoxItem>
+                                                <ComboBoxItem>Optics A (Time Attack)</ComboBoxItem>
+                                                <ComboBoxItem>Optics B (Time Attack)</ComboBoxItem>
+                                                <ComboBoxItem>Geometry A (Time Attack)</ComboBoxItem>
+                                            </ComboBox>
+                                            <DataGrid Grid.Row="2" ItemsSource="{Binding Rank}" Margin="0,0,0,10" GridLinesVisibility="All"
+                                                      BorderThickness="1" BorderBrush="Gray" Name="RankGrid"
+                                                      CanUserResizeColumns="True"
+                                                      CanUserReorderColumns="True"
+                                                      CanUserSortColumns="True" 
+                                                      IsReadOnly="False">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="Rank" x:DataType="types:Rank" Binding="{Binding Position}"></DataGridTextColumn>
+                                                    <DataGridTextColumn Header="Initials" x:DataType="types:Rank" Binding="{Binding Initials}"></DataGridTextColumn>
+                                                    <DataGridTextColumn Header="Score" x:DataType="types:Rank" Binding="{Binding Score}"></DataGridTextColumn>
+                                                    <DataGridTextColumn Header="Combos" x:DataType="types:Rank" Binding="{Binding Combos}"></DataGridTextColumn>
+                                                    <DataGridTextColumn Header="Difficulty" x:DataType="types:Rank" Binding="{Binding Difficulty}"/>
+                                                    <DataGridTextColumn Header="Offset" x:DataType="types:Rank" Binding="{Binding Offset}"></DataGridTextColumn>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                        </Grid>
+                                    </TabItem>
+                                    <TabItem Header="Options">
+                                        <Grid RowDefinitions="30,30,30,30,30,30,30,30,*" Margin="10" RowSpacing="8" DataContext="{Binding SaveData}">
+                                            <Grid ColumnDefinitions="200,*">
+                                                <Label VerticalAlignment="Center">Sound mode</Label>
+                                                <ComboBox Grid.Column="1" SelectedIndex="{Binding SoundMode}">
+                                                    <ComboBoxItem>Mono</ComboBoxItem>
+                                                    <ComboBoxItem>Stereo</ComboBoxItem>
+                                                </ComboBox>
+                                            </Grid>
+                                            <Grid Grid.Row="1" ColumnDefinitions="200,*">
+                                                <Label VerticalAlignment="Center">Volume: sound effects</Label>
+                                                <Slider Grid.Column="1" Minimum="0" Maximum="255" Value="{Binding SfxVolume}"></Slider>
+                                            </Grid>
+                                            <Grid Grid.Row="2" ColumnDefinitions="200,*">
+                                                <Label VerticalAlignment="Center">Volume: music</Label>
+                                                <Slider Grid.Column="1" Minimum="0" Maximum="255" Value="{Binding BgmVolume}"></Slider>
+                                            </Grid>
+                                            <Grid Grid.Row="3" ColumnDefinitions="200,*">
+                                                <Label VerticalAlignment="Center">Vibration</Label>
+                                                <ToggleSwitch Name="SaveFileVibrate" Grid.Column="1" IsChecked="{Binding Vibration}"></ToggleSwitch>
+                                            </Grid>
+                                            <Grid Grid.Row="4" ColumnDefinitions="200,*">
+                                                <Label VerticalAlignment="Center">Left Flipper</Label>
+                                                <ComboBox ItemsSource="{Binding $parent[vm:MainWindow].Controls}" Grid.Column="1" SelectedIndex="{Binding LeftFlipper}"></ComboBox>
+                                            </Grid>
+                                            <Grid Grid.Row="5" ColumnDefinitions="200,*">
+                                                <Label VerticalAlignment="Center">Right Flipper</Label>
+                                                <ComboBox ItemsSource="{Binding $parent[vm:MainWindow].Controls}" Grid.Column="1" SelectedIndex="{Binding RightFlipper}"></ComboBox>
+                                            </Grid>
+                                            <Grid Grid.Row="6" ColumnDefinitions="200,*">
+                                                <Label VerticalAlignment="Center">Left Nudge</Label>
+                                                <ComboBox ItemsSource="{Binding $parent[vm:MainWindow].Controls}" Grid.Column="1" SelectedIndex="{Binding LeftNudge}"></ComboBox>
+                                            </Grid>
+                                            <Grid Grid.Row="7" ColumnDefinitions="200,*">
+                                                <Label VerticalAlignment="Center">Right Nudge</Label>
+                                                <ComboBox ItemsSource="{Binding $parent[vm:MainWindow].Controls}" Grid.Column="1" SelectedIndex="{Binding RightNudge}"></ComboBox>
+                                            </Grid>
+                                            <Button Grid.Row="8" VerticalAlignment="Bottom" MinHeight="40" Margin="-5" HorizontalAlignment="Left" Name="SaveEditorResetControlButton" Content="Reset controls" Click="SaveEditorResetControlButton_OnClick"></Button>
+                                        </Grid>
+                                    </TabItem>
+                                    <TabItem Header="Unlocks">
+                                        <Grid RowDefinitions="40,*,40" Margin="10" DataContext="{Binding SaveData}">
+                                            <Grid ColumnDefinitions="*,80">
+                                                <StackPanel Orientation="Horizontal" Spacing="20">
+                                                    <RadioButton Name="SaveEditorOriginalGameRadioButton" Content="Original game" IsChecked="True" IsCheckedChanged="SaveEditorOriginalGameRadioButton_OnIsCheckedChanged"></RadioButton>
+                                                    <RadioButton Name="SaveEditorFreePlayRadioButton" Content="Free play" IsChecked="False" IsCheckedChanged="SaveEditorOriginalGameRadioButton_OnIsCheckedChanged"></RadioButton>
+                                                </StackPanel>
+                                                <Button Name="SaveEditorUnlockResetButton" Content="Reset" Grid.Column="1" Click="SaveEditorUnlockResetButton_OnClick"></Button>
+                                            </Grid>
+                                            <Grid Grid.Row="1" Margin="0, 10">
+                                                <ItemsRepeater Name="OriginalUnlocks" ItemsSource="{Binding OriginalUnlocks}">
+                                                    <ItemsRepeater.Layout>
+                                                        <WrapLayout Orientation="Horizontal" HorizontalSpacing="10" VerticalSpacing="10"></WrapLayout>
+                                                    </ItemsRepeater.Layout>
+                                                    <ItemsRepeater.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <CheckBox x:DataType="types:Unlock" IsChecked="{Binding IsUnlocked}" Content="{Binding Label}"></CheckBox>
+                                                        </DataTemplate>
+                                                    </ItemsRepeater.ItemTemplate>
+                                                </ItemsRepeater>
+                                                <ItemsRepeater Name="FreeUnlocks" IsVisible="False" ItemsSource="{Binding FreeUnlocks}">
+                                                    <ItemsRepeater.Layout>
+                                                        <WrapLayout Orientation="Horizontal" HorizontalSpacing="10" VerticalSpacing="10"></WrapLayout>
+                                                    </ItemsRepeater.Layout>
+                                                    <ItemsRepeater.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <CheckBox x:DataType="types:Unlock" IsChecked="{Binding IsUnlocked}" Content="{Binding Label}"></CheckBox>
+                                                        </DataTemplate>
+                                                    </ItemsRepeater.ItemTemplate>
+                                                </ItemsRepeater>
+                                            </Grid>
+                                        </Grid>
+                                    </TabItem>
+                                    <TabItem Header="Missions">
+                                        <Grid DataContext="{Binding SaveData}" RowDefinitions="40,*,40">
+                                            <ComboBox Name="StageIdComboBox" SelectedIndex="0"
+                                                      SelectionChanged="StageIdComboBox_OnSelectionChanged">
+                                                <ComboBoxItem Content="Biology A"/>
+                                                <ComboBoxItem Content="Evolution A"/>
+                                                <ComboBoxItem Content="Metallurgy A"/>
+                                                <ComboBoxItem Content="Evolution B"/>
+                                                <ComboBoxItem Content="Optics A"/>
+                                                <ComboBoxItem Content="Evolution C"/>
+                                                <ComboBoxItem Content="Biology B"/>
+                                                <ComboBoxItem Content="Metallurgy B"/>
+                                                <ComboBoxItem Content="Optics B"/>
+                                                <ComboBoxItem Content="Geometry A"/>
+                                                <ComboBoxItem Content="Evolution D"/>
+                                            </ComboBox>
+                                            <DataGrid Grid.Row="1" ItemsSource="{Binding Missions}" Margin="0,0,0,10" GridLinesVisibility="All"
+                                                      BorderThickness="1" BorderBrush="Gray"
+                                                      CanUserResizeColumns="True"
+                                                      CanUserReorderColumns="True"
+                                                      CanUserSortColumns="True" 
+                                                      IsReadOnly="False">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="Type" x:DataType="types:Mission" Binding="{Binding MissionColor}"></DataGridTextColumn>
+                                                    <DataGridTextColumn Header="Mission" x:DataType="types:Mission" Binding="{Binding MissionLabel}"></DataGridTextColumn>
+                                                    <DataGridTextColumn Header="Status" x:DataType="types:Mission" Binding="{Binding Status}"></DataGridTextColumn>
+                                                    <DataGridTextColumn Header="Index" x:DataType="types:Mission" Binding="{Binding ThumbnailIndex}"></DataGridTextColumn>
+                                                    <DataGridTextColumn Header="Pages" x:DataType="types:Mission" Binding="{Binding ThumbnailPages}"/>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                            <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="Mission data source:" VerticalAlignment="Center"></TextBlock>
+                                                <RadioButton Name="SaveEditorMissionOriginalGameRadioButton" Content="Original game" IsChecked="True" IsCheckedChanged="SaveEditorMissionOriginalGameRadioButton_OnIsCheckedChanged"></RadioButton>
+                                                <RadioButton Name="SaveEditorMissionFreePlayRadioButton" Content="Free play" IsCheckedChanged="SaveEditorMissionOriginalGameRadioButton_OnIsCheckedChanged"></RadioButton>
+                                                <RadioButton Name="SaveEditorMissionLastPlaythroughRadioButton" Content="Last playthrough" IsCheckedChanged="SaveEditorMissionOriginalGameRadioButton_OnIsCheckedChanged"></RadioButton>
+                                            </StackPanel>
+                                        </Grid>
+                                    </TabItem>
+                                    <TabItem Header="Stages">
+                                        <Grid DataContext="{Binding SaveData}" RowDefinitions="*,40">
+                                            
+                                            <DataGrid ItemsSource="{Binding Dirs}" Margin="0,0,0,10" GridLinesVisibility="All"
+                                                      BorderThickness="1" BorderBrush="Gray"
+                                                      CanUserResizeColumns="True"
+                                                      CanUserReorderColumns="True"
+                                                      CanUserSortColumns="True" 
+                                                      IsReadOnly="False">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="Stage" x:DataType="types:StageDirectory" Binding="{Binding StageName}"></DataGridTextColumn>
+                                                    <DataGridTextColumn Header="Directory" x:DataType="types:StageDirectory" Binding="{Binding StageDir}"></DataGridTextColumn>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                            <TextBlock Grid.Row="1" Text="This section allows you to modify the stages that will load in original game. Selecting 'DEMO1' will cause the game to crash upon selecting the stage." TextWrapping="Wrap"/>
+                                        </Grid>
+                                    </TabItem>
+                                </TabControl>
                             </sukiUi:SukiSideMenuItem.PageContent>
                         </sukiUi:SukiSideMenuItem>
                     </sukiUi:SukiSideMenu.Items>

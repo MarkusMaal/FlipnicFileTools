@@ -81,6 +81,10 @@ public abstract class StaticUtils
         return new string(chars.ToArray());
     }
 
+    public static long GetInt64(byte[] data, int offset)
+    {
+        return BitConverter.ToInt64(data.Skip(offset).Take(8).ToArray());
+    }
     public static int GetInt32(byte[] data, int offset)
     {
         return BitConverter.ToInt32(data.Skip(offset).Take(4).ToArray());

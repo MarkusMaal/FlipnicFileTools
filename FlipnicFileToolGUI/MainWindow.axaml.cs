@@ -25,6 +25,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using Avalonia.LogicalTree;
 
 namespace FlipnicFileToolGUI;
 
@@ -39,6 +40,10 @@ public partial class MainWindow : SukiWindow
     List<MenuElementViewModel> _menu = [];
 
     public ObservableCollection<MenuElementViewModel> MenuElements { get; set; }
+    
+    public ObservableCollection<string> Controls { get; set; } = new(["L2", "R2", "L1", "R1", "Triangle", "Circle", "Cross", "Square", "Unk8", "Unk9", "UnkA", "UnkB", "DPadUp", "DPadRight", "DPadDown", "DPadLeft"]);
+
+    public FpnSave SaveData { get; set; } = new FpnSave(new byte[0x2780]);
     
     private static int Progress { get; set; }
     private static int ProgressMax { get; set; }
@@ -59,9 +64,8 @@ public partial class MainWindow : SukiWindow
     public MainWindow()
     {
         InitializeComponent();
-
+        this.DataContext = this;
         MenuElements = new ObservableCollection<MenuElementViewModel>(_menu);
-        DataContext = this;
         ApplyCustomTheme();
         DialogHost.Manager = DialogManager;
         
@@ -371,6 +375,22 @@ public partial class MainWindow : SukiWindow
                         {
                             EventBox.Text = sst.GeneratePseudoCode();
                         }
+                        if (sst.HasScoreRecord())
+                        {
+                            SaveData = sst.GetSaveFromRecord();
+                            SaveEditorTabControl.SelectedIndex = 1;
+                            SaveEditor.IsVisible = true;
+                            foreach (var o in SaveEditorTabControl.Items)
+                            {
+                                if (o is not TabItem ti) continue;
+                                if ((string)(ti.Header ?? "") == "Ranking")
+                                {
+                                    ti.IsVisible = true;
+                                    continue;
+                                }
+                                ti.IsVisible = false;
+                            }
+                        }
 
                         GimmickCombobox.SelectedIndex = 0;
                         InfoTab.IsVisible = true;
@@ -412,11 +432,32 @@ public partial class MainWindow : SukiWindow
                     });
                     break;
                 default:
+                    var d = ds.ReadBytes(ds.Length <= 0x2780 ? (int)ds.Length : 0x2780);
+                    SaveData = new FpnSave(d);
+                    if (!SaveData.isValidHeader())
+                    {
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            InfoBox.Text = "Unrecognized file type";
+                            FileTypeLabel.Content = string.Format(FTypeFormat, "Unknown");
+                            InfoTab.IsVisible = true;
+                        });
+                        break;
+                    }
                     Dispatcher.UIThread.Post(() =>
                     {
-                        InfoBox.Text = "Unrecognized file type";
-                        FileTypeLabel.Content = string.Format(FTypeFormat, "Unknown");
-                        InfoTab.IsVisible = true;
+                        SaveData = new FpnSave(d);
+                        this.InfoTab.IsVisible = false;
+                        this.SaveEditor.IsVisible = true;
+                        SaveEditorTabControl.SelectedIndex = 0;
+                        foreach (var o in SaveEditorTabControl.Items)
+                        {
+                            if (o is TabItem ti)
+                            {
+                                ti.IsVisible = true;
+                            }
+                        }
+                        this.FileTypeLabel.Content = string.Format(FTypeFormat, "Flipnic save data");
                     });
                     break;
             }
@@ -1243,5 +1284,70 @@ public partial class MainWindow : SukiWindow
 
             break;
         }
+    }
+
+    private void UpdateChecksumButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        SaveData.UpdateChecksum();
+        ForceRefresh();
+    }
+
+    private void ForceRefresh()
+    {
+        var o = SaveEditorTabControl.SelectedItem;
+        if (o is not TabItem tab) return;
+        if (tab.GetLogicalChildren().FirstOrDefault() is not Grid g) return;
+        g.DataContext = null;
+        g.DataContext = SaveData;
+    }
+
+    private void DiagnoseSaveFileButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var fixes = SaveData.FixStructure();
+        ForceRefresh();
+        if (fixes.Length > 0)
+        {
+            ShowDialog("The following fixes were applied", string.Join('\n', fixes), NotificationType.Success);
+            return;
+        }
+        ShowDialog("No fixes were applied", "Save file appears to have the correct structure", NotificationType.Information);
+    }
+    
+    private void ScoreGrid_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        RankGrid.ItemsSource = SaveData.Rank;
+    }
+
+    private void SaveEditorResetControlButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        SaveData.ResetControls();
+        ForceRefresh();
+    }
+
+    private void SaveEditorOriginalGameRadioButton_OnIsCheckedChanged(object? sender, RoutedEventArgs e)
+    {
+        OriginalUnlocks.IsVisible = SaveEditorOriginalGameRadioButton.IsChecked ?? false;
+        FreeUnlocks.IsVisible = SaveEditorFreePlayRadioButton.IsChecked ?? false;
+    }
+
+    private void SaveEditorUnlockResetButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        SaveData.ResetGame(SaveEditorFreePlayRadioButton.IsChecked ?? false);
+        ForceRefresh();
+    }
+
+    private void StageIdComboBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (StageIdComboBox == null) return;
+        SaveData.StageId = StageIdComboBox.SelectedIndex;
+        ForceRefresh();
+    }
+
+    private void SaveEditorMissionOriginalGameRadioButton_OnIsCheckedChanged(object? sender, RoutedEventArgs e)
+    {
+        if (SaveEditorMissionOriginalGameRadioButton.IsChecked ?? false) SaveData.DataSourceId = 0;
+        if (SaveEditorMissionFreePlayRadioButton.IsChecked ?? false) SaveData.DataSourceId = 1;
+        if (SaveEditorMissionLastPlaythroughRadioButton.IsChecked ?? false) SaveData.DataSourceId = 2;
+        ForceRefresh();
     }
 }

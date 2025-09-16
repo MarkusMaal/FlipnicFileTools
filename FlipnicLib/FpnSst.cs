@@ -125,6 +125,35 @@ public class FpnSst
         return o;
     }
 
+    public bool HasScoreRecord()
+    {
+        return TableOfContents.ContainsKey("RECORD");
+    }
+    
+    public FpnSave GetSaveFromRecord()
+    {
+        var data = new byte[0x2780];
+        var recordEntry = TableOfContents["RECORD"];
+        var scoreData = new List<byte>();
+        
+        for (var i = 0; i < recordEntry.Count; i++)
+        {
+            var offset = recordEntry.Offset + (i*recordEntry.EntrySize);
+            scoreData.AddRange(_data.Skip(offset).Take(recordEntry.EntrySize-4).ToArray());
+            scoreData.Add(0);
+            scoreData.Add(0);
+            scoreData.Add(0);
+            scoreData.Add(0);
+            scoreData.AddRange(_data.Skip(offset+recordEntry.EntrySize-4).Take(4).ToArray());
+        }
+
+        for (var j = 0x60; j < scoreData.Count + 0x60; j++)
+        {
+            data[j] = scoreData[j-0x60];
+        }
+        return new FpnSave(data);
+    }
+
     private void GenerateToc(int end)
     {
         for (var i = 0x10; i < end; i+=0x10)

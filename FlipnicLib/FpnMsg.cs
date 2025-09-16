@@ -37,4 +37,9 @@ public class FpnMsg
     {
         return _messages.Aggregate("", (current, message) => current + (message + "\n"));
     }
+
+    public string[] ToArray()
+    {
+        return _messages.ToArray();
+    }
 }
