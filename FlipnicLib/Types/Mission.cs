@@ -9,7 +9,7 @@ public class Mission(FpnSave save, int rowIdx, int dataSource, int stage)
 
     public string MissionColor
     {
-        get => Save.GetMissionTypes(DataSource)[RowIndex];
+        get => Save.GetMissionTypes(Stage)[RowIndex];
         set => Save.SetMissionType(Stage, RowIndex, value == "Red");
     }
 
