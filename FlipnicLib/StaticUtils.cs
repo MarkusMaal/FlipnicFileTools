@@ -205,11 +205,11 @@ public abstract class StaticUtils
     
     public static void ConvertAudio(string outFile, string fileName, bool mono = false)
     {
-        Console.Write("     Loading sound file to memory".PadRight(StaticUtils.WindowWidth, ' '));
-        StaticUtils.PrintLoader();
+        Console.Write("     Loading sound file to memory".PadRight(WindowWidth, ' '));
+        PrintLoader();
         var data = File.ReadAllBytes(fileName);
-        Console.Write("\r     Separating left and right channels".PadRight(StaticUtils.WindowWidth, ' '));
-        StaticUtils.PrintLoader();
+        Console.Write("\r     Separating left and right channels".PadRight(WindowWidth, ' '));
+        PrintLoader();
         List<byte> interleavedDataL = [];
         List<byte> interleavedDataR = [];
         for (var i = 0; i < data.Length; i += 0x400)
@@ -230,14 +230,14 @@ public abstract class StaticUtils
             }
         }
         
-        Console.Write("\r     Converting to PCM".PadRight(StaticUtils.WindowWidth, ' '));
-        StaticUtils.PrintLoader();
+        Console.Write("\r     Converting to PCM".PadRight(WindowWidth, ' '));
+        PrintLoader();
         using var msl = new MemoryStream(SonyVag.Decode([.. interleavedDataL]));
         using var msr = new MemoryStream(SonyVag.Decode([.. interleavedDataR]));
         using var ms = new MemoryStream();
         
         {
-            Console.Write("\r     Generating WAV file".PadRight(StaticUtils.WindowWidth, ' '));
+            Console.Write("\r     Generating WAV file".PadRight(WindowWidth, ' '));
             var bufL = new byte[2]; // 16-bit, 2 channels = 2+2 bytes
             var bufR = new byte[2];
             var i = 0;
@@ -252,7 +252,7 @@ public abstract class StaticUtils
                     i++;
                     if (i % 0x100 == 0)
                     {
-                        StaticUtils.PrintLoader();
+                        PrintLoader();
                     }
                 }
                 catch (EndOfStreamException)
@@ -264,13 +264,46 @@ public abstract class StaticUtils
             // Stereo, Signed 16-bit, 44100Hz
             Pcm.WriteWavHeader(ms, false, 2, 16, 44100, (int)ms.Length);
         
-            Console.Write("\r     Saving WAV file".PadRight(StaticUtils.WindowWidth, ' '));
-            StaticUtils.PrintLoader();
+            Console.Write("\r     Saving WAV file".PadRight(WindowWidth, ' '));
+            PrintLoader();
             // save WAV file
             var fs = new FileStream(outFile, FileMode.Create);
             ms.WriteTo(fs);
             fs.Close();
-            Console.WriteLine($"\r   File saved as {outFile}".PadRight(StaticUtils.WindowWidth, ' '));
+            Console.WriteLine($"\r   File saved as {outFile}".PadRight(WindowWidth, ' '));
+        }
+    }
+
+    private static void HexStrToColor(string hex)
+    {
+        var bg = hex[0];
+        var fg = hex[1];
+        if ((bg == '-') && (fg == '-'))
+        {
+            Console.ResetColor();
+            return;
+        }
+
+        if (bg != '-')
+        {
+            var bgI = Convert.FromHexString("0" + bg)[0];
+            Console.BackgroundColor = (ConsoleColor)bgI;
+        }
+
+        if (fg == '-') return;
+        var fgI = Convert.FromHexString("0" + fg)[0];
+        Console.ForegroundColor = (ConsoleColor)fgI;
+    }
+
+    public static void DecodeColors(string encoded)
+    {
+        foreach (var _sect in encoded.Split('~'))
+        {
+            if (_sect.Length == 0) continue;
+            var sect = _sect.Replace("::::", "~")[2..];
+            var colorCode = _sect[..2].ToUpper();
+            HexStrToColor(colorCode);
+            Console.Write(sect);
         }
     }
 

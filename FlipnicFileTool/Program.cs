@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using FlipnicLib.Vag;
 using FlipnicLib;
 using FlipnicLib.Jam;
 using FlipnicLib.Midi;
@@ -9,91 +8,31 @@ namespace FlipnicFileTool;
 
 internal static class Program
 {
-    private enum Modes
-    {
-        ListResources,
-        ShowFpc,
-        ConvertXml,
-        ShowHelp,
-        ShowSstToc,
-        ShowMessages,
-        ListPssStreams,
-        ExtractPssStreams,
-        ListBin,
-        ExtractBin,
-        ShowGimmick,
-        ShowLp4,
-        ShowMlb,
-        ShowTim2,
-        ConvertTim2,
-        GenerateMockup,
-        ConvertIpu,
-        ConvertInt,
-        ConvertPssMov,
-        ConvertSvag,
-        ShowHd,
-        ShowMidi,
-        ConvertSf2,
-        ShowVsd,
-        ShowFpd,
-        ShowLay,
-        ShowPseudoCode
-    }
 
     private static bool _grayscale;
     private static string _mlbSect = "";
     private static string _magickPath = "magick";
     private static string _fFmpegPath = "ffmpeg";
     private static bool _usePng;
-    private static string FileName { get; set; }
+    private static string FileName { get; set; } = "";
     
     public static void Main(string[] args)
     {
         var secondaryFileName = "";
         var outFile = ".";
         var lastPar = "";
-        var mode = Modes.ShowHelp;
+        var mode = Enums.Modes.ShowHelp;
         if (args.Length > 0 && File.Exists(args[0]))
         {
-            mode = GuessAction(args[0]);
-            if (mode != Modes.ShowHelp)
+            mode = Enums.GuessAction(args[0]);
+            if (mode != Enums.Modes.ShowHelp)
             {
                 FileName = args[0];
             }
         }
         foreach (var arg in args)
         {
-            mode = arg switch
-            {
-                "--help" => Modes.ShowHelp,
-                "--show-fpc" => Modes.ShowFpc,
-                "--show-sst-resources" => Modes.ListResources,
-                "--convert-fpc-to-xml" => Modes.ConvertXml,
-                "--show-sst-toc" => Modes.ShowSstToc,
-                "--show-messages" => Modes.ShowMessages,
-                "--list-pss-streams" => Modes.ListPssStreams,
-                "--extract-pss-streams" => Modes.ExtractPssStreams,
-                "--list-files" => Modes.ListBin,
-                "--extract-files" => Modes.ExtractBin,
-                "--show-gimmick" => Modes.ShowGimmick,
-                "--show-lp4" => Modes.ShowLp4,
-                "--show-mlb" => Modes.ShowMlb,
-                "--show-tim2" => Modes.ShowTim2,
-                "--show-hd" => Modes.ShowHd,
-                "--show-midi" => Modes.ShowMidi,
-                "--show-vsd" => Modes.ShowVsd,
-                "--convert-tim2" => Modes.ConvertTim2,
-                "--generate-mockup" => Modes.GenerateMockup,
-                "--convert-ipu" => Modes.ConvertIpu,
-                "--convert-int" => Modes.ConvertInt,
-                "--convert-pss-mov" => Modes.ConvertPssMov,
-                "--convert-svag" => Modes.ConvertSvag,
-                "--convert-sf2" => Modes.ConvertSf2,
-                "--show-lay" => Modes.ShowLay,
-                "--get-pseudo-code" => Modes.ShowPseudoCode,
-                "--show-fpd" => Modes.ShowFpd,
-                _ => mode
-            };
+            mode = Enums.GetMode(arg, mode);
             switch (arg)
             {
                 case "--simple":
@@ -145,18 +84,18 @@ internal static class Program
             lastPar = arg;
         }
 
-        if (FileName == "" && mode != Modes.ShowHelp)
+        if (FileName == "" && mode != Enums.Modes.ShowHelp)
         {
             Console.WriteLine("Must specify input FileName in this case!");
             return;
         }
-        if (!File.Exists(FileName) && mode != Modes.ShowHelp)
+        if (!File.Exists(FileName) && mode != Enums.Modes.ShowHelp)
         {
             Console.WriteLine("Error: Input file does not exist!");
             return;
         }
 
-        if (mode != Modes.ShowHelp && new FileInfo(FileName).IsReadOnly && outFile != "")
+        if (mode != Enums.Modes.ShowHelp && new FileInfo(FileName).IsReadOnly && outFile != "")
         {
             Console.WriteLine("Error: Read-only file system");
             return;
@@ -165,59 +104,59 @@ internal static class Program
         // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
         switch (mode)
         {
-            case Modes.ListResources:
+            case Enums.Modes.ListResources:
                 Console.Write(new FpnSst(File.OpenRead(FileName)).GenerateMagicNumbers());
                 break;
-            case Modes.ShowFpc:
+            case Enums.Modes.ShowFpc:
                 Console.Write(new FpnFpc(FileName).ToString());
                 break;
-            case Modes.ConvertXml:
+            case Enums.Modes.ConvertXml:
                 new FpnFpc(FileName).GenerateXML().Save(outFile);
                 break;
-            case Modes.ShowSstToc:
+            case Enums.Modes.ShowSstToc:
                 Console.Write(new FpnSst(File.OpenRead(FileName)).ListEntries());
                 break;
-            case Modes.ShowPseudoCode:
+            case Enums.Modes.ShowPseudoCode:
                 Console.Write(new FpnSst(File.OpenRead(FileName)).GeneratePseudoCode());
                 break;
-            case Modes.ShowGimmick:
+            case Enums.Modes.ShowGimmick:
                 new FpnSst(File.OpenRead(FileName)).ShowGimmick(secondaryFileName);
                 break;
-            case Modes.ShowMessages:
+            case Enums.Modes.ShowMessages:
                 Console.WriteLine(StaticUtils.SimpleOutput ? new FpnMsg(FileName).ToSimpleString() : new FpnMsg(FileName).ToString());
                 break;
-            case Modes.ListPssStreams:
+            case Enums.Modes.ListPssStreams:
                 Console.WriteLine(new Pss(FileName).ListPss(File.OpenRead(FileName)));
                 break;
-            case Modes.ExtractPssStreams:
+            case Enums.Modes.ExtractPssStreams:
                 new Pss(FileName).ListPss(File.OpenRead(FileName), true, outFile);
                 break;
-            case Modes.ListBin:
+            case Enums.Modes.ListBin:
                 new BinFile().ListBin(File.OpenRead(FileName));
                 break;
-            case Modes.ExtractBin:
+            case Enums.Modes.ExtractBin:
                 new BinFile().ExtractBin(FileName, outFile);
                 break;
-            case Modes.ShowHd:
+            case Enums.Modes.ShowHd:
                 var jh = new JamHeader();
                 jh.Read(new BinaryStream(new FileStream(FileName, FileMode.Open, FileAccess.Read)));
                 Console.Write(jh.ToString());
                 break;
-            case Modes.ShowMidi:
+            case Enums.Modes.ShowMidi:
                 var midi = new Midi(FileName);
                 midi.Read();
                 Console.Write(midi.ToString());
                 break;
-            case Modes.ShowHelp:
-                Console.WriteLine(GetHelp());
+            case Enums.Modes.ShowHelp:
+                GetHelp();
                 break;
-            case Modes.ShowLp4:
+            case Enums.Modes.ShowLp4:
                 Console.WriteLine(new Lp4(File.ReadAllBytes(FileName), FileName).ToString());
                 break;
-            case Modes.ShowMlb:
+            case Enums.Modes.ShowMlb:
                 Console.WriteLine(new FpnMlb(File.ReadAllBytes(FileName)).ToString());
                 break;
-            case Modes.ConvertTim2:
+            case Enums.Modes.ConvertTim2:
                 var texture = new Tim2(File.ReadAllBytes(FileName), FileName, _grayscale);
                 if (_usePng)
                 {
@@ -227,24 +166,24 @@ internal static class Program
                 var fs = new FileStream(outFile, FileMode.Create);
                 texture.SaveBitmap(fs);
                 break;
-            case Modes.ConvertIpu:
+            case Enums.Modes.ConvertIpu:
                 Ipu.IpuConvert(FileName, outFile, _fFmpegPath);
                 break;
-            case Modes.ConvertSf2:
+            case Enums.Modes.ConvertSf2:
                 Converter.InstrumentToSoundFont2(FileName[..^3] + ".MID", FileName, FileName[..^2] + "BD", outFile);
                 break;
-            case Modes.ConvertInt:
+            case Enums.Modes.ConvertInt:
                 StaticUtils.ConvertAudio(outFile, FileName);
                 break;
-            case Modes.ConvertSvag:
+            case Enums.Modes.ConvertSvag:
                 StaticUtils.ConvertAudio(outFile, FileName, true);
                 Console.WriteLine($"File saved as {outFile}");
                 break;
-            case Modes.ShowVsd:
+            case Enums.Modes.ShowVsd:
                 var vsd = new FpnVsd(File.OpenRead(FileName));
                 Console.WriteLine($"Vibration Strength Data\n{vsd}");
                 break;
-            case Modes.ConvertPssMov:
+            case Enums.Modes.ConvertPssMov:
                 new Pss(FileName).ListPss(File.OpenRead(FileName), true, new FileInfo(outFile).Directory!.FullName);
                 var nf = Path.Combine(new FileInfo(outFile).Directory!.FullName, new FileInfo(FileName).Name);
                 Ipu.IpuConvert(nf + ".IPU", nf + ".TEMP.MOV", _fFmpegPath);
@@ -288,13 +227,13 @@ internal static class Program
                 File.Delete(nf + ".IPU");
                 Console.WriteLine($"\rFile saved as {outFile}");
                 break;
-            case Modes.ShowTim2:
+            case Enums.Modes.ShowTim2:
                 Console.WriteLine(new Tim2(File.ReadAllBytes(FileName), FileName).ToString());
                 break;
-            case Modes.ShowLay:
+            case Enums.Modes.ShowLay:
                 Console.Write(new FpnLay(File.ReadAllBytes(FileName)));
                 break;
-            case Modes.GenerateMockup:
+            case Enums.Modes.GenerateMockup:
                 StaticUtils.GenerateEmptyPng(outFile + "_", 640, StaticUtils.Pal ? 512 : 480);
                 var root = new FileInfo(FileName).Directory?.FullName ?? ".";
                 var magickCommand = $"\"{outFile}_\" ";
@@ -339,116 +278,15 @@ internal static class Program
                 break;
         }
     }
-    private static string GetHelp()
+    private static void GetHelp()
     {
-        return $"""
-               Usage: {Process.GetCurrentProcess().ProcessName} [FileName] [options]
-               
-               Specifying a FileName without any option will run an action corresponding file format below highlighted with an asterisk (*).
-               
-               --input                    File to open
-               --output                   File to write to
-               --help                     Display help
-               --simple                   Use output that is easy to parse for computer programs
-               --low-memory               Reduces performance to save on memory usage
-               --magick-path              Path to ImageMagick executable (may not be needed dep. on what you're trying to do)
-               --ffmpeg-path              Path to FFmpeg (for audio/video conversion operations)
-               --msg-path                 Path to JA.MSG file (optional)
-               --png                      Use PNG instead of BMP (for transparency and smaller file sizes)
-               
-               Flipnic Camera sequences (*.FPC)
-               
-               --show-fpc*                Display data from .FPC file as human-readable text
-               --convert-fpc-to-xml       Convert .FPC file to .XML
+        var ds = (OperatingSystem.IsWindows() ? "" : "./");
+        StaticUtils.DecodeColors($"""
+                                  ~-BFlipnic File Tools {StaticUtils.DotFloatString(StaticUtils.LibVersion)}~-- [~-ECLI Usage~--]
+                                  ~-7{ds + Process.GetCurrentProcess().ProcessName} [filename] [options]~--
 
-               Stage information files (*.SST)
-               
-               --show-sst-resources       Display all resources referenced by SST file
-               --show-sst-toc*            Display table of contents of the SST file
-               --show-gimmick [name]      Display a gimmick (name from TOC)
-               --get-pseudo-code          Transform stage event into something that's somewhat human-readable
-               
-               Message file (JA.MSG)
-               
-               --show-messages*           Display all strings stored in the file
-               
-               Interleaved audio/video stream (*.PSS)
-               
-               --list-pss-streams*        List all available streams in a .PSS file
-               --extract-pss-streams      Demux a .PSS file to .IPU and .INT files (output = folder)
-               --convert-ipu              Uses FFmpeg to convert .IPU file to .MOV
-               --convert-int              Convert .INT file to .WAV
-               --convert-pss-mov          Convert .PSS file directly to .MOV file with audio streams
-               --pal                      Force 25/50 frames per second when converting video files
-               
-               Blob files (*.BIN)
-               
-               --list-files*              List all files inside this container file
-               --extract-files            Extract files inside the container to a folder (output = folder)
-               
-               Resource files (*.LP4)
-               
-               --show-lp4*                Display general information about the file
-               
-               Menu files (*.MLB)
-               
-               --show-mlb*                Display all menu elements as a table
-               --generate-mockup          Combine texture files to create a mockup for the menu file (requires ImageMagick v7 or later)
-               --pal                      Use 512 lines instead of 480 for generated images
-               --mlb-section [name]       Combine only a specific section of the menu
-               
-               Texture files (*.TM2)
-               
-               --show-tim2*               Display information about a texture file
-               --convert-tim2             Converts a texture file to a bitmap (.BMP file)
-               --grayscale                Set palette to grayscale (black and white)
-               
-               Sound files (*.SVAG)
-               
-               --convert-svag             Converts a .SVAG file to .WAV
-               
-               VAB header files (*.HD)
-               
-               --show-hd*                 List programs in the .HD file
-               --convert-sf2              Allows you to convert soundbank to .SF2 (specify .HD file as input)
-               --no-envelopes             Doesn't export envelopes (attack, decay, sustain, release)
-               
-               MIDI sequences (*.MID)
-               
-               --show-midi*               List MIDI events
-               
-               Vibration data (*.VSD)
-               
-               --show-vsd*                Display vibration strength values
-               
-               Layout files (*.LAY)
-               
-               --show-lay*                List layout data in human-readable format
-               """;
-    }
-
-    private static Modes GuessAction(string FileName)
-    {
-        return Path.GetExtension(FileName) switch
-        {
-            ".FPC" => Modes.ShowFpc,
-            ".SST" => Modes.ShowSstToc,
-            ".MSG" => Modes.ShowMessages,
-            ".PSS" => Modes.ListPssStreams,
-            ".BIN" => Modes.ListBin,
-            ".LP4" => Modes.ShowLp4,
-            ".MLB" => Modes.ShowMlb,
-            ".TM2" => Modes.ShowTim2,
-            ".HD"  => Modes.ShowHd,
-            ".MID" => Modes.ShowMidi,
-            ".VSD" => Modes.ShowVsd,
-            ".LAY" => Modes.ShowLay,
-            _ => Modes.ShowHelp
-        };
-    }
-
-    public static string GetFileName()
-    {
-        return FileName;
+                                  """);
+        Help.HelpUtils.GenerateHelp();
+        StaticUtils.DecodeColors("~-7* ~-FDefault action");
     }
 }
