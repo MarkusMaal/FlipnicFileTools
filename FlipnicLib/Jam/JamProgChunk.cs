@@ -189,7 +189,7 @@ public class JamSplitChunk
         Release = bs.ReadSByte();
         Decay = bs.ReadSByte();
         bs.Position++; // skip the Volume Override
-        Volume = (byte)(Math.Ceiling(bs.Read1Byte() / 128f * 100f));
+        Volume = bs.Read1Byte();
         Pan = (byte)(bs.Read1Byte() + 0xC);
         PitchBend = bs.Read1Byte();
         LfoTableIndex = bs.Read1Byte();

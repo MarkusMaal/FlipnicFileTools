@@ -153,11 +153,12 @@ public abstract class Converter
                     sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(splitChunk.Decay * 125f - 4000f) });
                     sf2.AddInstrumentGenerator(SF2Generator.SustainVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Volume * 11.25f) });
+                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Sustain * 11.25f) });
                     sf2.AddInstrumentGenerator(SF2Generator.ReleaseVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(splitChunk.Release * 125f - 4000f) });
+                    sf2.AddInstrumentGenerator(SF2Generator.Velocity,
+                        new SF2GeneratorAmount { Amount = (short)((prog.BaseVolume + splitChunk.Volume) / 2) }); // divide by 2, because SF2 specifies 127 as the max value, but the maximum for BaseVolume + Volume is 255
                 }
-
                 if (splitChunk.Reverb)
                 {
                     sf2.AddInstrumentGenerator(SF2Generator.ReverbEffectsSend, new SF2GeneratorAmount { Amount = 800 });
