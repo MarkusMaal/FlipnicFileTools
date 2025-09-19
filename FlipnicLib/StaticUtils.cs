@@ -46,6 +46,8 @@ public abstract class StaticUtils
     public static bool ExportVelocity { get; set; } = true;
 
     public static bool AltSf2Method { get; set; } = false;
+
+    public static bool IsModeSet { get; set; } = false;
     
     public static void PrintLoader()
     {
@@ -118,19 +120,45 @@ public abstract class StaticUtils
         return f.ToString(CultureInfo.CreateSpecificCulture("en-US"));
     }
 
-    public static string GenerateTable(string[] columns, List<string[]> rows, int colSize = 15)
+    public static string GenerateTable(string[] columns, List<string[]> rows, bool asCsv)
     {
-        var width = (colSize+3) * columns.Length; 
-        var sep = "+";
         var o = "";
-        
-        for (var i = 1; i <= width; i++)
+        if (asCsv)
         {
-            if (i % (colSize+3) == 0) sep += "+";
-            else sep += "-";
+            o = "***CSV\n" + string.Join(",", columns) + "\n";
+            o = rows.Aggregate(o, (current, row) => current + (string.Join(",", row) + "\n"));
+            return o;
+        }
+        var sep = "+";
+
+        List<int> colSizes = [];
+        for (var c = 0; c < columns.Length; c++)
+        {
+            var max = 0;
+            if (rows.Count > 0)
+            {
+                max = rows.Select(row => row[c].Length).Max();
+            }
+            if (max < columns[c].Length) max = columns[c].Length;
+            colSizes.Add(max);
+        }
+
+        var cI = -1;
+        foreach (var cS in colSizes)
+        {
+            for (var j = 0; j < cS + 2; j++)
+            {
+                sep += "-";
+            }
+            sep += "+";
         }
         o += $"{sep}\n| ";
-        o = columns.Aggregate(o, (current, t) => current + t.PadRight(colSize) + " | ");
+        cI = 0;
+        foreach (var column in columns)
+        {
+            o = o + column.PadRight(colSizes[cI]) + " | ";
+            cI++;
+        }
 
         o += "\n";
         o += $"{sep}\n";
@@ -145,7 +173,14 @@ public abstract class StaticUtils
                 o = "";
             }
             o += "| ";
-            var line = row.Aggregate("", (current, s) => current + s.PadRight(colSize) + " | ");
+            var line = "";
+
+            cI = 0;
+            foreach (var s in row)
+            {
+                line = line + s.PadRight(colSizes[cI]) + " | ";
+                cI++;
+            }
             o += line + "\n";
             if (LowMem)
             {
@@ -278,8 +313,9 @@ public abstract class StaticUtils
 
     private static void HexStrToColor(string hex)
     {
+        if (SimpleOutput) return;
         var bg = hex[0];
-        var fg = hex[1];
+        var fg = hex[1]; 
         if ((bg == '-') && (fg == '-'))
         {
             Console.ResetColor();
@@ -309,4 +345,9 @@ public abstract class StaticUtils
         }
     }
 
+
+    public static string SNote(Jam.Note noteStr)
+    {
+        return noteStr.ToString().Replace("Sharp", "#").Replace("Neg", "Ng");
+    }
 }

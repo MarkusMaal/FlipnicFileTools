@@ -25,7 +25,7 @@ public class FpnSst
             var subEntries = GetSubentries(entry.Value.Offset, entry.Value.EntrySize, entry.Value.Count);
             rows.AddRange(subEntries.Select((t, i) => (string[]) [entry.Key, "0x" + i.ToString("X").PadLeft(2, '0'), StaticUtils.GetString(t)]));
         }
-        return StaticUtils.GenerateTable(colHeaders, rows, rows.Select(row => row[2].Length + 1).Prepend(15).Max());
+        return StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput);
     }
 
     public string GetStringById(string listName, int id)
@@ -57,7 +57,7 @@ public class FpnSst
     {
         string[] colHeaders = ["Name", "Offset", "Entry count", "Entry size"];
         var rows = TableOfContents.Select(entry => (string[]) [entry.Key, $"0x{entry.Value.Offset:X}", entry.Value.Count.ToString(), $"0x{entry.Value.EntrySize:X}"]).ToList();
-        return StaticUtils.GenerateTable(colHeaders, rows);
+        return StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput);
     }
 
     public void ShowGimmick(string name)
@@ -73,8 +73,7 @@ public class FpnSst
         string[] colHeaders = ["Label", "Type", "Button", "Sound effect", "Flip. strength", "Knockback", "Bounciness"];
         List<string[]> rows = [];
         rows.AddRange(gimmicks.Select(entry => (string[]) [entry.Label, entry.Type.ToString(), entry.Button.ToString(), entry.SoundEffect.ToString(), StaticUtils.DotFloatString(entry.FlipperStrength), StaticUtils.DotFloatString(entry.Knockback), StaticUtils.DotFloatString(entry.Bounciness)]));
-        Console.Write(StaticUtils.GenerateTable(colHeaders, rows,
-            rows.Select(row => row[0].Length).Prepend(15).Max()));
+        Console.Write(StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput));
     }
 
     public Dictionary<string, Gimmick[]>? GetGimmicks()

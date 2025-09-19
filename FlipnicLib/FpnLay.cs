@@ -40,7 +40,7 @@
             }
         }
 
-        public override string ToString()
+        public string ToString(bool asCsv)
         {
             string[] colHeaders = ["Label", "Size", "Skew", "Position"];
             List<string[]> rows = [];
@@ -48,8 +48,11 @@
                 $"{StaticUtils.DotFloatString(lay.SizeX)}/{StaticUtils.DotFloatString(lay.SizeY)}/{StaticUtils.DotFloatString(lay.SizeZ)}",
                 $"{StaticUtils.DotFloatString(lay.SkewX)}/{StaticUtils.DotFloatString(lay.SkewY)}/{StaticUtils.DotFloatString(lay.SkewZ)}",
                 $"{StaticUtils.DotFloatString(lay.PositionX)}/{StaticUtils.DotFloatString(lay.PositionY)}/{StaticUtils.DotFloatString(lay.PositionZ)}"]));
-            return StaticUtils.GenerateTable(colHeaders, rows,
-                rows.Select(row => row[3].Length + 1).Prepend(15).Max());
+            return StaticUtils.GenerateTable(colHeaders, rows, asCsv);
+        }
+        public override string ToString()
+        {
+            return ToString(false);
         }
 
         private class Layout

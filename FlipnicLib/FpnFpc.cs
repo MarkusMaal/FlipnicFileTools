@@ -103,6 +103,11 @@ public class FpnFpc
 
     public override string ToString()
     {
+        return ToString(false);
+    }
+
+    public string ToString(bool asCsv)
+    {
         var o = "";
         o += $"Frames: {NumFrames}, Sequences: {NumSequences}\n";
         o += $"Field of view: {StaticUtils.DotFloatString(FOV)}\n";
@@ -128,45 +133,7 @@ public class FpnFpc
                     StaticUtils.DotFloatString(tz), StaticUtils.DotFloatString(fov)
                 ]);
             }
-
-            if (!StaticUtils.SimpleOutput)
-            {
-                o += StaticUtils.GenerateTable(colHeaders, rows);
-            }
-            else
-            {
-                foreach (var row in rows)
-                {
-                    for (var i = 0; i < colHeaders.Length; i++)
-                    {
-                        if (StaticUtils.LowMem)
-                        {
-                            Console.Write(colHeaders[i] + ": " + row[i]);
-                            if (i != colHeaders.Length - 1)
-                            {
-                                Console.Write("; ");
-                            }   
-                        }
-                        else
-                        {
-                            o += colHeaders[i] + ": " + row[i];
-                            if (i != colHeaders.Length - 1)
-                            {
-                                o += "; ";
-                            }   
-                        }
-                    }
-
-                    if (StaticUtils.LowMem)
-                    {
-                        Console.WriteLine();
-                    }
-                    else
-                    {
-                        o += "\n";
-                    }
-                }
-            }
+            o += StaticUtils.GenerateTable(colHeaders, rows, asCsv);
         }
 
         if (NumFrames != 0)

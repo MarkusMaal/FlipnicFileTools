@@ -138,8 +138,7 @@ public class BinFile
             FsEntries.Add(new VirtualFile(rows[i][0], Offsets[i], Sizes[i]));
         }
         realRows.AddRange(rows.Select((t, i) => (string[]) [t[0], t[1], StaticUtils.GetFilesizeString(Sizes[i])]));
-        Console.Write(StaticUtils.GenerateTable(colHeader, realRows,
-            realRows.Select(row => row[0].Length + 1).Prepend(15).Max()));
+        Console.Write(StaticUtils.GenerateTable(colHeader, realRows, StaticUtils.SimpleOutput));
     }
 
 

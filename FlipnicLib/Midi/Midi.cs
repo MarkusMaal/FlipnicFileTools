@@ -43,6 +43,11 @@ public class Midi(string fileName)
 
     public override string ToString()
     {
+        return ToString(false);
+    }
+
+    public string ToString(bool asCsv)
+    {
         string[] colHeaders = ["Delta", "Event", "Status", "Channel"];
         List<string[]> rows = [];
         var fn = FileName != null ? new FileInfo(FileName).Name : "???";
@@ -58,7 +63,7 @@ public class Midi(string fileName)
             m.Status.ToString(),
             m.Event.ProgramID.ToString()
         ]));
-        o += StaticUtils.GenerateTable(colHeaders, rows, rows.Select(row => row[1].Length + 1).Prepend(15).Max());
+        o += StaticUtils.GenerateTable(colHeaders, rows, asCsv);
         return o;
     }
 }

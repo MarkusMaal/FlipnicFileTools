@@ -92,7 +92,7 @@ public class Tim2
         this._pallette = grayscalePalette.ToArray();
     }
 
-    private string DisplayPalette()
+    private string DisplayPalette(bool asCsv)
     {
         string[] colHeaders = ["ID", "RGB", "Alpha"];
         List<string[]> rows = [];
@@ -102,7 +102,7 @@ public class Tim2
                 this._pallette[i + 2]);
             rows.Add(["0x" + (i/4).ToString(ColorType == ColorMode.Tim8Bpp ? "X2" : "X"), $"#{pal.R:X2}{pal.G:X2}{pal.B:X2}", pal.A.ToString()]);
         }
-        return "Palette:\n" + StaticUtils.GenerateTable(colHeaders, rows, 9);
+        return "Palette:\n" + StaticUtils.GenerateTable(colHeaders, rows, asCsv);
     }
 
     public byte[] GenerateRgbaArray()
@@ -191,7 +191,7 @@ public class Tim2
         output.Close();
     }
 
-    public override string ToString()
+    public string ToString(bool asCsv)
     {
         var ct = ColorType switch
         {
@@ -202,14 +202,19 @@ public class Tim2
         var fn = FileName != null ? new FileInfo(FileName).Name : "???";
         return $"""
                 TIM2 texture file
-                
+
                 Name: {fn}
                 Width: {Width}
                 Height: {Height}
                 Colors: {_pallette.Length/4}
                 Palette type: {ct}
-                
-                {DisplayPalette()}
+
+                {DisplayPalette(asCsv)}
                 """;
+    }
+    
+    public override string ToString()
+    {
+        return ToString(false);
     }
 }

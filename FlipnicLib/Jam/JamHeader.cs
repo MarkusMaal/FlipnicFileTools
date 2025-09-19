@@ -132,12 +132,12 @@ public class JamHeader
         }
     }
 
-    public override string ToString()
+    public string ToString(bool asCsv)
     {
         var o = "";
         for (var i = 0; i < ProgramChunks.Count; i++)
         {
-            var ChunkData = (ProgramChunks[i]?.ToString() ?? "");
+            var ChunkData = (ProgramChunks[i]?.ToString(asCsv) ?? "");
             if (ChunkData != "")
             {
                 o += $"Programme {i + 1}\n{ChunkData}\n\n";
@@ -145,7 +145,7 @@ public class JamHeader
         }
         for (var i = 0; i < SeProgramChunks.Count; i++)
         {
-            o += $"SFX Programme {i + 1}\n{SeProgramChunks[i]}\n\n";
+            o += $"SFX Programme {i + 1}\n{SeProgramChunks[i].ToString(asCsv)}\n\n";
         }
 
         for (var i = 0; i < SeSeqChunks.Count; i++)
@@ -156,6 +156,11 @@ public class JamHeader
             }
         }
         return o;
+    }
+    
+    public override string ToString()
+    {
+        return ToString(false);
     }
 }
 

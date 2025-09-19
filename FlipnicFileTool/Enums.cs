@@ -1,3 +1,5 @@
+using FlipnicLib;
+
 namespace FlipnicFileTool;
 
 public abstract class Enums
@@ -30,7 +32,10 @@ public abstract class Enums
         ShowVsd,
         ShowFpd,
         ShowLay,
-        ShowPseudoCode
+        ShowPseudoCode,
+        ShowIpu,
+        ConflictingModes,
+        NoAction
     }
     
     public static Modes GuessAction(string fileName)
@@ -49,12 +54,14 @@ public abstract class Enums
             ".MID" => Modes.ShowMidi,
             ".VSD" => Modes.ShowVsd,
             ".LAY" => Modes.ShowLay,
+            ".IPU" => Modes.ShowIpu,
             _ => Modes.ShowHelp
         };
     }
 
     public static Modes GetMode(string flag, Modes mode)
     {
+        var oldMode = mode;
         mode = flag switch
         {
             "--help" => Modes.ShowHelp,
@@ -84,8 +91,18 @@ public abstract class Enums
             "--show-lay" => Modes.ShowLay,
             "--get-pseudo-code" => Modes.ShowPseudoCode,
             "--show-fpd" => Modes.ShowFpd,
+            "--show-ipu" => Modes.ShowIpu,
             _ => mode
         };
+        
+        if (oldMode == mode) StaticUtils.IsModeSet = false;
+        if (mode == Modes.ShowHelp) return mode;
+        if (StaticUtils.IsModeSet)
+        {
+            mode = Modes.ConflictingModes;
+        }
+        StaticUtils.IsModeSet = true;
+
         return mode;
     }
 }

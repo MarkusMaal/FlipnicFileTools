@@ -18,7 +18,8 @@ public abstract class HelpUtils
                 new HelpLine("magick-path", "Path to ImageMagick executable (may not be needed dep. on what you're trying to do)"),
                 new HelpLine("ffmpeg-path", "Path to FFmpeg (for audio/video conversion operations)"),
                 new HelpLine("msg-path", "Path to JA.MSG file (optional)"),
-                new HelpLine("png", "Use PNG instead of BMP (for transparency and smaller file sizes)") ]
+                new HelpLine("png", "Use PNG instead of BMP (for transparency and smaller file sizes)"), 
+                new HelpLine("version", "Displays the version number for FlipnicLib"),]
             ),
             new
             (
@@ -52,10 +53,17 @@ public abstract class HelpUtils
                 [
                     new HelpLine("list-pss-streams*", "List all available streams in a .PSS file"),
                     new HelpLine("extract-pss-streams", "Demux a .PSS file to .IPU and .INT files (output = folder)"),
-                    new HelpLine("convert-ipu", "Uses FFmpeg to convert .IPU file to .MOV"),
                     new HelpLine("convert-int", "Convert .INT file to .WAV"),
                     new HelpLine("convert-pss-mov", "Convert .PSS file directly to .MOV file with audio streams"),
                     new HelpLine("pal", "Force 25/50 frames per second when converting video files"),
+                ]
+            ),
+            new (
+                "Video files",
+                "*.IPU",
+                [
+                    new HelpLine("show-ipu", "Display basic information about the IPU file"),
+                    new HelpLine("convert-ipu", "Uses FFmpeg to convert .IPU file to .MOV")
                 ]
             ),
             new(

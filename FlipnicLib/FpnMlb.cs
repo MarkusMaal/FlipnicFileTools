@@ -27,7 +27,7 @@ public class FpnMlb
         }
     }
 
-    public override string ToString()
+    public string ToString(bool asCsv)
     {
         string[] colHeaders = ["Section", "Index", "Texture", "Position", "Dimensions"];
         List<string[]> rows = [];
@@ -35,8 +35,11 @@ public class FpnMlb
         {
             rows.AddRange(value.Select(elem => (string[]) [sectLabel, elem.Index.ToString(), elem.Texture, $"{elem.PosX}x{elem.PosY}", $"{elem.Width}x{elem.Height}"]));
         }
-        return StaticUtils.GenerateTable(colHeaders, rows,
-            rows.Select(row => row[2].Length + 1).Prepend(15).Max());
+        return StaticUtils.GenerateTable(colHeaders, rows, asCsv);
+    }
+    public override string ToString()
+    {
+        return ToString(false);
     }
 
     public struct MenuElement(byte[] data)

@@ -26,7 +26,7 @@ public class FpnVsd()
         }
     }
 
-    public override string ToString()
+    public string ToString(bool asCsv)
     {
         var o = "";
         var i = 0;
@@ -37,9 +37,14 @@ public class FpnVsd()
             o += $"\nSection {++i}\n";
             rows.Clear();
             rows.AddRange(section.Select(value => (string[]) [value.Flag.ToString(), StaticUtils.DotFloatString(value.Strength)]));
-            o += StaticUtils.GenerateTable(colHeaders, rows);
+            o += StaticUtils.GenerateTable(colHeaders, rows, asCsv);
         }
         return o;
+    }
+    
+    public override string ToString()
+    {
+        return ToString(false);
     }
 
     private class VibrationValue(int flag, float strength)

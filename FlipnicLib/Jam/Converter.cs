@@ -84,7 +84,7 @@ public abstract class Converter
 
                 bool looping = loopStart != 0 && loopEnd != 0 && loopStart < loopEnd && loopStart != loopEnd;
 
-                Console.WriteLine($"SF2: vag{j} (base note: {splitChunk.BaseNote}) - looping: {looping}");
+                Console.WriteLine($"SF2: vag{j} (base note: {StaticUtils.SNote(splitChunk.BaseNote)}) - looping: {looping}");
 
                 uint wavLoopStart = 0;
                 if (looping)

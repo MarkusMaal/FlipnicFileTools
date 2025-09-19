@@ -26,11 +26,15 @@ public class FpnMsg
         return id == -1 ? "MASTER" : _messages[id];
     }
 
-    public override string ToString()
+    public string ToString(bool asCsv)
     {
         return $"Magic: {_magic}\nEntries: {_messages.Count}\n" + StaticUtils.GenerateTable(["ID", "Message"],
-            _messages.Select((t, i) => (string[]) [i.ToString(), t]).ToList(), 
-            _messages.Select(message => message.Length + 1).Prepend(15).Max());
+            _messages.Select((t, i) => (string[]) [i.ToString(), t]).ToList(), asCsv);   
+    }
+    
+    public override string ToString()
+    {
+        return ToString(false);
     }
 
     public string ToSimpleString()

@@ -152,7 +152,7 @@ public class Pss(string fileName)
             string[] colHeaders = ["Stream", "Size", "Size (hex)"];
             List<string[]> rows = [];
             rows.AddRange(streams.Select(kvp => (string[]) [kvp.Key, StaticUtils.GetFilesizeString(kvp.Value), kvp.Value.ToString("X")]));
-            o += StaticUtils.GenerateTable(colHeaders, rows);
+            o += StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput);
             /*
             o += "\nChunk data\n";
             o += $"Video chunks: {videoChunks}, Audio chunks: {audioChunks}\n";

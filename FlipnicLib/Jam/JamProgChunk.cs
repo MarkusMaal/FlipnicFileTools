@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using FlipnicLib.Vag;
+﻿using FlipnicLib.Vag;
 
 using Syroot.BinaryData;
 
@@ -90,23 +84,28 @@ public class JamProgChunk
 
     public override string ToString()
     {
+        return ToString(false);
+    }
+
+    public string ToString(bool asCsv)
+    {
         var o = $"""
                  Count: {(CountOrFlag & 0x0F)+1}
-                 BaseVolume: {BaseVolume}, Pan: {Pan-64} ({(Pan == 64 ? "C" : Pan < 64 ? "L" : "R")})
+                 BaseVolume: {StaticUtils.DotFloatString((float)Math.Round(BaseVolume/127f*100f, 1))}%, BasePan: {Pan-64} ({(Pan == 64 ? "C" : Pan < 64 ? "L" : "R")}), BasePitch: {UnkPitchRelated_0x04}
                  LfoTableIndex: {LfoTableIndex}
-                 StartNoteRange: {StartNoteRange}, EndNoteRange: {EndNoteRange}
-                 
+
                  """;
         string[] colHeaders =
         [
-            "Volume", "Pan", "Note min.", "Note max.", "Base note", "Fine tune pitch", "LFO table idx", "Flags", "Sample offset","ADSR"
+            "Volume", "Pan", "Note min.", "Note max.", "Base note", "Fine tune", "LFO index", "Flags", "Offset","ADSR"
         ];
         List<string[]> rows = [];
         rows.AddRange(SplitChunks.Select(s => (string[]) [StaticUtils.DotFloatString((float)Math.Round(s.Volume / 127f * 100f, 1)) + "%", (s.Pan - 64) + " (" + (s.Pan == 64 ? "C" : s.Pan < 64 ? "L" : "R")+ ")",
-            s.NoteMin.ToString(), s.NoteMax.ToString(), s.BaseNote.ToString(), s.FineTunePitch.ToString(), s.LfoTableIndex.ToString(),
+            StaticUtils.SNote(s.NoteMin), StaticUtils.SNote(s.NoteMax), StaticUtils.SNote(s.BaseNote), s.FineTunePitch.ToString(), s.LfoTableIndex.ToString(),
             s.FlagsAsString(), (s.SampleOffset * 8).ToString("X"), $"{s.Attack:X}:{s.Decay:X}:{s.Sustain:X}:{s.Release:X}"]));
-        return o+StaticUtils.GenerateTable(colHeaders, rows);
+        return o+StaticUtils.GenerateTable(colHeaders, rows, asCsv);
     }
+
 }
 
 public class JamSplitChunk

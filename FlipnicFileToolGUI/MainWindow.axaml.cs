@@ -561,8 +561,7 @@ public partial class MainWindow : SukiWindow
            StaticUtils.DotFloatString(entry.FlipperStrength), StaticUtils.DotFloatString(entry.Knockback),
            StaticUtils.DotFloatString(entry.Bounciness)
        ]));
-       GimmickBox.Text = StaticUtils.GenerateTable(colHeaders, rows,
-           rows.Select(row => row[0].Length).Prepend(15).Max());
+       GimmickBox.Text = StaticUtils.GenerateTable(colHeaders, rows, false);
     }
 
     private void OpenMenuFromStr(string header)
