@@ -14,6 +14,8 @@ internal static class Program
     private static string _magickPath = "magick";
     private static string _fFmpegPath = "ffmpeg";
     private static bool _usePng;
+    private static string _midiFile = "";
+    private static string _bdFile = "";
     private static string FileName { get; set; } = "";
     
     public static void Main(string[] args)
@@ -77,6 +79,15 @@ internal static class Program
                     break;
                 case "--no-envelopes":
                     StaticUtils.ExportEnvelopes = false;
+                    break;
+                case "--midi-file":
+                    _midiFile = arg;
+                    break;
+                case "--bd-file":
+                    _bdFile = arg;
+                    break;
+                case "--no-velocity":
+                    StaticUtils.ExportVelocity = false;
                     break;
                 default:
                     break;
@@ -170,7 +181,7 @@ internal static class Program
                 Ipu.IpuConvert(FileName, outFile, _fFmpegPath);
                 break;
             case Enums.Modes.ConvertSf2:
-                Converter.InstrumentToSoundFont2(FileName[..^3] + ".MID", FileName, FileName[..^2] + "BD", outFile);
+                Converter.InstrumentToSoundFont2(_midiFile != "" ? _midiFile : (FileName[..^3] + ".MID"), FileName, _bdFile != "" ? _bdFile : (FileName[..^2] + "BD"), outFile);
                 break;
             case Enums.Modes.ConvertInt:
                 StaticUtils.ConvertAudio(outFile, FileName);

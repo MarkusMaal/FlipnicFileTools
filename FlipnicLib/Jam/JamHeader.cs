@@ -137,7 +137,11 @@ public class JamHeader
         var o = "";
         for (var i = 0; i < ProgramChunks.Count; i++)
         {
-            o += $"Programme {i + 1}\n{ProgramChunks[i]}\n\n";
+            var ChunkData = (ProgramChunks[i]?.ToString() ?? "");
+            if (ChunkData != "")
+            {
+                o += $"Programme {i + 1}\n{ChunkData}\n\n";
+            }
         }
         for (var i = 0; i < SeProgramChunks.Count; i++)
         {

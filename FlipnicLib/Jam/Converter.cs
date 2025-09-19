@@ -93,7 +93,7 @@ public abstract class Converter
                     wavLoopStart = (uint)(a * loopStart);
                 }
                 // Add the sample to the sound bank. Instruments will then pick which sample to use.
-                uint sampleId = sf2.AddSample(pcm16, $"sample{sampleIdx++}", true, looping ? wavLoopStart : 0, 44100, (byte)splitChunk.BaseNote, 0);
+                uint sampleId = sf2.AddSample(pcm16, $"sample{sampleIdx++}", looping, looping ? wavLoopStart : 0, 44100, (byte)splitChunk.BaseNote, 0);
 
                 // Dump instrument noises (debug)
                 /*WaveFormat waveFormat = new WaveFormat(44100, 16, 1);
@@ -139,9 +139,9 @@ public abstract class Converter
 
                 sf2.AddInstrumentBag();
 
-                var pan = splitChunk.Pan - 64;
+                var pan = (int)Normalize(splitChunk.Pan, 0, 128, -500, 500);
                 sf2.AddInstrumentGenerator(SF2Generator.Pan, new SF2GeneratorAmount { Amount = (short)(pan) });
-                sf2.AddInstrumentGenerator(SF2Generator.FineTune, new SF2GeneratorAmount { Amount = (short)((splitChunk.EnablePitchBend ? 0 : splitChunk.FineTunePitch * 6.5) )});
+                sf2.AddInstrumentGenerator(SF2Generator.FineTune, new SF2GeneratorAmount { Amount = (short)((splitChunk.EnablePitchBend ? 0 : (splitChunk.FineTunePitch * (prog.UnkPitchRelated_0x04 / 2))) )});
                 if (StaticUtils.AltSf2Method)
                 {
                     (splitChunk.Attack, splitChunk.Decay) = (splitChunk.Decay, splitChunk.Attack);
@@ -149,19 +149,23 @@ public abstract class Converter
                 if (StaticUtils.ExportEnvelopes)
                 {
                     sf2.AddInstrumentGenerator(SF2Generator.AttackVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Attack * 125f - 4000f) });
+                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Attack * 125f - 2000f) });
                     sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(splitChunk.Decay * 125f - 4000f) });
                     sf2.AddInstrumentGenerator(SF2Generator.SustainVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(splitChunk.Sustain * 11.25f) });
                     sf2.AddInstrumentGenerator(SF2Generator.ReleaseVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(splitChunk.Release * 125f - 4000f) });
+                }
+
+                if (StaticUtils.ExportVelocity)
+                {
                     sf2.AddInstrumentGenerator(SF2Generator.Velocity,
                         new SF2GeneratorAmount { Amount = (short)((prog.BaseVolume + splitChunk.Volume) / 2) }); // divide by 2, because SF2 specifies 127 as the max value, but the maximum for BaseVolume + Volume is 255
                 }
                 if (splitChunk.Reverb)
                 {
-                    sf2.AddInstrumentGenerator(SF2Generator.ReverbEffectsSend, new SF2GeneratorAmount { Amount = 800 });
+                    sf2.AddInstrumentGenerator(SF2Generator.ReverbEffectsSend, new SF2GeneratorAmount { Amount = 100 });
                 }
 
                 if (prog.CountOrFlag == 0xFF)

@@ -92,7 +92,7 @@ public class JamProgChunk
     {
         var o = $"""
                  Count: {(CountOrFlag & 0x0F)+1}
-                 BaseVolume: {BaseVolume}, Pan: {Pan}
+                 BaseVolume: {BaseVolume}, Pan: {Pan-64} ({(Pan == 64 ? "C" : Pan < 64 ? "L" : "R")})
                  LfoTableIndex: {LfoTableIndex}
                  StartNoteRange: {StartNoteRange}, EndNoteRange: {EndNoteRange}
                  
@@ -102,9 +102,9 @@ public class JamProgChunk
             "Volume", "Pan", "Note min.", "Note max.", "Base note", "Fine tune pitch", "LFO table idx", "Flags", "Sample offset","ADSR"
         ];
         List<string[]> rows = [];
-        rows.AddRange(SplitChunks.Select(s => (string[]) [s.Volume + "%", s.Pan.ToString(),
+        rows.AddRange(SplitChunks.Select(s => (string[]) [StaticUtils.DotFloatString((float)Math.Round(s.Volume / 127f * 100f, 1)) + "%", (s.Pan - 64) + " (" + (s.Pan == 64 ? "C" : s.Pan < 64 ? "L" : "R")+ ")",
             s.NoteMin.ToString(), s.NoteMax.ToString(), s.BaseNote.ToString(), s.FineTunePitch.ToString(), s.LfoTableIndex.ToString(),
-            s.FlagsAsString(), s.SampleOffset.ToString("X"), $"{s.Attack:X}:{s.Decay:X}:{s.Sustain:X}:{s.Release:X}"]));
+            s.FlagsAsString(), (s.SampleOffset * 8).ToString("X"), $"{s.Attack:X}:{s.Decay:X}:{s.Sustain:X}:{s.Release:X}"]));
         return o+StaticUtils.GenerateTable(colHeaders, rows);
     }
 }

@@ -236,6 +236,7 @@ public partial class MainWindow : SukiWindow
                         MidiBrowserGrid.IsVisible = true;
                         PalToggle.IsVisible = false;
                         EnvelopeToggle.IsVisible = true;
+                        VelocityToggle.IsVisible = true;
                         ConvertSf2Button.IsVisible = true;
                         ConvertMovAacButton.IsVisible = false;
                         ConvertMovButton.IsVisible = false;
@@ -338,6 +339,7 @@ public partial class MainWindow : SukiWindow
                         FfmpegBrowserGrid.IsVisible = true;
                         PalToggle.IsVisible = true;
                         EnvelopeToggle.IsVisible = false;
+                        VelocityToggle.IsVisible = false;
                         ConvertSf2Button.IsVisible = false;
                         DemuxButton.IsVisible = false;
                         BdBrowserGrid.IsVisible = false;
@@ -426,6 +428,7 @@ public partial class MainWindow : SukiWindow
                         FfmpegBrowserGrid.IsVisible = true;
                         PalToggle.IsVisible = true;
                         EnvelopeToggle.IsVisible = false;
+                        VelocityToggle.IsVisible = false;
                         ConvertSf2Button.IsVisible = false;
                         BdBrowserGrid.IsVisible = false;
                         MidiBrowserGrid.IsVisible = false;
@@ -925,6 +928,7 @@ public partial class MainWindow : SukiWindow
     {
         DockPanel1.IsVisible = false;
         Loader.IsVisible = true;
+        StaticUtils.Pal = PalToggle.IsChecked ?? false;
         var outPut = (FileBox.Text ?? "") + new FileInfo(FileName).Name + ".MOV";
         var ffMpegPath = FFmpegBox.Text ?? "";
         var originalFileName = FileName;
@@ -994,20 +998,6 @@ public partial class MainWindow : SukiWindow
                 Thread.Sleep(100);
             }
         }).Start();
-    }
-
-    private void PalToggle_CheckedChanged(object? sender, RoutedEventArgs e)
-    {
-        if (sender is not CheckBox cb) return;
-        switch (cb.Name)
-        {
-            case "PalToggle":
-                StaticUtils.Pal = cb.IsChecked ?? false;
-                break;
-            case "EnvelopeToggle":
-                StaticUtils.ExportEnvelopes = cb.IsChecked ?? false;
-                break;
-        }
     }
 
     private void CloseNativeMenuItem_Click(object? sender, EventArgs e)
@@ -1088,6 +1078,7 @@ public partial class MainWindow : SukiWindow
     {
         DockPanel1.IsVisible = false;
         Loader.IsVisible = true;
+        StaticUtils.Pal = PalToggle.IsChecked ?? false;
         var outPut = (FileBox.Text ?? "") + new FileInfo(FileName).Name + ".MOV";
         var ffMpegPath = FFmpegBox.Text ?? "";
         var originalFileName = FileName;
@@ -1118,6 +1109,8 @@ public partial class MainWindow : SukiWindow
         if (Design.IsDesignMode) return;
         DockPanel1.IsVisible = false;
         Loader.IsVisible = true;
+        StaticUtils.ExportVelocity = VelocityToggle.IsChecked ?? false;
+        StaticUtils.ExportEnvelopes = EnvelopeToggle.IsChecked ?? false;
         var outFile = FileBox.Text;
         var midiFile = MidiBox.Text ?? "/no.where";
         var bdFile = BdBox.Text ?? "/no.where";
