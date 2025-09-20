@@ -30,6 +30,7 @@ public class Event(byte[] data)
         ResetBgm,
         ScreenFade = 0x07,
         CameraSequence = 0x09,
+        SwitchArea,
         WonderfulSequence = 0x0D,
         GuideSfxEvent
     }
@@ -42,9 +43,17 @@ public class Event(byte[] data)
         StartedCompleted
     }
 
+    private enum HexagonFlashType
+    {
+        Off,
+        Flashing,
+        FastFlashing
+    }
+
     private enum BallEventType
     {
-        ToggleControl = 0x02
+        ToggleControl = 0x02,
+        PoleEvent = 0x0F
     }
 
     private enum ControllerToggles
@@ -101,9 +110,15 @@ public class Event(byte[] data)
 
     private string GetBallEventArgs(FpnSst sst)
     {
+        if (FuncArgs[3] == 0x0A)
+        {
+            return
+                $"ToggleLight, AreaCode: {sst.GetStringById("KUIDX", FuncArgs[1])[3..]}, ObjectID: {FuncArgs[2]}, FlashType::{(HexagonFlashType)EventArgs[0]}";
+        }
         return (BallEventType) FuncArgs[1] + ", " +  (BallEventType)FuncArgs[1] switch
         {
             BallEventType.ToggleControl => $"Toggle::{(ControllerToggles)FuncArgs[3]}",
+            BallEventType.PoleEvent=> $"ID: {FuncArgs[2]}, State: {FuncArgs[3]}",
             _ => $"???: {string.Join(", ???: ", FuncArgs.Skip(2).ToArray())}"
         };
     }
@@ -115,11 +130,12 @@ public class Event(byte[] data)
             SequenceEventType.BgmEvent => $"Filename: {sst.GetStringById("SEQN", FuncArgs[2])}",
             SequenceEventType.ScreenFade => "FadeOut: " + (FuncArgs[2] == 1 ? "true" : "false") + $", Ticks: {FuncArgs[3]}",
             SequenceEventType.CameraSequence => $"Filename: {sst.GetStringById("CAMN", FuncArgs[2])}",
-            SequenceEventType.WonderfulSequence => "DisplayText: " + (FuncArgs[2] == 1 ? "true" : "false"),
+            SequenceEventType.WonderfulSequence => "DisplayText: " + (FuncArgs[2] == 1 ? "true" : "false") + $", MsgId: {FuncArgs[3]}",
             SequenceEventType.FreezeAndPlaySound => $"Filename: {sst.GetStringById("SEQN", FuncArgs[2])}",
             SequenceEventType.SfxEvent  => $"SoundID: {FuncArgs[2]}",
             SequenceEventType.GuideSfxEvent  => $"Filename: {sst.GetStringById("INTN", FuncArgs[2])}",
             SequenceEventType.VideoEvent => $"Filename: {sst.GetStringById("IPUN", FuncArgs[2])}, Randomize: " + (FuncArgs[3] == 1 ? "true" : "false") + $", RandomizerSeed: {EventArgs[0]}",
+            SequenceEventType.SwitchArea => $"FromAreaCode: {sst.GetStringById("KUIDX", FuncArgs[2])[3..]}, Variation: {FuncArgs[3]}",
             _ => $"???: {string.Join(", ???: ", FuncArgs.Skip(2).ToArray())}"
         };
     }
@@ -156,7 +172,7 @@ public class Event(byte[] data)
 
                             break;
                     }
-                    o += $"\nfunc {Label} ({args})".PadRight((int)(StaticUtils.WindowWidth / 1.25), ' ') + " @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n";
+                    o += $"\nfunc {Label} ({args}) @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n";
                     return o;
                 case "FONT_EVENT":
                     o += $"\nfunc {Label} (Font: {sst.GetStringById("FNTN",  FuncArgs[2])}, Message: {GetMessageById(msg, FuncArgs[3])}, Duration: {EventArgs[0]}, Entrance: {EventArgs[1]}, Exit: {EventArgs[2]})".PadRight((int)(StaticUtils.WindowWidth / 1.25), ' ') + " @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n";
@@ -172,11 +188,11 @@ public class Event(byte[] data)
                 FuncArgs.CopyTo(allArgs, 0);
                 EventArgs.CopyTo(allArgs, FuncArgs.Length);
             }
-            o += $"\nfunc {Label} ({string.Join(", ", allArgs)})".PadRight((int)(StaticUtils.WindowWidth / 1.25), ' ') + " @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n";
+            o += $"\nfunc {Label} ({string.Join(", ", allArgs)}) @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n";
         }
         else if (Label != string.Empty)
         { 
-            o += $"\nfunc {Label} ()".PadRight((int)(StaticUtils.WindowWidth / 1.25), ' ') + " @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n";
+            o += $"\nfunc {Label} () @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n";
         }
 
         o += (EventType)EventMagic switch
