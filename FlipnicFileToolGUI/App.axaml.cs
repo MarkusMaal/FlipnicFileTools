@@ -30,7 +30,10 @@ public class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             if (OperatingSystem.IsMacOS()) desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-            var mw = new MainWindow();
+            var mw = new MainWindow
+            {
+                DataContext = new MainWindowViewModel(),
+            };
             desktop.MainWindow = mw;
             if (desktop.Args?.Length > 0)
             {

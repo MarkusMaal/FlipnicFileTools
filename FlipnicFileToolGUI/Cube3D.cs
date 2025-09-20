@@ -172,7 +172,7 @@ namespace FlipnicFileToolGUI
             _vertexBufferObject = GL.GenBuffer();
 
             //Set bg colour to a dark forest green
-            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
+            GL.ClearColor(0.6f, 0.5f, 0.9f, 1.0f);
 
             //Bind to the VAO
             GL.BindVertexArray(_vertexArrayObject);

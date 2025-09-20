@@ -122,6 +122,10 @@ public abstract class StaticUtils
 
     public static string GenerateTable(string[] columns, List<string[]> rows, bool asCsv)
     {
+        if ((rows.Count == 0) && !asCsv)
+        {
+            return "(none)";
+        }
         var o = "";
         if (asCsv)
         {

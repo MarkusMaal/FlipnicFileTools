@@ -2,19 +2,23 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:flipnicFileToolGui="clr-namespace:FlipnicFileToolGUI"
              mc:Ignorable="d" d:DesignWidth="320" d:DesignHeight="240"
-             DataContext="{Binding RelativeSource={RelativeSource Self}}"
-             x:Class="FlipnicFileToolGUI.CLIBox">
-    <ScrollViewer HorizontalScrollBarVisibility="Auto">
-        <TextBlock FontFamily="Cascadia Mono,Consolas,SF Mono,Menlo,DejaVu Sans Mono,Ubuntu Mono,Noto Mono,Courier New,Monospace"
-                   VerticalAlignment="Stretch" Padding="10" Foreground="Lime" Background="#e000" TextWrapping="NoWrap"
-                   Text="{Binding Text}">
-            <TextBlock.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Click="CopyClick" Header="Copy" />
-                    <MenuItem Click="SaveAsClick" Header="Save as.." />
-                </ContextMenu>
-            </TextBlock.ContextMenu>
-        </TextBlock>
+             x:Class="FlipnicFileToolGUI.CLIBox"  DataContext="{Binding RelativeSource={RelativeSource Self}}">
+    <ScrollViewer HorizontalScrollBarVisibility="Auto" Name="CliBox">
+        <TextBox FontFamily="Cascadia Mono,Consolas,SF Mono,Menlo,DejaVu Sans Mono,Ubuntu Mono,Noto Mono,Courier New,Monospace"
+                 VerticalAlignment="Stretch" Padding="10" TextWrapping="NoWrap" VerticalContentAlignment="Top" IsReadOnly="True"
+                 Text="{Binding Text}" Classes.IsLight="{Binding IsLightTheme}" Classes.IsDark="{Binding !IsLightTheme}">
+            <TextBox.Styles>
+                <Style Selector="TextBox.IsLight">
+                    <Setter Property="Background" Value="White"></Setter>
+                    <Setter Property="Foreground" Value="MidnightBlue"></Setter>
+                </Style>
+                <Style Selector="TextBox.IsDark">
+                    <Setter Property="Background" Value="Black"></Setter>
+                    <Setter Property="Foreground" Value="SpringGreen"></Setter>
+                </Style>
+            </TextBox.Styles>
+        </TextBox>
     </ScrollViewer>
 </UserControl>

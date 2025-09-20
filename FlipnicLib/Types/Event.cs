@@ -2,70 +2,6 @@
 
 public class Event(byte[] data)
 {
-    private enum EventType
-    {
-        NoOperation,
-        Do = 0x01,
-        Loop,
-        EndEvent = 0x08,
-        GameEvent,
-        TextEvent = 0xA,
-        BallEvent = 0xC,
-        SequenceEvent = 0x0E,        
-    }
-
-    private enum GameEventType
-    {
-        SetSpawn = 0x06,
-        SetMission = 0x8
-    }
-
-    private enum SequenceEventType
-    {
-        VideoEvent,
-        FreezeAndPlaySound,
-        SfxEvent,
-        BgmEvent = 0x04,
-        MuteEvent,
-        ResetBgm,
-        ScreenFade = 0x07,
-        CameraSequence = 0x09,
-        SwitchArea,
-        WonderfulSequence = 0x0D,
-        GuideSfxEvent
-    }
-
-    private enum MissionStatus
-    {
-        Incomplete,
-        Started,
-        Completed,
-        StartedCompleted
-    }
-
-    private enum HexagonFlashType
-    {
-        Off,
-        Flashing,
-        FastFlashing
-    }
-
-    private enum BallEventType
-    {
-        ToggleControl = 0x02,
-        PoleEvent = 0x0F
-    }
-
-    private enum ControllerToggles
-    {
-        UnlockPlunger = 0x0F,
-        LockPlunger,
-    }
-
-    private enum TextEventType
-    {
-        BonusEvent,
-    }
     
     /// <summary>
     /// May call a function
@@ -94,10 +30,10 @@ public class Event(byte[] data)
 
     private string GetGameEventArgs(FpnSst sst, FpnMsg? msg)
     {
-        return (GameEventType) FuncArgs[1] + ", " +  (GameEventType)FuncArgs[1] switch
+        return (EventEnums.GameEventType) FuncArgs[1] + ", " +  (EventEnums.GameEventType)FuncArgs[1] switch
         {
-            GameEventType.SetMission => $"{GetMessageById(msg, FuncArgs[2])}, Status::{(MissionStatus)FuncArgs[3]}",
-            GameEventType.SetSpawn => $"AreaCode: {sst.GetStringById("KUIDX", FuncArgs[2])[3..]}",
+            EventEnums.GameEventType.SetMission => $"{GetMessageById(msg, FuncArgs[2])}, Status::{(EventEnums.MissionStatus)FuncArgs[3]}",
+            EventEnums.GameEventType.SetSpawn => $"AreaCode: {sst.GetStringById("KUIDX", FuncArgs[2])[3..]}",
             _ => $"???: {string.Join(", ???: ", FuncArgs.Skip(2).ToArray())}"
         };
     }
@@ -113,38 +49,38 @@ public class Event(byte[] data)
         if (FuncArgs[3] == 0x0A)
         {
             return
-                $"ToggleLight, AreaCode: {sst.GetStringById("KUIDX", FuncArgs[1])[3..]}, ObjectID: {FuncArgs[2]}, FlashType::{(HexagonFlashType)EventArgs[0]}";
+                $"ToggleLight, AreaCode: {sst.GetStringById("KUIDX", FuncArgs[1])[3..]}, ObjectID: {FuncArgs[2]}, FlashType::{(EventEnums.HexagonFlashType)EventArgs[0]}";
         }
-        return (BallEventType) FuncArgs[1] + ", " +  (BallEventType)FuncArgs[1] switch
+        return (EventEnums.BallEventType) FuncArgs[1] + ", " +  (EventEnums.BallEventType)FuncArgs[1] switch
         {
-            BallEventType.ToggleControl => $"Toggle::{(ControllerToggles)FuncArgs[3]}",
-            BallEventType.PoleEvent=> $"ID: {FuncArgs[2]}, State: {FuncArgs[3]}",
+            EventEnums.BallEventType.ToggleControl => $"Toggle::{(EventEnums.ControllerToggles)FuncArgs[3]}",
+            EventEnums.BallEventType.PoleEvent=> $"ID: {FuncArgs[2]}, State: {FuncArgs[3]}",
             _ => $"???: {string.Join(", ???: ", FuncArgs.Skip(2).ToArray())}"
         };
     }
 
     private string GetSequenceEventArgs(FpnSst sst)
     {
-        return (SequenceEventType)FuncArgs[1] + ", " + (SequenceEventType)FuncArgs[1] switch
+        return (EventEnums.SequenceEventType)FuncArgs[1] + ", " + (EventEnums.SequenceEventType)FuncArgs[1] switch
         {
-            SequenceEventType.BgmEvent => $"Filename: {sst.GetStringById("SEQN", FuncArgs[2])}",
-            SequenceEventType.ScreenFade => "FadeOut: " + (FuncArgs[2] == 1 ? "true" : "false") + $", Ticks: {FuncArgs[3]}",
-            SequenceEventType.CameraSequence => $"Filename: {sst.GetStringById("CAMN", FuncArgs[2])}",
-            SequenceEventType.WonderfulSequence => "DisplayText: " + (FuncArgs[2] == 1 ? "true" : "false") + $", MsgId: {FuncArgs[3]}",
-            SequenceEventType.FreezeAndPlaySound => $"Filename: {sst.GetStringById("SEQN", FuncArgs[2])}",
-            SequenceEventType.SfxEvent  => $"SoundID: {FuncArgs[2]}",
-            SequenceEventType.GuideSfxEvent  => $"Filename: {sst.GetStringById("INTN", FuncArgs[2])}",
-            SequenceEventType.VideoEvent => $"Filename: {sst.GetStringById("IPUN", FuncArgs[2])}, Randomize: " + (FuncArgs[3] == 1 ? "true" : "false") + $", RandomizerSeed: {EventArgs[0]}",
-            SequenceEventType.SwitchArea => $"FromAreaCode: {sst.GetStringById("KUIDX", FuncArgs[2])[3..]}, Variation: {FuncArgs[3]}",
+            EventEnums.SequenceEventType.BgmEvent => $"Filename: {sst.GetStringById("SEQN", FuncArgs[2])}",
+            EventEnums.SequenceEventType.ScreenFade => "FadeOut: " + (FuncArgs[2] == 1 ? "true" : "false") + $", Ticks: {FuncArgs[3]}",
+            EventEnums.SequenceEventType.CameraSequence => $"Filename: {sst.GetStringById("CAMN", FuncArgs[2])}",
+            EventEnums.SequenceEventType.WonderfulSequence => "DisplayText: " + (FuncArgs[2] == 1 ? "true" : "false") + $", MsgId: {FuncArgs[3]}",
+            EventEnums.SequenceEventType.FreezeAndPlaySound => $"Filename: {sst.GetStringById("SEQN", FuncArgs[2])}",
+            EventEnums.SequenceEventType.SfxEvent  => $"SoundID: {FuncArgs[2]}",
+            EventEnums.SequenceEventType.GuideSfxEvent  => $"Filename: {sst.GetStringById("INTN", FuncArgs[2])}",
+            EventEnums.SequenceEventType.VideoEvent => $"Filename: {sst.GetStringById("IPUN", FuncArgs[2])}, Randomize: " + (FuncArgs[3] == 1 ? "true" : "false") + $", RandomizerSeed: {EventArgs[0]}",
+            EventEnums.SequenceEventType.SwitchArea => $"FromAreaCode: {sst.GetStringById("KUIDX", FuncArgs[2])[3..]}, Variation: {FuncArgs[3]}",
             _ => $"???: {string.Join(", ???: ", FuncArgs.Skip(2).ToArray())}"
         };
     }
 
     private string GetTextEventArgs(FpnSst sst, FpnMsg? msg)
     {
-        return (TextEventType)FuncArgs[1] + ", " + (TextEventType)FuncArgs[1] switch
+        return (EventEnums.TextEventType)FuncArgs[1] + ", " + (EventEnums.TextEventType)FuncArgs[1] switch
         {
-            TextEventType.BonusEvent => $"Points: {FuncArgs[2]}, Font: {sst.GetStringById("FNTN",  FuncArgs[3])}, Message: {GetMessageById(msg, EventArgs[0])}",
+            EventEnums.TextEventType.BonusEvent => $"Points: {FuncArgs[2]}, Font: {sst.GetStringById("FNTN",  FuncArgs[3])}, Message: {GetMessageById(msg, EventArgs[0])}",
             _ => $"???: {string.Join(", ???: ", FuncArgs.Skip(2).ToArray())}"
         };
     }
@@ -195,16 +131,16 @@ public class Event(byte[] data)
             o += $"\nfunc {Label} () @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n";
         }
 
-        o += (EventType)EventMagic switch
+        o += (EventEnums.EventType)EventMagic switch
         {
-            EventType.NoOperation => "nop",
-            EventType.Do => "do",
-            EventType.EndEvent => "end\n",
-            EventType.BallEvent => $"\t{(EventType)EventMagic} ({GetBallEventArgs(sst)})",
-            EventType.Loop => "loop",
-            EventType.TextEvent => $"\t{(EventType)EventMagic} ({GetTextEventArgs(sst, msg)})",
-            EventType.GameEvent => $"\t{(EventType)EventMagic} ({GetGameEventArgs(sst, msg)})",
-            EventType.SequenceEvent => $"\t{(EventType)EventMagic} ({GetSequenceEventArgs(sst)})",
+            EventEnums.EventType.NoOperation => "nop",
+            EventEnums.EventType.Do => "do",
+            EventEnums.EventType.EndEvent => "end\n",
+            EventEnums.EventType.BallEvent => $"\t{(EventEnums.EventType)EventMagic} ({GetBallEventArgs(sst)})",
+            EventEnums.EventType.Loop => "loop",
+            EventEnums.EventType.TextEvent => $"\t{(EventEnums.EventType)EventMagic} ({GetTextEventArgs(sst, msg)})",
+            EventEnums.EventType.GameEvent => $"\t{(EventEnums.EventType)EventMagic} ({GetGameEventArgs(sst, msg)})",
+            EventEnums.EventType.SequenceEvent => $"\t{(EventEnums.EventType)EventMagic} ({GetSequenceEventArgs(sst)})",
             _ => $"\t0x{EventMagic:X} ({string.Join(", ", EventArgs)})"
         };
 

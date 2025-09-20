@@ -9,9 +9,8 @@
         Icon="Assets\F.PNG"
         xmlns:sukiUi="clr-namespace:SukiUI.Controls;assembly=SukiUI"
         xmlns:types="clr-namespace:FlipnicLib.Types;assembly=FlipnicLib"
-        x:DataType="vm:MainWindow" x:Class="FlipnicFileToolGUI.MainWindow"
+        x:DataType="vm:MainWindowViewModel" x:Class="FlipnicFileToolGUI.MainWindow"
         Title="Flipnic file tool" Loaded="Window_Loaded" BackgroundStyle="Bubble"
-        DataContext="{Binding RelativeSource={RelativeSource Self}}"
         IsMenuVisible="{OnPlatform True, macOS=False}">
     <sukiUi:SukiWindow.RightWindowTitleBarControls>
         <Label Name="FileTypeLabel" Content="Ready" VerticalContentAlignment="Center" VerticalAlignment="Center"></Label>
@@ -59,14 +58,14 @@
     </sukiUi:SukiWindow.MenuItems>
     <Grid>
         <Grid Name="DockPanel1">
-                <sukiUi:SukiSideMenu IsSearchEnabled="False" IsMenuExpanded="False" Name="MainTabControl" SelectionMode="AlwaysSelected">
+                <sukiUi:SukiSideMenu IsSearchEnabled="False" IsMenuExpanded="False" Name="MainTabControl" SelectionMode="AlwaysSelected" SelectionChanged="MainTabControl_OnSelectionChanged">
                     <sukiUi:SukiSideMenu.Items>
                         <sukiUi:SukiSideMenuItem Name="InfoTab" Header="Info">
                             <sukiUi:SukiSideMenuItem.Icon>
                                 <vm:CircleDot ColorA="DeepSkyBlue" ColorB="DarkBlue" Text="i"></vm:CircleDot>
                             </sukiUi:SukiSideMenuItem.Icon>
                             <sukiUi:SukiSideMenuItem.PageContent>
-                                <vm:CLIBox Name="InfoBox" />
+                                <vm:CLIBox Name="InfoBox" x:DataType="vm:CLIBox" IsLightTheme="{Binding $parent[vm:MainWindow].IsLightTheme}" />
                             </sukiUi:SukiSideMenuItem.PageContent>
                         </sukiUi:SukiSideMenuItem>
                         <sukiUi:SukiSideMenuItem Name="ModelTab" Header="Models" IsVisible="False">
@@ -119,7 +118,7 @@
                                 <vm:CircleDot ColorA="Red" ColorB="#210" Text="⌘"></vm:CircleDot>
                             </sukiUi:SukiSideMenuItem.Icon>
                             <sukiUi:SukiSideMenuItem.PageContent>
-                                <vm:CLIBox Name="EventBox" />
+                                <vm:CLIBox Name="EventBox" x:DataType="vm:CLIBox" IsLightTheme="{Binding $parent[vm:MainWindow].IsLightTheme}" />
                             </sukiUi:SukiSideMenuItem.PageContent>
                         </sukiUi:SukiSideMenuItem>
                         <sukiUi:SukiSideMenuItem Name="StageGimmickTab" Header="Gimmicks" IsVisible="False">
@@ -129,7 +128,7 @@
                             <sukiUi:SukiSideMenuItem.PageContent>
                                 <Grid RowDefinitions="Auto, *">
                                     <ComboBox Grid.Row="0" Name="GimmickCombobox" SelectionChanged="GimmickCombobox_OnSelectionChanged"></ComboBox>                                        
-                                    <vm:CLIBox Grid.Row="1" Name="GimmickBox" />
+                                    <vm:CLIBox Grid.Row="1" x:DataType="vm:CLIBox" Name="GimmickBox" IsLightTheme="{Binding $parent[vm:MainWindow].IsLightTheme}" />
                                 </Grid>
                             </sukiUi:SukiSideMenuItem.PageContent>
                         </sukiUi:SukiSideMenuItem>
@@ -337,13 +336,13 @@
                                                     <ComboBoxItem>Stereo</ComboBoxItem>
                                                 </ComboBox>
                                             </Grid>
-                                            <Grid Grid.Row="1" ColumnDefinitions="200,*">
+                                            <Grid Grid.Row="1" ColumnDefinitions="200,*,20">
                                                 <Label VerticalAlignment="Center">Volume: sound effects</Label>
-                                                <Slider Grid.Column="1" Minimum="0" Maximum="255" Value="{Binding SfxVolume}"></Slider>
+                                                <Slider Grid.Column="1" Minimum="0" Maximum="127" Value="{Binding SfxVolume}" IsSnapToTickEnabled="True" TickFrequency="1"></Slider>
                                             </Grid>
-                                            <Grid Grid.Row="2" ColumnDefinitions="200,*">
+                                            <Grid Grid.Row="2" ColumnDefinitions="200,*,20">
                                                 <Label VerticalAlignment="Center">Volume: music</Label>
-                                                <Slider Grid.Column="1" Minimum="0" Maximum="255" Value="{Binding BgmVolume}"></Slider>
+                                                <Slider Grid.Column="1" Minimum="0" Maximum="127" Value="{Binding BgmVolume}" IsSnapToTickEnabled="True" TickFrequency="1"></Slider>
                                             </Grid>
                                             <Grid Grid.Row="3" ColumnDefinitions="200,*">
                                                 <Label VerticalAlignment="Center">Vibration</Label>
@@ -469,4 +468,7 @@
             <ProgressBar Name="LoadProgress" Grid.Row="1" IsIndeterminate="True" Width="300"></ProgressBar>
         </Grid>
     </Grid>
+    <sukiUi:SukiWindow.Styles>
+        <Style Selector=""></Style>
+    </sukiUi:SukiWindow.Styles>
 </sukiUi:SukiWindow>

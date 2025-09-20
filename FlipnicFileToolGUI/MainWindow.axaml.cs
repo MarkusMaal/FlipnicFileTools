@@ -26,27 +26,15 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Avalonia.LogicalTree;
+using Avalonia.Styling;
 
 namespace FlipnicFileToolGUI;
 
-public partial class MainWindow : SukiWindow
+public sealed partial class MainWindow : SukiWindow
 {
-    private Dictionary<string, Gimmick[]>? Gimmicks { get; set; }
-    
-    public ObservableCollection<VirtualFile>? VirtualFiles { get; set; }
-    
-    public ObservableCollection<SampleColl> Samples { get; set; }
-    
-    List<MenuElementViewModel> _menu = [];
-
-    public ObservableCollection<MenuElementViewModel> MenuElements { get; set; }
-    
-    public ObservableCollection<string> Controls { get; set; } = new(["L2", "R2", "L1", "R1", "Triangle", "Circle", "Cross", "Square", "Unk8", "Unk9", "UnkA", "UnkB", "DPadUp", "DPadRight", "DPadDown", "DPadLeft"]);
-
-    public FpnSave SaveData { get; set; } = new FpnSave(new byte[0x2780]);
-    
     private static int Progress { get; set; }
     private static int ProgressMax { get; set; }
+
     
     private const string FTypeFormat = "Type: {0}";
 
@@ -55,18 +43,25 @@ public partial class MainWindow : SukiWindow
     public ISukiDialogManager DialogManager = new SukiDialogManager();
 
     public static bool ErrorDisplayed = false;
-    public bool DevMode { get; set; }
     
     internal string FileName { get; set; }
     
     private BinFile Fs { get; set; }
 
+    public ObservableCollection<string> Controls => GetViewModel().Controls;
+    
+    public bool IsLightTheme => GetViewModel().IsLightTheme;
+
     public MainWindow()
     {
         InitializeComponent();
-        this.DataContext = this;
-        MenuElements = new ObservableCollection<MenuElementViewModel>(_menu);
         ApplyCustomTheme();
+        SukiTheme.GetInstance().OnBaseThemeChanged += variant =>
+        {
+            GetViewModel().IsLightTheme = variant == ThemeVariant.Light;
+            ForceRefresh();
+            UpdateSpecialTabThemes();
+        }; 
         DialogHost.Manager = DialogManager;
         
         DragDrop.SetAllowDrop(this, true);
@@ -76,7 +71,17 @@ public partial class MainWindow : SukiWindow
         });
         AddHandler(DragDrop.DragOverEvent, DragOver);
         AddHandler(DragDrop.DropEvent, WindowDropped);
+    }
 
+    private MainWindowViewModel GetViewModel()
+    {
+        if (this.DataContext is MainWindowViewModel vm)
+        {
+            return vm; 
+        }
+
+        return new MainWindowViewModel();
+        throw new NullReferenceException("View model is not initialized");
     }
 
     private static void DragOver(object? sender, DragEventArgs e)
@@ -184,9 +189,13 @@ public partial class MainWindow : SukiWindow
                     midi.Read(ds);
                     LoadAsString(midi, "General MIDI");
                     break;
+                case "VSD":
+                    var vsd = new FpnVsd(File.OpenRead(FileName));
+                    LoadAsString(vsd, "Vibration Strength Data");
+                    break;
                 case "BD": 
                 case ".BD":
-                    Samples = [];
+                    Dispatcher.UIThread.Post(() => GetViewModel().Samples = []);
                     var s = new Samples(ds);
                     var samples = new List<SampleColl>();
                     var offset = 0;
@@ -205,7 +214,7 @@ public partial class MainWindow : SukiWindow
 
                     Dispatcher.UIThread.Post(() =>
                     {
-                        Samples = new ObservableCollection<SampleColl>(samples);
+                        GetViewModel().Samples = new ObservableCollection<SampleColl>(samples);
                         BdSampleTab.IsVisible = true;
                         FileTypeLabel.Content = string.Format(FTypeFormat, "JAM body");
                     });
@@ -275,7 +284,7 @@ public partial class MainWindow : SukiWindow
                     ds.ReadExactly(mlbDa);
                     var mlb = new FpnMlb(mlbDa);
                     StaticUtils.LiveLoadStatus = "Generating menu...";
-                    _menu.Clear();
+                    Dispatcher.UIThread.Post(() => GetViewModel()._menu.Clear());
                     var menuIndex = 0;
                     Dispatcher.UIThread.Post(() => LoadProgress.IsIndeterminate = false);
                     Dispatcher.UIThread.Post(() => LoadProgress.Maximum = mlb.Sections.Count);
@@ -283,13 +292,15 @@ public partial class MainWindow : SukiWindow
                     {
                         try
                         {
-                            _menu.AddRange(from ima in sect.Value
+                            var r = from ima in sect.Value
                                 let p =
                                     Path.Combine(Path.GetDirectoryName(FileName) ?? string.Empty,
                                         ima.Texture.Split('\\')[^1].ToUpper())
-                                let bmp = new BitmapTools { Image = new Tim2(File.ReadAllBytes(p), FileName), }.ToBitmap()
+                                let bmp =
+                                    new BitmapTools { Image = new Tim2(File.ReadAllBytes(p), FileName), }.ToBitmap()
                                 select new MenuElementViewModel
-                                    { Layer = sect.Key, MenuElement = ima, ImageSource = bmp });
+                                    { Layer = sect.Key, MenuElement = ima, ImageSource = bmp };
+                            Dispatcher.UIThread.Post(() => GetViewModel()._menu.AddRange(r));
                         }
                         catch (Exception ex)
                         {
@@ -305,7 +316,7 @@ public partial class MainWindow : SukiWindow
                     Dispatcher.UIThread.Post(() =>
                     {
                         MenuMockupTab.IsVisible = true;
-                        MenuMockup.MenuElementSource = new ObservableCollection<MenuElementViewModel>(_menu);
+                        MenuMockup.MenuElementSource = new ObservableCollection<MenuElementViewModel>(GetViewModel()._menu);
                     });
                     LoadAsString(mlb, "Menu layout file");
                     break;
@@ -365,10 +376,10 @@ public partial class MainWindow : SukiWindow
                     Dispatcher.UIThread.Post(() =>
                     {
                         InfoBox.Text = $"Entries\n{sst.ListEntries()}\n\nResources\n{sst.GenerateMagicNumbers()}";
-                        Gimmicks = sst.GetGimmicks();
-                        StageGimmickTab.IsVisible = Gimmicks?.Count > 0;
+                        GetViewModel().Gimmicks = sst.GetGimmicks();
+                        StageGimmickTab.IsVisible = GetViewModel().Gimmicks?.Count > 0;
                         GimmickCombobox.Items.Clear();
-                        foreach (var key in Gimmicks?.Keys.ToArray() ?? [])
+                        foreach (var key in GetViewModel().Gimmicks?.Keys.ToArray() ?? [])
                         {
                             GimmickCombobox.Items.Add(key);
                         }
@@ -379,7 +390,7 @@ public partial class MainWindow : SukiWindow
                         }
                         if (sst.HasScoreRecord())
                         {
-                            SaveData = sst.GetSaveFromRecord();
+                            GetViewModel().SaveData = sst.GetSaveFromRecord();
                             SaveEditorTabControl.SelectedIndex = 1;
                             SaveEditor.IsVisible = true;
                             foreach (var o in SaveEditorTabControl.Items)
@@ -407,10 +418,9 @@ public partial class MainWindow : SukiWindow
                     var fsEntries = Fs.FsEntries.ToList();
                     Dispatcher.UIThread.Post(() =>
                     {
-                        VirtualFiles = new ObservableCollection<VirtualFile>(fsEntries);
+                        GetViewModel().VirtualFiles = new ObservableCollection<VirtualFile>(fsEntries);
                         FileListTab.IsVisible = true;
-                        DataContext = this;
-                        FilesGrid.ItemsSource = VirtualFiles;
+                        FilesGrid.ItemsSource = GetViewModel().VirtualFiles;
                         FileTypeLabel.Content = string.Format(FTypeFormat, "Blob file");
                     });
                     break;
@@ -436,8 +446,9 @@ public partial class MainWindow : SukiWindow
                     break;
                 default:
                     var d = ds.ReadBytes(ds.Length <= 0x2780 ? (int)ds.Length : 0x2780);
-                    SaveData = new FpnSave(d);
-                    if (!SaveData.isValidHeader())
+                    var sd = new FpnSave(d);
+                    Dispatcher.UIThread.Post(() => GetViewModel().SaveData = sd);
+                    if (!sd.isValidHeader())
                     {
                         Dispatcher.UIThread.Post(() =>
                         {
@@ -449,7 +460,7 @@ public partial class MainWindow : SukiWindow
                     }
                     Dispatcher.UIThread.Post(() =>
                     {
-                        SaveData = new FpnSave(d);
+                        GetViewModel().SaveData = new FpnSave(d);
                         this.InfoTab.IsVisible = false;
                         this.SaveEditor.IsVisible = true;
                         SaveEditorTabControl.SelectedIndex = 0;
@@ -534,7 +545,7 @@ public partial class MainWindow : SukiWindow
         };
     }
 
-    protected virtual bool IsFileLocked(FileInfo file)
+    private bool IsFileLocked(FileInfo file)
     {
         try
         {
@@ -551,7 +562,8 @@ public partial class MainWindow : SukiWindow
     private void GimmickCombobox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
        var val = ((ComboBox)sender!).SelectedValue?.ToString();
-       var gimmickList = Gimmicks?[val!];
+       if (val == null) return;
+       var gimmickList = GetViewModel().Gimmicks?[val!];
        string[] colHeaders = ["Label", "Type", "Button", "Sound effect", "Flip. strength", "Knockback", "Bounciness"];
        List<string[]> rows = [];
        if (gimmickList == null) return;
@@ -593,6 +605,7 @@ public partial class MainWindow : SukiWindow
 
     private void Window_Loaded(object? sender, RoutedEventArgs e)
     {
+        GetViewModel().MenuElements = new ObservableCollection<MenuElementViewModel>(GetViewModel()._menu);
         if (Design.IsDesignMode)
         {
             FileTypeLabel.Content = "Design mode";
@@ -623,7 +636,7 @@ public partial class MainWindow : SukiWindow
               or press Ctrl+Alt+V to paste a file.
               
               """;
-        
+        ForceRefresh();
         var p = new Process();
         
         p.StartInfo.UseShellExecute = false;
@@ -685,7 +698,13 @@ public partial class MainWindow : SukiWindow
     private void NewWindowMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
         if (Design.IsDesignMode) return;
-        new MainWindow().Show();
+        new MainWindow
+        {
+            DataContext = new MainWindowViewModel
+            {
+                IsLightTheme = IsLightTheme
+            },
+        }.Show();
     }
 
     private void DataGrid_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -701,7 +720,11 @@ public partial class MainWindow : SukiWindow
         var mw = new MainWindow()
         {
             Title = myTitle + vf!.Path,
-            FileName = vf!.Path
+            FileName = vf!.Path,
+            DataContext = new MainWindowViewModel
+            {
+                IsLightTheme = IsLightTheme
+            }
         };
         DockPanel1.IsVisible = false;
         Loader.IsVisible = true;
@@ -1161,11 +1184,11 @@ public partial class MainWindow : SukiWindow
         }
 
         var ms = new MemoryStream();
-        var loopStart = Samples[SamplesGrid.SelectedIndex].LoopStart;
-        var loopEnd = Samples[SamplesGrid.SelectedIndex].LoopEnd;
+        var loopStart = GetViewModel().Samples[SamplesGrid.SelectedIndex].LoopStart;
+        var loopEnd = GetViewModel().Samples[SamplesGrid.SelectedIndex].LoopEnd;
         if (button.Content is "Extract sample" or "Play")
         {
-            ms.Write(Samples[SamplesGrid.SelectedIndex].Data.ToArray());
+            ms.Write(GetViewModel().Samples[SamplesGrid.SelectedIndex].Data.ToArray());
         }
         ms.Position = 0;
         var decodedData = SonyVag.Decode(ms.ToArray());
@@ -1180,7 +1203,7 @@ public partial class MainWindow : SukiWindow
 
     private void SampleGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        ExtractLoopButton.IsEnabled = Samples[SamplesGrid.SelectedIndex].LoopStart != Samples[SamplesGrid.SelectedIndex].LoopEnd;
+        ExtractLoopButton.IsEnabled = GetViewModel().Samples[SamplesGrid.SelectedIndex].LoopStart != GetViewModel().Samples[SamplesGrid.SelectedIndex].LoopEnd;
     }
 
     private void CrashTestMenuItem_Click(object? sender, System.EventArgs e)
@@ -1193,8 +1216,6 @@ public partial class MainWindow : SukiWindow
         throw new Exception("End-user manually initiated the crash");
     }
 
-
-    public static readonly StyledProperty<bool> DevModeProperty = AvaloniaProperty.Register<MainWindow, bool>(nameof(DevMode), defaultValue: true);
 
     private async void BrowseButtonBdMidi_OnClick(object? sender, RoutedEventArgs e)
     {
@@ -1262,7 +1283,10 @@ public partial class MainWindow : SukiWindow
             {
                 if (name == "")  continue;
                 path = Uri.UnescapeDataString(new Uri(name).AbsolutePath);
-                var nw = new MainWindow();
+                var nw = new MainWindow() {DataContext = new MainWindowViewModel
+                {
+                    IsLightTheme = IsLightTheme
+                }};
                 nw.Title = "Flipnic file tool - " + new FileInfo(path).Name;
                 nw.FileName = path;
                 ext = new FileInfo(path).Extension;
@@ -1280,22 +1304,40 @@ public partial class MainWindow : SukiWindow
 
     private void UpdateChecksumButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        SaveData.UpdateChecksum();
+        GetViewModel().SaveData.UpdateChecksum();
         ForceRefresh();
+    }
+
+    private void UpdateThemeContainer(ScrollViewer cb)
+    {
+        if (cb.Name != "CliBox") return;
+        var cliBox = (CLIBox)cb.Parent!;
+        cliBox.IsLightTheme = IsLightTheme;
     }
 
     private void ForceRefresh()
     {
-        var o = SaveEditorTabControl.SelectedItem;
+        object? o;
+        foreach (var t in MainTabControl.Items)
+        {
+            o = t;
+            if (o is not SukiSideMenuItem mi) continue;
+            foreach (var child in ((Control)mi.PageContent).GetLogicalChildren())
+            {
+                if (child is not ScrollViewer cb) continue;
+                UpdateThemeContainer(cb);
+            }
+        }
+        o = SaveEditorTabControl.SelectedItem;
         if (o is not TabItem tab) return;
         if (tab.GetLogicalChildren().FirstOrDefault() is not Grid g) return;
         g.DataContext = null;
-        g.DataContext = SaveData;
+        g.DataContext = GetViewModel().SaveData;
     }
 
     private void DiagnoseSaveFileButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        var fixes = SaveData.FixStructure();
+        var fixes = GetViewModel().SaveData.FixStructure();
         ForceRefresh();
         if (fixes.Length > 0)
         {
@@ -1307,12 +1349,12 @@ public partial class MainWindow : SukiWindow
     
     private void ScoreGrid_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        RankGrid.ItemsSource = SaveData.Rank;
+        RankGrid.ItemsSource = GetViewModel().SaveData.Rank;
     }
 
     private void SaveEditorResetControlButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        SaveData.ResetControls();
+        GetViewModel().SaveData.ResetControls();
         ForceRefresh();
     }
 
@@ -1324,22 +1366,36 @@ public partial class MainWindow : SukiWindow
 
     private void SaveEditorUnlockResetButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        SaveData.ResetGame(SaveEditorFreePlayRadioButton.IsChecked ?? false);
+        GetViewModel().SaveData.ResetGame(SaveEditorFreePlayRadioButton.IsChecked ?? false);
         ForceRefresh();
     }
 
     private void StageIdComboBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (StageIdComboBox == null) return;
-        SaveData.StageId = StageIdComboBox.SelectedIndex;
+        GetViewModel().SaveData.StageId = StageIdComboBox.SelectedIndex;
         ForceRefresh();
     }
 
     private void SaveEditorMissionOriginalGameRadioButton_OnIsCheckedChanged(object? sender, RoutedEventArgs e)
     {
-        if (SaveEditorMissionOriginalGameRadioButton.IsChecked ?? false) SaveData.DataSourceId = 0;
-        if (SaveEditorMissionFreePlayRadioButton.IsChecked ?? false) SaveData.DataSourceId = 1;
-        if (SaveEditorMissionLastPlaythroughRadioButton.IsChecked ?? false) SaveData.DataSourceId = 2;
+        if (SaveEditorMissionOriginalGameRadioButton.IsChecked ?? false) GetViewModel().SaveData.DataSourceId = 0;
+        if (SaveEditorMissionFreePlayRadioButton.IsChecked ?? false) GetViewModel().SaveData.DataSourceId = 1;
+        if (SaveEditorMissionLastPlaythroughRadioButton.IsChecked ?? false) GetViewModel().SaveData.DataSourceId = 2;
         ForceRefresh();
+    }
+
+    private void UpdateSpecialTabThemes()
+    {
+        if (MainTabControl.SelectedItem is not SukiSideMenuItem mi) return;
+        if (mi.Header == "Gimmicks")
+        {
+            GimmickBox.IsLightTheme = IsLightTheme;
+        }
+    }
+    
+    private void MainTabControl_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        UpdateSpecialTabThemes();
     }
 }
