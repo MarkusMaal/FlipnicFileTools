@@ -114,37 +114,6 @@ public class Tim
         output.Close();
     }
     
-    
-    public void SaveBitmap(Stream output)
-    {
-        Console.Write("Converting...");
-        List<byte> imageData = [0x42, 0x4D];
-        var matrix = bitmap;
-        imageData.AddRange(BitConverter.GetBytes(matrix.Length + 0x36));
-        imageData.AddRange([0, 0, 0, 0]);
-        imageData.AddRange([0x36, 0, 0, 0]);
-        imageData.AddRange(BitConverter.GetBytes(0x28));
-        imageData.AddRange(BitConverter.GetBytes(Width));
-        imageData.AddRange(BitConverter.GetBytes(Height));
-        imageData.AddRange([0x1, 0x00]);
-        imageData.AddRange([0x18, 0x00]);
-        for (var i = 0; i < 6; i++)
-        {
-            imageData.AddRange([0, 0, 0, 0]);   
-        }
-        
-        imageData.AddRange(matrix);
-
-        output.Write(imageData.ToArray(), 0, imageData.Count);
-        if (output is not FileStream fs)
-        {
-            Console.WriteLine($"\rLoaded image data to memory ({StaticUtils.GetFilesizeString(output.Length)})");
-            return;
-        }
-
-        Console.WriteLine($"\rSaved as: {fs.Name}");
-        output.Close();
-    }
 
 
 }

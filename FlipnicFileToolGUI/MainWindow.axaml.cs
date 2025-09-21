@@ -363,6 +363,15 @@ public sealed partial class MainWindow : SukiWindow
                         Init3DStuff();
                         ModelTab.IsSelected = false;
                         ModelTab.IsVisible = true;
+                        ImagePreviewTab.IsVisible = true;
+                        try
+                        {
+                            PreviewImage.Source = new BitmapTools { Image = lp4.Texture }.ToBitmap();
+                        }
+                        catch
+                        {
+                            ImagePreviewTab.IsVisible = false;
+                        }
                     });
                     break;
                 case "IPU":

@@ -20,6 +20,8 @@ public class Lp4(byte[] data, string fileName)
     public bool HasEmbeddedResources { get; set; } = data[0x11] == 0x01;
     public bool Is2dAnimation { get; set; } = data[0x13] == 0x01;
     private List<float[]> verticies = new();
+    
+    private List<float> rawVerticies = new();
 
     private string TexturePath { get; set; } = "";
     
@@ -68,13 +70,12 @@ public class Lp4(byte[] data, string fileName)
                     AppendVerticies(i+0x20, len);
                     i += 2*len * 0x10 + 0xA0;
                     break;
-                    i += (f2 + f3 + f4) * 0x10;
                 }
             }
             i += 0x10;
         }
-
         TexturePath = StaticUtils.GetString(data.Skip(i).Take(0x20).ToArray());
+
         if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
                 TexturePath.ToUpper()))) return;
         var fs = File.OpenRead(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
@@ -88,18 +89,43 @@ public class Lp4(byte[] data, string fileName)
     {
         var len = forced_length == -1 ? BitConverter.ToInt32(data, offset) + 1 : forced_length;
 
-        float x, y, z;
-        for (var i = offset; i < offset + len * 0x10; i += 0x10)
+        float tex_x, tex_y, x, y, z;
+        //for (var i = offset; i < offset + len * 0x10; i += 0x10)
+        List<float> vertices = new();
+        for (var i = offset; i < offset + len * 0x10 - 0x20; i += 0x10)
         {
-            x = BitConverter.ToSingle(data.Skip(i).Take(4).ToArray(), 0);
-            y = BitConverter.ToSingle(data.Skip(i + 4).Take(4).ToArray(), 0);
-            z = BitConverter.ToSingle(data.Skip(i + 8).Take(4).ToArray(), 0);
-            verticies.Add([x, y, z]);
+
+            try
+            {
+                rawVerticies.Add(BitConverter.ToSingle(data.Skip(i).Take(4).ToArray(), 0));
+                rawVerticies.Add(BitConverter.ToSingle(data.Skip(i+12).Take(4).ToArray(), 0));
+                rawVerticies.Add(-BitConverter.ToSingle(data.Skip(i).Take(4).ToArray(), 0));
+                rawVerticies.Add(BitConverter.ToSingle(data.Skip(i+4).Take(4).ToArray(), 0));
+                rawVerticies.Add(BitConverter.ToSingle(data.Skip(i+8).Take(4).ToArray(), 0));
+                
+
+                rawVerticies.Add(BitConverter.ToSingle(data.Skip(i).Take(4).ToArray(), 0));
+                rawVerticies.Add(BitConverter.ToSingle(data.Skip(i + 12).Take(4).ToArray(), 0));
+                rawVerticies.Add(-BitConverter.ToSingle(data.Skip(i + 0x20).Take(4).ToArray(), 0));
+                rawVerticies.Add(BitConverter.ToSingle(data.Skip(i + 0x24).Take(4).ToArray(), 0));
+                rawVerticies.Add(BitConverter.ToSingle(data.Skip(i + 0x28).Take(4).ToArray(), 0));
+                
+                rawVerticies.Add(BitConverter.ToSingle(data.Skip(i).Take(4).ToArray(), 0));
+                rawVerticies.Add(BitConverter.ToSingle(data.Skip(i + 12).Take(4).ToArray(), 0));
+                rawVerticies.Add(-BitConverter.ToSingle(data.Skip(i + 0x10).Take(4).ToArray(), 0));
+                rawVerticies.Add(BitConverter.ToSingle(data.Skip(i + 0x14).Take(4).ToArray(), 0));
+                rawVerticies.Add(BitConverter.ToSingle(data.Skip(i + 0x18).Take(4).ToArray(), 0));
+            }
+            catch
+            {
+                break;
+            }
         }
     }
 
     public float[] GetVerticies()
     {
+        return rawVerticies.ToArray();
         List<float> result = [];
         float minValue = float.MaxValue;
         float maxValue = float.MinValue;
@@ -120,7 +146,8 @@ public class Lp4(byte[] data, string fileName)
             result.Add(vertex[0]);
             result.Add(vertex[1]);
             result.Add(vertex[2]);
-            result.Add(1f);
+            result.Add(vertex[3]);
+            result.Add(vertex[4]);
         }
         return result.ToArray();
     }

@@ -28,12 +28,20 @@ namespace FlipnicFileToolGUI.Textures
         public void LoadFromFile(object? texture)
         {
             Image<Rgba32> image = null;
-            if (texture is Tim2 tx)
+            try
             {
-                image = Image.Load<Rgba32>(new BitmapTools { Image = tx }.ToMemoryStream());
-            } else if (texture is Tim tx2)
+                if (texture is Tim2 tx)
+                {
+                    image = Image.Load<Rgba32>(new BitmapTools { Image = tx }.ToMemoryStream());
+                }
+                else if (texture is Tim tx2)
+                {
+                    image = Image.Load<Rgba32>(new BitmapTools { Icon = tx2 }.ToMemoryStream());
+                }
+            }
+            catch
             {
-                image = Image.Load<Rgba32>(new BitmapTools { Icon = tx2 }.ToMemoryStream());
+                Console.WriteLine("Unable to load texture!");
             }
 
             byte[] rndCol = [(byte)r.Next(0, 255), (byte)r.Next(0, 255), (byte)r.Next(0, 255)];

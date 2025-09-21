@@ -62,7 +62,14 @@ namespace FlipnicFileToolGUI
             StringBuilder sb = new();
             for (int i = 0; i < _vertices.Length; i += 4)
             {
-                sb.Append($"X={_vertices[i]},Y={_vertices[i + 1]},Z={_vertices[i + 2]}\n");
+                try
+                {
+                    sb.Append($"X={_vertices[i]},Y={_vertices[i + 1]},Z={_vertices[i + 2]}\n");
+                }
+                catch
+                {
+                    sb.Append($"---\n");
+                }
             }
 
             return sb.Length > 0 ? sb.ToString()[..(sb.Length - 1)] : "";

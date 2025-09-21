@@ -85,7 +85,7 @@
                                </Grid>
                             </sukiUi:SukiSideMenuItem.PageContent>
                         </sukiUi:SukiSideMenuItem>
-                        <sukiUi:SukiSideMenuItem Name="ImagePreviewTab" Header="Preview" IsVisible="False">
+                        <sukiUi:SukiSideMenuItem Name="ImagePreviewTab" Header="Texture" IsVisible="False">
                             <sukiUi:SukiSideMenuItem.Icon>
                                 <vm:CircleDot ColorA="Violet" ColorB="MidnightBlue" Text="🖼"></vm:CircleDot>
                             </sukiUi:SukiSideMenuItem.Icon>
