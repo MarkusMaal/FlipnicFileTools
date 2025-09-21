@@ -72,6 +72,11 @@ public abstract class StaticUtils
         return BitConverter.ToSingle(data.Skip(offset).Take(4).ToArray());
     }
 
+    public static float GetHalf(byte[] data, int offset)
+    {
+        return (float)BitConverter.ToHalf(new[]{data[offset+1], data[offset]});
+    }
+
     public static string GetString(byte[] data)
     {
         var chars = new List<char>();
@@ -93,10 +98,18 @@ public abstract class StaticUtils
     {
         return BitConverter.ToInt32(data.Skip(offset).Take(4).ToArray());
     }
+    public static uint GetUInt32(byte[] data, int offset)
+    {
+        return BitConverter.ToUInt32(data.Skip(offset).Take(4).ToArray());
+    }
 
     public static short GetInt16(byte[] data, int offset)
     {
         return BitConverter.ToInt16(data.Skip(offset).Take(2).ToArray());
+    }
+    public static ushort GetUInt16(byte[] data, int offset)
+    {
+        return BitConverter.ToUInt16(data.Skip(offset).Take(2).ToArray());
     }
 
     public static string GetStringAt(byte[] data, int offset)

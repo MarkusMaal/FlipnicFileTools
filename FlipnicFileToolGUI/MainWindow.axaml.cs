@@ -184,6 +184,32 @@ public sealed partial class MainWindow : SukiWindow
                         PreviewImage.Source = bt.ToBitmap();
                     });
                     break;
+                case "ICO":
+                    data = new byte[ds.Length];
+                    ds.ReadExactly(data);
+                    ds.Position = 0;
+                    var ico = new SaveIcon(data); 
+                    ico.Read();
+                    bt = new BitmapTools { Icon = ico.Texture };
+                    
+                    
+                    StaticUtils.LiveLoadStatus = "Initializing OpenGL";
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        ModelTab.IsSelected = true;
+                        InfoTab.IsSelected = false;
+                    });
+                    Thread.Sleep(1000);
+                    LoadAsString(ico, "PlayStation 2 save file icon");
+                    Dispatcher.UIThread.Post(() => {
+                        GlControl.ImportICO(ico);
+                        Init3DStuff();
+                        ModelTab.IsSelected = false;
+                        ModelTab.IsVisible = true;
+                        ImagePreviewTab.IsVisible = true;
+                        PreviewImage.Source = bt.IconToBitmap();
+                    });
+                    break;
                 case "MID":
                     var midi = new Midi(FileName);
                     midi.Read(ds);

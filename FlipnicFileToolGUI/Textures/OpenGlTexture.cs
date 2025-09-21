@@ -20,9 +20,22 @@ namespace FlipnicFileToolGUI.Textures
             _handle = GL.GenTexture();
         }
 
-        public void LoadFromFile(Tim2? texture)
+        private void LoadFromImgData(Image<Rgba32> image)
         {
-            var image = (texture != null) ? Image.Load<Rgba32>(new BitmapTools { Image = texture }.ToMemoryStream()) : null;
+            
+        }
+
+        public void LoadFromFile(object? texture)
+        {
+            Image<Rgba32> image = null;
+            if (texture is Tim2 tx)
+            {
+                image = Image.Load<Rgba32>(new BitmapTools { Image = tx }.ToMemoryStream());
+            } else if (texture is Tim tx2)
+            {
+                image = Image.Load<Rgba32>(new BitmapTools { Icon = tx2 }.ToMemoryStream());
+            }
+
             byte[] rndCol = [(byte)r.Next(0, 255), (byte)r.Next(0, 255), (byte)r.Next(0, 255)];
             List<byte> pixels = [];
             if (image != null)

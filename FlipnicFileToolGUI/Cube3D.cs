@@ -35,13 +35,13 @@ namespace FlipnicFileToolGUI
         private Point _lastPos;
 
         private const float Speed = 0.015f;
-        private Tim2? _texture;
+        private object? _texture;
 
         private float[] _vertices = [-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.5f, 0.5f, -0.5f, 1.0f, 1.0f, -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 0.5f, 0.5f, 0.5f, 1.0f, 1.0f, -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, -0.5f, 0.5f, 0.5f, 1.0f, 0.0f, -0.5f, 0.5f, -0.5f, 1.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, -0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.5f, -0.5f, 0.5f, 1.0f, 0.0f, -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f, 0.0f, -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, -0.5f, 0.5f, -0.5f, 0.0f, 1.0f];
         private readonly uint[] _indices =
         {
-            0, 1, 2, // first triangle
-            6, 5, 4, // second triangle
+            0, 1, 3, // first triangle
+            1, 2, 3, // second triangle
         };
 
         public CubeRenderingTkOpenGlControl()
@@ -82,6 +82,26 @@ namespace FlipnicFileToolGUI
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             _vertices = lp4.GetVerticies();
             
+            GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
+        }
+
+        public void ImportICO(SaveIcon saveIcon)
+        {
+            _texture = saveIcon.Texture;
+            OpenTkInit();
+            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            List<float> vertices = new();
+            foreach (var vertex in saveIcon.Vertices)
+            {
+                vertices.Add(vertex.TextureX / 4096f);
+                vertices.Add(-vertex.TextureY / 4096f);
+                vertices.Add(-vertex.CoordX / 4096f);
+                vertices.Add(-vertex.CoordY / 4096f);
+                vertices.Add(vertex.CoordZ / 4096f);
+            }
+            _vertices = vertices.ToArray();
             GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
         }
@@ -170,31 +190,33 @@ namespace FlipnicFileToolGUI
             //Create vertex and buffer objects
             _vertexArrayObject = GL.GenVertexArray();
             _vertexBufferObject = GL.GenBuffer();
+            
 
             //Set bg colour to a dark forest green
             GL.ClearColor(0.6f, 0.5f, 0.9f, 1.0f);
 
             //Bind to the VAO
             GL.BindVertexArray(_vertexArrayObject);
-
             //Set up the buffer for the triangle
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
 
             //Copy triangle vertices to the buffer
             GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
-            
+
 
             //Configure structure of the vertices
             //					  (position parameter in vertex shader, 3 points, data is stored as floats, non-normalized, 5 floats/point, first point at offset 0 in data array)
-            GL.VertexAttribPointer(_shader.GetAttribLocation("aPosition"), 3, VertexAttribPointerType.Float, true, 4 * sizeof(float), 0);
+            GL.VertexAttribPointer(_shader.GetAttribLocation("aPosition"), 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 2 * sizeof(float));
             GL.EnableVertexAttribArray(_shader.GetAttribLocation("aPosition"));
 
 
+            
             //Configure texture coordinate structure
             var texCoordLocation = _shader.GetAttribLocation("aTexCoord");
-            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 4 * sizeof(float));
+            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
             GL.EnableVertexAttribArray(texCoordLocation);
 
+            
             //Set up the EBO
             _elementBufferObject = GL.GenBuffer();
 
