@@ -350,7 +350,6 @@ public sealed partial class MainWindow : SukiWindow
                     var lp4Da =  new byte[ds.Length];
                     ds.ReadExactly(lp4Da);
                     var lp4 = new Lp4(lp4Da, FileName);
-                    LoadAsString(lp4, "Flipnic resource file");
                     StaticUtils.LiveLoadStatus = "Initializing OpenGL";
                     Dispatcher.UIThread.Post(() =>
                     {
@@ -358,8 +357,10 @@ public sealed partial class MainWindow : SukiWindow
                         InfoTab.IsSelected = false;
                     });
                     Thread.Sleep(1000);
+                    Dispatcher.UIThread.Post(() => { GlControl.ImportLP4(lp4); });
+                        
+                    LoadAsString(lp4, "Flipnic resource file");
                     Dispatcher.UIThread.Post(() => {
-                        GlControl.ImportLP4(lp4);
                         Init3DStuff();
                         ModelTab.IsSelected = false;
                         ModelTab.IsVisible = true;

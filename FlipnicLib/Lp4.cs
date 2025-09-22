@@ -26,8 +26,11 @@ public class Lp4(byte[] data, string fileName)
     private string TexturePath { get; set; } = "";
     
     private string FileName { get; set; } = fileName;
-    
+    private List<int> ModelOffsets { get; set; } = [];
+
     public Tim2? Texture { get; set; }
+
+    public List<Model> Models { get; set; } = [];
 
     public override string ToString()
     {
@@ -35,9 +38,21 @@ public class Lp4(byte[] data, string fileName)
         var i2 = Is2dAnimation ? "Yes" : "No";
         var o = $"""
                 Type: {Type.ToString()}
+                Model count: {ModelOffsets.Count}
                 Has embedded resources: {er}
                 Is 2D animation: {i2}
+                
                 """;
+        if (Type != FileType.StaticModel) return o;
+        o += $"""
+
+              Models:
+              
+              """;
+        string[] cols = ["Name", "Address", "Scale", "Offset", "Texture", "Polygons"];
+        List<string[]> rows = [];
+        rows.AddRange(Models.Select(model => model.GetRow()));
+        o += StaticUtils.GenerateTable(cols, rows, StaticUtils.SimpleOutput);
         return o;
     }
 
@@ -52,8 +67,62 @@ public class Lp4(byte[] data, string fileName)
         writer.Close();
     }
 
-    public void Read()
+    // this parser seems to fail most of the time, so further adjustments maybe needed
+    private void GetModelOffset()
     {
+        try
+        {
+            var i = 0xA0;
+            i += StaticUtils.GetInt32(data, 8) * 0x10;
+            while ((i < data.Length) && (i >= 0))
+            {
+                var sectionCount = StaticUtils.GetInt32(data, i + 4) - 1;
+                var modelOffset = i + 0x20;
+                var model = new Model { Address = modelOffset, Name = StaticUtils.GetStringAt(data, modelOffset) };
+                i += 0x30; // name and params
+                model.Scale =
+                [
+                    StaticUtils.GetFloat(data, i + 0x40), StaticUtils.GetFloat(data, i + 0x54),
+                    StaticUtils.GetFloat(data, i + 0x68)
+                ];
+                model.Offset =
+                [
+                    StaticUtils.GetFloat(data, i + 0x70), StaticUtils.GetFloat(data, i + 0x74),
+                    StaticUtils.GetFloat(data, i + 0x78)
+                ];
+                i += 0x80; // position, size, etc
+                i += 0xA0 * sectionCount; // some unknown sections
+                i += 0xA0; // more parameters before start of model
+
+                // model
+                i += 0x20; // model identifier, I guess?
+                var vectCount = StaticUtils.GetInt32(data, i);
+                var normalCount = StaticUtils.GetInt32(data, i + 4);
+                var textureCoordCount = StaticUtils.GetInt32(data, i + 12);
+                model.AppendVerticies(i, data);
+                i += 0x10; // the counts
+                i += 0x10 * vectCount; // vertices
+                i += 0x8 * normalCount; // normals
+                i += 0x8 * textureCoordCount; // texture coordinates
+                i += 0x80; // weird section that says "prefix" something-something
+                model.Texture = StaticUtils.GetStringAt(data, i);
+                i += 0x30; // footer containing the name of the texture
+                Models.Add(model);
+            }
+
+            if (Models[0].RawVertices.Count != 0) return;
+            Models.Clear();
+            OldMethod();
+        }
+        catch
+        {
+            OldMethod();
+        }
+    }
+    
+    private void OldMethod()
+    {
+        Console.WriteLine("Warning: failed to parse LP4 file correctly, falling back to brute-force method!");
         var i = 0;
         while (i < data.Length - 0x20)
         {
@@ -87,7 +156,7 @@ public class Lp4(byte[] data, string fileName)
 
     private void AppendVerticies(int offset, int forced_length = -1)
     {
-        var len = forced_length == -1 ? BitConverter.ToInt32(data, offset) + 1 : forced_length;
+        var len = forced_length == -1 ? BitConverter.ToInt32(data, offset) : forced_length;
 
         float tex_x, tex_y, x, y, z;
         //for (var i = offset; i < offset + len * 0x10; i += 0x10)
@@ -122,33 +191,84 @@ public class Lp4(byte[] data, string fileName)
             }
         }
     }
+    
+    public void Read()
+    {
+        GetModelOffset();
+        if (rawVerticies.Count > 0) return;
+        if (Models.Count == 0)
+        {
+            return;
+        }
+        if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
+                                        Models[0].Texture.ToUpper()))) return;
+        var fs = File.OpenRead(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
+            Models[0].Texture.ToUpper()));
+        var d = new byte[fs.Length];
+        fs.ReadExactly(d, 0, d.Length);
+        Texture = new Tim2(d, Models[0].Texture);
+    }
 
     public float[] GetVerticies()
     {
+        if ((rawVerticies.Count == 0) && (Models.Count > 0))
+        {
+            return Models[0].RawVertices.ToArray();
+        }
         return rawVerticies.ToArray();
-        List<float> result = [];
-        float minValue = float.MaxValue;
-        float maxValue = float.MinValue;
-        foreach (var vertex in verticies)
-        {
-            foreach (var point in vertex)
-            {
-                if (point < minValue) minValue = point;
-                if (point > maxValue) maxValue = point;
-            }
-        }
+    }
+}
 
-        foreach (var vertex in verticies)
+public class Model
+{
+    public string Name { get; set; }
+    public string Texture { get; set; }
+    
+    public float[] Scale { get; set; }
+    public float[] Offset { get; set; }
+    public int Address { get; set; }
+
+    public List<float> RawVertices { get; set; } = [];
+
+    public string[] GetRow()
+    {
+        return
+        [
+            Name, Address.ToString("X"),
+            $"{StaticUtils.DotFloatString(Scale[0])}x{StaticUtils.DotFloatString(Scale[1])}x{StaticUtils.DotFloatString(Scale[2])}",
+            $"{StaticUtils.DotFloatString(Offset[0])}x{StaticUtils.DotFloatString(Offset[1])}x{StaticUtils.DotFloatString(Offset[2])}",
+            Texture,
+            RawVertices.Count.ToString()
+        ];
+    }
+    
+    
+
+    public void AppendVerticies(int offset, byte[] data)
+    {
+        var len = BitConverter.ToInt32(data, offset);
+        var texOffset = (len * 0x18);
+        var div = 4096f;
+        for (var i = offset; i < offset + len * 0x10 - 0x20; i += 0x10)
         {
-            //result.Add(vertex[0] > 0 ? vertex[0] / maxValue : -vertex[0] / minValue);
-            //result.Add(vertex[1] > 0 ? vertex[1] / maxValue : -vertex[1] / minValue);
-            //result.Add(vertex[2] > 0 ? vertex[2] / maxValue : -vertex[2] / minValue);
-            result.Add(vertex[0]);
-            result.Add(vertex[1]);
-            result.Add(vertex[2]);
-            result.Add(vertex[3]);
-            result.Add(vertex[4]);
+            var id = i - offset;
+            RawVertices.Add(-BitConverter.ToInt16(data.Skip(id/2 + texOffset).Take(2).ToArray(), 0) / div);
+            RawVertices.Add(-BitConverter.ToInt16(data.Skip(id/2 + texOffset + 2).Take(2).ToArray(), 0)  / div);
+            RawVertices.Add(BitConverter.ToSingle(data.Skip(i).Take(4).ToArray(), 0));
+            RawVertices.Add(BitConverter.ToSingle(data.Skip(i + 4).Take(4).ToArray(), 0));
+            RawVertices.Add(BitConverter.ToSingle(data.Skip(i + 8).Take(4).ToArray(), 0));
+
+            RawVertices.Add(-BitConverter.ToInt16(data.Skip(id/2 + texOffset + 8).Take(2).ToArray(), 0)  / div);
+            RawVertices.Add(-BitConverter.ToInt16(data.Skip(id/2 + texOffset + 10).Take(2).ToArray(), 0)  / div);
+            RawVertices.Add(BitConverter.ToSingle(data.Skip(i + 0x20).Take(4).ToArray(), 0));
+            RawVertices.Add(BitConverter.ToSingle(data.Skip(i + 0x24).Take(4).ToArray(), 0));
+            RawVertices.Add(BitConverter.ToSingle(data.Skip(i + 0x28).Take(4).ToArray(), 0));
+
+            RawVertices.Add(-BitConverter.ToInt16(data.Skip(id/2 + texOffset + 16).Take(2).ToArray(), 0)  / div);
+            RawVertices.Add(-BitConverter.ToInt16(data.Skip(id/2 + texOffset + 18).Take(2).ToArray(), 0)  / div);
+            RawVertices.Add(BitConverter.ToSingle(data.Skip(i + 0x10).Take(4).ToArray(), 0));
+            RawVertices.Add(BitConverter.ToSingle(data.Skip(i + 0x14).Take(4).ToArray(), 0));
+            RawVertices.Add(BitConverter.ToSingle(data.Skip(i + 0x18).Take(4).ToArray(), 0));
         }
-        return result.ToArray();
     }
 }

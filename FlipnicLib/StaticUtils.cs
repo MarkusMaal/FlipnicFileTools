@@ -115,6 +115,8 @@ public abstract class StaticUtils
     public static string GetStringAt(byte[] data, int offset)
     {
         var chars = new List<char>();
+        if (offset >= data.Length) return "";
+        if (offset < 0) return "";
         while (data[offset] != 0x00)
         {
             chars.Add((char)data[offset]);
