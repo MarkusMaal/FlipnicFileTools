@@ -1,3 +1,5 @@
+using FlipnicLib.Formats;
+
 namespace FlipnicLib.Types;
 
 public class Rank(FpnSave save, int idx, int gameMode)

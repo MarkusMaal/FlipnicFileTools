@@ -1,3 +1,5 @@
+using FlipnicLib.Formats;
+
 namespace FlipnicLib.Types;
 
 public class Mission(FpnSave save, int rowIdx, int dataSource, int stage)

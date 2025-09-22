@@ -1,4 +1,6 @@
-﻿namespace FlipnicLib.Types;
+﻿using FlipnicLib.Formats;
+
+namespace FlipnicLib.Types;
 
 public class Event(byte[] data)
 {

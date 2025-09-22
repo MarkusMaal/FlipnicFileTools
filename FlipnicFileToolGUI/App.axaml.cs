@@ -9,7 +9,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
-using FlipnicLib;
+using FlipnicFileToolGUI.ViewModels;
 using SukiUI;
 using SukiUI.Models;
 

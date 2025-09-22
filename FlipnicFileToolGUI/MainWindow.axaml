@@ -9,7 +9,8 @@
         Icon="Assets\F.PNG"
         xmlns:sukiUi="clr-namespace:SukiUI.Controls;assembly=SukiUI"
         xmlns:types="clr-namespace:FlipnicLib.Types;assembly=FlipnicLib"
-        x:DataType="vm:MainWindowViewModel" x:Class="FlipnicFileToolGUI.MainWindow"
+        xmlns:viewModels="clr-namespace:FlipnicFileToolGUI.ViewModels"
+        x:DataType="viewModels:MainWindowViewModel" x:Class="FlipnicFileToolGUI.MainWindow"
         Title="Flipnic file tool" Loaded="Window_Loaded" BackgroundStyle="Bubble"
         IsMenuVisible="{OnPlatform True, macOS=False}">
     <sukiUi:SukiWindow.RightWindowTitleBarControls>

@@ -7,12 +7,11 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
-using FlipnicFileTool;
 using FlipnicLib;
-using FlipnicLib.Jam;
-using FlipnicLib.Midi;
+using FlipnicLib.Formats;
+using FlipnicLib.Formats.Jam;
+using FlipnicLib.Formats.Midi;
 using FlipnicLib.Types;
-using FlipnicLib.Vag;
 using SukiUI;
 using SukiUI.Controls;
 using SukiUI.Dialogs;
@@ -27,6 +26,8 @@ using System.Text;
 using System.Threading;
 using Avalonia.LogicalTree;
 using Avalonia.Styling;
+using FlipnicFileToolGUI.ViewModels;
+using SonyVag = FlipnicLib.Formats.Vag.SonyVag;
 
 namespace FlipnicFileToolGUI;
 

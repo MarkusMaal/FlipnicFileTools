@@ -1,3 +1,5 @@
+using FlipnicLib.Formats;
+
 namespace FlipnicLib.Types;
 
 public class StageDirectory(FpnSave save, int idx, string name)

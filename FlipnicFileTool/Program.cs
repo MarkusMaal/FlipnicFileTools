@@ -1,7 +1,8 @@
 ﻿using System.Diagnostics;
 using FlipnicLib;
-using FlipnicLib.Jam;
-using FlipnicLib.Midi;
+using FlipnicLib.Formats;
+using FlipnicLib.Formats.Jam;
+using FlipnicLib.Formats.Midi;
 using Syroot.BinaryData;
 
 namespace FlipnicFileTool;

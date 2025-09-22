@@ -9,8 +9,9 @@ using FlipnicFileToolGUI.Textures;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTKAvalonia;
-using FlipnicLib;
 using System.IO;
+using FlipnicLib;
+using FlipnicLib.Formats;
 
 namespace FlipnicFileToolGUI
 {

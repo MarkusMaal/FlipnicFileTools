@@ -2,7 +2,9 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using BigGustave;
-using FlipnicLib.Vag;
+using FlipnicLib.Formats;
+using FlipnicLib.Formats.Jam;
+using SonyVag = FlipnicLib.Formats.Vag.SonyVag;
 
 namespace FlipnicLib;
 
@@ -365,7 +367,7 @@ public abstract class StaticUtils
     }
 
 
-    public static string SNote(Jam.Note noteStr)
+    public static string SNote(Note noteStr)
     {
         return noteStr.ToString().Replace("Sharp", "#").Replace("Neg", "Ng");
     }

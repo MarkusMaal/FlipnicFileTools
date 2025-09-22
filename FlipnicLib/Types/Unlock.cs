@@ -1,3 +1,5 @@
+using FlipnicLib.Formats;
+
 namespace FlipnicLib.Types;
 
 public class Unlock(string label, FpnSave save, int idx, bool isFreePlay)

@@ -1,9 +1,6 @@
 using System.IO;
-using System.Runtime.InteropServices;
-using Avalonia;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform;
-using FlipnicLib;
+using FlipnicLib.Formats;
 
 namespace FlipnicFileToolGUI;
 
