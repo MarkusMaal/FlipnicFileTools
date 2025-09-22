@@ -34,6 +34,10 @@ public abstract class Enums
         ShowLay,
         ShowPseudoCode,
         ShowIpu,
+        ExportObj,
+        ShowIco,
+        ConvertIcoTexture,
+        ConvertIcoObj,
         ConflictingModes,
         NoAction
     }
@@ -55,6 +59,7 @@ public abstract class Enums
             ".VSD" => Modes.ShowVsd,
             ".LAY" => Modes.ShowLay,
             ".IPU" => Modes.ShowIpu,
+            ".ICO" => Modes.ShowIco,
             _ => Modes.ShowHelp
         };
     }
@@ -92,15 +97,19 @@ public abstract class Enums
             "--get-pseudo-code" => Modes.ShowPseudoCode,
             "--show-fpd" => Modes.ShowFpd,
             "--show-ipu" => Modes.ShowIpu,
+            "--export-obj" => Modes.ExportObj,
+            "--show-ico" => Modes.ShowIco,
+            "--convert-ico-texture" => Modes.ConvertIcoTexture,
+            "--convert-ico-obj" => Modes.ConvertIcoObj,
             _ => mode
         };
         
         if (oldMode == mode) StaticUtils.IsModeSet = false;
         if (mode == Modes.ShowHelp) return mode;
-        if (StaticUtils.IsModeSet)
+        /*if (StaticUtils.IsModeSet)
         {
             mode = Modes.ConflictingModes;
-        }
+        }*/
         StaticUtils.IsModeSet = true;
 
         return mode;

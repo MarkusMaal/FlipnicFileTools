@@ -151,6 +151,30 @@ internal static class Program
                         "~-CError~--: Syntax is incorrect. To see command line usage, append the ~-F--help~-- flag.");
                     Console.WriteLine();
                     return 5;
+                case Enums.Modes.ShowIco:
+                    var ico = new SaveIcon(File.ReadAllBytes(FileName));
+                    ico.Read();
+                    Console.WriteLine(ico.ToString());
+                    break;
+                case Enums.Modes.ConvertIcoTexture:
+                    ico = new SaveIcon(File.ReadAllBytes(FileName));
+                    ico.Read();
+                    ico.Texture?.SavePng(File.OpenWrite(outFile));
+                    break;
+                case Enums.Modes.ConvertIcoObj:
+                    ico = new SaveIcon(File.ReadAllBytes(FileName));
+                    ico.Read();
+                    List<float> modelData = [];
+                    foreach (var vertex in ico.Vertices)
+                    {
+                        modelData.Add(vertex.TextureX / 4096f);
+                        modelData.Add(-vertex.TextureY / 4096f);
+                        modelData.Add(vertex.CoordX / 4096f);
+                        modelData.Add(-vertex.CoordY / 4096f);
+                        modelData.Add(-vertex.CoordZ / 4096f);
+                    }
+                    StaticUtils.ExportObj(outFile, modelData.ToArray(), ico.Texture);
+                    break;
                 case Enums.Modes.ListResources:
                     Console.Write(new FpnSst(File.OpenRead(FileName)).GenerateMagicNumbers());
                     break;
@@ -200,7 +224,14 @@ internal static class Program
                     GetHelp();
                     break;
                 case Enums.Modes.ShowLp4:
-                    Console.WriteLine(new Lp4(File.ReadAllBytes(FileName), FileName).ToString());
+                    var lp4 = new Lp4(File.ReadAllBytes(FileName), FileName);
+                    lp4.Read();
+                    Console.WriteLine(lp4.ToString());
+                    break;
+                case Enums.Modes.ExportObj:
+                    lp4 = new Lp4(File.ReadAllBytes(FileName), FileName);
+                    lp4.Read();
+                    StaticUtils.ExportObj(outFile, lp4.GetVerticies(), lp4.Texture);
                     break;
                 case Enums.Modes.ShowMlb:
                     Console.WriteLine(new FpnMlb(File.ReadAllBytes(FileName)).ToString(StaticUtils.SimpleOutput));

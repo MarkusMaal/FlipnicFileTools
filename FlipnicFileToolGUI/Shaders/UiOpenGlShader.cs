@@ -1,5 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using OpenTK.Graphics.OpenGL;
@@ -62,7 +63,10 @@ namespace FlipnicFileToolGUI.Shaders
             GL.DeleteShader(vertexShader);
             GL.DeleteShader(fragmentShader);
 
-            Console.WriteLine("UI: Compiled shaders successfully");
+            if (Debugger.IsAttached)
+            {
+                Console.WriteLine("UI: Compiled shaders successfully");
+            }
         }
 
         public void Use()

@@ -78,7 +78,8 @@ public abstract class HelpUtils
                 "Resource files",
                 "*.LP4",
                 [
-                    new HelpLine("show-lp4*", "Display general information about the file")
+                    new HelpLine("show-lp4*", "Display general information about the file"),
+                    new HelpLine("export-obj", "Export models from the LP4 file as Wavefront OBJ")
                 ]
             ),
             new(
@@ -138,6 +139,15 @@ public abstract class HelpUtils
                 "*.LAY",
                 [
                     new HelpLine("show-lay*", "List layout data in human-readable format")
+                ]
+            ),
+            new(
+                "Save file icon",
+                "*.ICO",
+                [
+                    new HelpLine("show-ico*", "Display information about the save icon"),
+                    new HelpLine("convert-ico-texture", "Converts save icon texture to PNG"),
+                    new HelpLine("convert-ico-obj", "Converts save icon to Wavefront OBJ model"),
                 ]
             ),
         ];

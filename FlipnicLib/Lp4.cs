@@ -56,17 +56,6 @@ public class Lp4(byte[] data, string fileName)
         return o;
     }
 
-    public static void ExportObj(float[] vertices,  string outFile)
-    {
-        using var writer = new FileStream(outFile, FileMode.Create, FileAccess.Write);
-        for (int i = 0; i < vertices.Length; i+=3)
-        {
-            float[] vertex = [vertices[i], vertices[i + 1], vertices[i + 2]];
-            writer.Write(Encoding.ASCII.GetBytes($"v {StaticUtils.DotFloatString(vertex[0])} {StaticUtils.DotFloatString(vertex[1])} {StaticUtils.DotFloatString(vertex[2])}\n"));
-        }
-        writer.Close();
-    }
-
     // this parser seems to fail most of the time, so further adjustments maybe needed
     private void GetModelOffset()
     {

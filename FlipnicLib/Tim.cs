@@ -11,21 +11,27 @@ public class Tim
 
     public int Width { get; private set; }
     public int Height { get; private set; }
+    
+    private bool IsCompressed { get; set; }
+    
+    private int CompressedSize { get; set; }
+    private int DecompressedSize { get; set; }
 
     public Tim(byte[] data)
     {
         Width = 128;
         Height = 128;
+        CompressedSize = data.Length;
         bitmap = new byte[Width * Height * 4];
-        var isCompressed = false;
+        var IsCompressed = false;
         var Length = BitConverter.ToInt32(data, 0);
         if (Length == data.Length)
         {
-            isCompressed = true;
+            IsCompressed = true;
         }
 
         byte[] decompressed = [];
-        if (!isCompressed)
+        if (!IsCompressed)
         {
             decompressed = data;
         }
@@ -64,6 +70,7 @@ public class Tim
 
             decompressed = RLEDecoded.ToArray();
         }
+        DecompressedSize = decompressed.Length;
 
         var bp = 0;
         const int alpha = 0xFF;
@@ -113,7 +120,20 @@ public class Tim
         Console.WriteLine($"\rSaved as: {fs.Name}");
         output.Close();
     }
-    
+
+    public override string ToString()
+    {
+        var typeS = ((DecompressedSize != CompressedSize) ? "RLE compressed" : "Uncompressed");
+        return $"""
+                
+                Width: {Width}
+                Height: {Height}
+                
+                Type: {typeS}
+                Compressed size: {StaticUtils.GetFilesizeString(CompressedSize)}
+                Decompressed size: {StaticUtils.GetFilesizeString(DecompressedSize)}
+                """;
+    }
 
 
 }

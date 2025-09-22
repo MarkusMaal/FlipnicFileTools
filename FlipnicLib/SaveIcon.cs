@@ -30,6 +30,22 @@ public class SaveIcon(byte [] data)
         var textureSize = StaticUtils.GetUInt32(data, texOffset);
         Texture = new Tim(data.Skip(texOffset).Take((int)textureSize).ToArray());
     }
+
+    public override string ToString()
+    {
+        var isCompressed = TextureType == 0x0F ? "Yes" : "No";
+        var o = $"""
+                 PlayStation 2 save icon
+                 
+                 Magic: {IconFileId:X}
+                 Shapes: {AnimationShapes}
+                 Polygons: {VertexCount / 3}
+                 
+                 Texture:
+                 {Texture}
+                 """;
+        return o;
+    }
 }
 
 public class Vertex(byte[] vertexData)

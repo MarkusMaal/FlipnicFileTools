@@ -369,4 +369,57 @@ public abstract class StaticUtils
     {
         return noteStr.ToString().Replace("Sharp", "#").Replace("Neg", "Ng");
     }
+
+    public static void ExportObj(string fileName, float[] vertices, object? texture)
+    {
+        // generate .png file
+        switch (texture)
+        {
+            case Tim2 tm2:
+                tm2.SavePng(new FileStream(fileName[..^4] + ".png", FileMode.Create, FileAccess.Write));
+                break;
+            case Tim tm:
+                tm.SavePng(new FileStream(fileName[..^4] + ".png", FileMode.Create, FileAccess.Write));
+                break;
+        }
+            
+        // generate .mtl file
+        using var mtlwriter = new StreamWriter(fileName[..^4] + ".mtl");
+        mtlwriter.WriteLine($"newmtl {new FileInfo(fileName).Name[..^4]}");
+        mtlwriter.WriteLine($"map_Kd {new FileInfo(fileName).Name[..^4]}.png");
+        mtlwriter.Close();
+        Console.WriteLine($"Saved as: {fileName[..^4]}.mtl");
+            
+        var vertexCount = vertices.Length / 5;
+        using var writer = new StreamWriter(fileName);
+        var culture = CultureInfo.InvariantCulture;
+        writer.WriteLine($"mtllib {new FileInfo(fileName).Name[..^4]}.mtl");
+        writer.WriteLine($"usemtl {new FileInfo(fileName).Name[..^4]}");
+
+        // Write vertex positions and texture coordinates
+        for (var i = 0; i < vertexCount; i++)
+        {
+            var u = vertices[i * 5 + 0];
+            var v = vertices[i * 5 + 1];
+            var x = vertices[i * 5 + 2];
+            var y = vertices[i * 5 + 3];
+            var z = vertices[i * 5 + 4];
+
+            writer.WriteLine($"v {x.ToString(culture)} {y.ToString(culture)} {z.ToString(culture)}");
+            writer.WriteLine($"vt {u.ToString(culture)} {v.ToString(culture)}");
+        }
+
+        // Write face assuming every 3 vertices = 1 triangle
+        for (var i = 0; i < vertexCount; i += 3)
+        {
+            var v1 = i + 1;
+            var v2 = i + 2;
+            var v3 = i + 3;
+
+            writer.WriteLine($"f {v1}/{v1} {v2}/{v2} {v3}/{v3}");
+        }
+
+        writer.Close();
+        Console.WriteLine($"Saved as: {fileName}");
+    }
 }

@@ -122,7 +122,7 @@ public sealed partial class MainWindow : SukiWindow
             Title = "Open file",
             AllowMultiple = false,
             FileTypeFilter = jaMsg ? [Filters.FpnMsg] : [Filters.AllSupported, Filters.BinFile, Filters.FpnFpc, Filters.FpnSst, Filters.FpnLp4, Filters.FpnMlb,
-                Filters.SonyPss, Filters.SonyTim2, Filters.MidiFile, Filters.HdFile, Filters.VsdFile, Filters.SvagFile, Filters.TxtFile, Filters.CsvFile, Filters.XmlFile]
+                Filters.SonyPss, Filters.SonyTim2, Filters.MidiFile, Filters.HdFile, Filters.VsdFile, Filters.SvagFile, Filters.TxtFile, Filters.CsvFile, Filters.XmlFile, Filters.SaveIcon]
         });
 
         if (files.Count <= 0) return;

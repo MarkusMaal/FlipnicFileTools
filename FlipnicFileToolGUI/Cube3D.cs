@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Text;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Input;
 using FlipnicFileToolGUI.Shaders;
 using FlipnicFileToolGUI.Textures;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
-using OpenTK.Windowing.Common;
 using OpenTKAvalonia;
 using FlipnicLib;
 using System.IO;
@@ -37,7 +35,7 @@ namespace FlipnicFileToolGUI
         private const float Speed = 0.015f;
         private object? _texture;
 
-        private float[] _vertices = [-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.5f, 0.5f, -0.5f, 1.0f, 1.0f, -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 0.5f, 0.5f, 0.5f, 1.0f, 1.0f, -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, -0.5f, 0.5f, 0.5f, 1.0f, 0.0f, -0.5f, 0.5f, -0.5f, 1.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, -0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.5f, -0.5f, 0.5f, 1.0f, 0.0f, -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f, 0.0f, -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, -0.5f, 0.5f, -0.5f, 0.0f, 1.0f];
+        private float[] _vertices = [];
         private readonly uint[] _indices =
         {
             0, 1, 3, // first triangle
@@ -46,7 +44,7 @@ namespace FlipnicFileToolGUI
 
         public CubeRenderingTkOpenGlControl()
         {
-            Console.WriteLine("UI: Creating OpenGLControl");
+            if (Debugger.IsAttached) Console.WriteLine("UI: Creating OpenGLControl");
 
             //Initial camera facing update
             UpdateCameraFront();
@@ -54,7 +52,7 @@ namespace FlipnicFileToolGUI
 
         public void SaveAs(string fileName)
         {
-            Lp4.ExportObj(_vertices, fileName);
+            StaticUtils.ExportObj(fileName, _vertices, _texture);
         }
 
         public string GetVertices()
@@ -208,7 +206,7 @@ namespace FlipnicFileToolGUI
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
 
             //Copy triangle vertices to the buffer
-            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * 4 * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
 
 
             //Configure structure of the vertices
@@ -321,7 +319,6 @@ namespace FlipnicFileToolGUI
 
             //3d projection matrices
             var model = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_modelRotationDegrees));
-            // model *= Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-30));
             var view = Matrix4.LookAt(_cameraPosition, _cameraPosition + _cameraFront, _up);
             var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(_fov), (float)(Bounds.Width / Bounds.Height), 0.1f, 100.0f);
 

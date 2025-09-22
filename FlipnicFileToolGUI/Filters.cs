@@ -6,7 +6,7 @@ public class Filters
 {
     public static FilePickerFileType AllSupported { get; } = new("All supported file formats")
     {
-        Patterns = ["*.BIN", "*.FPC", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML"]
+        Patterns = ["*.BIN", "*.FPC", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML", "*.ICO"]
     };
     
     public static FilePickerFileType BinFile { get; } = new("BIN files")
@@ -66,6 +66,12 @@ public class Filters
     public static FilePickerFileType IpuFile { get; } = new("IPU video stream")
     {
         Patterns = ["*.IPU"]
+    };
+
+    
+    public static FilePickerFileType SaveIcon { get; } = new("PlayStation 2 save icon")
+    {
+        Patterns = ["*.ICO"]
     };
 
     public static FilePickerFileType TxtFile { get; } = new("Text files")
