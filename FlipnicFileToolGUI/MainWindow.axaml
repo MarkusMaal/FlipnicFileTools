@@ -74,7 +74,7 @@
                                 <vm:CircleDot ColorA="Orange" ColorB="Brown" Text="⬡"></vm:CircleDot>
                             </sukiUi:SukiSideMenuItem.Icon>
                             <sukiUi:SukiSideMenuItem.PageContent>
-                              <Grid RowDefinitions="*,100">
+                              <Grid RowDefinitions="*,110">
                                 <vm:CubeRenderingTkOpenGlControl Grid.Row="0"  Focusable="True" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="GlControl"></vm:CubeRenderingTkOpenGlControl>
                                 <Button Grid.Row="1" Margin="10" VerticalAlignment="Bottom" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>
                                 <StackPanel Orientation="Horizontal" Grid.Row="1">
@@ -83,6 +83,22 @@
                                     <ListBox Margin="5" Name="Vertices" Width="500"></ListBox>
                                 </StackPanel>
                                </Grid>
+                            </sukiUi:SukiSideMenuItem.PageContent>
+                        </sukiUi:SukiSideMenuItem>
+                        <sukiUi:SukiSideMenuItem Name="MessageEditorTab" Header="Messages" IsVisible="False">
+                            <sukiUi:SukiSideMenuItem.Icon>
+                                <vm:CircleDot ColorA="#AADAD3" ColorB="#675DF7" Text="🖊️"></vm:CircleDot>
+                            </sukiUi:SukiSideMenuItem.Icon>
+                            <sukiUi:SukiSideMenuItem.PageContent>
+                                <vm:MessageEditor Name="MsgEditor"></vm:MessageEditor>
+                            </sukiUi:SukiSideMenuItem.PageContent>
+                        </sukiUi:SukiSideMenuItem>
+                        <sukiUi:SukiSideMenuItem Name="CameraToolTab" Header="Camera sequences" IsVisible="False">
+                            <sukiUi:SukiSideMenuItem.Icon>
+                                <vm:CircleDot ColorA="#45F6DF" ColorB="#6C3A33" Text="📷"></vm:CircleDot>
+                            </sukiUi:SukiSideMenuItem.Icon>
+                            <sukiUi:SukiSideMenuItem.PageContent>
+                                <vm:CameraTool Name="CameraTool"></vm:CameraTool>
                             </sukiUi:SukiSideMenuItem.PageContent>
                         </sukiUi:SukiSideMenuItem>
                         <sukiUi:SukiSideMenuItem Name="ImagePreviewTab" Header="Texture" IsVisible="False">

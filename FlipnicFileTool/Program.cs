@@ -199,6 +199,17 @@ internal static class Program
                         ? new FpnMsg(FileName).ToSimpleString()
                         : new FpnMsg(FileName).ToString(StaticUtils.SimpleOutput));
                     break;
+                case Enums.Modes.GenerateMsg:
+                    Console.WriteLine("Loading text file...");
+                    var lines = File.ReadAllLines(FileName);
+                    var msg = new FpnMsg
+                    {
+                        Messages = lines
+                    };
+                    Console.WriteLine("Saving message file...");
+                    File.WriteAllBytes(outFile, msg.GetData());
+                    Console.WriteLine($"File saved as {outFile}");
+                    break;
                 case Enums.Modes.ListPssStreams:
                     Console.WriteLine(new Pss(FileName).ListPss(File.OpenRead(FileName)));
                     break;

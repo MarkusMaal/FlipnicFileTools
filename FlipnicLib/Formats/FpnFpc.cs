@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using FlipnicLib.Types;
 
 namespace FlipnicLib.Formats;
 
@@ -22,12 +23,21 @@ public class FpnFpc
     readonly float TargetY;
     readonly float TargetZ;
 
+    public string FOVf => StaticUtils.DotFloatString(FOV);
+    public string OriginXf => StaticUtils.DotFloatString(OriginX);
+    public string OriginYf => StaticUtils.DotFloatString(OriginY);
+    public string OriginZf => StaticUtils.DotFloatString(OriginZ);
+    public string TargetXf => StaticUtils.DotFloatString(TargetX);
+    public string TargetYf => StaticUtils.DotFloatString(TargetY);
+    public string TargetZf => StaticUtils.DotFloatString(TargetZ);
+
     //private int TotalFrames;
 
     private readonly byte[] Data;
 
     private readonly int NumFrames;
     private readonly int NumSequences;
+    public string NumFramesStr => NumFrames.ToString();
 
     private enum ValueIDs : int
     {
@@ -41,6 +51,48 @@ public class FpnFpc
     }
     
     public FpnFpc(string filename) : this(File.OpenRead(filename)) {}
+
+    public CameraFrame[] CamFrames
+    {
+        get
+        {
+            List<CameraFrame> frames = [];
+            for (var i = 0; i < NumFrames; i++)
+            {
+                var ox = SequenceXo.Count > i ? SequenceXo[i] : OriginX;
+                var oy = SequenceYo.Count > i ? SequenceYo[i] : OriginY;
+                var oz = SequenceZo.Count > i ? SequenceZo[i] : OriginZ;
+                var tx = SequenceXt.Count > i ? SequenceXt[i] : TargetX;
+                var ty = SequenceYt.Count > i ? SequenceYt[i] : TargetY;
+                var tz = SequenceZt.Count > i ? SequenceZt[i] : TargetZ;
+                var fov = SequenceFov.Count > i ? SequenceFov[i] : FOV;
+                frames.Add(new CameraFrame
+                {
+                    Fov = StaticUtils.DotFloatString(fov) + "°",
+                    OriginX = StaticUtils.DotFloatString(ox),
+                    OriginY = StaticUtils.DotFloatString(oy),
+                    OriginZ = StaticUtils.DotFloatString(oz),
+                    TargetX = StaticUtils.DotFloatString(tx),
+                    TargetY = StaticUtils.DotFloatString(ty),
+                    TargetZ = StaticUtils.DotFloatString(tz),
+                });
+            }
+            return frames.ToArray();
+        }
+        set
+        {
+            for (var i = 0; i < value.Length; i++)
+            {
+                if (SequenceFov.Count < i) SequenceFov[i] = float.Parse(value[i].Fov[..^1]);
+                if (SequenceXo.Count < i) SequenceXo[i] = float.Parse(value[i].OriginX);
+                if (SequenceYo.Count < i) SequenceYo[i] = float.Parse(value[i].OriginY);
+                if (SequenceZo.Count < i) SequenceZo[i] = float.Parse(value[i].OriginZ);
+                if (SequenceXt.Count < i) SequenceXt[i] = float.Parse(value[i].TargetX);
+                if (SequenceYt.Count < i) SequenceYt[i] = float.Parse(value[i].TargetY);
+                if (SequenceZt.Count < i) SequenceZt[i] = float.Parse(value[i].TargetZ);
+            } 
+        }
+    }
 
     public FpnFpc(Stream stream)
     {

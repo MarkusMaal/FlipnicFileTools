@@ -44,7 +44,8 @@ public abstract class HelpUtils
                 "Message file",
                 "JA.MSG",
                 [
-                    new HelpLine("show-messages*", "Display all strings stored in the file")
+                    new HelpLine("show-messages*", "Display all strings stored in the file"),
+                    new HelpLine("generate-msg", "Generates a message file from a text file containing strings separated by new lines (input = txt file, output = msg file)"),
                 ]
             ),
             new(

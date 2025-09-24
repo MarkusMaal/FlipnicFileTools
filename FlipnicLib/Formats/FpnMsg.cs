@@ -1,9 +1,21 @@
+using System.Text;
+
 namespace FlipnicLib.Formats;
 
 public class FpnMsg
 {
     private readonly List<string> _messages = [];
     private readonly string _magic;
+
+    public string[] Messages
+    {
+        get => _messages.ToArray();
+        set
+        {
+            _messages.Clear();
+            _messages.AddRange(value);
+        }
+    }
 
     public FpnMsg(string filename) : this(File.OpenRead(filename)) {}
     
@@ -19,6 +31,11 @@ public class FpnMsg
         {
             _messages.Add(StaticUtils.GetFixedUtf16String(data, StaticUtils.GetInt32(data, offset), StaticUtils.GetInt16(data, offset + 4)));
         }
+    }
+
+    public FpnMsg()
+    {
+        _magic = "FpnMsg00";
     }
 
     public string GetMessageById(int id)
@@ -45,5 +62,31 @@ public class FpnMsg
     public string[] ToArray()
     {
         return _messages.ToArray();
+    }
+
+    public byte[] GetData()
+    {
+        List<byte> data = [];
+        data.AddRange(Encoding.UTF8.GetBytes(_magic));
+        data.AddRange([0x18, 0, 0, 0]);
+        data.AddRange(BitConverter.GetBytes(_messages.Count));
+        data.AddRange([0,0,0,0,0,0,0,0]);
+        var offset = 0x18 + 0x8 * _messages.Count;
+        foreach (var message in _messages)
+        {
+            data.AddRange(BitConverter.GetBytes(offset));
+            data.AddRange(BitConverter.GetBytes((short)(message.Length*2)));
+            data.Add(0x30);
+            data.Add(0x30);
+            offset += (message.Length + 1) * 2;
+        }
+
+        foreach (var message in _messages)
+        {
+            data.AddRange(Encoding.Unicode.GetBytes(message));
+            data.Add(0x00);
+            data.Add(0x00);
+        }
+        return data.ToArray();
     }
 }

@@ -126,7 +126,14 @@ public class Event(byte[] data)
                 FuncArgs.CopyTo(allArgs, 0);
                 EventArgs.CopyTo(allArgs, FuncArgs.Length);
             }
-            o += $"\nfunc {Label} ({string.Join(", ", allArgs)}) @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n";
+
+            o += (EventEnums.EventType)EventMagic switch
+            {
+                EventEnums.EventType.GameEvent when FuncArgs[1] == 1 => $"\n\tget {Label}\n",
+                EventEnums.EventType.Setter => $"\nfunc {Label} (value={FuncArgs[1]})\n",
+                EventEnums.EventType.Breq => $"\n\tif value == {FuncArgs[1]} goto {Label}",
+                _ => $"\nfunc {Label} ({string.Join(", ", allArgs)}) @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n"
+            };
         }
         else if (Label != string.Empty)
         { 
@@ -135,6 +142,7 @@ public class Event(byte[] data)
 
         o += (EventEnums.EventType)EventMagic switch
         {
+            EventEnums.EventType.Breq => "",
             EventEnums.EventType.NoOperation => "nop",
             EventEnums.EventType.Do => "do",
             EventEnums.EventType.EndEvent => "end\n",

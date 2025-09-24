@@ -7,9 +7,11 @@ internal static class EventEnums
         NoOperation,
         Do = 0x01,
         Loop,
+        Setter = 0x06,
         EndEvent = 0x08,
         GameEvent,
         TextEvent = 0xA,
+        Breq = 0xB,
         BallEvent = 0xC,
         SequenceEvent = 0x0E,        
     }

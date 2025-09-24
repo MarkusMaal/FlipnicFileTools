@@ -38,6 +38,7 @@ public abstract class Enums
         ShowIco,
         ConvertIcoTexture,
         ConvertIcoObj,
+        GenerateMsg,
         ConflictingModes,
         NoAction
     }
@@ -101,6 +102,7 @@ public abstract class Enums
             "--show-ico" => Modes.ShowIco,
             "--convert-ico-texture" => Modes.ConvertIcoTexture,
             "--convert-ico-obj" => Modes.ConvertIcoObj,
+            "--generate-msg" => Modes.GenerateMsg,
             _ => mode
         };
         

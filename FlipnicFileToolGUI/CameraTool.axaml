@@ -1,0 +1,53 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:types="clr-namespace:FlipnicLib.Types;assembly=FlipnicLib"
+             xmlns:formats="clr-namespace:FlipnicLib.Formats;assembly=FlipnicLib"
+             xmlns:flipnicFileToolGui="clr-namespace:FlipnicFileToolGUI"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="FlipnicFileToolGUI.CameraTool"
+             DataContext="{Binding RelativeSource={RelativeSource Self}}">
+    <Grid RowDefinitions="80, *">
+        <StackPanel DataContext="{Binding CameraObject}" Margin="10">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Label Content="Origin: "></Label>
+                <Label Content="{Binding OriginXf}"></Label>
+                <Label Content="{Binding OriginYf}"></Label>
+                <Label Content="{Binding OriginZf}"></Label>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Label Content="Target: "></Label>
+                <Label Content="{Binding TargetXf}"></Label>
+                <Label Content="{Binding TargetYf}"></Label>
+                <Label Content="{Binding TargetZf}"></Label>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Label Content="FOV: "></Label>
+                <Label Content="{Binding FOVf}"></Label>
+                <Label Content="Frames: "></Label>
+                <Label Content="{Binding NumFramesStr}"></Label>
+            </StackPanel>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Spacing="10">
+            <Button Content="Export TXT" Click="Button_OnClick"/>
+            <Button Content="Export XML" Click="Button_OnClick"/>
+        </StackPanel>
+        <DataGrid Grid.Row="1" Margin="0,0,0,10" GridLinesVisibility="All" ItemsSource="{Binding CamFrames}"
+                  BorderThickness="1" BorderBrush="Gray" Name="CameraGrid"
+                  CanUserResizeColumns="True"
+                  CanUserReorderColumns="True" DataContext="{Binding CameraObject}"
+                  CanUserSortColumns="True"
+                  IsReadOnly="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Origin X" x:DataType="types:CameraFrame" Binding="{Binding OriginX}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Origin Y" x:DataType="types:CameraFrame" Binding="{Binding OriginY}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Origin Z" x:DataType="types:CameraFrame"  Binding="{Binding OriginZ}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Target X" x:DataType="types:CameraFrame" Binding="{Binding TargetX}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Target Y" x:DataType="types:CameraFrame" Binding="{Binding TargetY}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Target Z" x:DataType="types:CameraFrame" Binding="{Binding TargetZ}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Field of view" x:DataType="types:CameraFrame"  Binding="{Binding Fov}"></DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

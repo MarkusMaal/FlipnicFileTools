@@ -203,11 +203,12 @@ namespace FlipnicFileToolGUI
 
             //Bind to the VAO
             GL.BindVertexArray(_vertexArrayObject);
+            GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
             //Set up the buffer for the triangle
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
 
             //Copy triangle vertices to the buffer
-            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * 4 * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * (OperatingSystem.IsMacOS() ? 4 : 1) * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
 
 
             //Configure structure of the vertices

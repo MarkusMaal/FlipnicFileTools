@@ -1,0 +1,22 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="FlipnicFileToolGUI.MessageEditor"
+             DataContext="{Binding RelativeSource={RelativeSource Self}}">
+    <Grid ColumnDefinitions="*,*">
+        <ListBox Grid.Column="0" Margin="0,0,0,10" ItemsSource="{Binding MsgObject.Messages}"
+                 BorderThickness="1" BorderBrush="Gray" Name="MessageList" SelectionChanged="MessageList_OnSelectionChanged">
+        </ListBox>
+        <StackPanel Grid.Column="1" Spacing="10" Margin="10">
+            <Label Content="Table"></Label>
+            <WrapPanel ItemSpacing="10" LineSpacing="10">
+                <Button Content="Export TXT" Name="ExportTxtButton" Click="ExportTxtButton_OnClick" />
+                <Button Content="Export MSG" Name="ExportMsgButton" Click="ExportMsgButton_OnClick" />
+            </WrapPanel>
+            <Label Content="Selection"></Label>
+            <TextBox Name="SelectedItemTextBox" IsEnabled="{Binding ItemSelected}" Text="{Binding Text}" KeyUp="SelectedItemTextBox_OnKeyUp"></TextBox>
+        </StackPanel>
+    </Grid>
+</UserControl>

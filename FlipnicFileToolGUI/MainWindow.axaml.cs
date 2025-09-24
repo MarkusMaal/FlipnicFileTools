@@ -402,11 +402,23 @@ public sealed partial class MainWindow : SukiWindow
                     break;
                 case "MSG":
                     var msg = new FpnMsg(ds);
-                    LoadAsString(msg, "Message table");
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        MsgEditor.MsgObject = msg;
+                        FileTypeLabel.Content = "Message table";
+                        MessageEditorTab.IsVisible = true;
+                        MessageEditorTab.IsSelected = true;
+                    });
                     break;
                 case "FPC":
                     var fpc = new FpnFpc(ds);
-                    LoadAsString(fpc, "Camera sequence");
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        CameraTool.CameraObject = fpc;
+                        FileTypeLabel.Content = "Camera sequence";
+                        CameraToolTab.IsVisible = true;
+                        CameraToolTab.IsSelected = true;
+                    });
                     break;
                 case "SST":
                     var sst = new FpnSst(ds);
