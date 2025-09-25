@@ -220,7 +220,7 @@ internal static class Program
                     new BinFile().ListBin(File.OpenRead(FileName));
                     break;
                 case Enums.Modes.ExtractBin:
-                    new BinFile().ExtractBin(FileName, outFile);
+                    new BinFile().ExtractBin(File.OpenRead(FileName), outFile);
                     break;
                 case Enums.Modes.ShowHd:
                     var jh = new JamHeader();
