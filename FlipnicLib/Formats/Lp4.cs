@@ -95,7 +95,7 @@ public class Lp4(byte[] data, string fileName)
                 Models.Add(model);
             }
 
-            if (Models[0].RawVertices.Count != 0) return;
+            if (Models[1].RawVertices.Count != 0) return;
             Models.Clear();
             OldMethod();
         }
@@ -177,19 +177,19 @@ public class Lp4(byte[] data, string fileName)
             return;
         }
         if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-                                        Models[0].Texture.ToUpper()))) return;
+                                        Models[1].Texture.ToUpper()))) return;
         var fs = File.OpenRead(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-            Models[0].Texture.ToUpper()));
+            Models[1].Texture.ToUpper()));
         var d = new byte[fs.Length];
         fs.ReadExactly(d, 0, d.Length);
-        Texture = new Tim2(d, Models[0].Texture);
+        Texture = new Tim2(d, Models[1].Texture);
     }
 
     public float[] GetVerticies()
     {
         if ((rawVerticies.Count == 0) && (Models.Count > 0))
         {
-            return Models[0].RawVertices.ToArray();
+            return Models[1].RawVertices.ToArray();
         }
         return rawVerticies.ToArray();
     }
