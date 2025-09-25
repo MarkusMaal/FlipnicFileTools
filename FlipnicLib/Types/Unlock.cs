@@ -10,7 +10,7 @@ public class Unlock(string label, FpnSave save, int idx, bool isFreePlay)
 
     public bool IsUnlocked
     {
-        get => Save.getUnlocks(IsFreePlay)[idx];
+        get => Save.GetUnlocks(IsFreePlay)[idx];
         set => Save.WriteUnlock(IsFreePlay, idx, value);
     } 
 }

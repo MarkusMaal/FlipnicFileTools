@@ -8,7 +8,7 @@ public class StageDirectory(FpnSave save, int idx, string name)
     
     public string StageDir
     {
-        get => save.getStageDirs()[idx];
+        get => save.GetStageDirs()[idx];
         set => save.SetStageDirFromString(idx, value);
     }
 }

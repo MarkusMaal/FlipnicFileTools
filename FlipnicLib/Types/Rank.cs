@@ -52,9 +52,9 @@ public class Rank(FpnSave save, int idx, int gameMode)
         var score = (long)((updatedType == UpdatedValueType.Score) ? newValue : Score);
         var diff = (updatedType == UpdatedValueType.Difficulty ? newValue : Difficulty) switch
         {
-            "Easy" => FpnSave.Difficulty.EASY,
-            "Normal" => FpnSave.Difficulty.NORMAL,
-            "Hard" => FpnSave.Difficulty.HARD,
+            "Easy" => FpnSave.Difficulty.Easy,
+            "Normal" => FpnSave.Difficulty.Normal,
+            "Hard" => FpnSave.Difficulty.Hard,
         };
         SaveFile.SetScore(GameMode, idx, score, initials, combos, diff);
     }

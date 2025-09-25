@@ -461,7 +461,7 @@ public static class FileHelpers
                     var d = ds.ReadBytes(ds.Length <= 0x2780 ? (int)ds.Length : 0x2780);
                     var sd = new FpnSave(d);
                     Dispatcher.UIThread.Post(() => mw.GetViewModel().SaveData = sd);
-                    if (!sd.isValidHeader())
+                    if (!sd.IsValidHeader())
                     {
                         Dispatcher.UIThread.Post(() =>
                         {

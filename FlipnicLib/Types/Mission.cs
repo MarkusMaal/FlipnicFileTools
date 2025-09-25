@@ -29,7 +29,7 @@ public class Mission(FpnSave save, int rowIdx, int dataSource, int stage)
 
     public int ThumbnailIndex
     {
-        get => Save.GetMissionIndicies(Stage)[RowIndex];
+        get => Save.GetMissionIndices(Stage)[RowIndex];
         set => Save.SetMissionIndex(Stage, RowIndex, value);
     }
 
