@@ -95,7 +95,7 @@ public class Lp4(byte[] data, string fileName)
                 Models.Add(model);
             }
 
-            if (Models[1].RawVertices.Count != 0) return;
+            if (Models[0].RawVertices.Count != 0) return;
             Models.Clear();
             OldMethod();
         }
@@ -152,18 +152,21 @@ public class Lp4(byte[] data, string fileName)
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j).Take(4).ToArray(), 0));
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 4).Take(4).ToArray(), 0));
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 8).Take(4).ToArray(), 0));
+            rawVerticies.AddRange(Model.DecodeNormals(data.Skip(uvOffset - (len * 0x8)).Take(8).ToArray()));
 
             rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset + 8).Take(8).ToArray())[0]);
             rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset + 8).Take(8).ToArray())[1]);
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x10).Take(4).ToArray(), 0));
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x14).Take(4).ToArray(), 0));
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x18).Take(4).ToArray(), 0));
+            rawVerticies.AddRange(Model.DecodeNormals(data.Skip(uvOffset - (len * 0x8) + 8).Take(8).ToArray()));
 
             rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset + 16).Take(8).ToArray())[0]);
             rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset + 16).Take(8).ToArray())[1]);
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x20).Take(4).ToArray(), 0));
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x24).Take(4).ToArray(), 0));
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x28).Take(4).ToArray(), 0));
+            rawVerticies.AddRange(Model.DecodeNormals(data.Skip(uvOffset - (len * 0x8) + 16).Take(8).ToArray()));
             uvOffset += 8;
         }
     }
@@ -177,19 +180,19 @@ public class Lp4(byte[] data, string fileName)
             return;
         }
         if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-                                        Models[1].Texture.ToUpper()))) return;
+                                        Models[0].Texture.ToUpper()))) return;
         var fs = File.OpenRead(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-            Models[1].Texture.ToUpper()));
+            Models[0].Texture.ToUpper()));
         var d = new byte[fs.Length];
         fs.ReadExactly(d, 0, d.Length);
-        Texture = new Tim2(d, Models[1].Texture);
+        Texture = new Tim2(d, Models[0].Texture);
     }
 
     public float[] GetVerticies()
     {
         if ((rawVerticies.Count == 0) && (Models.Count > 0))
         {
-            return Models[1].RawVertices.ToArray();
+            return Models[0].RawVertices.ToArray();
         }
         return rawVerticies.ToArray();
     }
@@ -228,23 +231,23 @@ public class Model
         var uvOffset = texOffset;
         for (var j = offset + 0x10; j < offset + len * 0x10 - 0x10; j += 0x10)
         {
-            RawVertices.Add(DecodeCoords(data.Skip(uvOffset).Take(8).ToArray())[0]);
-            RawVertices.Add(DecodeCoords(data.Skip(uvOffset).Take(8).ToArray())[1]);
+            RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset).Take(8).ToArray()));
             RawVertices.Add(BitConverter.ToSingle(data.Skip(j).Take(4).ToArray(), 0));
             RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 4).Take(4).ToArray(), 0));
             RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 8).Take(4).ToArray(), 0));
+            RawVertices.AddRange(DecodeNormals(data.Skip(uvOffset - (len * 0x8)).Take(8).ToArray()));
 
-            RawVertices.Add(DecodeCoords(data.Skip(uvOffset + 8).Take(8).ToArray())[0]);
-            RawVertices.Add(DecodeCoords(data.Skip(uvOffset + 8).Take(8).ToArray())[1]);
+            RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset+8).Take(8).ToArray()));
             RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 0x10).Take(4).ToArray(), 0));
             RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 0x14).Take(4).ToArray(), 0));
             RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 0x18).Take(4).ToArray(), 0));
+            RawVertices.AddRange(DecodeNormals(data.Skip(uvOffset - (len * 0x8) + 8).Take(8).ToArray()));
 
-            RawVertices.Add(DecodeCoords(data.Skip(uvOffset + 16).Take(8).ToArray())[0]);
-            RawVertices.Add(DecodeCoords(data.Skip(uvOffset + 16).Take(8).ToArray())[1]);
+            RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset+16).Take(8).ToArray()));
             RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 0x20).Take(4).ToArray(), 0));
             RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 0x24).Take(4).ToArray(), 0));
             RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 0x28).Take(4).ToArray(), 0));
+            RawVertices.AddRange(DecodeNormals(data.Skip(uvOffset - (len * 0x8) + 16).Take(8).ToArray()));
             uvOffset += 8;
         }
     }
@@ -256,5 +259,13 @@ public class Model
         var fx = BitConverter.ToInt16(data.Take(2).ToArray(), 0);
         var fy = BitConverter.ToInt16(data.Skip(2).Take(2).ToArray(), 0);
         return [(float)fx/div, -(float)fy/div]; // invert, because otherwise it's upside-down
+    }
+
+    public static float[] DecodeNormals(byte[] data)
+    {
+        var x =  BitConverter.ToInt16(data.Take(2).ToArray(), 0) / 4096f;
+        var y =  BitConverter.ToInt16(data.Skip(2).Take(2).ToArray(), 0) / 4096f;
+        var z =  BitConverter.ToInt16(data.Skip(4).Take(2).ToArray(), 0) / 4096f;
+        return [x, y, z];
     }
 }

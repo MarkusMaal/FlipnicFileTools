@@ -106,6 +106,9 @@ namespace FlipnicFileToolGUI.Controls
                 vertices.Add(-vertex.CoordX / 4096f);
                 vertices.Add(-vertex.CoordY / 4096f);
                 vertices.Add(vertex.CoordZ / 4096f);
+                vertices.Add(-vertex.NormalCoordX / 4096f);
+                vertices.Add(-vertex.NormalCoordY / 4096f);
+                vertices.Add(vertex.NormalCoordZ / 4096f);
             }
             _vertices = vertices.ToArray();
             GL.GenBuffer();
@@ -145,7 +148,9 @@ namespace FlipnicFileToolGUI.Controls
                                 #version 330 core
                                 in vec3 aPosition;
                                 in vec2 aTexCoord;
-
+                                in vec3 aNormal;
+                                
+                                out vec3 Normal;
                                 out vec2 texCoord;
 
                                 uniform mat4 model;
@@ -155,6 +160,7 @@ namespace FlipnicFileToolGUI.Controls
                                 void main()
                                 {
                                     texCoord = aTexCoord;
+                                    Normal = aNormal;
                                     gl_Position = vec4(aPosition, 1.0) * model * view * projection;
                                 }
                                 """;
@@ -208,19 +214,23 @@ namespace FlipnicFileToolGUI.Controls
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
 
             //Copy triangle vertices to the buffer
-            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * (OperatingSystem.IsMacOS() ? 4 : 1) * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * (OperatingSystem.IsMacOS() ? 1 : 1) * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
 
 
             //Configure structure of the vertices
             //					  (position parameter in vertex shader, 3 points, data is stored as floats, non-normalized, 5 floats/point, first point at offset 0 in data array)
-            GL.VertexAttribPointer(_shader.GetAttribLocation("aPosition"), 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 2 * sizeof(float));
+            GL.VertexAttribPointer(_shader.GetAttribLocation("aPosition"), 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 2 * sizeof(float));
             GL.EnableVertexAttribArray(_shader.GetAttribLocation("aPosition"));
 
 
             
             //Configure texture coordinate structure
             var texCoordLocation = _shader.GetAttribLocation("aTexCoord");
-            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
+            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 8 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(texCoordLocation);
+            
+            var normalLocation = _shader.GetAttribLocation("aNormal");
+            GL.VertexAttribPointer(normalLocation, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 5 * sizeof(float));
             GL.EnableVertexAttribArray(texCoordLocation);
 
             
