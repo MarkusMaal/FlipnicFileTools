@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using Avalonia;
 using Avalonia.Input;
 using FlipnicFileToolGUI.Shaders;
 using FlipnicFileToolGUI.Textures;
+using FlipnicLib;
+using FlipnicLib.Formats;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using OpenTKAvalonia;
-using System.IO;
-using FlipnicLib;
-using FlipnicLib.Formats;
 
-namespace FlipnicFileToolGUI
+namespace FlipnicFileToolGUI.Controls
 {
     public class CubeRenderingTkOpenGlControl : BaseTkOpenGlControl
     {
@@ -21,15 +21,15 @@ namespace FlipnicFileToolGUI
         private int _vertexBufferObject;
         private int _vertexArrayObject;
         private int _elementBufferObject;
-        private OpenGlTexture _brickTexture;
+        private OpenGlTexture? _brickTexture;
 
         private Vector3 _cameraPosition = new(0, 2, 2);
         private Vector3 _cameraFront;
-        private Vector3 _up = Vector3.UnitY;
+        private readonly Vector3 _up = Vector3.UnitY;
         private float _fov = 45;
         private double _pitch = -40;
         private double _yaw = 90f;
-        private float _modelRotationDegrees = 0f;
+        private const float ModelRotationDegrees = 0f;
         private bool _isDragging;
         private Point _lastPos;
 
@@ -320,7 +320,7 @@ namespace FlipnicFileToolGUI
             _brickTexture.Use(TextureUnit.Texture2);
 
             //3d projection matrices
-            var model = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_modelRotationDegrees));
+            var model = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(ModelRotationDegrees));
             var view = Matrix4.LookAt(_cameraPosition, _cameraPosition + _cameraFront, _up);
             var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(_fov), (float)(Bounds.Width / Bounds.Height), 0.1f, 100.0f);
 

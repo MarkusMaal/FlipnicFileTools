@@ -33,6 +33,25 @@
         <AvaloniaResource Include="Assets\**" />
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="Views\" />
+      <Compile Update="Controls\MessageEditor.axaml.cs">
+        <DependentUpon>MessageEditor.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Controls\MenuMockup.axaml.cs">
+        <DependentUpon>MenuMockup.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Controls\CLIBox.axaml.cs">
+        <DependentUpon>CLIBox.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Controls\CircleDot.axaml.cs">
+        <DependentUpon>CircleDot.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+      <Compile Update="Controls\CameraTool.axaml.cs">
+        <DependentUpon>CameraTool.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 </Project>

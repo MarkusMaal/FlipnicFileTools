@@ -6,10 +6,10 @@ using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform.Storage;
+using FlipnicFileToolGUI.Helpers;
 using FlipnicFileToolGUI.ViewModels;
 
-namespace FlipnicFileToolGUI;
+namespace FlipnicFileToolGUI.Controls;
 
 public partial class MenuMockup : UserControl
 {
@@ -56,13 +56,7 @@ public partial class MenuMockup : UserControl
 
     private async void SaveAsMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
-        var topLevel = TopLevel.GetTopLevel(this);
-        var file = await topLevel!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions()
-        {
-            Title = "Save file",
-            FileTypeChoices = [Filters.PngFile]
-        });
-
+        var file = await FileHelpers.SaveFile(this, [Filters.PngFile]);
         if (file is null) return;
         
         var scTarget = (Grid?)((MenuItem?)sender)?.Parent?.Parent?.Parent;
@@ -76,8 +70,8 @@ public partial class MenuMockup : UserControl
         scTarget.Measure(size);
         scTarget.Arrange(new Rect(size));
         bitmap.Render(scTarget);
-        bitmap.Save(Uri.UnescapeDataString(file.Path.AbsolutePath));
-        ((MainWindow?)topLevel)?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
+        bitmap.Save(Uri.UnescapeDataString(file));
+        ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
 
     }
 }

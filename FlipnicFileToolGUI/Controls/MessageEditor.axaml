@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="FlipnicFileToolGUI.MessageEditor"
+             x:Class="FlipnicFileToolGUI.Controls.MessageEditor"
              DataContext="{Binding RelativeSource={RelativeSource Self}}">
     <Grid ColumnDefinitions="*,*">
         <ListBox Grid.Column="0" Margin="0,0,0,10" ItemsSource="{Binding MsgObject.Messages}"

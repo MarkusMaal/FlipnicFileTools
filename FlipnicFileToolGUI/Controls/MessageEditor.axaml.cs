@@ -6,11 +6,10 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
-using Avalonia.Markup.Xaml;
-using Avalonia.Platform.Storage;
+using FlipnicFileToolGUI.Helpers;
 using FlipnicLib.Formats;
 
-namespace FlipnicFileToolGUI;
+namespace FlipnicFileToolGUI.Controls;
 
 public partial class MessageEditor : UserControl
 {
@@ -39,16 +38,10 @@ public partial class MessageEditor : UserControl
 
     private async void ExportTxtButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        var topLevel = TopLevel.GetTopLevel(this);
-        var file = await topLevel!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions()
-        {
-            Title = "Save text file",
-            FileTypeChoices = [Filters.TxtFile]
-        });
-        
+        var file = await FileHelpers.SaveFile(this, [Filters.TxtFile], "Save text file");
         if (file == null) return;
-        File.WriteAllText(Uri.UnescapeDataString(file.Path.AbsolutePath), string.Join("\n", MsgObject.Messages));
-        ((MainWindow?)topLevel)?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
+        await File.WriteAllTextAsync(Uri.UnescapeDataString(file), string.Join("\n", MsgObject.Messages));
+        ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
     }
 
     private void MessageList_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -86,15 +79,9 @@ public partial class MessageEditor : UserControl
 
     private async void ExportMsgButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        var topLevel = TopLevel.GetTopLevel(this);
-        var file = await topLevel!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-        {
-            Title = "Save message table",
-            FileTypeChoices = [Filters.FpnMsg]
-        });
-        
+        var file = await FileHelpers.SaveFile(this, [Filters.FpnMsg], "Save message table");
         if (file == null) return;
-        await File.WriteAllBytesAsync(Uri.UnescapeDataString(file.Path.AbsolutePath), MsgObject.GetData());
-        ((MainWindow?)topLevel)?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
+        await File.WriteAllBytesAsync(Uri.UnescapeDataString(file), MsgObject.GetData());
+        ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
     }
 }

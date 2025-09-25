@@ -9,6 +9,10 @@ public class BitmapTools
     public Tim? Icon { get; init; }
     public Tim2? Image { get; init; }
 
+    /// <summary>
+    /// Converts TIM2 to a standard bitmap
+    /// </summary>
+    /// <returns>Bitmap object containing the converted image</returns>
     public Bitmap ToBitmap()
     {
         var ms =  new MemoryStream();
@@ -17,6 +21,10 @@ public class BitmapTools
         return new Bitmap(ms);
     }
 
+    /// <summary>
+    /// Converts TIM to a standard bitmap
+    /// </summary>
+    /// <returns>Bitmap object containing the converted image</returns>
     public Bitmap IconToBitmap()
     {
         var ms =  new MemoryStream();
@@ -25,6 +33,10 @@ public class BitmapTools
         return new Bitmap(ms);
     }
 
+    /// <summary>
+    /// Loads image to memory as bitmap data
+    /// </summary>
+    /// <returns>Memory stream containing the image data</returns>
     public byte[] ToMemoryStream()
     {
         var ms = new MemoryStream();

@@ -3,10 +3,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:types="clr-namespace:FlipnicLib.Types;assembly=FlipnicLib"
-             xmlns:formats="clr-namespace:FlipnicLib.Formats;assembly=FlipnicLib"
-             xmlns:flipnicFileToolGui="clr-namespace:FlipnicFileToolGUI"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="FlipnicFileToolGUI.CameraTool"
+             x:Class="FlipnicFileToolGUI.Controls.CameraTool"
              DataContext="{Binding RelativeSource={RelativeSource Self}}">
     <Grid RowDefinitions="80, *">
         <StackPanel DataContext="{Binding CameraObject}" Margin="10">

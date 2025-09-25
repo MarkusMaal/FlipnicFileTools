@@ -4,10 +4,10 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Interactivity;
-using Avalonia.Platform.Storage;
+using FlipnicFileToolGUI.Helpers;
 using FlipnicLib.Formats;
 
-namespace FlipnicFileToolGUI;
+namespace FlipnicFileToolGUI.Controls;
 
 public partial class CameraTool : UserControl
 {
@@ -25,22 +25,18 @@ public partial class CameraTool : UserControl
     private async void Button_OnClick(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button button) return;
-        var topLevel = TopLevel.GetTopLevel(this);
-        var file = await topLevel!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions()
-        {
-            Title = "Save file",
-            FileTypeChoices = [button.Content!.ToString()!.Contains("XML") ? Filters.XmlFile : Filters.TxtFile]
-        });
+        var file = await FileHelpers.SaveFile(this,
+            [button.Content!.ToString()!.Contains("XML") ? Filters.XmlFile : Filters.TxtFile]);
         
         if (file == null) return;
         if (button.Content.ToString()!.Contains("XML"))
         {
-            CameraObject.GenerateXML().Save(File.OpenWrite(Uri.UnescapeDataString(file.Path.AbsolutePath)));
+            CameraObject.GenerateXML().Save(File.OpenWrite(Uri.UnescapeDataString(file)));
         }
         else
         {
-            await File.WriteAllTextAsync(Uri.UnescapeDataString(file.Path.AbsolutePath), CameraObject.ToString(false));
+            await File.WriteAllTextAsync(Uri.UnescapeDataString(file), CameraObject.ToString(false));
         }
-        ((MainWindow?)topLevel)?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
+        ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
     }
 }

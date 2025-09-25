@@ -57,7 +57,7 @@ public class Midi(string fileName)
         rows.AddRange(Track.Messages.Select(m => (string[])
         [
             m.Delta.ToString(),
-            ((m.Event.ToString() != null ? m.Event.ToString()?.Replace("FlipnicLib.Midi.", "") : "") ?? string.Empty),
+            ((m.Event.ToString() != null ? m.Event.ToString()?.Replace("FlipnicLib.Formats.Midi.", "") : "") ?? string.Empty),
             m.Status.ToString(),
             m.Event.ProgramID.ToString()
         ]));

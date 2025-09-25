@@ -6,7 +6,7 @@
              xmlns:viewModels="clr-namespace:FlipnicFileToolGUI.ViewModels"
              mc:Ignorable="d" d:DesignWidth="512" d:DesignHeight="512"
              DataContext="{Binding RelativeSource={RelativeSource Self}}"
-             x:Class="FlipnicFileToolGUI.MenuMockup">
+             x:Class="FlipnicFileToolGUI.Controls.MenuMockup">
     <Grid ColumnDefinitions="300,*">
         <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
             <StackPanel Spacing="10" Margin="10">

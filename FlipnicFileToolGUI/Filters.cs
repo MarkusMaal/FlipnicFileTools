@@ -2,7 +2,7 @@ using Avalonia.Platform.Storage;
 
 namespace FlipnicFileToolGUI;
 
-public class Filters
+public abstract class Filters
 {
     public static FilePickerFileType AllSupported { get; } = new("All supported file formats")
     {

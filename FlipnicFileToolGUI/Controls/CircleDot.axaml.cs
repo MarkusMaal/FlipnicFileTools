@@ -1,9 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 
-namespace FlipnicFileToolGUI;
+namespace FlipnicFileToolGUI.Controls;
 
 public partial class CircleDot : UserControl
 {
@@ -13,17 +12,27 @@ public partial class CircleDot : UserControl
         InitializeComponent();
     }
     
+    /// <summary>
+    /// First color of the icon gradient
+    /// </summary>
     public Color ColorA
     {
         get => GetValue(ColorAProperty);
         set => SetValue(ColorAProperty, value);
     }
+    
+    /// <summary>
+    /// Second color of the icon gradient
+    /// </summary>
     public Color ColorB
     {
         get => GetValue(ColorBProperty);
         set => SetValue(ColorBProperty, value);
     }
 
+    /// <summary>
+    /// Text content of the icon
+    /// </summary>
     public string Text
     {
         get => GetValue(TextProperty);

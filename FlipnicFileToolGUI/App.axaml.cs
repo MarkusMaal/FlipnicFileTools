@@ -1,5 +1,8 @@
 using System;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
@@ -9,8 +12,10 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using FlipnicFileToolGUI.Helpers;
 using FlipnicFileToolGUI.ViewModels;
 using SukiUI;
+using SukiUI.Controls;
 using SukiUI.Models;
 
 namespace FlipnicFileToolGUI;
@@ -47,7 +52,7 @@ public class App : Application
                         return;
                     } 
                     mw.FileName = desktop.Args[0];
-                    Dispatcher.UIThread.Post(() => mw.LoadFromData(File.OpenRead(desktop.Args[0]), Path.GetExtension(desktop.Args[0])[1..]));
+                    Dispatcher.UIThread.Post(() => FileHelpers.LoadFromData(File.OpenRead(desktop.Args[0]), Path.GetExtension(desktop.Args[0])[1..], mw));
                 }).Start();
             }
         }
@@ -92,5 +97,79 @@ public class App : Application
                 nativeMenuItem.IsEnabled = windowCount > 0;
             }
         }
+    }
+
+    public static void Init(MainWindow mw)
+    {
+        mw.GetViewModel().MenuElements = new ObservableCollection<MenuElementViewModel>(mw.GetViewModel().Menu);
+        if (Design.IsDesignMode)
+        {
+            mw.FileTypeLabel.Content = "Design mode";
+            foreach (var tab in mw.MainTabControl.Items)
+            {
+                if (tab is SukiSideMenuItem ssmi)
+                {
+                    ssmi.IsVisible = true;
+                }
+            }
+            return;
+        }
+
+        mw.InfoBox.Text = !OperatingSystem.IsLinux()
+            ? """
+              ---------------------------------
+              Flipnic file tools
+              ---------------------------------
+              No file loaded, open a file by clicking File > Open
+              or drag a file to this window.
+
+              """
+            : """
+              ---------------------------------
+              Flipnic file tools
+              ---------------------------------
+              No file loaded, open a file by clicking File > Open
+              or press Ctrl+Alt+V to paste a file.
+              
+              """;
+        mw.ForceRefresh();
+        var p = new Process();
+        
+        p.StartInfo.UseShellExecute = false;
+        p.StartInfo.RedirectStandardOutput = true;
+        p.StartInfo.FileName = OperatingSystem.IsWindows() ? "where" : "which";
+        p.StartInfo.Arguments = "ffmpeg";
+        p.Start();
+        DetectFromOutput(p, mw.FFmpegBox , "FFmpeg", mw);
+        if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop) return;
+        if (desktop.Args?.Length == 0) return;
+        if (MainWindow.ErrorDisplayed || desktop.Args?[0] != "-e") return;
+
+        mw.InfoBox.Text = $"""
+            ---------------------------------
+            Flipnic file tools
+            ---------------------------------
+            The app was restarted because of a problem.
+            If this keeps re-occuring, please report it to the developer!
+
+            {desktop.Args[1]}
+            {string.Join(" ", desktop.Args.Skip(3).ToArray())}
+            """;
+        MainWindow.ErrorDisplayed = true;
+    }
+
+    private static void DetectFromOutput(Process p, TextBox? textBox, string friendlyName, MainWindow mw)
+    {
+        var output = p.StandardOutput.ReadToEnd();
+        p.WaitForExit();
+        if (p.ExitCode != 0)
+        {
+            mw.InfoBox.Text += $"\n{friendlyName} is not installed";
+            return;
+        }
+        if (output.Contains(';')) output = output.Split(';')[0];
+        if (output.Contains('\n')) output = output.Replace("\r\n", "\n").Split('\n')[0];
+        if (textBox != null) textBox.Text = output;
+        mw.InfoBox.Text += $"\n{friendlyName} auto-detected at: {output}";
     }
 }
