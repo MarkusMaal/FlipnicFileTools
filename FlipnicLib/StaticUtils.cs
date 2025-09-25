@@ -392,7 +392,7 @@ public abstract class StaticUtils
         mtlwriter.Close();
         Console.WriteLine($"Saved as: {fileName[..^4]}.mtl");
             
-        var vertexCount = vertices.Length / 5;
+        var vertexCount = vertices.Length / 8;
         using var writer = new StreamWriter(fileName);
         var culture = CultureInfo.InvariantCulture;
         writer.WriteLine($"mtllib {new FileInfo(fileName).Name[..^4]}.mtl");
@@ -401,14 +401,18 @@ public abstract class StaticUtils
         // Write vertex positions and texture coordinates
         for (var i = 0; i < vertexCount; i++)
         {
-            var u = vertices[i * 5 + 0];
-            var v = vertices[i * 5 + 1];
-            var x = vertices[i * 5 + 2];
-            var y = vertices[i * 5 + 3];
-            var z = vertices[i * 5 + 4];
+            var u = vertices[i * 8 + 0];
+            var v = vertices[i * 8 + 1];
+            var x = vertices[i * 8 + 2];
+            var y = vertices[i * 8 + 3];
+            var z = vertices[i * 8 + 4];
+            var nx = vertices[i * 8 + 5];
+            var ny = vertices[i * 8 + 6];
+            var nz = vertices[i * 8 + 7];
 
             writer.WriteLine($"v {x.ToString(culture)} {y.ToString(culture)} {z.ToString(culture)}");
             writer.WriteLine($"vt {u.ToString(culture)} {v.ToString(culture)}");
+            writer.WriteLine($"vn {nx.ToString(culture)} {ny.ToString(culture)} {nz.ToString(culture)}");
         }
 
         // Write face assuming every 3 vertices = 1 triangle
