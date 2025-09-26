@@ -260,17 +260,29 @@ Entries: 92
 
 ## Resource files (*.LP4)
 
-These files define stuff like 3D models and 2D animation sequences (e.g. the WONDERFUL text when you complete a mission). Not much is known about this format, but you can still see some info about them.
+These files define stuff like 3D models and 2D animation sequences (e.g. the WONDERFUL text when you complete a mission). You can view all models and other information about the LP4 file.
 
-Example: `FlipnicFileTool --input DIR_SEL.LP4 --show-lp4`
+Example: `FlipnicFileTool --input CHOU01.LP4 --show-lp4`
 
 Outputs:
 ```
-Type: 4
-Model count: 2
+Type: StaticModel
+Model count: 0
 Has embedded resources: Yes
 Is 2D animation: No
+
+Models:
++------------+---------+-------+--------+-------------------+----------+
+| Name       | Address | Scale | Offset | Texture           | Polygons | 
++------------+---------+-------+--------+-------------------+----------+
+| MO_CHOU_UV | F0      | 1x1x1 | 0x0x0  | mo_chou_tex_1.tm2 | 11232    | 
++------------+---------+-------+--------+-------------------+----------+
+
 ```
+
+You can also attempt to convert the 3D models stored inside LP4 files to Wavefront OBJ by running the following command: `FlipnicFileTool --input CHOU01.LP4 --convert-obj --output CHOU01.OBJ`
+
+Note: LP4 implementation is still kind of unreliable, so this may fail. Also, not all LP4 files contain model data.
 
 ## VAB header files (*.HD)
 
@@ -295,6 +307,10 @@ StartNoteRange: CNeg1, EndNoteRange: CNeg1
 
 ...
 ```
+
+If the HD/BD pair has a corresponding MIDI file, you can convert it to SF2 soundfont, by running the following command: `FlipnicFileTool --convert-sf2 --input NATURE_0.HD --bd-file NATURE_0.BD --midi-file NATURE_0.MID --output NATURE_0.SF2`.
+
+If the BD and MIDI files have the same name, you can omit them from the command and this tool will try to figure out the names automatically: `FlipnicFileTool --convert-sf2 --input NATURE_0.HD --output NATURE_0.SF2`. 
 
 ## Layout files (*.LAY)
 
