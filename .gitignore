@@ -434,3 +434,6 @@ obj/
 riderModule.iml
 /_ReSharper.Caches/
 .vs/
+
+# JetBrains IDE files
+.idea
