@@ -79,11 +79,13 @@
                               <Grid RowDefinitions="*,110">
                                 <controls:CubeRenderingTkOpenGlControl Grid.Row="0"  Focusable="True" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="GlControl"></controls:CubeRenderingTkOpenGlControl>
                                 <Button Grid.Row="1" Margin="10" VerticalAlignment="Bottom" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>
-                                <StackPanel Orientation="Horizontal" Grid.Row="1">
+                                <Grid ColumnDefinitions="150,150,*" Grid.Row="1">
                                     <Label Margin="5" Name="FPSLabel">No info</Label>
-                                    <Label Margin="5" Name="MoreInfoLabel">No info</Label>
-                                    <ListBox Margin="5" Name="Vertices" Width="500"></ListBox>
-                                </StackPanel>
+                                    <Label Grid.Column="1" Margin="5" Name="MoreInfoLabel">No info</Label>
+                                    <ScrollViewer Grid.Column="2">
+                                        <ListBox Margin="5" Name="Models" SelectionChanged="Models_OnSelectionChanged"></ListBox>
+                                    </ScrollViewer>
+                                </Grid>
                                </Grid>
                             </sukiUi:SukiSideMenuItem.PageContent>
                         </sukiUi:SukiSideMenuItem>

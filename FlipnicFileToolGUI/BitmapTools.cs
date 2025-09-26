@@ -18,7 +18,14 @@ public class BitmapTools
         var ms =  new MemoryStream();
         Image?.SavePng(ms);
         ms.Position = 0;
-        return new Bitmap(ms);
+        try
+        {
+            return new Bitmap(ms);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>

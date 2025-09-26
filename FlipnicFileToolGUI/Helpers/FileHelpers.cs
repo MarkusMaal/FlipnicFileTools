@@ -323,7 +323,7 @@ public static class FileHelpers
                     LoadAsString(lp4, "Flipnic resource file", mw);
                     Dispatcher.UIThread.Post(() =>
                     {
-                        mw.Init3DStuff();
+                        mw.Init3DStuff(lp4);
                         mw.ModelTab.IsSelected = false;
                         mw.ModelTab.IsVisible = true;
                         mw.ImagePreviewTab.IsVisible = true;

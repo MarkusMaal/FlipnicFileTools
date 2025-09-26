@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
 using FlipnicFileToolGUI.Shaders;
 using FlipnicFileToolGUI.Textures;
@@ -42,6 +43,8 @@ namespace FlipnicFileToolGUI.Controls
             0, 1, 3, // first triangle
             1, 2, 3, // second triangle
         };
+        
+        public Lp4 OpenContainer { get; set; }
 
         public CubeRenderingTkOpenGlControl()
         {
@@ -87,9 +90,37 @@ namespace FlipnicFileToolGUI.Controls
             GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             _vertices = lp4.GetVerticies();
-            
+            OpenContainer = lp4;
             GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
+        }
+
+        public void SwitchModel(string? name, Image previewImg)
+        {
+            if (name is null) return;
+            var lp4 = OpenContainer;
+            foreach (var model in lp4.Models)
+            {
+                if (model.Name == name)
+                {
+                    lp4.SetSelectedModel(model);
+                }
+            }
+            _texture = null;
+            if (lp4.Texture != null)
+            {
+                _texture = lp4.Texture;
+            }
+            previewImg.Source = new BitmapTools(){Image = (Tim2?)_texture}.ToBitmap();
+            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            OpenContainer = lp4;
+            _vertices = lp4.GetVerticies();
+            OpenTkTeardown();
+            OpenTkInit();
+            GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
+            UpdateCameraFront();
         }
 
         public void ImportICO(SaveIcon saveIcon)
@@ -119,12 +150,10 @@ namespace FlipnicFileToolGUI.Controls
         {
             if (!more)
             {
-                return "Num. of vertices: " + _vertices.Length + "\n" + "Field of view: " + _fov + "\nSpeed: " + Speed;
+                return "Num. of vertices: " + _vertices.Length + "\n" + "Field of view: " + StaticUtils.DotFloatString(_fov) + "\nSpeed: " + StaticUtils.DotFloatString(Speed);
             }
-            else
-            {
-                return "CameraX: " + _cameraPosition.X + "\nCameraY: " + _cameraPosition.Y + "\nCameraZ: " + _cameraPosition.Z;
-            }
+
+            return "CameraX: " + StaticUtils.DotFloatString(_cameraPosition.X) + "\nCameraY: " + StaticUtils.DotFloatString(_cameraPosition.Y) + "\nCameraZ: " + StaticUtils.DotFloatString(_cameraPosition.Z);
         }
 
         private void DefaultShaders()

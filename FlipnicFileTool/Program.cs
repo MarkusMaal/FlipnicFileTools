@@ -243,7 +243,15 @@ internal static class Program
                 case Enums.Modes.ExportObj:
                     lp4 = new Lp4(File.ReadAllBytes(FileName), FileName);
                     lp4.Read();
-                    StaticUtils.ExportObj(outFile, lp4.GetVerticies(), lp4.Texture);
+                    var id = 1;
+                    foreach (var model in lp4.Models)
+                    {
+                        lp4.SetSelectedModel(model);
+                        var ext = Path.GetExtension(outFile);
+                        StaticUtils.ExportObj(outFile[..^ext.Length] + $".{model.Name}" + ext, lp4.GetVerticies(), lp4.Texture);
+                        id++;
+                    }
+
                     break;
                 case Enums.Modes.ShowMlb:
                     Console.WriteLine(new FpnMlb(File.ReadAllBytes(FileName)).ToString(StaticUtils.SimpleOutput));

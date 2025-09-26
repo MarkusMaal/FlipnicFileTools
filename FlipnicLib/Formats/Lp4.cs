@@ -28,7 +28,7 @@ public class Lp4(byte[] data, string fileName)
 
     public List<Model> Models { get; set; } = [];
     
-    private Model SelectedModel { get; set; }
+    public Model SelectedModel { get; set; }
 
     public override string ToString()
     {
@@ -52,6 +52,18 @@ public class Lp4(byte[] data, string fileName)
         rows.AddRange(Models.Select(model => model.GetRow()));
         o += StaticUtils.GenerateTable(cols, rows, StaticUtils.SimpleOutput);
         return o;
+    }
+
+    public void SetSelectedModel(Model model)
+    {
+        SelectedModel = model;
+        if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
+                SelectedModel.Texture.ToUpper()))) return;
+        var fs = File.OpenRead(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
+            SelectedModel.Texture.ToUpper()));
+        var d = new byte[fs.Length];
+        fs.ReadExactly(d, 0, d.Length);
+        Texture = new Tim2(d, SelectedModel.Texture);
     }
 
     // this parser seems to fail most of the time, so further adjustments maybe needed

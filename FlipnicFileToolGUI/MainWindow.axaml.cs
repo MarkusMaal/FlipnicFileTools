@@ -21,6 +21,7 @@ using Avalonia.Styling;
 using FlipnicFileToolGUI.Controls;
 using FlipnicFileToolGUI.Helpers;
 using FlipnicFileToolGUI.ViewModels;
+using FlipnicLib.Formats;
 
 namespace FlipnicFileToolGUI;
 
@@ -188,7 +189,7 @@ public sealed partial class MainWindow : SukiWindow
         App.Init(this);
     }
 
-    public void Init3DStuff()
+    public void Init3DStuff(Lp4? container = null)
     {
         DispatcherTimer dpt = new();
         dpt.Interval = TimeSpan.FromMilliseconds(100);
@@ -198,9 +199,16 @@ public sealed partial class MainWindow : SukiWindow
             MoreInfoLabel.Content = GlControl.GetInfo(true);
         };
         dpt.Start();
-        foreach (var s in GlControl.GetVertices().Split("\n"))
+        Models.Items.Clear();
+        if (container is null) return;
+        foreach (var s in container.Models)
         {
-            Vertices.Items.Add(s);
+            Models.Items.Add(s.Name);
+        }
+
+        if (Models.Items.Count > 0)
+        {
+            Models.SelectedIndex = 0;
         }
 
         GlControl.Focus();
@@ -534,5 +542,36 @@ public sealed partial class MainWindow : SukiWindow
     private void MainTabControl_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         UpdateSpecialTabThemes();
+    }
+
+    private void Models_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (Models.SelectedIndex < 0) return;
+        GlControl.SwitchModel(Models.SelectedItems?[0]?.ToString(), PreviewImage);
+        new Thread(() =>
+        {
+            var bck = false;
+            var bckType = "";
+            Dispatcher.UIThread.Post(() =>
+            {
+                Loader.IsVisible = true;
+                MainTabControl.IsVisible = false;
+                LoadStatus.Text = "Generating model";
+                bckType = FileTypeLabel.Content?.ToString();
+                FileTypeLabel.Content = "Please wait...";
+                bck = ModelTab.IsSelected;
+                ModelTab.IsSelected = false;
+                ModelTab.IsVisible = false;
+            });
+            Thread.Sleep(800);   
+            Dispatcher.UIThread.Post(() => {
+                Loader.IsVisible = false;
+                MainTabControl.IsVisible = true;
+                ModelTab.IsVisible = true;
+                ModelTab.IsSelected = bck;
+                FileTypeLabel.Content = bckType;
+                LoadStatus.Text = "Loading";
+            });
+        }).Start();
     }
 }
