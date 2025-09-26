@@ -3,6 +3,7 @@ using FlipnicLib;
 using FlipnicLib.Formats;
 using FlipnicLib.Formats.Jam;
 using FlipnicLib.Formats.Midi;
+using FlipnicLib.Types;
 using Syroot.BinaryData;
 
 namespace FlipnicFileTool;
@@ -227,6 +228,36 @@ internal static class Program
                     jh.Read(new BinaryStream(new FileStream(FileName, FileMode.Open, FileAccess.Read)));
                     Console.Write(jh.ToString(StaticUtils.SimpleOutput));
                     break;
+                case Enums.Modes.ShowBd:                    
+                    var s = new Samples(File.OpenRead(FileName));
+                    var samples = new List<SampleColl>();
+                    var offset = 0;
+                    for (var i = 0; i < s.RawSamples.Count; i++)
+                    {
+                        samples.Add(new SampleColl
+                        {
+                            Data = s.RawSamples[i],
+                            Id = i,
+                            Offset = offset + 0x10,
+                            LoopStart = s.LoopStarts[i],
+                            LoopEnd = s.LoopEnds[i],
+                        });
+                        offset += s.Lengths[i];
+                    }
+                    string[] cols = ["Id", "Offset", "Loop start", "Loop end"];
+                    List<string[]> rows = [];
+                    rows.AddRange(samples.Select(sm => (string[])[sm.Id.ToString(), $"0x{sm.OffsetX}", $"0x{sm.LoopStart:X}", $"0x{sm.LoopEnd:X}"]));
+                    Console.WriteLine(StaticUtils.GenerateTable(cols, rows, StaticUtils.SimpleOutput));
+                    break;
+                case Enums.Modes.ExtractSamples:
+                    s = new Samples(File.OpenRead(FileName));
+                    var justName = new FileInfo(FileName).Name;
+                    for (var i = 0; i < s.RawSamples.Count; i++)
+                    {
+                        var sample = s.RawSamples[i];
+                        StaticUtils.ConvertAudio(Path.Combine(outFile, $"{justName}.{i}.WAV"), sample, true, 32000);
+                    }
+                    break;
                 case Enums.Modes.ShowMidi:
                     var midi = new Midi(FileName);
                     midi.Read();
@@ -395,7 +426,7 @@ internal static class Program
 
             return 0;
         }
-        catch (Exception e)
+        catch (Exception e) when (!Debugger.IsAttached)
         {
             var indentedTrace = "";
             if (e.StackTrace != null) indentedTrace = "  " + string.Join("\n     ", e.StackTrace.Split("\n"));

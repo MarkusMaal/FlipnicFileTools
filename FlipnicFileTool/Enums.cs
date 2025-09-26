@@ -27,8 +27,10 @@ public abstract class Enums
         ConvertPssMov,
         ConvertSvag,
         ShowHd,
+        ShowBd,
         ShowMidi,
         ConvertSf2,
+        ExtractSamples,
         ShowVsd,
         ShowFpd,
         ShowLay,
@@ -103,6 +105,8 @@ public abstract class Enums
             "--convert-ico-texture" => Modes.ConvertIcoTexture,
             "--convert-ico-obj" => Modes.ConvertIcoObj,
             "--generate-msg" => Modes.GenerateMsg,
+            "--show-bd" => Modes.ShowBd,
+            "--extract-samples" => Modes.ExtractSamples,
             _ => mode
         };
         

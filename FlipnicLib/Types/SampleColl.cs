@@ -1,4 +1,4 @@
-namespace FlipnicFileToolGUI.ViewModels;
+namespace FlipnicLib.Types;
 
 public class SampleColl
 {

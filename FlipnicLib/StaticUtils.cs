@@ -146,8 +146,9 @@ public abstract class StaticUtils
         var o = "";
         if (asCsv)
         {
-            o = "***CSV\n" + string.Join(",", columns) + "\n";
+            o = "***TABLE***\n" + string.Join(",", columns) + "\n";
             o = rows.Aggregate(o, (current, row) => current + (string.Join(",", row) + "\n"));
+            o += "***END***";
             return o;
         }
         var sep = "+";
@@ -260,8 +261,15 @@ public abstract class StaticUtils
         p.Start();
         p.WaitForExit();
     }
+
+    public static void ConvertAudio(string outFile, byte[] data, bool mono = false, int sampleRate = 44100)
+    {
+        File.WriteAllBytes(Path.GetTempPath() + "/temp.vag", data);
+        ConvertAudio(outFile, Path.GetTempPath() + "/temp.vag", mono, sampleRate);
+        File.Delete(Path.GetTempPath() + "/temp.vag");
+    }
     
-    public static void ConvertAudio(string outFile, string fileName, bool mono = false)
+    public static void ConvertAudio(string outFile, string fileName, bool mono = false, int sampleRate = 44100)
     {
         Console.Write("     Loading sound file to memory".PadRight(WindowWidth, ' '));
         PrintLoader();
@@ -320,7 +328,7 @@ public abstract class StaticUtils
             }
             
             // Stereo, Signed 16-bit, 44100Hz
-            Pcm.WriteWavHeader(ms, false, 2, 16, 44100, (int)ms.Length);
+            Pcm.WriteWavHeader(ms, false, 2, 16, sampleRate, (int)ms.Length);
         
             Console.Write("\r     Saving WAV file".PadRight(WindowWidth, ' '));
             PrintLoader();

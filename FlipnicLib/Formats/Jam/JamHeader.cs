@@ -36,6 +36,8 @@ public class JamHeader
 
     public byte[] VelocityTable { get; set; } = new byte[128];
 
+    public List<SeSeq> SoundEffectSequences { get; set; } = [];
+
     public void Read(BinaryStream bs)
     {
         bs.Position = 0;
@@ -91,9 +93,16 @@ public class JamHeader
             short[] chunkOffsets = bs.ReadInt16s(chunkCount + 1);
             for (int i = 0; i < chunkCount + 1; i++)
             {
+                if (chunkOffsets[i] == -1) continue;
                 bs.Position = baseChunkPos + chunkOffsets[i];
-
-                SeSeqChunks.Add((bs.ReadInt16(), bs.ReadInt16()));
+                var id = bs.ReadInt16();
+                var offset = bs.ReadInt16();
+                if (offset < 0) continue;
+                var ss = new SeSeq();
+                SeSeqChunks.Add((id, offset));
+                bs.Position = baseChunkPos + offset;
+                ss.Read(bs);
+                SoundEffectSequences.Add(ss);
             }
         }
 
@@ -147,6 +156,7 @@ public class JamHeader
             if (SeSeqChunks[i].Item1 != 0x7F7F)
             {
                 o += $"SFX Sequence {SeSeqChunks[i].Item1} @ {SeSeqChunks[i].Offset:X} \n";
+                o += $"{SoundEffectSequences[i].ToString(asCsv)}\n\n";
             }
         }
         return o;

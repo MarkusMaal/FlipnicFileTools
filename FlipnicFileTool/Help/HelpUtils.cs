@@ -122,6 +122,14 @@ public abstract class HelpUtils
                 ]
             ),
             new(
+                "VAB body files",
+                "*.BD",
+                [
+                    new HelpLine("show-bd*", "List samples in the .BD file"),
+                    new HelpLine("extract-samples", "Extract all samples from the .BD file (output = folder)"),
+                ]
+            ),
+            new(
                 "MIDI sequences",
                 "*.MID",
                 [

@@ -9,6 +9,26 @@ Prerequisites:
 * [FFmpeg](https://ffmpeg.org/) - required for some video related operations
 * [ImageMagick](https://imagemagick.org/) - required for creating BMP mock-ups from menu files (when using the CLI version)
 
+Jump to section:
+
+* [GUI version](#gui-version)
+* [Command line syntax](#command-line-syntax)
+* [Blob files (*.BIN)](#blob-files-bin)
+* [Movies (*.PSS)](#movies-pss)
+* [Sound files (*.INT / *.SVAG)](#sound-files-int-svag)
+* [Texture files (*.TM2)](#texture-files-tm2)
+* [Menu files (*.MLB)](#menu-files-mlb)
+* [Camera sequences (*.FPC)](#camera-sequences-fpc)
+* [Stage information files (*.SST)](#stage-information-files-sst)
+* [Message files (*.MSG)](#message-files-msg)
+    + [Generating custom message files](#generating-custom-message-files)
+* [Resource files (*.LP4)](#resource-files-lp4)
+* [VAB header files (*.HD)](#vab-header-files-hd)
+* [VAB body files (*.BD)](#vab-body-files-bd)
+* [Save file icon (*.ICO)](#save-file-icon-ico)
+* [Layout files (*.LAY)](#layout-files-lay)
+* [FlipnicLib](#flipniclib)
+
 ## GUI version
 
 There's also a graphical front-end for this CLI tool, which is easier to use, but also gives you better preview for stuff like textures, audio samples, stuff like that without having to type down a bunch of commands with the disadvantages being lack of automation options and in some cases compatibility.
@@ -296,7 +316,7 @@ Models:
 
 You can also attempt to convert the 3D models stored inside LP4 files to Wavefront OBJ by running the following command: `FlipnicFileTool --input CHOU01.LP4 --convert-obj --output CHOU01.OBJ`
 
-Note: LP4 implementation is still kind of unreliable, so this may fail. Also, not all LP4 files contain model data.
+**Note**: LP4 implementation is still kind of unreliable, so this may fail. Also, not all LP4 files contain model data.
 
 ## VAB header files (*.HD)
 
@@ -326,11 +346,40 @@ If the HD/BD pair has a corresponding MIDI file, you can convert it to SF2 sound
 
 If the BD and MIDI files have the same name, you can omit them from the command and this tool will try to figure out the names automatically: `FlipnicFileTool --convert-sf2 --input NATURE_0.HD --output NATURE_0.SF2`. 
 
+## VAB body files (*.BD)
+
+These contain samples for background music or sound effects. You can scan for them and see their offsets.
+
+Example: `FlipnicFileTool --input SE_ST01.BD --show-bd`
+
+Outputs:
+
+```
++----+---------+------------+----------+
+| Id | Offset  | Loop start | Loop end | 
++----+---------+------------+----------+
+| 0  | 0x10    | 0x0        | 0x0      | 
+| 1  | 0x62A0  | 0x0        | 0x0      | 
+| 2  | 0xF710  | 0x0        | 0x0      | 
+| 3  | 0x13B60 | 0x0        | 0x0      | 
+| 4  | 0x14C70 | 0x0        | 0x0      | 
+| 5  | 0x185F0 | 0x0        | 0x0      | 
+| 6  | 0x1A2D0 | 0x0        | 0x0      | 
+| 7  | 0x1E170 | 0x0        | 0x0      | 
+| 8  | 0x1ED80 | 0x0        | 0x0      | 
+| 9  | 0x1F9D0 | 0x0        | 0x0      | 
+| 10 | 0x24880 | 0x0        | 0x0      | 
+| 11 | 0x29C50 | 0x0        | 0x0      | 
++----+---------+------------+----------+
+```
+
+In addition, you can extract all the samples to a folder by running this command: `FlipnicFileTool --input SE_ST01.BD --extract-samples --output .`
+
 ## Save file icon (*.ICO)
 
 This is just a standard PlayStation 2 save icon with an RLE compressed texture. But this tool can still do some things with it.
 
-Note: This tool is specific to Flipnic, so save icons with animations will not work with this tool.
+**Note**: This tool is specific to Flipnic, so save icons with animations will not work with this tool.
 
 Example: `FlipnicFileTool --input FICON.ICO --show-ico`
 
@@ -359,6 +408,8 @@ You can convert it to Wavefront OBJ by running this command: `FlipnicFileTool --
 ## Layout files (*.LAY)
 
 Determines where things are placed on the stage and how they are scaled/skewed.
+
+**Note**: LAY implementation is unfinished
 
 Example: `FlipnicFileTool --input LAY_13_14.LAY --show-lay`
 

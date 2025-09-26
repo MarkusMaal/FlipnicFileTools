@@ -42,13 +42,37 @@ public class SeSeq
         while ((@byte & 0x80) != 0);
         return result;
     }
+
+    public override string ToString()
+    {
+        return ToString(false);
+    }
+    
+    public string ToString(bool asCsv)
+    {
+        string[] colHeaders = ["Delta", "Event", "Status"];
+        List<string[]> rows = [];
+        var plural = (Messages?.Count == 1) ? "" : "s";
+        var o = $"{Messages?.Count} message{plural}\n";
+        rows.Clear();
+        if (Messages == null) return o;
+        
+        rows.AddRange(Messages.Select(m => (string[])
+        [
+            m.Delta.ToString(),
+            ((m.Event != null ? m.Event.ToString()?.Replace("FlipnicLib.Formats.Jam.", "") : "null") ?? string.Empty),
+            m.Status.ToString()
+        ]));
+        o += StaticUtils.GenerateTable(colHeaders, rows, asCsv);
+        return o;
+    }
 }
 
 public class SeMessage
 {
     public uint Delta { get; set; }
     public byte Status { get; set; }
-    public ISeEvent Event { get; set; }
+    public ISeEvent? Event { get; set; }
 
     public void Read(BinaryStream bs, byte lastStatus)
     {
@@ -189,7 +213,14 @@ public class SeMetaEvent : ISeEvent
             // TODO
         }
 
-        bs.ReadBytes((int)Length);
+        try
+        {
+            bs.ReadBytes((int)Length);
+        }
+        catch
+        {
+            
+        }
     }
 }
 
