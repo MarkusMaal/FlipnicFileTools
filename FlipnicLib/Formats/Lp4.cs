@@ -27,6 +27,8 @@ public class Lp4(byte[] data, string fileName)
     public Tim2? Texture { get; set; }
 
     public List<Model> Models { get; set; } = [];
+    
+    private Model SelectedModel { get; set; }
 
     public override string ToString()
     {
@@ -57,11 +59,13 @@ public class Lp4(byte[] data, string fileName)
     {
         try
         {
+            var additionalDataLength = StaticUtils.GetInt32(data, 8); 
             var i = 0xA0;
-            i += StaticUtils.GetInt32(data, 8) * 0x10;
+            i += additionalDataLength * 0x10;
             while ((i < data.Length) && (i >= 0))
             {
-                var sectionCount = StaticUtils.GetInt32(data, i + 4) - 1;
+                var attributeSetCount = StaticUtils.GetInt32(data, i + 4);
+                var extraUnknownDataCount = StaticUtils.GetInt32(data, i + 12);
                 var modelOffset = i + 0x20;
                 var model = new Model { Address = modelOffset, Name = StaticUtils.GetStringAt(data, modelOffset) };
                 i += 0x30; // name and params
@@ -75,12 +79,60 @@ public class Lp4(byte[] data, string fileName)
                     StaticUtils.GetFloat(data, i + 0x70), StaticUtils.GetFloat(data, i + 0x74),
                     StaticUtils.GetFloat(data, i + 0x78)
                 ];
-                i += 0x80; // position, size, etc
-                i += 0xA0 * sectionCount; // some unknown sections
-                i += 0xA0; // more parameters before start of model
+                var animationJoints = StaticUtils.GetInt32(data, i + 0x24);
+                if (animationJoints > 0) // this is an animated model, ignore the animation stuff and just get the default pose
+                {
+                    i += 0x10;
+                    for (var j = 0; j < attributeSetCount; j++) // joint definitions
+                    {
+                        animationJoints = StaticUtils.GetInt32(data, i + 0x14);
+                        var extraDataLength =  StaticUtils.GetInt32(data, i + 0x28) - 1;
+                        i += 0x90;
+                        i += animationJoints * 0x60;
+                        i +=  extraDataLength * 0x10;
+                    }
+
+                    i += 0x80;
+                    
+                    // model definition
+                    var extraData = StaticUtils.GetInt32(data, i + 0x18);
+                    i += 0x10 * extraData;
+                    i += 0x20;
+
+                    // animations
+                    var numAnimations = StaticUtils.GetInt32(data, i);
+                    i += 0x10;
+                    for (var j = 0; j < numAnimations - 1; j++)
+                    {
+                        i += 0x20; // animation name
+                        var keyFrames = StaticUtils.GetInt32(data, i);
+                        i += 0x10; // keyframe count
+                        i += 0x10 * keyFrames; // keyframes
+                    }
+                    
+                    i += 0x20; // animation name
+                    i += 0x10; // keyframe count
+                    i += 0x10 * StaticUtils.GetInt32(data, i-0x10); // keyframes
+                    // model
+                    var modelVertCount = StaticUtils.GetInt32(data, i);
+                    var modelNormalCount = StaticUtils.GetInt32(data, i + 4);
+                    var modelTextureCoordCount = StaticUtils.GetInt32(data, i + 12);
+                    model.AppendVerticies(i, data);
+                    i += 0x10 * modelVertCount;
+                    i += 0x8 * modelNormalCount;
+                    i += 0x8 * modelTextureCoordCount;
+                    i += 0x90;
+                    model.Texture = StaticUtils.GetStringAt(data, i);
+                    Models.Add(model);
+                    break;
+                }
+                i += 0x90 * attributeSetCount; // position, size, etc
+                i += 0x90 * extraUnknownDataCount; // some unknown sections
 
                 // model
+                var padding = 0x10 * (StaticUtils.GetInt32(data, i + 0x18));
                 i += 0x20; // model identifier, I guess?
+                i += padding;
                 var vectCount = StaticUtils.GetInt32(data, i);
                 var normalCount = StaticUtils.GetInt32(data, i + 4);
                 var textureCoordCount = StaticUtils.GetInt32(data, i + 12);
@@ -95,7 +147,12 @@ public class Lp4(byte[] data, string fileName)
                 Models.Add(model);
             }
 
-            if (Models[0].RawVertices.Count != 0) return;
+
+            if (Models.Count > 0)
+            {
+                SelectedModel = Models[0];
+            }
+            if (SelectedModel.RawVertices.Count != 0) return;
             Models.Clear();
             OldMethod();
         }
@@ -180,19 +237,19 @@ public class Lp4(byte[] data, string fileName)
             return;
         }
         if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-                                        Models[0].Texture.ToUpper()))) return;
+                SelectedModel.Texture.ToUpper()))) return;
         var fs = File.OpenRead(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-            Models[0].Texture.ToUpper()));
+            SelectedModel.Texture.ToUpper()));
         var d = new byte[fs.Length];
         fs.ReadExactly(d, 0, d.Length);
-        Texture = new Tim2(d, Models[0].Texture);
+        Texture = new Tim2(d, SelectedModel.Texture);
     }
 
     public float[] GetVerticies()
     {
         if ((rawVerticies.Count == 0) && (Models.Count > 0))
         {
-            return Models[0].RawVertices.ToArray();
+            return SelectedModel.RawVertices.ToArray();
         }
         return rawVerticies.ToArray();
     }
