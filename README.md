@@ -258,6 +258,20 @@ Entries: 92
 +-------------------------+-------------------------+
 ```
 
+### Generating custom message files
+
+First, convert the JA.MSG to a TXT file by running the following command:
+
+`FlipnicFileTool --input JA.MSG --show-messages --simple > converted.txt`
+
+Note that the --simple flag is important here.
+
+You can edit the converted file with notepad. Each line is one message. Make your changes and save the file. After that, you can convert the TXT back into MLB by running this command
+
+`FlipnicFileTool --input converted.txt --generate-msg --output JA_MOD.MSG`
+
+The generated file will have the same layout that the game can understand.
+
 ## Resource files (*.LP4)
 
 These files define stuff like 3D models and 2D animation sequences (e.g. the WONDERFUL text when you complete a mission). You can view all models and other information about the LP4 file.
@@ -311,6 +325,36 @@ StartNoteRange: CNeg1, EndNoteRange: CNeg1
 If the HD/BD pair has a corresponding MIDI file, you can convert it to SF2 soundfont, by running the following command: `FlipnicFileTool --convert-sf2 --input NATURE_0.HD --bd-file NATURE_0.BD --midi-file NATURE_0.MID --output NATURE_0.SF2`.
 
 If the BD and MIDI files have the same name, you can omit them from the command and this tool will try to figure out the names automatically: `FlipnicFileTool --convert-sf2 --input NATURE_0.HD --output NATURE_0.SF2`. 
+
+## Save file icon (*.ICO)
+
+This is just a standard PlayStation 2 save icon with an RLE compressed texture. But this tool can still do some things with it.
+
+Note: This tool is specific to Flipnic, so save icons with animations will not work with this tool.
+
+Example: `FlipnicFileTool --input FICON.ICO --show-ico`
+
+Outputs:
+```
+PlayStation 2 save icon
+
+Magic: 10000
+Shapes: 1
+Polygons: 128
+
+Texture:
+
+Width: 128
+Height: 128
+
+Type: RLE compressed
+Compressed size: 4.41 kiB
+Decompressed size: 29.37 kiB
+```
+
+You can extract the texture by running this command: `FlipnicFileTool --input FICON.ICO --convert-ico-texture --output FICON.PNG`.
+
+You can convert it to Wavefront OBJ by running this command: `FlipnicFileTool --input FICON.ICO --convert-ico-obj --output FICON.OBJ`.
 
 ## Layout files (*.LAY)
 
