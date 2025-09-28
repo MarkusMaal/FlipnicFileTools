@@ -67,7 +67,11 @@ public class App : Application
 
     private void NewWindowMenuItem_OnClick(object? sender, EventArgs e)
     {
-        new MainWindow().Show();
+        var mw = new MainWindow
+        {
+            DataContext = new MainWindowViewModel(),
+        };
+        mw.Show();
     }
 
     private void AboutNativeMenu_OnClick(object? sender, EventArgs e)
