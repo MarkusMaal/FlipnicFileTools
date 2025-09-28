@@ -66,9 +66,11 @@ Extract files: `FlipnicFileTool --extract-files --input RES.BIN --output ./RES`
 
 These are not a standard PlayStation video streams, instead they're a special container format in Flipnic, which contain audio and video streams.
 
-If you want to convert a PSS file directly into a MOV file (requires FFmpeg): `FlipnicFileTool --convert-pss-mov --input ./FREEZE_OVER.PSS --output ./FREEZE_OVER.MOV` (this will also integrate multiple audio streams into the output file if the .PSS file has multiple audio streams)
+If you want to convert a PSS file directly into a MOV file (requires FFmpeg): `FlipnicFileTool --convert-pss-mp4 --input ./FREEZE_OVER.PSS --output ./FREEZE_OVER.MOV` (this will also integrate multiple audio streams into the output file if the .PSS file has multiple audio streams)
 
-If you have the PAL version, you should also add a --pal flag: `FlipnicFileTool --convert-pss-mov --input ./FREEZE_OVER.PSS --output ./FREEZE_OVER.MOV --pal`
+If you have the PAL version, you should also add a --pal flag: `FlipnicFileTool --convert-pss-mp4 --input ./FREEZE_OVER.PSS --output ./FREEZE_OVER.MOV --pal`
+
+**NOTE**: PSS to MP4 option is lossy. If you want lossless conversion, you must demux the streams first and convert each file separately.
 
 If you just want to see what streams a .PSS file contains, run this: `FlipnicFileTool SHUKYAKUDEMO.PSS --list-pss-streams`
 
