@@ -38,7 +38,17 @@ public class ExtractUtils
         var decodedData = SonyVag.Decode(ms.ToArray());
         ms = new MemoryStream();
         ms.Write(decodedData);
-        Pcm.WriteWavHeader(ms, false, 1, 16, 32000, (int)ms.Length);
+        // Mono, Signed 16-bit, 32000Hz
+        var riff = new Riff(32000)
+        {
+            NumChannels = 1,
+            BitsPerSample = 16,
+            data = ms.ToArray(),
+            
+        };
+
+        ms.Position = 0;
+        ms.Write(riff.GetBytes());
         var fs = new FileStream(Uri.UnescapeDataString(filePath), FileMode.Create, FileAccess.Write);
         fs.Write(ms.ToArray(), 0, (int)ms.Length);
         fs.Close();

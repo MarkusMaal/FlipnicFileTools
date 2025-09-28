@@ -18,7 +18,12 @@ internal static class Program
     private static bool _usePng;
     private static string _midiFile = "";
     private static string _bdFile = "";
+
+    private static bool CropAlpha { get; set; } = false;
+    private static bool CropRgb { get; set; } = false;
     private static string FileName { get; set; } = "";
+    
+    private static int ScaleFactor { get; set; } = 1;
     
     public static int Main(string[] args)
     {
@@ -45,11 +50,20 @@ internal static class Program
                     case "--pal":
                         StaticUtils.Pal = true;
                         break;
+                    case "--crop-rgb":
+                        CropRgb = true;
+                        break;
+                    case "--crop-alpha":
+                        CropAlpha = true;
+                        break;
                     case "--png":
                         _usePng = true;
                         break;
                     case "--version":
                         Console.WriteLine(StaticUtils.DotFloatString(StaticUtils.LibVersion));
+                        return 0;
+                    case "--disclaimer":
+                        GetDisclaimer();
                         return 0;
                 }
 
@@ -88,6 +102,9 @@ internal static class Program
                     case "--no-velocity":
                         StaticUtils.ExportVelocity = false;
                         break;
+                    case "--scale-factor":
+                        ScaleFactor = int.Parse(arg);
+                        break;
                     default:
                         break;
                 }
@@ -97,7 +114,7 @@ internal static class Program
 
             if (args.Length > 0 && File.Exists(args[0]))
             {
-                if (mode == Enums.Modes.ShowHelp)
+                if (mode == Enums.Modes.NoAction)
                 {
                     mode = Enums.GuessAction(args[0]);
                     if (mode != Enums.Modes.ShowHelp)
@@ -316,10 +333,10 @@ internal static class Program
                     var vsd = new FpnVsd(File.OpenRead(FileName));
                     Console.WriteLine($"Vibration Strength Data\n{vsd.ToString(StaticUtils.SimpleOutput)}");
                     break;
-                case Enums.Modes.ConvertPssMov:
+                case Enums.Modes.ConvertPssMpeg:
                     new Pss(FileName).ListPss(File.OpenRead(FileName), true, new FileInfo(outFile).Directory!.FullName);
                     var nf = Path.Combine(new FileInfo(outFile).Directory!.FullName, new FileInfo(FileName).Name);
-                    Ipu.IpuConvert(nf + ".IPU", nf + ".TEMP.MOV", _fFmpegPath);
+                    Ipu.IpuConvert(nf + ".IPU", nf + ".TEMP.M2V", _fFmpegPath);
                     var exist = true;
                     var streams = 0;
                     while (exist)
@@ -338,7 +355,7 @@ internal static class Program
                         exist = false;
                     }
 
-                    var ffmpegCommand = $"-i \"{nf}.TEMP.MOV\" -i ";
+                    var ffmpegCommand = $"-y -i \"{nf}.TEMP.M2V\" -i ";
                     List<string> audioFiles = [];
                     for (var i = 1; i < streams; i++)
                     {
@@ -349,12 +366,31 @@ internal static class Program
                     ffmpegCommand += " -map 0";
                     for (var i = 1; i < streams; i++)
                     {
-                        ffmpegCommand += $" -map {i}:a";
+                        ffmpegCommand += $" -map {i}:a:0";
                     }
 
-                    ffmpegCommand += $" -c:v copy -shortest \"{outFile}\"";
+                    if (CropAlpha)
+                    {
+                        ffmpegCommand += " -vf \"crop=256:256:0:256";
+                    }
+                    if (CropRgb)
+                    {
+                        ffmpegCommand += " -vf \"crop=256:256:0:0";
+                    }
+                    if (ffmpegCommand.Contains("-vf") && (ScaleFactor == 1)) ffmpegCommand += "\"";
+
+                    if (ScaleFactor != 1)
+                    {
+                        if (!ffmpegCommand.Contains("-vf"))
+                        {
+                            ffmpegCommand += " -vf \"";
+                        }
+                        ffmpegCommand += $"scale=iw*{ScaleFactor}:ih*{ScaleFactor}\" -sws_flags neighbor";
+                    }
+
+                    ffmpegCommand += $" -c:v libx264 -crf 3 -preset slow -shortest \"{outFile}\"";
                     StaticUtils.ProcessFFmpeg(_fFmpegPath, ffmpegCommand);
-                    File.Delete(nf + ".TEMP.MOV");
+                    File.Delete(nf + ".TEMP.M2V");
                     for (var i = 1; i <= streams; i++)
                     {
                         File.Delete(nf + $".{i}.WAV");
@@ -487,6 +523,13 @@ internal static class Program
             throw;
         }
     }
+
+    private static void GetDisclaimer()
+    {
+        StaticUtils.DecodeColors("~-4Disclaimer~--: ");
+        Console.WriteLine(StaticUtils.DisclaimerText);
+    }
+    
     private static void GetHelp()
     {
         var ds = (OperatingSystem.IsWindows() ? "" : "./");

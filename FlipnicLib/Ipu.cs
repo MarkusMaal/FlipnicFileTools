@@ -27,7 +27,7 @@ public abstract class Ipu
             false when isPal => "25",
             _ => "59.94"
         };
-        var ffmpegCommand = $"-r {frameRate} -i \"{fileName}\" -vf bwdif -c:v qtrle -pix_fmt rgb24 \"{outFile}\"";
+        var ffmpegCommand = $"-y -r {frameRate} -i \"{fileName}\" -vf bwdif -c:v mpeg2video -q:v 1 \"{outFile}\"";
         StaticUtils.ProcessFFmpeg(ffmpegPath, ffmpegCommand);
     }
 

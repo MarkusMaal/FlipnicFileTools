@@ -13,6 +13,7 @@ public abstract class HelpUtils
                 new HelpLine("input", "File to open"),
                 new HelpLine("output", "File to write to"),
                 new HelpLine("help", "Display help"),
+                new HelpLine("disclaimer", "Display disclaimer"),
                 new HelpLine("simple", "Use output that is easy to parse for computer programs"),
                 new HelpLine("low-memory", "Reduces performance to save on memory usage"),
                 new HelpLine("magick-path", "Path to ImageMagick executable (may not be needed dep. on what you're trying to do)"),
@@ -55,8 +56,11 @@ public abstract class HelpUtils
                     new HelpLine("list-pss-streams*", "List all available streams in a .PSS file"),
                     new HelpLine("extract-pss-streams", "Demux a .PSS file to .IPU and .INT files (output = folder)"),
                     new HelpLine("convert-int", "Convert .INT file to .WAV"),
-                    new HelpLine("convert-pss-mov", "Convert .PSS file directly to .MOV file with audio streams"),
+                    new HelpLine("convert-pss-mp4", "Convert .PSS file directly to .MP4 file with audio streams"),
                     new HelpLine("pal", "Force 25/50 frames per second when converting video files"),
+                    new HelpLine("crop-alpha", "Crops out the alpha mask from low-res FMVs"),
+                    new HelpLine("crop-rgb", "Crops out the RGB part of low-res FMVs"),
+                    new HelpLine("scale-factor [n]", "Scales up the final video *n (NOTE: you can't apply crop and scale factor at the same time)")
                 ]
             ),
             new (
@@ -64,7 +68,7 @@ public abstract class HelpUtils
                 "*.IPU",
                 [
                     new HelpLine("show-ipu", "Display basic information about the IPU file"),
-                    new HelpLine("convert-ipu", "Uses FFmpeg to convert .IPU file to .MOV")
+                    new HelpLine("convert-ipu", "Uses FFmpeg to convert .IPU file to .M2V")
                 ]
             ),
             new(

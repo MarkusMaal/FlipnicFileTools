@@ -264,8 +264,8 @@
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
                                             <Button Click="DemuxButton_OnClick" Name="DemuxButton">Demux</Button>
-                                            <Button Click="ConvertMovAacButton_OnClick" Name="ConvertMovAacButton" IsEnabled="False">Convert to .MOV/.AAC</Button>
-                                            <Button Click="ConvertMovButton_OnClick" Name="ConvertMovButton" IsEnabled="False">Convert to .MOV</Button>
+                                            <Button Click="ConvertMovAacButton_OnClick" Name="ConvertMovAacButton" IsEnabled="False">Convert to MPEG4</Button>
+                                            <Button Click="ConvertMovButton_OnClick" Name="ConvertMovButton" IsEnabled="False">Convert to .M2V</Button>
                                             <Button Click="ConvertSf2Button_OnClick" Name="ConvertSf2Button" IsEnabled="False">Convert to .SF2</Button>
                                         </StackPanel>
                                     </StackPanel>

@@ -8,7 +8,14 @@ namespace FlipnicFileToolGUI;
 class Program
 {
     public static readonly string AboutText =
-        $"Created by Markus Maal\n\nPowered by Avalonia UI using the SukiUI theme\nFlipnicLib version: {StaticUtils.DotFloatString(StaticUtils.LibVersion)}";
+        $"""
+         Created by Markus Maal (a.k.a. Press any key to continue...)
+         
+         Powered by Avalonia UI using the SukiUI theme
+         FlipnicLib version: {StaticUtils.DotFloatString(StaticUtils.LibVersion)}
+         
+         Disclaimer: {StaticUtils.DisclaimerText}
+         """;
     
     // Initialization code. Don't use any Avalonia, third-party APIs or any
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized

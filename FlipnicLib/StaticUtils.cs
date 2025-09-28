@@ -10,6 +10,9 @@ namespace FlipnicLib;
 
 public abstract class StaticUtils
 {
+    public static string DisclaimerText =>
+        "This software is provided to you free of charge AS IS without a warranty. If you paid for this software, you should ask for a refund. The copyrights of original Flipnic game assets belong to Japan Studio of Sony Interactive Entertainment (a.k.a. SCEI) and these assets are not distributed with this software. This tool is designed for personal non-commercial use only.";
+    
     private static char[] Loaders = ['/', '-', '\\', '|'];
     public static int LoadIdx = 0;
 
@@ -301,7 +304,7 @@ public abstract class StaticUtils
         using var msl = new MemoryStream(SonyVag.Decode([.. interleavedDataL]));
         using var msr = new MemoryStream(SonyVag.Decode([.. interleavedDataR]));
         using var ms = new MemoryStream();
-        
+
         {
             Console.Write("\r     Generating WAV file".PadRight(WindowWidth, ' '));
             var bufL = new byte[2]; // 16-bit, 2 channels = 2+2 bytes
@@ -316,6 +319,10 @@ public abstract class StaticUtils
                     ms.Write(bufL);
                     ms.Write(bufR);
                     i++;
+                    if (i == msl.Length/2 - 1342)
+                    {
+                        break;
+                    }
                     if (i % 0x100 == 0)
                     {
                         PrintLoader();
@@ -328,8 +335,15 @@ public abstract class StaticUtils
             }
             
             // Stereo, Signed 16-bit, 44100Hz
-            Pcm.WriteWavHeader(ms, false, 2, 16, sampleRate, (int)ms.Length);
-        
+            var riff = new Riff(sampleRate)
+            {
+                NumChannels = 2,
+                BitsPerSample = 16,
+                data = ms.ToArray(),
+            };
+
+            ms.Position = 0;
+            ms.Write(riff.GetBytes());
             Console.Write("\r     Saving WAV file".PadRight(WindowWidth, ' '));
             PrintLoader();
             // save WAV file
