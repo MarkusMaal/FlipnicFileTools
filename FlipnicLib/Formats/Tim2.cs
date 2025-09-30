@@ -70,6 +70,7 @@ public class Tim2
         {
             this._pallette = [255, 255, 255, 255, 0, 0, 0, 0];
         }
+        Unscramble();
         if (!grayscale) return;
         List<byte> grayscalePalette = [];
         var increment = (255 / ((_pallette.Length / 3) != 0 ? (_pallette.Length / 3) : 1));
@@ -92,6 +93,44 @@ public class Tim2
         this._pallette = grayscalePalette.ToArray();
     }
 
+    // Re-implementation of this code snippet: https://github.com/ImageMagick/ImageMagick/blob/main/coders/tim2.c#L202-L230
+    private void Unscramble()
+    {
+        if (_pallette.Length < 255) return;
+        var blocks = 4; /* Blocks per page */
+        var colors = 8*4; /* Colors per block */
+        var pages = _pallette.Length / (blocks * colors) ;  /* Pages per CLUT */
+        
+        List<uint> sortedPalette = [];
+        for (var i = 0; i < _pallette.Length; i += 4)
+        {
+            sortedPalette.Add(StaticUtils.GetUInt32(_pallette, i));
+        }
+        var oldColormap = _pallette;
+        /*
+         * Swap the 2nd and 3rd block in each page
+         */
+        var j = 0;
+        for (var page = 0; page < pages; page++)
+        {
+            Array.Copy(
+                oldColormap,           // source array
+                j + 2 * colors,        // source index
+                _pallette,        // destination array
+                j + 1 * colors,        // destination index
+                colors                 // number of elements
+            );
+            Array.Copy(
+                oldColormap,           // source array
+                j + 1 * colors,        // source index
+                _pallette,        // destination array
+                j + 2 * colors,        // destination index
+                colors                 // number of elements
+            );
+            j += blocks * colors;
+        }
+    }
+    
     private string DisplayPalette(bool asCsv)
     {
         string[] colHeaders = ["ID", "RGB", "Alpha"];
@@ -139,15 +178,14 @@ public class Tim2
         List<Pixel> pixels = [];
         for (var i = 0; i < _pallette.Length; i += 4)
         {
-            pixels.Add(new Pixel(_pallette[i], _pallette[i+1], _pallette[i+2], _pallette[i+3], false));
+            pixels.Add(new Pixel(_pallette[i], _pallette[i+1], _pallette[i + 2],
+                _pallette[i+3], false));
         }
-
-        for (var y = 0; y < Height; y++)
+        for (var i = 0; i < Height * Width; i++)
         {
-            for (var x = 0; x < Width; x++)
-            {
-                builder.SetPixel(pixels[_bitmap[y * Width + x]], x, y);
-            }
+            var y = i / Width;
+            var x = i % Width;
+            builder.SetPixel(pixels[_bitmap[i]], x, y);
         }
 
         builder.Save(output);
