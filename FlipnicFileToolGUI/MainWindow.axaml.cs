@@ -230,6 +230,7 @@ public sealed partial class MainWindow : SukiWindow
     {
         OpenButton.IsEnabled = ((DataGrid)sender!).SelectedIndex != -1;
         ExtractButton.IsEnabled = ((DataGrid)sender!).SelectedIndex != -1;
+        ReplaceButton.IsEnabled = ((DataGrid)sender!).SelectedItems.Count == 1;
     }
 
     private void OpenButton_OnClick(object? sender, RoutedEventArgs e)
@@ -579,5 +580,23 @@ public sealed partial class MainWindow : SukiWindow
                 LoadStatus.Text = "Loading";
             });
         }).Start();
+    }
+
+    private async void ReplaceButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (FilesGrid.SelectedItem is not VirtualFile vf) return;
+        if (FileName is null) return;
+        var replacement = await FileHelpers.OpenFile(this, [], "Choose a replacement file");
+        if (replacement == null) return;
+        var offset = vf.Offset;
+        var size = vf.Length;
+        var rfi = new FileInfo(replacement);
+        if (rfi.Length > size)
+        {
+            ShowDialog( "Flipnic file tools" ,"Currently, only replacing with smaller or equal sized files is supported." , NotificationType.Error);
+            return;
+        }
+        RepackUtils.RepackFileUnsafe((int)(offset/2048L), replacement, FileName, size, vf.Path[1..].Contains('\\') && !vf.Path[1..].EndsWith('\\') ? 1 : 2048);
+        ShowDialog("Flipnic file tools", "File replaced successfully.", NotificationType.Success);
     }
 }

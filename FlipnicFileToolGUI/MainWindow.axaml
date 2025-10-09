@@ -209,6 +209,7 @@
                                     <StackPanel Name="FileActionButtons" Orientation="Horizontal" Grid.Row="1" Spacing="8" Margin="0,0,0,10">
                                         <Button Name="OpenButton" IsEnabled="False" Click="OpenButton_OnClick">Open</Button>
                                         <Button Name="ExtractButton" IsEnabled="False" Click="ExtractButton_OnClick">Extract</Button>
+                                        <Button Name="ReplaceButton" IsEnabled="False" Click="ReplaceButton_OnClick">Replace</Button>
                                         <Button Name="ExtractAllButton" Click="ExtractAllButton_OnClick">Extract all</Button>
                                     </StackPanel>
                                 </Grid>
