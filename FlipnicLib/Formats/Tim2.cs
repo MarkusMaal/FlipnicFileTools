@@ -101,32 +101,20 @@ public class Tim2
         var colors = 8*4; /* Colors per block */
         var pages = _pallette.Length / (blocks * colors) ;  /* Pages per CLUT */
         
-        List<uint> sortedPalette = [];
-        for (var i = 0; i < _pallette.Length; i += 4)
-        {
-            sortedPalette.Add(StaticUtils.GetUInt32(_pallette, i));
-        }
         var oldColormap = _pallette;
+        
         /*
          * Swap the 2nd and 3rd block in each page
          */
-        var j = 0;
+        var j = -0x20;
         for (var page = 0; page < pages; page++)
         {
-            Array.Copy(
-                oldColormap,           // source array
-                j + 2 * colors,        // source index
-                _pallette,        // destination array
-                j + 1 * colors,        // destination index
-                colors                 // number of elements
-            );
-            Array.Copy(
-                oldColormap,           // source array
-                j + 1 * colors,        // source index
-                _pallette,        // destination array
-                j + 2 * colors,        // destination index
-                colors                 // number of elements
-            );
+            for (var c = 0; c < colors; c++)
+            {
+                if ((j + 1 * colors) % 0x20 == 0) break;
+                _pallette[j + 1 * colors + c] = oldColormap[j + 2 * colors + c];
+                _pallette[j + 2 * colors + c] = oldColormap[j + 1 * colors + c];
+            }
             j += blocks * colors;
         }
     }
