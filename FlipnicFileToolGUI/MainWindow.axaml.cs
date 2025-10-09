@@ -596,7 +596,7 @@ public sealed partial class MainWindow : SukiWindow
             ShowDialog( "Flipnic file tools" ,"Currently, only replacing with smaller or equal sized files is supported." , NotificationType.Error);
             return;
         }
-        RepackUtils.RepackFileUnsafe((int)(offset/2048L), replacement, FileName, size, vf.Path[1..].Contains('\\') && !vf.Path[1..].EndsWith('\\') ? 1 : 2048);
+        RepackUtils.RepackFileUnsafe(offset, replacement, FileName, size, vf.Path[1..].Contains('\\') && !vf.Path[1..].EndsWith('\\') ? 1 : 2048);
         ShowDialog("Flipnic file tools", "File replaced successfully.", NotificationType.Success);
     }
 }

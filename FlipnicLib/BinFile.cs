@@ -11,8 +11,20 @@ public class BinFile
     {
         string[] colHeader = ["Path", "Offset", "Size"];
         var rows = GetFsEntriesNew(src);
+        foreach (var t in rows)
+        {
+            t[2] = StaticUtils.GetFilesizeString(long.Parse(t[2]));
+        }
         src.Close();
         Console.Write(StaticUtils.GenerateTable(colHeader, rows, StaticUtils.SimpleOutput));
+    }
+    public VirtualFile[] GetListBin(Stream src)
+    {
+        string[] colHeader = ["Path", "Offset", "Size"];
+        var rows = GetFsEntriesNew(src);
+        var fsEntries = rows.Select(row => new VirtualFile(row[0], Convert.ToInt64(row[1], 16), long.Parse(row[2]))).ToList();
+        src.Close();
+        return fsEntries.ToArray();
     }
 
     private List<string[]> GetFsEntriesNew(Stream src)
@@ -126,7 +138,7 @@ public class BinFile
         {
             FsEntries.Add(new VirtualFile(rows[i][0], Offsets[i], Sizes[i]));
         }
-        realRows.AddRange(rows.Select((t, i) => (string[]) [t[0], t[1], StaticUtils.GetFilesizeString(Sizes[i])]));
+        realRows.AddRange(rows.Select((t, i) => (string[]) [t[0], t[1], Sizes[i].ToString()]));
         return realRows;
     }
     

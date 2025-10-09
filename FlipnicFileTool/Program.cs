@@ -18,6 +18,7 @@ internal static class Program
     private static bool _usePng;
     private static string _midiFile = "";
     private static string _bdFile = "";
+    private static string _vFile = "";
 
     private static bool CropAlpha { get; set; } = false;
     private static bool CropRgb { get; set; } = false;
@@ -104,6 +105,9 @@ internal static class Program
                         break;
                     case "--scale-factor":
                         ScaleFactor = int.Parse(arg);
+                        break;
+                    case "--replace-file":
+                        _vFile = arg;
                         break;
                     default:
                         break;
@@ -239,6 +243,37 @@ internal static class Program
                     break;
                 case Enums.Modes.ExtractBin:
                     new BinFile().ExtractBin(File.OpenRead(FileName), outFile);
+                    break;
+                case Enums.Modes.ReplaceBin:
+                    var binFiles = new BinFile().GetListBin(File.OpenRead(outFile));
+                    var vfOffset = -1L;
+                    var vfSize = -1L;
+                    var largeBuffer = true;
+                    foreach (var vf in binFiles)
+                    {
+                        if (vf.Path != _vFile && vf.Path[1..] != _vFile) continue;
+                        vfOffset = vf.Offset;
+                        vfSize = vf.Length;
+                        largeBuffer = !vf.Path[1..].Contains('\\') || vf.Path[1..].EndsWith('\\');
+                    }
+
+                    if ((vfOffset == -1L) || (vfSize == -1L))
+                    {
+                        StaticUtils.DecodeColors("~-CError~--: The specified virtual file was not found");
+                        Console.WriteLine();
+                        break;
+                    }
+
+                    if (new FileInfo(FileName).Length > vfSize)
+                    {
+                        StaticUtils.DecodeColors($"~-CError~--: The replacement file is too big! Must be {vfSize} bytes or less!");
+                        Console.WriteLine();
+                        break;
+                    }
+                    Console.Write("Repacking...");
+                    RepackUtils.RepackFileUnsafe(vfOffset, FileName, outFile, vfSize, largeBuffer ? 2048 : 1);
+                    StaticUtils.DecodeColors("~-A\rSuccess~--: The file has been replaced!");
+                    Console.WriteLine();
                     break;
                 case Enums.Modes.ShowHd:
                     var jh = new JamHeader();

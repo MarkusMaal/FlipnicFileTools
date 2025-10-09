@@ -1,6 +1,4 @@
-using System.IO;
-
-namespace FlipnicFileToolGUI.Helpers;
+namespace FlipnicLib;
 
 public abstract class RepackUtils
 {
@@ -12,10 +10,10 @@ public abstract class RepackUtils
     /// <param name="destinationPath">Location of the BIN file</param>
     /// <param name="padding">Total size of the file to be replaced in bytes</param>
     /// <param name="bufferSize">Size of the buffer. Must be either 1 or 2048.</param>
-    public static void RepackFileUnsafe(int offset, string sourcePath, string destinationPath, long padding, int bufferSize = 2048)
+    public static void RepackFileUnsafe(long offset, string sourcePath, string destinationPath, long padding, int bufferSize = 2048)
     {
         using Stream s = File.Open(destinationPath, FileMode.Open);
-        s.Position = offset * (long)bufferSize;
+        s.Position = offset;
         using Stream sr = File.OpenRead(sourcePath);
         var bytesWritten = 0;
         while (sr.Position < sr.Length)
