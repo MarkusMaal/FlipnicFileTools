@@ -54,6 +54,10 @@ public class Lp4(byte[] data, string fileName)
         return o;
     }
 
+    /// <summary>
+    /// Swap the selected model
+    /// </summary>
+    /// <param name="model">Model object from the Models list</param>
     public void SetSelectedModel(Model model)
     {
         SelectedModel = model;
@@ -240,6 +244,9 @@ public class Lp4(byte[] data, string fileName)
         }
     }
     
+    /// <summary>
+    /// Process the data provided
+    /// </summary>
     public void Read()
     {
         GetModelOffset();
@@ -257,6 +264,10 @@ public class Lp4(byte[] data, string fileName)
         Texture = new Tim2(d, SelectedModel.Texture);
     }
 
+    /// <summary>
+    /// Get the 3D float array of the selected model
+    /// </summary>
+    /// <returns>An array containing chunks of 8 * sizeof(float), where first 2 entries are XY UV coordinates, next 3 are XYZ vertex coordinates, final 3 are XYZ normal coordinates</returns>
     public float[] GetVerticies()
     {
         if ((rawVerticies.Count == 0) && (Models.Count > 0))
@@ -278,6 +289,10 @@ public class Model
 
     public List<float> RawVertices { get; set; } = [];
 
+    /// <summary>
+    /// Generate a table row of this model
+    /// </summary>
+    /// <returns>Table row containing information about the model, including name, address, scale, offset, texture and vertex count</returns>
     public string[] GetRow()
     {
         return
@@ -291,7 +306,11 @@ public class Model
     }
     
     
-
+    /// <summary>
+    /// Once we figure out where the vertex data is, call this method to append vertices from the data and offset provided
+    /// </summary>
+    /// <param name="offset">Physical location of the vertex data (including the first 0x10 bytes that have the length)</param>
+    /// <param name="data">LP4 binary data</param>
     public void AppendVerticies(int offset, byte[] data)
     {
         var len = BitConverter.ToInt32(data, offset);
@@ -321,6 +340,11 @@ public class Model
         }
     }
 
+    /// <summary>
+    /// Extract UV coordinates from the 8 bytes provided
+    /// </summary>
+    /// <param name="data">8 byte chunk containing the UV coordinate</param>
+    /// <returns>X and Y coordinates</returns>
     public static float[] DecodeCoords(byte[] data)
     {
         var div = BitConverter.ToInt16(data.Skip(4).Take(2).ToArray(), 0);
@@ -330,6 +354,11 @@ public class Model
         return [(float)fx/div, -(float)fy/div]; // invert, because otherwise it's upside-down
     }
 
+    /// <summary>
+    /// Extract normal coordinates from the 8 bytes provided 
+    /// </summary>
+    /// <param name="data">8 byte chunk containing the normal coordinate</param>
+    /// <returns>X, Y and Z coordinates</returns>
     public static float[] DecodeNormals(byte[] data)
     {
         var x =  BitConverter.ToInt16(data.Take(2).ToArray(), 0) / 4096f;

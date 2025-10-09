@@ -94,6 +94,11 @@ public class Tim
             }
         }
     }
+    
+    /// <summary>
+    /// Convert the TIM file to PNG
+    /// </summary>
+    /// <param name="output">Output .PNG file stream</param>
     public void SavePng(Stream output)
     {
         Console.Write("Converting...");

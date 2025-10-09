@@ -9,6 +9,9 @@ public class HelpTopic(string title, string ext, HelpLine[] lines)
     private string Extension { get; set; } = ext;
     private HelpLine[] Lines { get; set; } = lines;
 
+    /// <summary>
+    /// Display help topic and all lines in that topic
+    /// </summary>
     public void DisplayTopic()
     {
         var t = Strings.ChrW(0x23F5);

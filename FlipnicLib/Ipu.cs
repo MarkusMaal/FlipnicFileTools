@@ -3,6 +3,12 @@ namespace FlipnicLib;
 public abstract class Ipu
 {
     
+    /// <summary>
+    /// Convert IPU file to M2V
+    /// </summary>
+    /// <param name="fileName">Full path to the input .IPU file</param>
+    /// <param name="outFile">Full path to the output .M2V file</param>
+    /// <param name="ffmpegPath">Full path to the FFmpeg executable</param>
     public static void IpuConvert(string fileName, string outFile, string ffmpegPath)
     {
         var header = new byte[0x10];
@@ -31,6 +37,11 @@ public abstract class Ipu
         StaticUtils.ProcessFFmpeg(ffmpegPath, ffmpegCommand);
     }
 
+    /// <summary>
+    /// Get information about the IPU file, including resolution, magic and frame count
+    /// </summary>
+    /// <param name="stream">Input .IPU file stream</param>
+    /// <returns>A string to display to the user containing the info</returns>
     public static string GetInfoAsString(Stream stream)
     {
         var header = new byte[0x10];

@@ -16,6 +16,10 @@ public class FpnSst
         GenerateToc(StaticUtils.GetInt32(_data, 0x0C));
     }
 
+    /// <summary>
+    /// Get the list of resources references by the SST file
+    /// </summary>
+    /// <returns>ASCII table containing TOC name, index and value</returns>
     public string GenerateMagicNumbers()
     {
         string[] colHeaders = ["TOC name", "Index", "Value"];
@@ -28,6 +32,12 @@ public class FpnSst
         return StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput);
     }
 
+    /// <summary>
+    /// Get a resource name from the ID specified
+    /// </summary>
+    /// <param name="listName">The string list inside the SST file</param>
+    /// <param name="id">ID you want the string from</param>
+    /// <returns>String located at the index specified by id</returns>
     public string GetStringById(string listName, int id)
     {
         foreach (var entry in TableOfContents.Where(entry => entry.Key.Equals(listName)))
@@ -53,6 +63,10 @@ public class FpnSst
         return "(null)";
     }
     
+    /// <summary>
+    /// Display SST file TOC entries as table string
+    /// </summary>
+    /// <returns>ASCII table containing the TOC entries</returns>
     public string ListEntries()
     {
         string[] colHeaders = ["Name", "Offset", "Entry count", "Entry size"];
@@ -60,6 +74,10 @@ public class FpnSst
         return StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput);
     }
 
+    /// <summary>
+    /// Display gimmick data as table string
+    /// </summary>
+    /// <param name="name">Name of the gimmick (from TOC, always starts with GMK)</param>
     public void ShowGimmick(string name)
     {
         var tocEntry = TableOfContents[name];
@@ -76,6 +94,10 @@ public class FpnSst
         Console.Write(StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput));
     }
 
+    /// <summary>
+    /// Get gimmick data
+    /// </summary>
+    /// <returns>Dictionary where each key references a TOC entry (starts with GMK)</returns>
     public Dictionary<string, Gimmick[]>? GetGimmicks()
     {
         Dictionary<string, Gimmick[]>? gimmicks = [];
@@ -94,6 +116,13 @@ public class FpnSst
         return gimmicks;
     }
 
+    /// <summary>
+    /// Get raw data from the TOC entry
+    /// </summary>
+    /// <param name="offset">Offset of the entry</param>
+    /// <param name="entrySize">Size of each subentry</param>
+    /// <param name="count">Number of subentries</param>
+    /// <returns>List containing raw data from each subentry</returns>
     private List<byte[]> GetSubentries(int offset, int entrySize, int count)
     {
         List<byte[]> subentries = [];
@@ -104,6 +133,10 @@ public class FpnSst
         return subentries;
     }
 
+    /// <summary>
+    /// Creates semi human-readable pseudocode from the EVENT entry 
+    /// </summary>
+    /// <returns></returns>
     public string GeneratePseudoCode()
     {
         try
@@ -124,11 +157,17 @@ public class FpnSst
         return o;
     }
 
+    /// <summary>
+    /// Check if the SST file has the RECORD entry in TOC
+    /// </summary>
     public bool HasScoreRecord()
     {
         return TableOfContents.ContainsKey("RECORD");
     }
     
+    /// <summary>
+    /// Convert the RECORD entry to FpnSave object
+    /// </summary>
     public FpnSave GetSaveFromRecord()
     {
         var data = new byte[0x2780];

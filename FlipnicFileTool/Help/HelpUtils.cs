@@ -2,6 +2,9 @@ namespace FlipnicFileTool.Help;
 
 public abstract class HelpUtils
 {
+    /// <summary>
+    /// Generates the text that is displayed when the user passes a --help flag to args
+    /// </summary>
     public static void GenerateHelp()
     {
         HelpTopic[] help =

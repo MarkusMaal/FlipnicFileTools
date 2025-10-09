@@ -7,6 +7,11 @@ public class BinFile
 {
     public BinFile() {}
     public List<VirtualFile> FsEntries { get; set; } = [];
+    
+    /// <summary>
+    /// Generate a table containing a list of all the files stored inside the .BIN file
+    /// </summary>
+    /// <param name="src">The source .BIN file stream</param>
     public void ListBin(Stream src)
     {
         string[] colHeader = ["Path", "Offset", "Size"];
@@ -18,6 +23,12 @@ public class BinFile
         src.Close();
         Console.Write(StaticUtils.GenerateTable(colHeader, rows, StaticUtils.SimpleOutput));
     }
+    
+    /// <summary>
+    /// Generate a VirtualFile array containing all the files stored inside the .BIN file
+    /// </summary>
+    /// <param name="src">The source .BIN file stream</param>
+    /// <returns>An array, where each entry contains virtual file path, offset and size</returns>
     public VirtualFile[] GetListBin(Stream src)
     {
         string[] colHeader = ["Path", "Offset", "Size"];
@@ -27,6 +38,7 @@ public class BinFile
         return fsEntries.ToArray();
     }
 
+    // internal method for getting the VFS entries
     private List<string[]> GetFsEntriesNew(Stream src)
     {
         
@@ -142,6 +154,11 @@ public class BinFile
         return realRows;
     }
     
+    /// <summary>
+    /// Extracts all files inside the .BIN container
+    /// </summary>
+    /// <param name="source">The input .BIN file stream</param>
+    /// <param name="destination">Full path to the folder to extract the files to</param>
     public void ExtractBin(Stream source, string destination)
     {
         if (Directory.Exists(destination))

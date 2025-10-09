@@ -10,6 +10,9 @@ public class SaveIcon(byte [] data)
     
     public List<Vertex> Vertices = [];
 
+    /// <summary>
+    /// Process the data provided
+    /// </summary>
     public void Read()
     {
         for (var i = 0; i < VertexCount; i++)

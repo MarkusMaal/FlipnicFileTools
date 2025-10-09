@@ -54,6 +54,9 @@ public abstract class StaticUtils
 
     public static bool IsModeSet { get; set; } = false;
     
+    /// <summary>
+    /// Display an animated spinning line loader
+    /// </summary>
     public static void PrintLoader()
     {
         
@@ -72,16 +75,21 @@ public abstract class StaticUtils
         }
     }
     
+    /// <summary>
+    /// Read signed 32-bit floating point (float) from the offset specified (assuming little-endian)
+    /// </summary>
+    /// <param name="data">Source data</param>
+    /// <param name="offset">Offset of the location within the data provided, which contains the float requested</param>
     public static float GetFloat(byte[] data, int offset)
     { 
         return BitConverter.ToSingle(data.Skip(offset).Take(4).ToArray());
     }
 
-    public static float GetHalf(byte[] data, int offset)
-    {
-        return (float)BitConverter.ToHalf(new[]{data[offset+1], data[offset]});
-    }
-
+    /// <summary>
+    /// Decode UTF-8 string from the provided data
+    /// </summary>
+    /// <param name="data">Source data</param>
+    /// <returns>Decoded UTF-8 string</returns>
     public static string GetString(byte[] data)
     {
         var chars = new List<char>();
@@ -95,28 +103,65 @@ public abstract class StaticUtils
         return new string(chars.ToArray());
     }
 
+    
+    /// <summary>
+    /// Read signed 64-bit integer (long) from the offset specified (assuming little-endian)
+    /// </summary>
+    /// <param name="data">Source data</param>
+    /// <param name="offset">Offset of the location within the data provided, which contains the integer requested</param>
     public static long GetInt64(byte[] data, int offset)
     {
         return BitConverter.ToInt64(data.Skip(offset).Take(8).ToArray());
     }
+    
+    
+    /// <summary>
+    /// Read signed 32-bit integer (int) from the offset specified (assuming little-endian)
+    /// </summary>
+    /// <param name="data">Source data</param>
+    /// <param name="offset">Offset of the location within the data provided, which contains the integer requested</param>
     public static int GetInt32(byte[] data, int offset)
     {
         return BitConverter.ToInt32(data.Skip(offset).Take(4).ToArray());
     }
+    
+    
+    /// <summary>
+    /// Read unsigned 32-bit integer (uint) from the offset specified (assuming little-endian)
+    /// </summary>
+    /// <param name="data">Source data</param>
+    /// <param name="offset">Offset of the location within the data provided, which contains the integer requested</param>
     public static uint GetUInt32(byte[] data, int offset)
     {
         return BitConverter.ToUInt32(data.Skip(offset).Take(4).ToArray());
     }
 
+    /// <summary>
+    /// Read signed 16-bit integer from the offset specified (assuming little-endian)
+    /// </summary>
+    /// <param name="data">Source data</param>
+    /// <param name="offset">Offset of the location within the data provided, which contains the integer requested</param>
     public static short GetInt16(byte[] data, int offset)
     {
         return BitConverter.ToInt16(data.Skip(offset).Take(2).ToArray());
     }
+    
+    /// <summary>
+    /// Read unsigned 16-bit integer from the offset specified (assuming little-endian)
+    /// </summary>
+    /// <param name="data">Source data</param>
+    /// <param name="offset">Offset of the location within the data provided, which contains the integer requested</param>
     public static ushort GetUInt16(byte[] data, int offset)
     {
         return BitConverter.ToUInt16(data.Skip(offset).Take(2).ToArray());
     }
 
+    /// <summary>
+    /// Convert a range withing byte array to string assuming it's UTF-8 encoded, NUL character is the delimiter
+    /// </summary>
+    /// <param name="data">Full range of the data</param>
+    /// <param name="offset">Offset to the location within the data provided, which contains the UTF-8/ASCII string</param>
+    /// <returns>Decoded UTF-8 string</returns>
     public static string GetStringAt(byte[] data, int offset)
     {
         var chars = new List<char>();
@@ -130,16 +175,35 @@ public abstract class StaticUtils
         return new string(chars.ToArray());
     }
 
+    /// <summary>
+    /// Convert a range within byte array to string assuming it's UTF-16 encoded
+    /// </summary>
+    /// <param name="data">Full range of the data</param>
+    /// <param name="offset">Offset to the location within the data provided, which contains the UTF-16 string</param>
+    /// <param name="length">Number of bytes to read in order to decode the UTF-16 string</param>
+    /// <returns>Decoded UTF-16 string</returns>
     public static string GetFixedUtf16String(byte[] data, int offset, int length)
     {
         return Encoding.Unicode.GetString(data.Skip(offset).Take(length).ToArray());
     }
 
+    /// <summary>
+    /// Converts a float to string with the en-US culture
+    /// </summary>
+    /// <param name="f">The float you want to stringify</param>
+    /// <returns>Float formatted as string where the decimal point is a period (.)</returns>
     public static string DotFloatString(float f)
     {
         return f.ToString(CultureInfo.CreateSpecificCulture("en-US"));
     }
 
+    /// <summary>
+    /// Generates an ASCII table with the data provided
+    /// </summary>
+    /// <param name="columns">Table headers (the first row)</param>
+    /// <param name="rows">Every subsequent row of the table (the length of each string[] inside the list should be equal to the length of columns)</param>
+    /// <param name="asCsv">Return a CSV table instead of ASCII table</param>
+    /// <returns>A table containing the data provided as string</returns>
     public static string GenerateTable(string[] columns, List<string[]> rows, bool asCsv)
     {
         if ((rows.Count == 0) && !asCsv)
@@ -220,6 +284,11 @@ public abstract class StaticUtils
         return o;
     }
 
+    /// <summary>
+    /// Converts a numeric size value to a human-friendly string to describe the file size in B, kiB, MiB or GiB
+    /// </summary>
+    /// <param name="bytes">Filesize in bytes</param>
+    /// <returns>Formatted filesize string (e.g. 5.21MiB)</returns>
     public static string GetFilesizeString(long bytes)
     {
         return bytes switch
@@ -231,6 +300,12 @@ public abstract class StaticUtils
         };
     }
 
+    /// <summary>
+    /// Creates a fully transparent blank PNG file with the specified width and height.
+    /// </summary>
+    /// <param name="fileName">Full path of the output file</param>
+    /// <param name="width">Width of the image</param>
+    /// <param name="height">Height of the image</param>
     public static void GenerateEmptyPng(string fileName, int width, int height)
     {
         var builder = PngBuilder.Create(width, height, true);
@@ -248,6 +323,11 @@ public abstract class StaticUtils
         fs.Close();
     }
 
+    /// <summary>
+    /// Runs FFmpeg command with the OS shell
+    /// </summary>
+    /// <param name="ffmpegPath">Full path to FFmpeg executable</param>
+    /// <param name="ffmpegCommand">Arguments to pass to FFmpeg (separated by spaces)</param>
     public static void ProcessFFmpeg(string ffmpegPath, string ffmpegCommand)
     {
         var p = new Process
@@ -265,6 +345,13 @@ public abstract class StaticUtils
         p.WaitForExit();
     }
 
+    /// <summary>
+    /// Convert Sony Compressed ADPCM audio to PCM
+    /// </summary>
+    /// <param name="outFile">Full path to output .WAV file</param>
+    /// <param name="data">Binary data containing the compressed ADPCM audio with 0x400 interleave</param>
+    /// <param name="mono">Does the audio file only have 1 channel? If yes, this method won't interleave the data.</param>
+    /// <param name="sampleRate">Sample rate of the audio in Hz (see https://en.wikipedia.org/wiki/Sampling_(signal_processing)#Audio_sampling)</param>
     public static void ConvertAudio(string outFile, byte[] data, bool mono = false, int sampleRate = 44100)
     {
         File.WriteAllBytes(Path.GetTempPath() + "/temp.vag", data);
@@ -272,6 +359,13 @@ public abstract class StaticUtils
         File.Delete(Path.GetTempPath() + "/temp.vag");
     }
     
+    /// <summary>
+    /// Convert Sony Compressed ADPCM audio to PCM
+    /// </summary>
+    /// <param name="outFile">Full path to output .WAV file</param>
+    /// <param name="fileName">Full path to input file containing compressed ADPCM audio with 0x400 interleave</param>
+    /// <param name="mono">Does the audio file only have 1 channel? If yes, this method won't interleave the data.</param>
+    /// <param name="sampleRate">Sample rate of the audio in Hz (see https://en.wikipedia.org/wiki/Sampling_(signal_processing)#Audio_sampling)</param>
     public static void ConvertAudio(string outFile, string fileName, bool mono = false, int sampleRate = 44100)
     {
         Console.Write("     Loading sound file to memory".PadRight(WindowWidth, ' '));
@@ -354,7 +448,7 @@ public abstract class StaticUtils
         }
     }
 
-    private static void HexStrToColor(string hex)
+    private static void HexStrToColor(string hex) // internal method, do not touch
     {
         if (SimpleOutput) return;
         var bg = hex[0];
@@ -376,6 +470,16 @@ public abstract class StaticUtils
         Console.ForegroundColor = (ConsoleColor)fgI;
     }
 
+    /// <summary>
+    /// Paints text characters inside the string to specific colors specified by my custom encoding and displays them.
+    ///
+    /// Colors are encoded like so: ~[BG][FG], where BG represents a background color using a hex nibble (0-F)
+    /// or dash character (-), FG is the same, but for foreground color. The first character of the encoded string MUST
+    /// be a tilde (~).
+    ///
+    /// Example: "~1FThis is white on blue.~-- This is default. ~-AThis is green on default.~4-This is default on red.~--"
+    /// </summary>
+    /// <param name="encoded">The encoded text</param>
     public static void DecodeColors(string encoded)
     {
         foreach (var _sect in encoded.Split('~'))
@@ -389,11 +493,22 @@ public abstract class StaticUtils
     }
 
 
+    /// <summary>
+    /// Shortens the Note value
+    /// </summary>
+    /// <param name="noteStr">Unshortened string</param>
+    /// <returns>Shortened value, e.g. Sharp is replaced with #</returns>
     public static string SNote(Note noteStr)
     {
         return noteStr.ToString().Replace("Sharp", "#").Replace("Neg", "Ng");
     }
 
+    /// <summary>
+    /// Export raw model data and texture to Wavefront OBJ, MTL and PNG
+    /// </summary>
+    /// <param name="fileName">Full path to output OBJ file (including extension)</param>
+    /// <param name="vertices">Array containing raw model data (each chunk is 7*sizeof(float), where first 2 items are XY UV coordinates, next 3 items are XYZ vertex coordinates and final 3 items are XYZ normal coordinates)</param>
+    /// <param name="texture">Texture object (either Tim or Tim2 is accepted here)</param>
     public static void ExportObj(string fileName, float[] vertices, object? texture)
     {
         // generate .png file

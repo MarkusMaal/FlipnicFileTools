@@ -4,6 +4,9 @@ namespace FlipnicFileTool;
 
 public abstract class Enums
 {
+    /// <summary>
+    /// Includes all the modes this app can operate in
+    /// </summary>
     public enum Modes
     {
         ListResources,
@@ -43,9 +46,15 @@ public abstract class Enums
         ConvertIcoObj,
         GenerateMsg,
         ConflictingModes,
-        NoAction
+        NoAction,
+        Quit
     }
     
+    /// <summary>
+    /// Attempt to guess the default action based on the extension of the filename provided
+    /// </summary>
+    /// <param name="fileName">Full path to the input file</param>
+    /// <returns>The mode we guessed, default is help</returns>
     public static Modes GuessAction(string fileName)
     {
         return Path.GetExtension(fileName) switch
@@ -68,6 +77,12 @@ public abstract class Enums
         };
     }
 
+    /// <summary>
+    /// Switches to a specific mode based on the CLI flag
+    /// </summary>
+    /// <param name="flag">The flag from CLI args, must start with two dashes (e.g. --help)</param>
+    /// <param name="mode">Current mode of the app before switching</param>
+    /// <returns>The new mode the app should operate in</returns>
     public static Modes GetMode(string flag, Modes mode)
     {
         var oldMode = mode;

@@ -38,6 +38,9 @@ public class FpnMsg
         _magic = "FpnMsg00";
     }
 
+    /// <summary>
+    /// Gets the message at the index specified by id
+    /// </summary>
     public string GetMessageById(int id)
     {
         return id == -1 ? "MASTER" : _messages[id];
@@ -54,6 +57,9 @@ public class FpnMsg
         return ToString(false);
     }
 
+    /// <summary>
+    /// Show messages without generating a table
+    /// </summary>
     public string ToSimpleString()
     {
         return _messages.Aggregate("", (current, message) => current + (message + "\n"));
@@ -64,6 +70,9 @@ public class FpnMsg
         return _messages.ToArray();
     }
 
+    /// <summary>
+    /// Get the raw .MSG data from this object
+    /// </summary>
     public byte[] GetData()
     {
         List<byte> data = [];

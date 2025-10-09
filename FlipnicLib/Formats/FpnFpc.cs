@@ -192,6 +192,9 @@ public class FpnFpc
         return o;
     }
 
+    /// <summary>
+    /// Converts FPC to human-readable XML
+    /// </summary>
     public XDocument GenerateXML()
     {
         

@@ -4,6 +4,14 @@ public class Pss(string fileName)
 {
     private string FileName { get; set; } = fileName;
     private static readonly char Slash = OperatingSystem.IsWindows() ? '\\' : '/';
+    
+    /// <summary>
+    /// Lists streams inside the PSS container or extract them
+    /// </summary>
+    /// <param name="inFile">File stream of the .PSS file</param>
+    /// <param name="extract">If true, demux instead of just listing</param>
+    /// <param name="outFile">Full path to the output directory</param>
+    /// <returns>Table containing info about the PSS container or empty string (when extracting)</returns>
     public string ListPss(Stream inFile, bool extract = false, string? outFile = null)
     {
         outFile ??= Directory.GetCurrentDirectory();
@@ -168,7 +176,7 @@ public class Pss(string fileName)
     }
     
     
-    private void CutFile(string sourceFilePath, string destinationFilePath, long startPosition, long endPosition)
+    private void CutFile(string sourceFilePath, string destinationFilePath, long startPosition, long endPosition) // internal
     {
         StaticUtils.LiveLoadStatus = "Extracting streams, please wait...";
         Console.Write($"\r     {StaticUtils.LiveLoadStatus}".PadRight(StaticUtils.WindowWidth));

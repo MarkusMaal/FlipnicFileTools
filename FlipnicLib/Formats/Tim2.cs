@@ -159,6 +159,10 @@ public class Tim2
         return bitmapArray.ToArray();
     }
 
+    /// <summary>
+    /// Convert the TIM2 file to PNG
+    /// </summary>
+    /// <param name="output">Output .PNG file stream</param>
     public void SavePng(Stream output)
     {
         Console.Write("Converting...");
@@ -186,6 +190,10 @@ public class Tim2
         output.Close();
     }
 
+    /// <summary>
+    /// Convert the TIM2 file to BMP (NOTE: Opacity data will be lost)
+    /// </summary>
+    /// <param name="output">Output .BMP file stream</param>
     public void SaveBitmap(Stream output)
     {
         Console.Write("Converting...");
