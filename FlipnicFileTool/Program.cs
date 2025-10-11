@@ -95,6 +95,11 @@ internal static class Program
                     break;
                 case Enums.Modes.ShowFpd:
                     throw new NotImplementedException();
+                case Enums.Modes.ShowIso:
+                case Enums.Modes.ExtractIso:
+                case Enums.Modes.ReplaceIso:
+                    _ = new IsoTools(Cfg);
+                    break;
                 case Enums.Modes.Quit:
                     break;
                 default:

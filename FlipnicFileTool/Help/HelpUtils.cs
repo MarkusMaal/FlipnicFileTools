@@ -75,15 +75,6 @@ public abstract class HelpUtils
                 ]
             ),
             new(
-                "Blob files",
-                "*.BIN",
-                [
-                    new HelpLine("list-files*", "List all files inside this container file"),
-                    new HelpLine("extract-files", "Extract files inside the container to a folder (output = folder)"),
-                    new HelpLine("replace-file [filename]", "Allows you to replace a single file inside a .BIN container. Input should be the replacement file and output should be the .BIN file you want to repack (so it's also an input in a way). The filename you specify after the flag is the virtual filename inside the .BIN container."),
-                ]
-            ),
-            new(
                 "Resource files",
                 "*.LP4",
                 [
@@ -165,6 +156,24 @@ public abstract class HelpUtils
                     new HelpLine("show-ico*", "Display information about the save icon"),
                     new HelpLine("convert-ico-texture", "Converts save icon texture to PNG"),
                     new HelpLine("convert-ico-obj", "Converts save icon to Wavefront OBJ model"),
+                ]
+            ),
+            new(
+                "Blob files",
+                "*.BIN",
+                [
+                    new HelpLine("list-files*", "List all files inside this container file"),
+                    new HelpLine("extract-files", "Extract files inside the container to a folder (output = folder)"),
+                    new HelpLine("replace-file [vfile]", "Allows you to replace a single file inside a .BIN container (input = replacement file, output = BIN file, vfile = BIN file record name)"),
+                ]
+            ),
+            new(
+                "PlayStation 2 ISO file",
+                "*.ISO",
+                [
+                    new HelpLine("show-iso*", "Display a list of files stored inside the ISO file"),
+                    new HelpLine("extract-iso", "Extract all files from the .ISO file (output = folder)"),
+                    new HelpLine("replace-iso [vfile]", "Replace an existing file inside the .ISO file with new contents (input = replacement file, output = ISO file, vfile = ISO file record name)"),
                 ]
             ),
         ];

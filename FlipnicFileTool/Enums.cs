@@ -46,6 +46,9 @@ public abstract class Enums
         ConvertIcoObj,
         GenerateMsg,
         ConflictingModes,
+        ShowIso,
+        ExtractIso,
+        ReplaceIso,
         NoAction,
         Quit
     }
@@ -57,7 +60,7 @@ public abstract class Enums
     /// <returns>The mode we guessed, default is help</returns>
     public static Modes GuessAction(string fileName)
     {
-        return Path.GetExtension(fileName) switch
+        return Path.GetExtension(fileName.ToUpper()) switch
         {
             ".FPC" => Modes.ShowFpc,
             ".SST" => Modes.ShowSstToc,
@@ -73,6 +76,7 @@ public abstract class Enums
             ".LAY" => Modes.ShowLay,
             ".IPU" => Modes.ShowIpu,
             ".ICO" => Modes.ShowIco,
+            ".ISO" => Modes.ShowIso,
             _ => Modes.ShowHelp
         };
     }
@@ -124,6 +128,9 @@ public abstract class Enums
             "--generate-msg" => Modes.GenerateMsg,
             "--show-bd" => Modes.ShowBd,
             "--extract-samples" => Modes.ExtractSamples,
+            "--show-iso" => Modes.ShowIso,
+            "--extract-iso" => Modes.ExtractIso,
+            "--replace-iso" => Modes.ReplaceIso,
             _ => mode
         };
         

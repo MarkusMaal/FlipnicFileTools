@@ -46,6 +46,8 @@ public sealed partial class MainWindow : SukiWindow
     public string? FileName { get; set; }
     
     public BinFile? Fs { get; set; }
+    
+    public IsoUdf? IsoFile { get; set; }
 
     public MainWindow()
     {
@@ -588,6 +590,38 @@ public sealed partial class MainWindow : SukiWindow
         if (FileName is null) return;
         var replacement = await FileHelpers.OpenFile(this, [], "Choose a replacement file");
         if (replacement == null) return;
+        if (FileName.ToUpper().EndsWith(".ISO"))
+        {
+            new Thread(() =>
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    Loader.IsVisible = true;
+                    MainTabControl.IsVisible = false;
+                });
+                new IsoUdf(FileName).ReplaceFile(replacement, FileName, vf.Path);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    Loader.IsVisible = false;
+                    MainTabControl.IsVisible = true;
+                    StaticUtils.LiveLoadStatus = "Done!";
+                    ShowDialog("Flipnic file tools", "File replaced successfully.", NotificationType.Success);
+                });
+            }).Start();
+            new Thread(() =>
+            {
+                while (StaticUtils.LiveLoadStatus != "Done!")
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        LoadStatus.Text = StaticUtils.LiveLoadStatus;
+                    });
+                    Thread.Sleep(100);
+                }
+                StaticUtils.LiveLoadStatus = "Please wait...";
+            }).Start();
+            return;
+        }
         var offset = vf.Offset;
         var size = vf.Length;
         var rfi = new FileInfo(replacement);

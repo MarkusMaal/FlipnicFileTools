@@ -104,7 +104,7 @@ public class ExtractUtils
     }
 
     /// <summary>
-    /// Extracts all files from a .BIN container to a folder specified
+    /// Extracts all files from a .BIN/.ISO container to a folder specified
     /// </summary>
     /// <param name="mw">Main window instance</param>
     public static async void ExtractAll(MainWindow mw)
@@ -121,28 +121,48 @@ public class ExtractUtils
                 Thread.Sleep(100);
                 Dispatcher.UIThread.Post(() =>
                 {
-                    mw.LoadProgress.Maximum = MainWindow.ProgressMax;
-                    mw.LoadProgress.Value = MainWindow.Progress;
+
+                    if (!mw.FileName!.ToUpper().EndsWith(".ISO"))
+                    {
+                        mw.LoadProgress.Maximum = MainWindow.ProgressMax;
+                        mw.LoadProgress.Value = MainWindow.Progress;
+                    }
+                    else
+                    {
+                        mw.LoadStatus.Text = StaticUtils.LiveLoadStatus;
+                    }
                 });
             }
         }).Start();
         new Thread(() =>
         {
-            foreach (var vf in mw.Fs.FsEntries)
+            if (mw.FileName!.ToUpper().EndsWith(".ISO"))
             {
-                if (vf.Path[1..].Contains('\\') && !Directory.Exists(outputDir + vf.Path.Split('\\')[1]))
-                {
-                    Directory.CreateDirectory(outputDir + vf.Path.Split('\\')[1]);
-                }
-
-                if (vf.Path.EndsWith('\\')) continue;
                 Dispatcher.UIThread.Post(() =>
                 {
-                    mw.LoadStatus.Text = $"Extracting {vf.Path} ({StaticUtils.GetFilesizeString(vf.Length)})";
-                    MainWindow.Progress = 0;
-                    MainWindow.ProgressMax = 1;
+                    mw.LoadProgress.IsIndeterminate = true;
                 });
-                SaveFile(vf, outputDir + vf.Path.Replace("\\", "/"), mw);
+                new IsoUdf(mw.FileName).ExtractFiles(mw.FileName, outputDir);
+                MainWindow.ProgressMax = 0;
+            }
+            else
+            {
+                foreach (var vf in mw.Fs.FsEntries)
+                {
+                    if (vf.Path[1..].Contains('\\') && !Directory.Exists(outputDir + vf.Path.Split('\\')[1]))
+                    {
+                        Directory.CreateDirectory(outputDir + vf.Path.Split('\\')[1]);
+                    }
+
+                    if (vf.Path.EndsWith('\\')) continue;
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        mw.LoadStatus.Text = $"Extracting {vf.Path} ({StaticUtils.GetFilesizeString(vf.Length)})";
+                        MainWindow.Progress = 0;
+                        MainWindow.ProgressMax = 1;
+                    });
+                    SaveFile(vf, outputDir + vf.Path.Replace("\\", "/"), mw);
+                }
             }
             Dispatcher.UIThread.Post(() =>
             {
@@ -154,6 +174,7 @@ public class ExtractUtils
             });
         }).Start();
     }
+
 
     /// <summary>
     /// Saves a file inside the .BIN container

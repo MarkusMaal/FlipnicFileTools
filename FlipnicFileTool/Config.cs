@@ -60,7 +60,7 @@ public class Config
     public string BdFile { get; set; } = "";
     
     /// <summary>
-    /// Name of a virtual file inside a .BIN container
+    /// Name of a virtual file inside a .BIN/.ISO container
     /// </summary>
     public string VFile { get; set; } = "";
     
@@ -162,6 +162,7 @@ public class Config
                     ScaleFactor = int.Parse(arg);
                     break;
                 case "--replace-file":
+                case "--replace-iso":
                     VFile = arg;
                     break;
                 default:

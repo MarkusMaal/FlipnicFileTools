@@ -116,6 +116,8 @@ public static class FileHelpers
         mw.DockPanel1.IsVisible = false;
         mw.Loader.IsVisible = true;
 
+        List<VirtualFile> fsEntries;
+
         new Thread(() =>
         {
             switch (ext.ToUpper())
@@ -428,13 +430,28 @@ public static class FileHelpers
                     mw.Fs.FsEntries.Clear();
                     mw.Fs.ListBin(ds);
 
-                    var fsEntries = mw.Fs.FsEntries.ToList();
+                    fsEntries = mw.Fs.FsEntries.ToList();
                     Dispatcher.UIThread.Post(() =>
                     {
                         mw.GetViewModel().VirtualFiles = new ObservableCollection<VirtualFile>(fsEntries);
                         mw.FileListTab.IsVisible = true;
                         mw.FilesGrid.ItemsSource = mw.GetViewModel().VirtualFiles;
                         mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "Blob file");
+                        mw.OpenButton.IsVisible = true;
+                        mw.ExtractButton.IsVisible = true;
+                    });
+                    break;
+                case "ISO":
+                    mw.IsoFile = new IsoUdf(mw.FileName);
+                    fsEntries = mw.IsoFile.GetFiles().ToList();
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        mw.GetViewModel().VirtualFiles = new ObservableCollection<VirtualFile>(fsEntries);
+                        mw.FileListTab.IsVisible = true;
+                        mw.FilesGrid.ItemsSource = mw.GetViewModel().VirtualFiles;
+                        mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "UDF disc image");
+                        mw.OpenButton.IsVisible = false;
+                        mw.ExtractButton.IsVisible = false;
                     });
                     break;
                 case "PSS":
