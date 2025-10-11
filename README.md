@@ -13,6 +13,7 @@ Jump to section:
 
 * [GUI version](#gui-version)
 * [Command line syntax](#command-line-syntax)
+* [Disc images (*.ISO)](#disc-images-iso)
 * [Blob files (*.BIN)](#blob-files-bin)
 * [Movies (*.PSS)](#movies-pss)
 * [Sound files (*.INT / *.SVAG)](#sound-files-int-svag)
@@ -39,6 +40,43 @@ There's also a graphical front-end for this CLI tool, which is easier to use, bu
 
 To see command line syntax at any time, you can run: `FlipnicFileTool --help`
 
+## Disc images (*.ISO)
+
+This is the final disc image that can be burned to a disc and run by the PlayStation 2.
+
+Listing files: `FlipnicFileTool --show-iso --input Flipnic.iso`
+
+Outputs:
+```
+PlayStation 2 ISO file
+File system: UDF
+Volume label: Untitled
+
++----------------------+------------+
+| Filename             | Size       | 
++----------------------+------------+
+| modules\ioprp270.img | 243.28 kiB | 
+| modules\libsd.irx    | 27.89 kiB  | 
+| modules\mcman.irx    | 93.63 kiB  | 
+| modules\mcserv.irx   | 7.24 kiB   | 
+| modules\padman.irx   | 42.79 kiB  | 
+| modules\sdrdrv.irx   | 7.88 kiB   | 
+| modules\sg2iop.irx   | 26.76 kiB  | 
+| modules\sio2man.irx  | 6.49 kiB   | 
+| SYSTEM.CNF           | 56 B       | 
+| SLES_520.65          | 1.17 MiB   | 
+| FONT.BIN             | 304 kiB    | 
+| RES.BIN              | 189.06 MiB | 
+| STR.BIN              | 955.66 MiB | 
+| TUTO.BIN             | 1.47 GiB   | 
+| DUMMY.DAT            | 2 kiB      | 
++----------------------+------------+
+```
+
+Extract files: `FlipnicFileTool --extract-iso --input Flipnic.iso --output ./FlipnicISO`
+
+Repack a file: `FlipnicFileTool --replace-iso RES.BIN --input RES.BIN --output Flipnic.iso` (CAUTION: this operation WILL overwrite the contents of the ISO file)
+
 ## Blob files (*.BIN)
 
 These are big files that contain smaller files within themselves (basically like an uncompressesed .ZIP or .TAR file, but proprietary to Flipnic).
@@ -61,6 +99,8 @@ Outputs:
 ```
 
 Extract files: `FlipnicFileTool --extract-files --input RES.BIN --output ./RES`
+
+Repack a file: `FlipnicFileTool --replace-file RETRO1\RETRO1.SST --input RETRO1.SST --output RES.BIN`  (CAUTION: this operation WILL overwrite existing data)
 
 ## Movies (*.PSS)
 
