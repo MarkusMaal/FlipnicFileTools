@@ -35,7 +35,6 @@
                     <NativeMenuItem Header="Toggle dark theme" Click="ToggleDarkNative" />
                     <NativeMenuItemSeparator/>
                     <NativeMenuItem Header="Import JA.MSG" Click="OpenNativeMenuItem_OnClick"></NativeMenuItem>
-                    <NativeMenuItem Header="Crash test" Click="CrashTestMenuItem_Click" IsVisible="{Binding DevMode}"></NativeMenuItem>
                 </NativeMenu>
             </NativeMenuItem>
         </NativeMenu>
@@ -53,7 +52,6 @@
             <MenuItem Header="Toggle dark theme" Click="PalMenuItem_OnClick"></MenuItem>
             <Separator/>
           <MenuItem Header="Import JA.MSG" Click="OpenMenuItem_OnClick"></MenuItem>
-          <MenuItem Header="Crash test" Click="CrashMenuItem_Click" IsVisible="{Binding DevMode}"></MenuItem>
         </MenuItem>
         <MenuItem Name="AboutMenu1" Header="About" Click="AboutClick">
             

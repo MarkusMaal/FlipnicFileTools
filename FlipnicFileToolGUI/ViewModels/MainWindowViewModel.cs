@@ -38,13 +38,13 @@ public class MainWindowViewModel
     /// App > Is light mode enabled?
     /// </summary>
     public bool IsLightTheme { get; set; } = Design.IsDesignMode;
-    
+
     /// <summary>
     /// App > Enable developer features?
     /// </summary>
-    public bool DevMode { get; set; }
+    //public bool DevMode { get; set; };
 
-    public static readonly StyledProperty<bool> DevModeProperty = AvaloniaProperty.Register<MainWindow, bool>(nameof(DevMode), defaultValue: true);
+    //public static readonly StyledProperty<bool> DevModeProperty = AvaloniaProperty.Register<MainWindow, bool>(nameof(DevMode), defaultValue: false);
     public ObservableCollection<MenuElementViewModel>? MenuElements { get; set; }
     
     /// <summary>
