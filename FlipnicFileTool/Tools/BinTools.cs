@@ -50,11 +50,33 @@ public class BinTools
 
         if (new FileInfo(filename).Length > vfSize)
         {
-            StaticUtils.DecodeColors($"~-CError~--: The replacement file is too big! Must be {vfSize} bytes or less!");
+            var nSize = new FileInfo(filename).Length;
+            while ((nSize - vfSize) % 0x800 != 0)
+            {
+                nSize++;
+            }
+            StaticUtils.DecodeColors("~-EWarning~--: It seems like the input file is bigger than the original. This means, we are going to have to update file records and increase the size of the .BIN file. This operation is POTENTIALLY DANGEROUS and should only be done if you know exactly what you are doing!!! Are you sure you want to continue? ~-8[y/n]~--");
+            while (true)
+            {
+                var ck = Console.ReadKey();
+                var bn = false;
+                switch (ck.Key)
+                {
+                    case ConsoleKey.Y:
+                        bn = true;
+                        break;
+                    case ConsoleKey.N:
+                        return;
+                }
+
+                if (bn) break;
+            }
+
             Console.WriteLine();
-            return;
+            Console.Write("\rRebuilding .BIN file...");
+            RepackUtils.ResizeFile(vFile, (int)nSize, File.Open(outFile, FileMode.Open), binFiles);
         }
-        Console.Write("Repacking...");
+        Console.Write("\rRepacking...".PadRight(Console.WindowWidth, ' '));
         RepackUtils.RepackFileUnsafe(vfOffset, filename, outFile, vfSize, largeBuffer ? 2048 : 1);
         StaticUtils.DecodeColors("~-A\rSuccess~--: The file has been replaced!");
         Console.WriteLine();

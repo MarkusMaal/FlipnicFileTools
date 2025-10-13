@@ -14,7 +14,7 @@ public class BinFile
     /// <param name="src">The source .BIN file stream</param>
     public void ListBin(Stream src)
     {
-        string[] colHeader = ["Path", "Offset", "Size"];
+        string[] colHeader = ["Path", "Offset", "Size", "TOC offset", "Large buffer"];
         var rows = GetFsEntriesNew(src);
         foreach (var t in rows)
         {
@@ -31,9 +31,9 @@ public class BinFile
     /// <returns>An array, where each entry contains virtual file path, offset and size</returns>
     public VirtualFile[] GetListBin(Stream src)
     {
-        string[] colHeader = ["Path", "Offset", "Size"];
+        string[] colHeader = ["Path", "Offset", "Size", "TOC offset"];
         var rows = GetFsEntriesNew(src);
-        var fsEntries = rows.Select(row => new VirtualFile(row[0], Convert.ToInt64(row[1], 16), long.Parse(row[2]))).ToList();
+        var fsEntries = rows.Select(row => new VirtualFile(row[0], Convert.ToInt64(row[1], 16), long.Parse(row[2]), Convert.ToInt64(row[3], 16), row[4] == "Y")).ToList();
         src.Close();
         return fsEntries.ToArray();
     }
@@ -59,6 +59,7 @@ public class BinFile
         while ((offset = src.Read(buffer, 0, buffer.Length)) > 0)
         {
             string filename;
+            var tOff = loc;
             if (intoc)
             {
                 if (loc >= end_of_toc)
@@ -101,7 +102,7 @@ public class BinFile
                 {
                     folders[filename] = byteoffset;
                 }
-                rows.Add([$"\\{filename}", $"0x{byteoffset:X}"]);
+                rows.Add([$"\\{filename}", $"0x{byteoffset:X}", $"0x{tOff+64:X}", "Y"]);
                 Offsets.Add(byteoffset);
             } else if (insub)
             {
@@ -130,7 +131,7 @@ public class BinFile
                     continue;
                 }
 
-                rows.Add([$"\\{folder}{filename}", $"0x{byteoffset:X}"]);
+                rows.Add([$"\\{folder}{filename}", $"0x{byteoffset:X}", $"0x{tOff:X}", "N"]);
                 Offsets.Add(byteoffset);
             }
             loc += 64;
@@ -148,9 +149,9 @@ public class BinFile
         List<string[]> realRows = [];
         for (var i = 0; i < Sizes.Count; i++)
         {
-            FsEntries.Add(new VirtualFile(rows[i][0], Offsets[i], Sizes[i]));
+            FsEntries.Add(new VirtualFile(rows[i][0], Offsets[i], Sizes[i], Convert.ToInt64(rows[i][2], 16), rows[i][3] == "Y"));
         }
-        realRows.AddRange(rows.Select((t, i) => (string[]) [t[0], t[1], Sizes[i].ToString()]));
+        realRows.AddRange(rows.Select((t, i) => (string[]) [t[0], t[1], Sizes[i].ToString(), t[2], t[3]]));
         return realRows;
     }
     
@@ -223,5 +224,4 @@ public class BinFile
         Console.WriteLine($"\r   Files have been extracted to: {destination}".PadRight(StaticUtils.WindowWidth));
 
     }
-
 }

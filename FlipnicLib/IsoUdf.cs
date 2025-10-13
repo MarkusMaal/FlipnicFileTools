@@ -64,13 +64,13 @@ public class IsoUdf
         foreach (var f in _records.Where(f => f.Path.ToUpper() == vfsName.ToUpper().Replace("/", "\\")))
         {
             // vfsName matches, so replace this UdfFileEntry
-            if (f.Size > new FileInfo(replacementFile).Length)
+            if (new FileInfo(replacementFile).Length > f.Size)
             {
                 StaticUtils.LiveLoadStatus = "Rebuilding ISO file...";
                 using var fs = File.Open(replacementFile, FileMode.Open);
-                editor.ReplaceFileStream(f.File, fs);
-                fs.Close();
+                editor.ReplaceFileStream(editor.GetFileByName(f.Path) ?? throw new InvalidOperationException(), fs);
                 editor.Rebuild();
+                fs.Close();
                 return true;
             }
 
@@ -97,7 +97,7 @@ public class IsoUdf
     /// <returns></returns>
     public VirtualFile[] GetFiles()
     {
-        return _records.Select(rec => new VirtualFile(rec.Path, -1, rec.Size)).ToArray();
+        return _records.Select(rec => new VirtualFile(rec.Path, -1, rec.Size, -1, true)).ToArray();
     }
     
     public string ToString(bool asCsv)
