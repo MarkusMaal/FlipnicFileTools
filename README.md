@@ -2,7 +2,14 @@
 
 Several command line tools with a GUI front-end for various file formats used by Flipnic.
 
-Build instructions: [BUILD.md](BUILD.md)
+Useful links:
+
+* [Build instructions](BUILD.md)
+* [Progress report](https://github.com/MarkusMaal/FlipnicPatterns?tab=readme-ov-file#progress)
+* [Patterns](https://github.com/MarkusMaal/FlipnicPatterns/?tab=readme-ov-file#flipnic-hex-patterns)
+* [File format wiki (incomplete)](https://github.com/MarkusMaal/FlipnicPatterns/wiki)
+* [The Cutting Room Floor page (managed by SuperFromND)](https://tcrf.net/Flipnic:_Ultimate_Pinball)
+* [Freecam mod](https://www.youtube.com/watch?v=31-pnJw6PFo)
 
 Prerequisites:
 
