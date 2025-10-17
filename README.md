@@ -6,10 +6,12 @@ Useful links:
 
 * [Build instructions](BUILD.md)
 * [Progress report](https://github.com/MarkusMaal/FlipnicPatterns?tab=readme-ov-file#progress)
-* [Patterns](https://github.com/MarkusMaal/FlipnicPatterns/?tab=readme-ov-file#flipnic-hex-patterns)
+* [ImHex patterns](https://github.com/MarkusMaal/FlipnicPatterns/?tab=readme-ov-file#flipnic-hex-patterns)
 * [File format wiki (incomplete)](https://github.com/MarkusMaal/FlipnicPatterns/wiki)
-* [The Cutting Room Floor page (managed by SuperFromND)](https://tcrf.net/Flipnic:_Ultimate_Pinball)
+* [The Cutting Room Floor page (currently managed by SuperFromND)](https://tcrf.net/Flipnic:_Ultimate_Pinball)
 * [Freecam mod](https://www.youtube.com/watch?v=31-pnJw6PFo)
+* [Gameplay guide (with illustrations)](https://paktc.markusmaal.ee/?doc=en/FlipnicGuide.md)
+* [Teleporting the ball to other areas (guide)](https://paktc.markusmaal.ee/?doc=en/flipnic_ball_tp.md)
 
 Prerequisites:
 
@@ -476,3 +478,25 @@ Outputs:
 ## FlipnicLib
 
 If you want to work with Flipnic file formats on your own projects, you can add FlipnicLib as a dependancy to your project. Both the GUI and CLI of FlipnicFileTool are just front-ends to this library.
+
+Example:
+
+```C#
+using FlipnicLib;
+using FlipnicLib.Formats;
+
+namespace FlipnicLibExample {
+    public static void Main(string[] args) {
+        // Print library version
+        Console.WriteLine($"FlipnicLib version: {StaticUtils.DotFloatString(StaticUtils.LibVersion)}");
+        // SST file example
+        if (args.Length > 0) {
+            Console.Write($"Filename: {args[0]}");
+            var sst = new FpnSst(File.OpenRead(args[0]));
+            Console.Write(sst.ListEntries());
+            return;
+        }
+        Console.WriteLine("Please provide args!");
+    }
+}
+```
