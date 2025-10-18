@@ -2,10 +2,16 @@ using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.LogicalTree;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using Avalonia.Styling;
 using Avalonia.Threading;
+using FlipnicFileToolGUI.Controls;
+using FlipnicFileToolGUI.Helpers;
+using FlipnicFileToolGUI.ViewModels;
 using FlipnicLib;
+using FlipnicLib.Formats;
 using FlipnicLib.Types;
 using SukiUI;
 using SukiUI.Controls;
@@ -15,13 +21,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
-using Avalonia.LogicalTree;
-using Avalonia.Styling;
-using FlipnicFileToolGUI.Controls;
-using FlipnicFileToolGUI.Helpers;
-using FlipnicFileToolGUI.ViewModels;
-using FlipnicLib.Formats;
 
 namespace FlipnicFileToolGUI;
 
@@ -390,6 +391,18 @@ public sealed partial class MainWindow : SukiWindow
     {
         if (Design.IsDesignMode) return;
         Converters.ConvertSf2(this);
+        new Thread(() => {
+            var visible = false;
+            while (!visible)
+            {
+                Thread.Sleep(100);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    LoadStatus.Text = StaticUtils.LiveLoadStatus;
+                    visible = MainTabControl.IsVisible;
+                });
+            }
+        });
     }
 
     private async void ExtractSampleButton_OnClick(object? sender, RoutedEventArgs e)
@@ -625,9 +638,42 @@ public sealed partial class MainWindow : SukiWindow
         var offset = vf.Offset;
         var size = vf.Length;
         var rfi = new FileInfo(replacement);
+        var binFiles = new BinFile().GetListBin(File.OpenRead(replacement));
         if (rfi.Length > size)
         {
-            ShowDialog( "Flipnic file tools" ,"Currently, only replacing with smaller or equal sized files is supported." , NotificationType.Error);
+            var nSize = new FileInfo(FileName).Length;
+            while ((nSize - vf.Length) % 0x800 != 0)
+            {
+                nSize++;
+            }
+            _dialogManager.CreateDialog()
+                .WithTitle("CAUTION")
+                .WithContent("It appears the replacement file is bigger than the original file. We will need to update other file records and increase the size of the .BIN file. This should only be done if you know exactly what you're doing. Are you sure you want to continue?")
+                .WithActionButton("Yes", _ => {
+                    Loader.IsVisible = true;
+                    MainTabControl.IsVisible = false;
+                    LoadStatus.Text = "Rebuilding .BIN file";
+                    new Thread(() =>
+                    {
+                        RepackUtils.ResizeFile(vf.Path, (int)nSize, File.Open(FileName, FileMode.Open), binFiles);
+                        RepackUtils.RepackFileUnsafe(offset, replacement, FileName, size, vf.Path[1..].Contains('\\') && !vf.Path[1..].EndsWith('\\') ? 1 : 2048);
+
+                        Dispatcher.UIThread.Post(() => {
+                            ShowDialog("Flipnic file tools", "File replaced successfully.", NotificationType.Success);
+                            Loader.IsVisible = false;
+                            MainTabControl.IsVisible = true;
+                        });
+                    }).Start();
+                }, true)
+                .WithActionButton("No", _ => {
+                    new Thread(() =>
+                    {
+                        Thread.Sleep(200);
+                        Dispatcher.UIThread.Post(() => ShowDialog("Flipnic file tools", "No changes were made.", NotificationType.Information));
+                    }).Start();
+                }, true)
+                .OfType(NotificationType.Warning)
+                .TryShow();
             return;
         }
         RepackUtils.RepackFileUnsafe(offset, replacement, FileName, size, vf.Path[1..].Contains('\\') && !vf.Path[1..].EndsWith('\\') ? 1 : 2048);

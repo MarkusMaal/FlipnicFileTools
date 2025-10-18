@@ -442,6 +442,7 @@ public static class FileHelpers
                     });
                     break;
                 case "ISO":
+                    ds.Close(); // fix access violation
                     mw.IsoFile = new IsoUdf(mw.FileName);
                     fsEntries = mw.IsoFile.GetFiles().ToList();
                     Dispatcher.UIThread.Post(() =>

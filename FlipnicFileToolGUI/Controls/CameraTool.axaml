@@ -35,7 +35,7 @@
                   BorderThickness="1" BorderBrush="Gray" Name="CameraGrid"
                   CanUserResizeColumns="True"
                   CanUserReorderColumns="True" DataContext="{Binding CameraObject}"
-                  CanUserSortColumns="True"
+                  CanUserSortColumns="True" SelectionMode="Single"
                   IsReadOnly="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Origin X" x:DataType="types:CameraFrame" Binding="{Binding OriginX}"></DataGridTextColumn>

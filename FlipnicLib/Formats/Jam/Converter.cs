@@ -8,7 +8,16 @@ namespace FlipnicLib.Formats.Jam;
 
 public abstract class Converter
 {
-    
+ 
+    // Based on page 47 of SoundFont 2.01 specification (SFSPEC21.PDF)
+    private enum SF2SampleModeFlags
+    {
+        NoLoop,
+        Continuous,
+        UnusedNoLoop,
+        StartLoopEnd
+    };
+
     /// <summary>
     /// Converts a .hd/.bd (audio bank)'s instruments to a sound font 2 file.
     /// </summary>
@@ -54,6 +63,7 @@ public abstract class Converter
 
         // First find all samples in the instrument file by navigating through program chunks
         var vagSamples = new Dictionary<uint, SampleInfo>();
+        var doLoops = new Dictionary<uint, bool>();
 
         var sampleIdx = 0;
         var idx = 0;
@@ -62,6 +72,10 @@ public abstract class Converter
             if (channelToPrograms[j].Program >= instrument.ProgramChunks.Count) continue;
             var prog = instrument.ProgramChunks[channelToPrograms[j].Program];
             if (prog == null) continue;
+
+            uint wavLoopStart = 0;
+            uint wavLoopEnd = 0;
+            int wavLength = 0;
             foreach (var splitChunk in prog.SplitChunks)
             {
                 // May refer to same sample so offset
@@ -81,19 +95,19 @@ public abstract class Converter
                 byte[] decoded = SonyVag.Decode(vag);
                 Span<short> pcm16 = MemoryMarshal.Cast<byte, short>(decoded);
 
-                bool looping = loopStart != 0 && loopEnd != 0 && loopStart < loopEnd && loopStart != loopEnd;
+                bool looping = loopStart != 0;
 
                 Console.WriteLine($"SF2: vag{j} (base note: {StaticUtils.SNote(splitChunk.BaseNote)}) - looping: {looping}");
-
-                uint wavLoopStart = 0;
                 if (looping)
                 {
                     double a = (pcm16.Length / ((double)vag.Length / 0x10));
                     wavLoopStart = (uint)(a * loopStart);
+                    wavLoopEnd = (uint)(a * loopEnd);
+                    wavLength = pcm16.Length;
                 }
+                doLoops.Add(splitChunk.SampleOffset, looping);
                 // Add the sample to the sound bank. Instruments will then pick which sample to use.
-                uint sampleId = sf2.AddSample(pcm16, $"sample{sampleIdx++}", looping, looping ? wavLoopStart : 0, 44100, (byte)splitChunk.BaseNote, 0);
-
+                uint sampleId = sf2.AddSample(pcm16, $"sample{sampleIdx++}", looping, wavLoopStart + 90, 44100, (byte)splitChunk.BaseNote, 0);
                 // Dump instrument noises (debug)
                 /*WaveFormat waveFormat = new WaveFormat(44100, 16, 1);
                 Directory.CreateDirectory("samples");
@@ -109,6 +123,18 @@ public abstract class Converter
         // Essentially bags declare new incoming data for context (preset or instrument),
         // "generator" might sound complicated but it's a needlessly complicated name for a single parameter for either presets or instruments.
 
+        if (StaticUtils.ExportEnvelopes)
+        {
+            foreach (var pc in instrument.ProgramChunks)
+            {
+                if (pc is null) continue;
+                foreach (var sc in pc.SplitChunks)
+                {
+                    sc.ConvertADSR(instrument.VelocityTable);
+                }
+            }
+        }// convert ADSR
+        sampleIdx = 0;
         for (int j = 0; j < channelToPrograms.Count; j++)
         {
             if (channelToPrograms[j].Program >= instrument.ProgramChunks.Count) continue;
@@ -116,12 +142,13 @@ public abstract class Converter
             if (prog is null) continue;
 
             string name = $"JAM Program {channelToPrograms[j].Program}";
+            StaticUtils.LiveLoadStatus = $"Converting JAM Program {channelToPrograms[j].Program}";
 
             if (channelToPrograms[j].Channel == 9) // Percussion channel
                 sf2.AddPreset(name, channelToPrograms[j].Program, 128);
             else
                 sf2.AddPreset(name, channelToPrograms[j].Program, 0);
-
+            
             sf2.AddPresetBag();
 
             // Preset has a specified range with 0xFF (otherwise instruments provide it)
@@ -139,29 +166,40 @@ public abstract class Converter
                 sf2.AddInstrumentBag();
 
                 var pan = (int)Normalize(splitChunk.Pan, 0, 128, -500, 500);
+                if (doLoops[splitChunk.SampleOffset])
+                {
+                    sf2.AddInstrumentGenerator(SF2Generator.SampleModes, new SF2GeneratorAmount { Amount = (short)SF2SampleModeFlags.StartLoopEnd }); // enable looping
+                }
+
                 sf2.AddInstrumentGenerator(SF2Generator.Pan, new SF2GeneratorAmount { Amount = (short)(pan) });
                 sf2.AddInstrumentGenerator(SF2Generator.FineTune, new SF2GeneratorAmount { Amount = (short)((splitChunk.EnablePitchBend ? 0 : (splitChunk.FineTunePitch * (prog.UnkPitchRelated_0x04 / 2))) )});
                 if (StaticUtils.AltSf2Method)
                 {
                     (splitChunk.Attack, splitChunk.Decay) = (splitChunk.Decay, splitChunk.Attack);
                 }
-                if (StaticUtils.ExportEnvelopes)
-                {
-                    sf2.AddInstrumentGenerator(SF2Generator.AttackVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Attack * 125f - 2000f) });
-                    sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Decay * 125f - 4000f) });
-                    sf2.AddInstrumentGenerator(SF2Generator.SustainVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Sustain * 11.25f) });
-                    sf2.AddInstrumentGenerator(SF2Generator.ReleaseVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Release * 125f - 4000f) });
-                }
-
                 if (StaticUtils.ExportVelocity)
                 {
                     sf2.AddInstrumentGenerator(SF2Generator.Velocity,
                         new SF2GeneratorAmount { Amount = (short)((prog.BaseVolume + splitChunk.Volume) / 2) }); // divide by 2, because SF2 specifies 127 as the max value, but the maximum for BaseVolume + Volume is 255
                 }
+                if (StaticUtils.ExportEnvelopes)
+                {
+                    sf2.AddInstrumentGenerator(SF2Generator.AttackModEnv,
+                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Attack) });
+                    sf2.AddInstrumentGenerator(SF2Generator.DecayModEnv,
+                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Decay) });
+                    sf2.AddInstrumentGenerator(SF2Generator.SustainModEnv,
+                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Sustain) });
+                    sf2.AddInstrumentGenerator(SF2Generator.SustainVolEnv,
+                        new SF2GeneratorAmount { Amount = (short)(splitChunk.SustainL) });
+                    sf2.AddInstrumentGenerator(SF2Generator.ReleaseModEnv,
+                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Release) });
+                }
+
+                sf2.AddInstrumentGenerator(SF2Generator.FreqModLFO, new SF2GeneratorAmount
+                {
+                    Amount = (short)(instrument.VelocityTable[splitChunk.LfoTableIndex] * 160.15625f - 16000f)
+                });
                 if (splitChunk.Reverb)
                 {
                     sf2.AddInstrumentGenerator(SF2Generator.ReverbEffectsSend, new SF2GeneratorAmount { Amount = 100 });
@@ -173,6 +211,7 @@ public abstract class Converter
                     sf2.AddInstrumentGenerator(SF2Generator.KeyRange, new SF2GeneratorAmount { LowByte = (byte)prog.SplitChunks[k].NoteMin, HighByte = (byte)prog.SplitChunks[k].NoteMax });
                 sf2.AddInstrumentGenerator(SF2Generator.SampleID, new SF2GeneratorAmount { UAmount = vagSamples[splitChunk.SampleOffset].SampleID });
                 offset += vagSamples[splitChunk.SampleOffset].SampleData.Length;
+                sampleIdx += 1;
             }
         }
 

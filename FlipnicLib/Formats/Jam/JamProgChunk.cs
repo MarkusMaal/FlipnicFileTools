@@ -96,12 +96,12 @@ public class JamProgChunk
                  """;
         string[] colHeaders =
         [
-            "Volume", "Pan", "Note min.", "Note max.", "Base note", "Fine tune", "LFO index", "Flags", "Offset","ADSR"
+            "Volume", "Pan", "Note min.", "Note max.", "Base note", "Fine tune", "LFO index", "Flags", "Offset"
         ];
         List<string[]> rows = [];
         rows.AddRange(SplitChunks.Select(s => (string[]) [StaticUtils.DotFloatString((float)Math.Round(s.Volume / 127f * 100f, 1)) + "%", (s.Pan - 64) + " (" + (s.Pan == 64 ? "C" : s.Pan < 64 ? "L" : "R")+ ")",
             StaticUtils.SNote(s.NoteMin), StaticUtils.SNote(s.NoteMax), StaticUtils.SNote(s.BaseNote), s.FineTunePitch.ToString(), s.LfoTableIndex.ToString(),
-            s.FlagsAsString(), (s.SampleOffset * 8).ToString("X"), $"{s.Attack:X}:{s.Decay:X}:{s.Sustain:X}:{s.Release:X}"]));
+            s.FlagsAsString(), (s.SampleOffset * 8).ToString("X")]));
         return o+StaticUtils.GenerateTable(colHeaders, rows, asCsv);
     }
 
@@ -161,11 +161,15 @@ public class JamSplitChunk
     /// 0x7F = no lfo in use
     /// </summary>
     public byte LfoTableIndex { get; set; }
-    
-    public sbyte Attack { get; set; }
-    public sbyte Decay { get; set; }
-    public byte Sustain { get; set; }
-    public sbyte Release { get; set; }
+
+    public short ADSR1 { get; set; }
+    public short ADSR2 { get; set; }
+
+    public double Attack { get; set; }
+    public double Decay { get; set; }
+    public double Sustain { get; set; }
+    public double SustainL { get; set; }
+    public double Release { get; set; }
 
     // Flags
     public bool HighPriority => (Flags & 0x80) != 0;
@@ -182,16 +186,37 @@ public class JamSplitChunk
         BaseNote = (Note)bs.Read1Byte();
         FineTunePitch = bs.ReadSByte();
         SampleOffset = (uint)(bs.ReadInt16()) & 0xFFFF;
-        Sustain = bs.Read1Byte();
-        Attack = bs.ReadSByte();
-        Release = bs.ReadSByte();
-        Decay = bs.ReadSByte();
+        ADSR2 = bs.ReadInt16();
+        ADSR1 = bs.ReadInt16();
+
         bs.Position++; // skip the Volume Override
         Volume = bs.Read1Byte();
         Pan = (byte)(bs.Read1Byte() + 0xC);
         PitchBend = bs.Read1Byte();
         LfoTableIndex = bs.Read1Byte();
         Flags = bs.Read1Byte();
+    }
+
+    public void ConvertADSR(byte[] LfoTable)
+    {
+        byte Am = (byte)((ADSR1 & 0x8000) >> 15);    // if 1, then Exponential, else linear
+        byte Ar = (byte)((ADSR1 & 0x7F00) >> 8);
+        byte Dr = (byte)((ADSR1 & 0x00F0) >> 4);
+        byte Sl = (byte)(ADSR1 & 0x000F);
+        byte Rm = (byte)((ADSR2 & 0x0020) >> 5);
+        byte Rr = (byte)(ADSR2 & 0x001F);
+
+        // The following are unimplemented in conversion (because DLS and SF2 do not support Sustain Rate)
+        byte Sm = (byte)((ADSR2 & 0x8000) >> 15);
+        byte Sd = (byte)((ADSR2 & 0x4000) >> 14);
+        byte Sr = (byte)((ADSR2 >> 6) & 0x7F);
+
+        var adsrObj = PsxConvADSR(Am, Ar, Dr, Sl, Sm, Sd, Sr, Rm, Rr, true, LfoTable);
+        Attack = adsrObj.attack_time;
+        Decay = adsrObj.decay_time;
+        Sustain = adsrObj.sustain_time;
+        SustainL = adsrObj.sustain_level;
+        Release = adsrObj.release_time;
     }
 
     public string FlagsAsString()
@@ -247,4 +272,224 @@ public class JamSplitChunk
     {
         return $"{NoteMin}->{NoteMax}";
     }
+
+    private static int RoundToZero(double val)
+    {
+        return (int)(val < 0 ? Math.Ceiling(val) : Math.Floor(val));
+    }
+
+    private static double LinearAmpDecayTimeToLinDBDecayTime(double secondsToFullAtten,
+                                          double targetDb_LeastSquares = 70,
+                                          double targetDb_InitialSlope = 140)
+    {
+        if (secondsToFullAtten <= 0.0) return 0.0;
+
+        const double ln10 = 2.302585092994046;
+        double k_short = targetDb_InitialSlope / (20.0 / ln10);
+        double k_long = targetDb_LeastSquares * ln10 / 45.0;
+
+        // Knee near temporal integration (100–150 ms). p controls sharpness.
+        const double T_knee = 0.12; // seconds
+        const double p = 2.0;
+
+        double x = secondsToFullAtten / T_knee;
+        double w = 1.0 / (1.0 + Math.Pow(x, p)); // w≈1 for very short; →0 for long
+
+        return secondsToFullAtten * (w * k_short + (1.0 - w) * k_long);
+    }
+
+
+    public static ADSR PsxConvADSR(
+       byte Am, byte Ar, byte Dr, byte Sl,
+       byte Sm, byte Sd, byte Sr, byte Rm, byte Rr, bool bPS2,
+       byte[] RateTable)
+    {
+        var realADSR = new ADSR();
+
+        // Validate ranges
+        if (((Am & ~0x01) != 0) ||
+            ((Ar & ~0x7F) != 0) ||
+            ((Dr & ~0x0F) != 0) ||
+            ((Sl & ~0x0F) != 0) ||
+            ((Rm & ~0x01) != 0) ||
+            ((Rr & ~0x1F) != 0) ||
+            ((Sm & ~0x01) != 0) ||
+            ((Sd & ~0x01) != 0) ||
+            ((Sr & ~0x7F) != 0))
+        {
+            return null;
+        }
+
+        double sampleRate = bPS2 ? 48000.0 : 44100.0;
+        double samples = 0;
+        int l;
+
+
+        // Attack time
+        if ((Ar ^ 0x7F) < 0x10)
+            Ar = 0;
+
+        if (Am == 0)
+        {
+            uint rate = RateTable[RoundToZero((Ar ^ 0x7F) - 0x10)];
+            samples = Math.Ceiling(0x7FFFFFFF / (double)rate);
+        }
+        else if (Am == 1)
+        {
+            uint rate = RateTable[RoundToZero((Ar ^ 0x7F) - 0x10)];
+            samples = 0x60000000 / (double)rate;
+            uint remainder = 0x60000000 % rate;
+            rate = RateTable[RoundToZero((Ar ^ 0x7F) - 0x18)];
+            samples += Math.Ceiling(Math.Max(0, 0x1FFFFFFF - remainder) / (double)rate);
+        }
+
+        realADSR.attack_time = samples / sampleRate;
+
+        // Decay time
+        long envelope_level = 0x7FFFFFFF;
+        bool bSustainLevFound = false;
+        uint realSustainLevel = 0;
+
+        for (l = 0; envelope_level > 0; l++)
+        {
+            if (4 * (Dr ^ 0x1F) < 0x18)
+                Dr = 0;
+
+            int idxBase = RoundToZero((4 * (Dr ^ 0x1F)) - 0x18);
+            int shift = (int)((envelope_level >> 28) & 0x7);
+
+            envelope_level -= RateTable[idxBase + shift switch
+            {
+                0 => 0,
+                1 => 4,
+                2 => 6,
+                3 => 8,
+                4 => 9,
+                5 => 10,
+                6 => 11,
+                7 => 12,
+                _ => 0
+            }];
+
+            if (!bSustainLevFound && ((envelope_level >> 27) & 0xF) <= Sl)
+            {
+                realSustainLevel = (uint)envelope_level;
+                bSustainLevFound = true;
+            }
+        }
+
+        samples = l;
+        realADSR.decay_time = samples / sampleRate;
+
+        // Sustain time
+        envelope_level = 0x7FFFFFFF;
+        if (Sd == 0)
+        {
+            realADSR.sustain_time = -1;
+        }
+        else if (Sr == 0x7F)
+        {
+            realADSR.sustain_time = -1;
+        }
+        else
+        {
+            if (Sm == 0)
+            {
+                uint rate = RateTable[RoundToZero((Sr ^ 0x7F) - 0x0F)];
+                samples = Math.Ceiling(0x7FFFFFFF / (double)rate);
+            }
+            else
+            {
+                l = 0;
+                while (envelope_level > 0)
+                {
+                    long envelope_level_diff = 0;
+                    long envelope_level_target = 0;
+
+                    switch ((envelope_level >> 28) & 0x7)
+                    {
+                        case 0: envelope_level_target = 0x00000000; envelope_level_diff = RateTable[RoundToZero((Sr ^ 0x7F) - 0x1B + 0)]; break;
+                        case 1: envelope_level_target = 0x0FFFFFFF; envelope_level_diff = RateTable[RoundToZero((Sr ^ 0x7F) - 0x1B + 4)]; break;
+                        case 2: envelope_level_target = 0x1FFFFFFF; envelope_level_diff = RateTable[RoundToZero((Sr ^ 0x7F) - 0x1B + 6)]; break;
+                        case 3: envelope_level_target = 0x2FFFFFFF; envelope_level_diff = RateTable[RoundToZero((Sr ^ 0x7F) - 0x1B + 8)]; break;
+                        case 4: envelope_level_target = 0x3FFFFFFF; envelope_level_diff = RateTable[RoundToZero((Sr ^ 0x7F) - 0x1B + 9)]; break;
+                        case 5: envelope_level_target = 0x4FFFFFFF; envelope_level_diff = RateTable[RoundToZero((Sr ^ 0x7F) - 0x1B + 10)]; break;
+                        case 6: envelope_level_target = 0x5FFFFFFF; envelope_level_diff = RateTable[RoundToZero((Sr ^ 0x7F) - 0x1B + 11)]; break;
+                        case 7: envelope_level_target = 0x6FFFFFFF; envelope_level_diff = RateTable[RoundToZero((Sr ^ 0x7F) - 0x1B + 12)]; break;
+                    }
+
+                    long steps = (envelope_level - envelope_level_target + (envelope_level_diff - 1)) / envelope_level_diff;
+                    envelope_level -= envelope_level_diff * steps;
+                    l += (int)steps;
+                }
+
+                samples = l;
+            }
+
+            double timeInSecs = samples / sampleRate;
+            realADSR.sustain_time = LinearAmpDecayTimeToLinDBDecayTime(timeInSecs, 0x800);
+        }
+
+        // Sustain level
+        if (Sl == 0)
+            realSustainLevel = 0x07FFFFFF;
+
+        realADSR.sustain_level = realSustainLevel / (double)0x7FFFFFFF;
+
+        // Decay/sustain heuristic adjustment
+        if ((realADSR.decay_time < 2 || (Dr == 0x0F && Sl >= 0x0C)) && Sr < 0x7E && Sd == 1)
+        {
+            realADSR.sustain_level = 0;
+            realADSR.decay_time = realADSR.sustain_time;
+        }
+
+        // Release time
+        envelope_level = 0x7FFFFFFF;
+
+        if (Rm == 0)
+        {
+            uint rate = RateTable[RoundToZero((4 * (Rr ^ 0x1F)) - 0x0C)];
+            samples = rate != 0 ? Math.Ceiling(envelope_level / (double)rate) : 0;
+        }
+        else if (Rm == 1)
+        {
+            if ((Rr ^ 0x1F) * 4 < 0x18)
+                Rr = 0;
+
+            for (l = 0; envelope_level > 0; l++)
+            {
+                if (envelope_level == 0xFFFFFFF) break;
+                int idx = RoundToZero((4 * (Rr ^ 0x1F)) - 0x18);
+                int shift = (int)((envelope_level >> 28) & 0x7);
+                envelope_level -= RateTable[idx + shift switch
+                {
+                    0 => 0,
+                    1 => 4,
+                    2 => 6,
+                    3 => 8,
+                    4 => 9,
+                    5 => 10,
+                    6 => 11,
+                    7 => 12,
+                    _ => 0
+                }];
+            }
+
+            samples = l;
+        }
+
+        double releaseTimeSecs = samples / sampleRate;
+        realADSR.release_time = LinearAmpDecayTimeToLinDBDecayTime(releaseTimeSecs, 0x800);
+        return realADSR;
+    }
+
+    public class ADSR
+    {
+        public double attack_time;
+        public double decay_time;
+        public double sustain_time;
+        public double sustain_level;
+        public double release_time;
+    }
+
 }

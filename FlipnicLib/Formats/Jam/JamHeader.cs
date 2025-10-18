@@ -59,6 +59,17 @@ public class JamHeader
         int unkPhysicalOffset = bs.ReadInt32(); // Unknown, set in se files. Never seen actually read
         int seProgChunkPhysicalOffset = bs.ReadInt32();
 
+
+        if (velocityChunkPhysicalOffset != -1)
+        {
+            bs.Position = basePos + velocityChunkPhysicalOffset;
+            long baseChunkPos = bs.Position;
+            short chunkCount = bs.ReadInt16(); // Always 0
+
+            for (int i = 0; i < 128; i++)
+                VelocityTable[i] = bs.Read1Byte();
+        }
+
         if (programChunkPhysicalOffset != -1)
         {
             bs.Position = basePos + programChunkPhysicalOffset;
@@ -122,16 +133,6 @@ public class JamHeader
                 chunk.Read(bs, physicalStart);
                 SeProgramChunks.Add(chunk);
             }
-        }
-
-        if (velocityChunkPhysicalOffset != -1)
-        {
-            bs.Position = basePos + velocityChunkPhysicalOffset;
-            long baseChunkPos = bs.Position;
-            short chunkCount = bs.ReadInt16(); // Always 0
-
-            for (int i = 0; i < 128; i++)
-                VelocityTable[i] = bs.Read1Byte();
         }
     }
 

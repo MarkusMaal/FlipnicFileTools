@@ -168,7 +168,7 @@
                                               BorderThickness="1" BorderBrush="Gray" Name="SamplesGrid"
                                               CanUserResizeColumns="True"
                                               CanUserReorderColumns="True" SelectionChanged="SampleGridSelectionChanged"
-                                              CanUserSortColumns="True"
+                                              CanUserSortColumns="True" SelectionMode="Single"
                                               IsReadOnly="True">
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="Id" Binding="{Binding Id}"></DataGridTextColumn>
@@ -196,7 +196,7 @@
                                               CanUserResizeColumns="True"
                                               CanUserReorderColumns="True"
                                               CanUserSortColumns="True"
-                                              IsReadOnly="True"
+                                              IsReadOnly="True" SelectionMode="Single"
                                               SelectionChanged="DataGrid_OnSelectionChanged">
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="Path" Binding="{Binding Path}"></DataGridTextColumn>
@@ -331,7 +331,7 @@
                                             </ComboBox>
                                             <DataGrid Grid.Row="2" ItemsSource="{Binding Rank}" Margin="0,0,0,10" GridLinesVisibility="All"
                                                       BorderThickness="1" BorderBrush="Gray" Name="RankGrid"
-                                                      CanUserResizeColumns="True"
+                                                      CanUserResizeColumns="True" SelectionMode="Single"
                                                       CanUserReorderColumns="True"
                                                       CanUserSortColumns="True" 
                                                       IsReadOnly="False">
@@ -439,7 +439,7 @@
                                                       BorderThickness="1" BorderBrush="Gray"
                                                       CanUserResizeColumns="True"
                                                       CanUserReorderColumns="True"
-                                                      CanUserSortColumns="True" 
+                                                      CanUserSortColumns="True"  SelectionMode="Single"
                                                       IsReadOnly="False">
                                                 <DataGrid.Columns>
                                                     <DataGridTextColumn Header="Type" x:DataType="types:Mission" Binding="{Binding MissionColor}"></DataGridTextColumn>
@@ -464,7 +464,7 @@
                                                       BorderThickness="1" BorderBrush="Gray"
                                                       CanUserResizeColumns="True"
                                                       CanUserReorderColumns="True"
-                                                      CanUserSortColumns="True" 
+                                                      CanUserSortColumns="True" SelectionMode="Single"
                                                       IsReadOnly="False">
                                                 <DataGrid.Columns>
                                                     <DataGridTextColumn Header="Stage" x:DataType="types:StageDirectory" Binding="{Binding StageName}"></DataGridTextColumn>
