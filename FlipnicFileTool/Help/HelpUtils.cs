@@ -115,7 +115,6 @@ public abstract class HelpUtils
                     new HelpLine("show-hd*", "List programs in the .HD file"),
                     new HelpLine("convert-sf2", "Allows you to convert soundbank to .SF2 (specify .HD file as input)"),
                     new HelpLine("no-envelopes", "Doesn't export envelopes (attack, decay, sustain, release)"),
-                    new HelpLine("no-velocity", "Doesn't export volume levels (may fix some playback issues)"),
                     new HelpLine("midi-file [path]", "Manually specify a .MID file to use for conversion (default is input file path, but with .MID extension)"),
                     new HelpLine("bd-file [path]", "Manually specify a .BD file to use for conversion (default is input file path, but with .BD extension)"),
                 ]

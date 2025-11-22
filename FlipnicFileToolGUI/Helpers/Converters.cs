@@ -165,7 +165,6 @@ public static class Converters
     {
         mw.DockPanel1.IsVisible = false;
         mw.Loader.IsVisible = true;
-        StaticUtils.ExportVelocity = mw.VelocityToggle.IsChecked ?? false;
         StaticUtils.ExportEnvelopes = mw.EnvelopeToggle.IsChecked ?? false;
         var outFile = mw.FileBox.Text;
         var midiFile = mw.MidiBox.Text ?? "/no.where";

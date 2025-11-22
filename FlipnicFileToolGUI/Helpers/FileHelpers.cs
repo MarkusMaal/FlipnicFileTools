@@ -228,7 +228,6 @@ public static class FileHelpers
                         mw.MidiBrowserGrid.IsVisible = true;
                         mw.PalToggle.IsVisible = false;
                         mw.EnvelopeToggle.IsVisible = true;
-                        mw.VelocityToggle.IsVisible = true;
                         mw.ConvertSf2Button.IsVisible = true;
                         mw.ConvertMovAacButton.IsVisible = false;
                         mw.ConvertMovButton.IsVisible = false;
@@ -350,7 +349,6 @@ public static class FileHelpers
                         mw.FfmpegBrowserGrid.IsVisible = true;
                         mw.PalToggle.IsVisible = true;
                         mw.EnvelopeToggle.IsVisible = false;
-                        mw.VelocityToggle.IsVisible = false;
                         mw.ConvertSf2Button.IsVisible = false;
                         mw.DemuxButton.IsVisible = false;
                         mw.BdBrowserGrid.IsVisible = false;
@@ -469,7 +467,6 @@ public static class FileHelpers
                         mw.FfmpegBrowserGrid.IsVisible = true;
                         mw.PalToggle.IsVisible = true;
                         mw.EnvelopeToggle.IsVisible = false;
-                        mw.VelocityToggle.IsVisible = false;
                         mw.ConvertSf2Button.IsVisible = false;
                         mw.BdBrowserGrid.IsVisible = false;
                         mw.MidiBrowserGrid.IsVisible = false;

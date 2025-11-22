@@ -155,9 +155,6 @@ public class Config
                 case "--bd-file":
                     BdFile = arg;
                     break;
-                case "--no-velocity":
-                    StaticUtils.ExportVelocity = false;
-                    break;
                 case "--scale-factor":
                     ScaleFactor = int.Parse(arg);
                     break;

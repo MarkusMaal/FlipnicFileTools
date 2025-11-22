@@ -83,22 +83,30 @@ public class MTrk
         byte lastStatus = 0;
         while (true)
         {
-            var message = new SqMessage();
-            message.Read(bs, lastStatus);
-            if (message.Status == 0xFF)
+            try
             {
-                
-                var meta = message.Event as SqMetaEvent;
-                if (meta.Type == 0x2F)
-                    break;
-            }
+                var message = new SqMessage();
+                message.Read(bs, lastStatus);
+                if (message.Status == 0xFF)
+                {
 
-            if (message.Event is null)
-            {
-                continue;
+                    var meta = message.Event as SqMetaEvent;
+                    if (meta.Type == 0x2F)
+                        break;
+                }
+
+                if (message.Event is null)
+                {
+                    continue;
+                }
+
+                Messages.Add(message);
+                lastStatus = message.Status;
             }
-            Messages.Add(message);
-            lastStatus = message.Status;
+            catch
+            {
+                break;
+            }
         }
     }
 }
@@ -115,7 +123,8 @@ public class SqMessage
         // (yes i'm reading the delta first here)
         Delta = (uint)Midi.readVariable(bs);
         byte status = bs.Read1Byte();
-        if ((status & 0x80) != 0) {
+        if ((status & 0x80) != 0)
+        {
             Status = status;
         }
         else

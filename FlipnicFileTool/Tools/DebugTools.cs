@@ -24,7 +24,6 @@ public class DebugTools(Exception e)
                                     CLI arguments: {Environment.CommandLine}
                                     Global variables:
                                        Simple output: {StaticUtils.SimpleOutput}
-                                       Export velocity: {StaticUtils.ExportVelocity}
                                        Export envelopes: {StaticUtils.ExportEnvelopes}
                                        Is mode set: {StaticUtils.IsModeSet}
                                        Low memory: {StaticUtils.LowMem}

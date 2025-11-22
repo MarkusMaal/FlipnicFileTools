@@ -48,8 +48,6 @@ public abstract class StaticUtils
 
     public static bool ExportEnvelopes { get; set; } = true;
 
-    public static bool ExportVelocity { get; set; } = true;
-
     public static bool AltSf2Method { get; set; } = false;
 
     public static bool IsModeSet { get; set; } = false;

@@ -253,11 +253,8 @@
                                                 <CheckBox Name="PalToggle" Margin="0,2, 0,-8" IsChecked="False" Content="Use PAL instead of NTSC">
                                                     <ToolTip.Tip>If the output is at the wrong framerate or video de-syncs with audio, you may need to check this option.</ToolTip.Tip>
                                                 </CheckBox>
-                                                <CheckBox Name="EnvelopeToggle" Margin="0,2, 0,-8" IsChecked="True" Content="Export envelopes">
+                                                <CheckBox Name="EnvelopeToggle" Margin="0,2, 0,-8" IsChecked="True" Content="Export envelopes (experimental)">
                                                     <ToolTip.Tip>Tries to create the soundfont with proper envelopes (attack, decay, sustain, release). Uncheck this if you don't want that.</ToolTip.Tip>
-                                                </CheckBox>
-                                                <CheckBox Name="VelocityToggle" Margin="0,2, 0,-8" IsChecked="True" Content="Export velocity">
-                                                    <ToolTip.Tip>Adjust the volume for each program chunk to a correct level, but can sometimes lead to looping problems. Uncheck this if you are experiencing the latter.</ToolTip.Tip>
                                                 </CheckBox>
                                             </StackPanel>
                                         </StackPanel>
