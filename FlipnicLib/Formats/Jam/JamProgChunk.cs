@@ -162,15 +162,19 @@ public class JamSplitChunk
     /// </summary>
     public byte LfoTableIndex { get; set; }
 
-    public short ADSR1 { get; set; }
-    public short ADSR2 { get; set; }
-
     public double Attack { get; set; }
     public double Decay { get; set; }
     public double Sustain { get; set; }
     public double SustainL { get; set; }
     public double Release { get; set; }
+    
+    // Constants from SPU2OverviewManual.pdf
+    private readonly double[] linearReleaseMs = [0.04,0.09,0.18,0.36,0.73,1.5,2.9,5.8,12,23,46,93,190,370,740,1500,3000,5900,12000,24000,48000,95000,190000,380000,760000,1520000,3040000,double.NaN,double.NaN,double.PositiveInfinity];
+    private readonly double[] exponentialReleaseMs = [0.07,0.18,0.39,0.81,1.6,3.3,6.7,13,27,53,110,210,430,860,1700,3400,6800,14000,27000,55000,109000,219000,438000,876000,1752000,3504000,7008000,double.NaN,double.NaN,double.PositiveInfinity];
 
+    private readonly double[] decayRateMs = [0.07, 0.18, 0.39, 0.81, 1.6, 3.3, 6.7, 13, 27, 53, 110, 210, 430, 860, 1700, 3400];
+    private readonly double[] sustainLevels = [0.0625d, 0.125d, 0.1875d, 0.25d, 0.3125d, 0.375d, 0.4375d, 0.5d, 0.5625d, 0.625d, 0.6875d, 0.75d, 0.8125d, 0.875d,  0.9375d, 1.0];
+    
     // Flags
     public bool HighPriority => (Flags & 0x80) != 0;
     public bool Noise => (Flags & 0x40) != 0;
@@ -186,11 +190,12 @@ public class JamSplitChunk
         BaseNote = (Note)bs.Read1Byte();
         FineTunePitch = bs.ReadSByte();
         SampleOffset = (uint)(bs.ReadInt16()) & 0xFFFF;
-        Attack = (bs.ReadSByte()) * 142.4 + -12000.0;
-        Decay = bs.ReadSByte() * 142.4 + -12000.0;
-        Sustain = -bs.ReadByte();
-        Release = bs.ReadSByte() * 142.4 + -12000.0; // fairly certain release is parsed correctly
-
+        var adsr1 = bs.ReadUInt16();
+        Decay = 1200*Math.Log2(decayRateMs[(adsr1 & 0xf0) >> 4]);
+        var adsr2 = bs.ReadUInt16();
+        var isExponent = ((adsr2 & 0x20) == 0x20);
+        Release = 1200*Math.Log2(isExponent ? exponentialReleaseMs[adsr2 & 0x1F] : linearReleaseMs[adsr2 & 0x1F]); // fairly certain release is parsed correctly
+        SustainL = 1440-1400*((sustainLevels[adsr1 & 0x0f]));
         bs.Position++; // skip the Volume Override
         Volume = bs.Read1Byte();
         Pan = (byte)(bs.Read1Byte() + 0xC);
