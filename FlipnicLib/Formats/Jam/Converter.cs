@@ -206,17 +206,17 @@ public abstract class Converter
                 sf2.AddInstrumentGenerator(SF2Generator.InitialAttenuation, new SF2GeneratorAmount { Amount = (short)(127 - (splitChunk.Volume * prog.BaseVolume / 16129.0 * 32.0)) });
                 if (StaticUtils.ExportEnvelopes)
                 {
-                    /*sf2.AddInstrumentGenerator(SF2Generator.AttackVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Attack) });
+                    /* });
                     sf2.AddInstrumentGenerator(SF2Generator.SustainVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(splitChunk.Sustain) });*/
-                    
+                    sf2.AddInstrumentGenerator(SF2Generator.AttackVolEnv,
+                        new SF2GeneratorAmount { Amount = (short)(1200*Math.Log2(splitChunk.Attack)) });
                     sf2.AddInstrumentGenerator(SF2Generator.SustainVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(splitChunk.SustainL) });
+                        new SF2GeneratorAmount { Amount = (short)(1440-1400*splitChunk.SustainL) });
                     sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Decay / 4) });
+                        new SF2GeneratorAmount { Amount = (short)(1200*Math.Log2(splitChunk.Decay)) });
                     sf2.AddInstrumentGenerator(SF2Generator.ReleaseVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Release / 8) });
+                        new SF2GeneratorAmount { Amount = (short)(1200*Math.Log2(splitChunk.Release)/4) });
                 }
 
                 if (splitChunk.LfoTableIndex != 0x7F)

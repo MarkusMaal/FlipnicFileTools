@@ -88,20 +88,23 @@ public class JamProgChunk
 
     public string ToString(bool asCsv)
     {
+        var lfoIdx = LfoTableIndex != 127 ? LfoTableIndex.ToString() : "N/A";
         var o = $"""
                  Count: {(CountOrFlag & 0x0F)+1}
                  BaseVolume: {StaticUtils.DotFloatString((float)Math.Round(BaseVolume/127f*100f, 1))}%, BasePan: {Pan-64} ({(Pan == 64 ? "C" : Pan < 64 ? "L" : "R")}), BasePitch: {UnkPitchRelated_0x04}
-                 LfoTableIndex: {LfoTableIndex}
+                 LfoTableIndex: {lfoIdx}
 
                  """;
         string[] colHeaders =
         [
-            "Volume", "Pan", "Note min.", "Note max.", "Base note", "Fine tune", "LFO index", "Flags", "Offset"
+            "Volume", "Pan", "Note min.", "Note max.", "Base note", "Fine tune", "LFO index", "Flags", "Offset", "Attack", "Decay", "Sustain Lv.", "Release"
         ];
         List<string[]> rows = [];
         rows.AddRange(SplitChunks.Select(s => (string[]) [StaticUtils.DotFloatString((float)Math.Round(s.Volume / 127f * 100f, 1)) + "%", (s.Pan - 64) + " (" + (s.Pan == 64 ? "C" : s.Pan < 64 ? "L" : "R")+ ")",
-            StaticUtils.SNote(s.NoteMin), StaticUtils.SNote(s.NoteMax), StaticUtils.SNote(s.BaseNote), s.FineTunePitch.ToString(), s.LfoTableIndex.ToString(),
-            s.FlagsAsString(), (s.SampleOffset * 8).ToString("X")]));
+            StaticUtils.SNote(s.NoteMin), StaticUtils.SNote(s.NoteMax), StaticUtils.SNote(s.BaseNote), s.FineTunePitch.ToString(), (s.LfoTableIndex!=127 ? s.LfoTableIndex.ToString() : "N/A"),
+            s.FlagsAsString(), (s.SampleOffset * 8).ToString("X"), $"{StaticUtils.DotFloatString((float)Math.Round(s.Attack, 4))} s",
+            $"{StaticUtils.DotFloatString((float)Math.Round(s.Decay, 4))} s", $"{StaticUtils.DotFloatString((float)Math.Round(s.SustainL*100.0, 2))} %",
+            $"~{StaticUtils.DotFloatString((float)Math.Round(s.Release/8/8, 4))} s"]));
         return o+StaticUtils.GenerateTable(colHeaders, rows, asCsv);
     }
 
@@ -174,6 +177,22 @@ public class JamSplitChunk
 
     private readonly double[] decayRateMs = [0.07, 0.18, 0.39, 0.81, 1.6, 3.3, 6.7, 13, 27, 53, 110, 210, 430, 860, 1700, 3400];
     private readonly double[] sustainLevels = [0.0625d, 0.125d, 0.1875d, 0.25d, 0.3125d, 0.375d, 0.4375d, 0.5d, 0.5625d, 0.625d, 0.6875d, 0.75d, 0.8125d, 0.875d,  0.9375d, 1.0];
+
+    private readonly double[] posLinModeMs = [0.05,0.06,0.07,0.09,0.1,0.12,0.15,0.18,0.21,0.24,0.29,0.36,0.41,0.48,0.58,0.73,0.83,0.97,1.2,1.5,1.7,1.9,2.3,2.9,3.3,3.9,4.6,5.8,6.6,7.7,9.3,12,13,15,19,23,27,31,37,
+                                              46,53,62,74,93,110,120,150,190,210,250,300,370,420,500,590,740,850,990,1200,1500,1700,2000,2400,3000,3400,4000,4800,5900,6800,7900,9500,12000,14000,16000,19000,24000,27000,32000,
+                                              38000,48000,54000,63000,76000,95000,109000,127000,152000,190000,218000,254000,304000,380000,436000,508000,608000,760000,872000,1016000,1216000,1520000,1744000,2032000,2432000,3040000,3488000,4064000,4864000,6080000,
+                                              double.NaN,double.NaN,double.NaN,double.PositiveInfinity];
+
+    private readonly double[] posExpModMs =
+    [
+        0.09, 0.11, 0.13, 0.16, 0.18, 0.21, 0.25, 0.32, 0.36, 0.42, 0.51, 0.64, 0.73, 0.85, 1, 1.3, 1.5, 1.7, 2, 2.5,
+        2.9, 3.4, 4.1, 5.1, 5.8, 6.8, 8.1, 10, 12, 14, 16, 20, 23, 27, 33, 41,
+        46, 54, 65, 81, 93, 110, 130, 160, 190, 220, 260, 330, 370, 430, 520, 650, 740, 870, 1000, 1300, 1500, 1700,
+        2100, 2600, 3000, 3500, 4200, 5200, 5900, 6900, 8300, 10000, 12000, 14000, 17000, 21000,
+        24000, 28000, 33000, 42000, 48000, 55000, 67000, 83000, 95000, 111000, 133000, 166000, 190000, 222000, 266000,
+        333000, 380000, 444000, 532000, 666000, 760000, 888000, 1064000, 1332000, 1520000, 1776000, 2128000, 2664000,
+        double.NaN, double.NaN, double.NaN, double.PositiveInfinity
+    ];
     
     // Flags
     public bool HighPriority => (Flags & 0x80) != 0;
@@ -191,11 +210,15 @@ public class JamSplitChunk
         FineTunePitch = bs.ReadSByte();
         SampleOffset = (uint)(bs.ReadInt16()) & 0xFFFF;
         var adsr1 = bs.ReadUInt16();
-        Decay = 1200*Math.Log2(decayRateMs[(adsr1 & 0xf0) >> 4]);
         var adsr2 = bs.ReadUInt16();
+        
+        var isPseudoExpIncrementMode = (((adsr1 & 0x80) >> 8) == 0x80);
+        var attackIdx = (adsr1 & 0x7F00) >> 8;
+        Attack = (isPseudoExpIncrementMode ? posExpModMs[attackIdx] : posLinModeMs[attackIdx]) / 1000.0;
+        Decay = decayRateMs[(adsr1 & 0xf0) >> 4] / 256.0;
         var isExponent = ((adsr2 & 0x20) == 0x20);
-        Release = 1200*Math.Log2(isExponent ? exponentialReleaseMs[adsr2 & 0x1F] : linearReleaseMs[adsr2 & 0x1F]); // fairly certain release is parsed correctly
-        SustainL = 1440-1400*((sustainLevels[adsr1 & 0x0f]));
+        Release = (isExponent ? exponentialReleaseMs[adsr2 & 0x0F] : linearReleaseMs[adsr2 & 0x0F]) / 8; // fairly certain release is parsed correctly
+        SustainL = sustainLevels[adsr1 & 0x0f];
         bs.Position++; // skip the Volume Override
         Volume = bs.Read1Byte();
         Pan = (byte)(bs.Read1Byte() + 0xC);
