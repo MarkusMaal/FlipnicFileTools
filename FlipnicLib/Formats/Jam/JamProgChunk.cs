@@ -97,14 +97,15 @@ public class JamProgChunk
                  """;
         string[] colHeaders =
         [
-            "Volume", "Pan", "Note min.", "Note max.", "Base note", "Fine tune", "LFO index", "Flags", "Offset", "Attack", "Decay", "Sustain Lv.", "Release"
+            "Volume", "Pan", "Note min.", "Note max.", "Base note", "Fine tune", "LFO index", "Flags", "Offset", "Attack", "Decay", "Sustain", "Release"
         ];
         List<string[]> rows = [];
         rows.AddRange(SplitChunks.Select(s => (string[]) [StaticUtils.DotFloatString((float)Math.Round(s.Volume / 127f * 100f, 1)) + "%", (s.Pan - 64) + " (" + (s.Pan == 64 ? "C" : s.Pan < 64 ? "L" : "R")+ ")",
             StaticUtils.SNote(s.NoteMin), StaticUtils.SNote(s.NoteMax), StaticUtils.SNote(s.BaseNote), s.FineTunePitch.ToString(), (s.LfoTableIndex!=127 ? s.LfoTableIndex.ToString() : "N/A"),
             s.FlagsAsString(), (s.SampleOffset * 8).ToString("X"), $"{StaticUtils.DotFloatString((float)Math.Round(s.Attack, 4))} s",
-            $"{StaticUtils.DotFloatString((float)Math.Round(s.Decay, 4))} s", $"{StaticUtils.DotFloatString((float)Math.Round(s.SustainL*100.0, 2))} %",
-            $"~{StaticUtils.DotFloatString((float)Math.Round(s.Release/8/8, 4))} s"]));
+            $"{StaticUtils.DotFloatString((float)Math.Round(s.Decay, 4))} s",
+            $"{StaticUtils.DotFloatString((float)Math.Round(s.Sustain, 4))} s ({StaticUtils.DotFloatString((float)Math.Round(s.SustainL*100.0, 2))} %)",
+            $"{StaticUtils.DotFloatString((float)Math.Round(s.Release, 4))} s"]));
         return o+StaticUtils.GenerateTable(colHeaders, rows, asCsv);
     }
 
@@ -193,6 +194,28 @@ public class JamSplitChunk
         333000, 380000, 444000, 532000, 666000, 760000, 888000, 1064000, 1332000, 1520000, 1776000, 2128000, 2664000,
         double.NaN, double.NaN, double.NaN, double.PositiveInfinity
     ];
+
+    private readonly double[] negLinModeMs = 
+    [
+        0.04, 0.05, 0.06, 0.07, 0.09, 0.1, 0.12, 0.15, 0.18, 0.21, 0.24, 0.29, 0.36, 0.41, 0.48, 0.58, 0.73, 0.83, 0.97, 1.2, 1.5,
+        1.7, 1.9, 2.3, 2.9, 3.3, 3.9, 4.6, 5.8, 6.6, 7.7, 9.3, 12, 13, 15, 19, 23, 27, 31,
+        37, 46, 53, 62, 74, 93, 110, 120, 150, 190, 210, 250, 300, 370, 420, 500, 590, 740, 850, 990, 1200, 1500, 1700, 2000, 2400,
+        3000, 3400, 4000, 4800, 5900, 6800, 7900, 9500, 12000, 14000, 16000, 19000, 24000, 27000,
+        32000, 38000, 48000, 54000, 63000, 76000, 95000, 109000, 127000, 152000, 190000, 218000, 254000, 304000, 380000, 436000,
+        508000, 608000, 760000, 872000, 1016000, 1216000, 1520000, 1744000, 2032000, 2432000, 3040000, 3488000, 4064000, 4864000,
+        double.NaN, double.NaN, double.NaN, double.PositiveInfinity
+    ];
+
+    private readonly double[] negExpModeMs =
+    [
+        0.07, 0.09, 0.11, 0.14, 0.18, 0.21, 0.25, 0.31, 0.39, 0.45, 0.53, 0.64, 0.81, 0.93, 1.1, 1.3, 1.6, 1.9, 2.2, 2.6, 3.3, 3.8,
+        4.4, 5.3, 6.7, 7.6, 8.9, 11, 13, 15, 18, 21, 27, 31, 36, 43, 53, 61, 71,
+        86, 110, 120, 140, 170, 210, 240, 290, 340, 430, 490, 570, 680, 860, 980, 1100, 1400, 1700, 2000, 2300, 2700, 3400, 3900, 4600,
+        5500, 6800, 7800, 9100, 11000, 14000, 16000, 18000, 22000, 27000, 31000, 36000, 44000, 55000, 63000,
+        73000, 88000, 109000, 125000, 146000, 175000, 219000, 250000, 292000, 350000, 438000, 500000, 584000, 700000, 876000, 1000000,
+        1168000, 1400000, 1752000, 2000000, 2336000, 2800000, 3504000, 4000000, 4672000, 5600000, 7008000, 8000000, 9344000, 11200000,
+        double.NaN, double.NaN, double.NaN, double.PositiveInfinity
+    ];
     
     // Flags
     public bool HighPriority => (Flags & 0x80) != 0;
@@ -201,6 +224,18 @@ public class JamSplitChunk
     public bool Modulation => (Flags & 0x04) != 0;
     public bool BreathWaveFromProg => (Flags & 0x02) != 0;
     public bool Reverb => (Flags & 0x01) != 0;
+
+    private enum SustainModes
+    {
+        LinearIncrement,
+        Reserved1,
+        LinearDecrement,
+        Reserved2,
+        PseudoExponentialIncrement,
+        Reserved3,
+        PseudoExponentialDecrement,
+        Reserved4
+    };
 
     public void Read(BinaryStream bs, int headerSize)
     {
@@ -214,11 +249,37 @@ public class JamSplitChunk
         
         var isPseudoExpIncrementMode = (((adsr1 & 0x80) >> 8) == 0x80);
         var attackIdx = (adsr1 & 0x7F00) >> 8;
-        Attack = (isPseudoExpIncrementMode ? posExpModMs[attackIdx] : posLinModeMs[attackIdx]) / 1000.0;
-        Decay = decayRateMs[(adsr1 & 0xf0) >> 4] / 256.0;
+        Attack = (isPseudoExpIncrementMode ? posExpModMs[attackIdx] : posLinModeMs[attackIdx]) / 1000.0; // this one I'm fairly confident about
+        Decay = decayRateMs[(adsr1 & 0xf0) >> 4] / 128.0;
         var isExponent = ((adsr2 & 0x20) == 0x20);
-        Release = (isExponent ? exponentialReleaseMs[adsr2 & 0x0F] : linearReleaseMs[adsr2 & 0x0F]) / 8; // fairly certain release is parsed correctly
+        Release = (isExponent ? exponentialReleaseMs[adsr2 & 0x1F] : linearReleaseMs[adsr2 & 0x1F]) / 140.0; // this one maybe a bit confident 
         SustainL = sustainLevels[adsr1 & 0x0f];
+
+        var sustainRateIdx = ((adsr1 & 0x3f8) >> 3);
+        var sustainMode = (SustainModes)((adsr1 & 0x7));
+
+        switch (sustainMode)
+        {
+            case SustainModes.LinearDecrement:
+                Sustain = negLinModeMs[sustainRateIdx];
+                break;
+            case SustainModes.LinearIncrement:
+                Sustain = posLinModeMs[sustainRateIdx];
+                break;
+            case SustainModes.PseudoExponentialDecrement:
+                Sustain = negExpModeMs[sustainRateIdx];
+                break;
+            case SustainModes.PseudoExponentialIncrement:
+                Sustain = posExpModMs[sustainRateIdx];
+                break;
+            case SustainModes.Reserved1:
+            case SustainModes.Reserved2:
+            case SustainModes.Reserved3:
+            case SustainModes.Reserved4:
+            default:
+                Sustain = 0.0;
+                break;
+        }
         bs.Position++; // skip the Volume Override
         Volume = bs.Read1Byte();
         Pan = (byte)(bs.Read1Byte() + 0xC);

@@ -204,11 +204,9 @@ public abstract class Converter
                         new SF2GeneratorAmount { Amount = (short)((prog.BaseVolume + splitChunk.Volume) / 2) }); // divide by 2, because SF2 specifies 127 as the max value, but the maximum for BaseVolume + Volume is 255
                 }*/
                 sf2.AddInstrumentGenerator(SF2Generator.InitialAttenuation, new SF2GeneratorAmount { Amount = (short)(127 - (splitChunk.Volume * prog.BaseVolume / 16129.0 * 32.0)) });
+                // sustain time itself is not included in the final SF2, since the spec doesn't have support for it
                 if (StaticUtils.ExportEnvelopes)
                 {
-                    /* });
-                    sf2.AddInstrumentGenerator(SF2Generator.SustainVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(splitChunk.Sustain) });*/
                     sf2.AddInstrumentGenerator(SF2Generator.AttackVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(1200*Math.Log2(splitChunk.Attack)) });
                     sf2.AddInstrumentGenerator(SF2Generator.SustainVolEnv,
@@ -216,7 +214,7 @@ public abstract class Converter
                     sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(1200*Math.Log2(splitChunk.Decay)) });
                     sf2.AddInstrumentGenerator(SF2Generator.ReleaseVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(1200*Math.Log2(splitChunk.Release)/4) });
+                        new SF2GeneratorAmount { Amount = (short)(1200*Math.Log2(splitChunk.Release)) });
                 }
 
                 if (splitChunk.LfoTableIndex != 0x7F)
@@ -229,7 +227,8 @@ public abstract class Converter
 
                 if (splitChunk.Reverb)
                 {
-                    sf2.AddInstrumentGenerator(SF2Generator.ReverbEffectsSend, new SF2GeneratorAmount { Amount = 100 });
+                    sf2.AddInstrumentGenerator(SF2Generator.ReverbEffectsSend, new SF2GeneratorAmount { Amount = 200 });
+                    sf2.AddInstrumentGenerator(SF2Generator.ChorusEffectsSend, new SF2GeneratorAmount { Amount = 200 });
                 }
 
                 if (prog.CountOrFlag == 0xFF)
