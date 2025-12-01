@@ -263,9 +263,9 @@ public class JamSplitChunk
         var isPseudoExpIncrementMode = (((adsr1 & 0x80) >> 8) == 0x80);
         var attackIdx = (adsr1 & 0x7F00) >> 8;
         Attack = (isPseudoExpIncrementMode ? posExpModMs[attackIdx] : posLinModeMs[attackIdx]) / 1000.0; // this one I'm fairly confident about
-        Decay = decayRateMs[(adsr1 & 0xf0) >> 4] / 128.0;
+        Decay = decayRateMs[(adsr1 & 0xf0) >> 4] / 250.0;
         var isExponent = ((adsr2 & 0x20) == 0x20);
-        Release = (isExponent ? exponentialReleaseMs[adsr2 & 0x1F] : linearReleaseMs[adsr2 & 0x1F]) / 256.0; // this one maybe a bit confident 
+        Release = (isExponent ? exponentialReleaseMs[adsr2 & 0x1F] : linearReleaseMs[adsr2 & 0x1F]) / 250.0; // this one maybe a bit confident 
         SustainL = sustainLevels[adsr1 & 0x0f];
 
         var sustainRateIdx = ((adsr2 & 0x1fc0) >> 6);
