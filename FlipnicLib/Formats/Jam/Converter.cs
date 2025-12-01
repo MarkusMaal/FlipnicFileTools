@@ -203,8 +203,8 @@ public abstract class Converter
                     sf2.AddInstrumentGenerator(SF2Generator.Velocity,
                         new SF2GeneratorAmount { Amount = (short)((prog.BaseVolume + splitChunk.Volume) / 2) }); // divide by 2, because SF2 specifies 127 as the max value, but the maximum for BaseVolume + Volume is 255
                 }*/
-                sf2.AddInstrumentGenerator(SF2Generator.InitialAttenuation, new SF2GeneratorAmount { Amount = (short)(127 - (splitChunk.Volume * prog.BaseVolume / 16129.0 * 32.0)) });
-                // sustain time itself is not included in the final SF2, since the spec doesn't have support for it
+                sf2.AddInstrumentGenerator(SF2Generator.InitialAttenuation, new SF2GeneratorAmount { Amount = (short)(127 - (instrument.VelocityTable[splitChunk.Volume] * instrument.VelocityTable[prog.BaseVolume] / 16129.0 * 32.0)) });
+                // sustain rate itself is not included in the final SF2, since there is no direct way to have support for it
                 if (StaticUtils.ExportEnvelopes)
                 {
                     sf2.AddInstrumentGenerator(SF2Generator.AttackVolEnv,

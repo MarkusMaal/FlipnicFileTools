@@ -253,8 +253,14 @@
                                                 <CheckBox Name="PalToggle" Margin="0,2, 0,-8" IsChecked="False" Content="Use PAL instead of NTSC">
                                                     <ToolTip.Tip>If the output is at the wrong framerate or video de-syncs with audio, you may need to check this option.</ToolTip.Tip>
                                                 </CheckBox>
-                                                <CheckBox Name="EnvelopeToggle" Margin="0,2, 0,-8" IsChecked="True" Content="Export envelopes (experimental)">
-                                                    <ToolTip.Tip>Tries to create the soundfont with proper envelopes (attack, decay, sustain, release). Uncheck this if you don't want that.</ToolTip.Tip>
+                                                <CheckBox Name="EnvelopeToggle" Margin="0,2, 0,-8" IsChecked="True" Content="Export envelopes">
+                                                    <ToolTip.Tip>
+                                                        <TextBlock>
+                                                            Tries to create the soundfont with proper envelopes (attack, decay, sustain, release). Uncheck this if you don't want that.
+                                                            <LineBreak/>
+                                                            NOTE: Sustain Rate will not be converted, because SF2 doesn't support it.
+                                                        </TextBlock>
+                                                    </ToolTip.Tip>
                                                 </CheckBox>
                                             </StackPanel>
                                         </StackPanel>

@@ -218,12 +218,12 @@ public class JamSplitChunk
     ];
     
     // Flags
-    public bool HighPriority => (Flags & 0x80) != 0;
-    public bool Noise => (Flags & 0x40) != 0;
-    public bool EnablePitchBend => (Flags & 0x08) != 0;
-    public bool Modulation => (Flags & 0x04) != 0;
-    public bool BreathWaveFromProg => (Flags & 0x02) != 0;
-    public bool Reverb => (Flags & 0x01) != 0;
+    public bool Reverb => (Flags & 0x80) != 0;
+    public bool BreathWaveFromProg => (Flags & 0x40) != 0;
+    public bool Modulation => (Flags & 0x20) != 0;
+    public bool EnablePitchBend => (Flags & 0x10) != 0;
+    public bool Noise => (Flags & 0x02) != 0;
+    public bool HighPriority => (Flags & 0x01) != 0;
 
     private enum SustainModes
     {
@@ -244,42 +244,67 @@ public class JamSplitChunk
         BaseNote = (Note)bs.Read1Byte();
         FineTunePitch = bs.ReadSByte();
         SampleOffset = (uint)(bs.ReadInt16()) & 0xFFFF;
+        
+        /* Start of ADSR decoding */
         var adsr1 = bs.ReadUInt16();
         var adsr2 = bs.ReadUInt16();
+        
+        // So the bits I'm using here for ADSR are very likely correct (according to SPU2 documentation).
+        //
+        // The thing I'm concerned about is the dividers I'm using for Decay and Release
+        // these are brute-forced and therefore may be slightly inaccurate.
+        //
+        // The sustain rate is shown when the user queries information about the
+        // HD file, but is completely unused when doing the SF2 conversion.
+        // 
+        // However, the Sustain Level IS used during the conversion.
+        //
         
         var isPseudoExpIncrementMode = (((adsr1 & 0x80) >> 8) == 0x80);
         var attackIdx = (adsr1 & 0x7F00) >> 8;
         Attack = (isPseudoExpIncrementMode ? posExpModMs[attackIdx] : posLinModeMs[attackIdx]) / 1000.0; // this one I'm fairly confident about
         Decay = decayRateMs[(adsr1 & 0xf0) >> 4] / 128.0;
-        var isExponent = ((adsr2 & 0x400) == 0x400);
+        var isExponent = ((adsr2 & 0x20) == 0x20);
         Release = (isExponent ? exponentialReleaseMs[adsr2 & 0x1F] : linearReleaseMs[adsr2 & 0x1F]) / 256.0; // this one maybe a bit confident 
         SustainL = sustainLevels[adsr1 & 0x0f];
 
-        var sustainRateIdx = ((adsr1 & 0x3f8) >> 3);
-        var sustainMode = (SustainModes)((adsr1 & 0x7));
-
-        switch (sustainMode)
+        var sustainRateIdx = ((adsr2 & 0x1fc0) >> 6);
+        var sustainMode = (SustainModes)((adsr2 & 0xe000) >> 13);
+        if (sustainRateIdx != 0x7F)
         {
-            case SustainModes.LinearDecrement:
-                Sustain = negLinModeMs[sustainRateIdx];
-                break;
-            case SustainModes.LinearIncrement:
-                Sustain = posLinModeMs[sustainRateIdx];
-                break;
-            case SustainModes.PseudoExponentialDecrement:
-                Sustain = negExpModeMs[sustainRateIdx];
-                break;
-            case SustainModes.PseudoExponentialIncrement:
-                Sustain = posExpModMs[sustainRateIdx];
-                break;
-            case SustainModes.Reserved1:
-            case SustainModes.Reserved2:
-            case SustainModes.Reserved3:
-            case SustainModes.Reserved4:
-            default:
-                Sustain = 0.0;
-                break;
+            switch (sustainMode)
+            {
+                case SustainModes.LinearDecrement:
+                    Sustain = negLinModeMs[sustainRateIdx];
+                    break;
+                case SustainModes.LinearIncrement:
+                    Sustain = posLinModeMs[sustainRateIdx];
+                    break;
+                case SustainModes.PseudoExponentialDecrement:
+                    Sustain = negExpModeMs[sustainRateIdx];
+                    break;
+                case SustainModes.PseudoExponentialIncrement:
+                    Sustain = posExpModMs[sustainRateIdx];
+                    break;
+                case SustainModes.Reserved1:
+                case SustainModes.Reserved2:
+                case SustainModes.Reserved3:
+                case SustainModes.Reserved4:
+                default:
+                    Sustain = 0.0;
+                    break;
+            }
         }
+        else
+        {
+            // Ignore sustain rate if the value is 0x7F (which seems to be the default)
+            // Otherwise the program would crash due to an index array exception
+            Sustain = 0.0;
+        }
+        
+        Sustain /= 1000.0; // value in seconds instead of ms
+        /* End of ADSR decoding */
+        
         bs.Position++; // skip the Volume Override
         Volume = bs.Read1Byte();
         Pan = (byte)(bs.Read1Byte() + 0xC);
