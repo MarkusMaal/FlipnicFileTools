@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Runtime.InteropServices;
 using FlipnicLib.Formats.Midi;
 using Kermalis.SoundFont2;
@@ -55,8 +56,6 @@ public abstract class Converter
             _i++;
         }
         
-
-        
         // Add metadata to the sf2
         var sf2 = new SF2();
         sf2.InfoChunk.Bank = Path.GetFileNameWithoutExtension(new FileInfo(hdFilePath).Name) + " (SCEI/JAM Voicebank)";
@@ -77,6 +76,9 @@ public abstract class Converter
 
         var sampleIdx = 0;
         var idx = 0;
+        
+        Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+        
         for (var j = 0; j < channelToPrograms.Count; j++)
         {
             if (channelToPrograms[j].Program >= instrument.ProgramChunks.Count) continue;
@@ -108,6 +110,12 @@ public abstract class Converter
                 bool looping = loopStart != 0;
 
                 Console.WriteLine($"SF2: vag{j} (base note: {StaticUtils.SNote(splitChunk.BaseNote)}) - looping: {looping}");
+                if (StaticUtils.ExportEnvelopes)
+                {
+                    Console.WriteLine(
+                        $"     ADSR: {Math.Round(splitChunk.Attack, 2)} s -> {Math.Round(splitChunk.Decay, 2)} s -> {Math.Round(splitChunk.Sustain, 2)} s ({splitChunk.SustainL * 100}%) -> {Math.Round(splitChunk.Release, 2)} s");
+                }
+
                 if (looping)
                 {
                     double a = (pcm16.Length / ((double)vag.Length / 0x10));
