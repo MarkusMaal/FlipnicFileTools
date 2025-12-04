@@ -218,7 +218,7 @@ public class Lp4(byte[] data, string fileName)
         var texOffset = offset + (len * 0x18) + 0x10;
         var div = 4096f;
         var uvOffset = texOffset;
-        for (var j = offset + 0x10; j < offset + len * 0x10 - 0x10; j += 0x10)
+        for (var j = offset + 0x10; j < offset + len * 0x10 - 0x10; j += 0x30)
         {
             rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset).Take(8).ToArray())[0]);
             rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset).Take(8).ToArray())[1]);
@@ -240,7 +240,7 @@ public class Lp4(byte[] data, string fileName)
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x24).Take(4).ToArray(), 0));
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x28).Take(4).ToArray(), 0));
             rawVerticies.AddRange(Model.DecodeNormals(data.Skip(uvOffset - (len * 0x8) + 16).Take(8).ToArray()));
-            uvOffset += 8;
+            uvOffset += 24;
         }
     }
     
@@ -317,7 +317,7 @@ public class Model
         var texOffset = offset + (len * 0x18) + 0x10;
         var div = 4096f;
         var uvOffset = texOffset;
-        for (var j = offset + 0x10; j < offset + len * 0x10 - 0x10; j += 0x10)
+        for (var j = offset + 0x10; j < offset + len * 0x10 - 0x10; j += 0x30)
         {
             RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset).Take(8).ToArray()));
             RawVertices.Add(BitConverter.ToSingle(data.Skip(j).Take(4).ToArray(), 0));
@@ -336,7 +336,7 @@ public class Model
             RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 0x24).Take(4).ToArray(), 0));
             RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 0x28).Take(4).ToArray(), 0));
             RawVertices.AddRange(DecodeNormals(data.Skip(uvOffset - (len * 0x8) + 16).Take(8).ToArray()));
-            uvOffset += 8;
+            uvOffset += 24;
         }
     }
 
