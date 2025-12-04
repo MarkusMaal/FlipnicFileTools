@@ -28,7 +28,7 @@
                 </ItemsControl>
             </StackPanel>
         </ScrollViewer>
-        <Viewbox Grid.Column="1" >
+        <Viewbox Grid.Column="1">
             <Grid MinWidth="{Binding Width}" MinHeight="{Binding Height}">
                 <Grid.ContextMenu>
                     <ContextMenu>
@@ -57,6 +57,7 @@
                                    Height="{Binding MenuElement.Height}"
                                    ZIndex="{Binding MenuElement.Dipth}"
                                    IsVisible="{Binding IsVisible}"
+                                   Stretch="Fill"
                                    VerticalAlignment="Top"
                                    HorizontalAlignment="Left"
                                    RenderOptions.BitmapInterpolationMode="None">
