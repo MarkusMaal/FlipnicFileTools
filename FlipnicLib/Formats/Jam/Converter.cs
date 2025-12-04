@@ -222,11 +222,11 @@ public abstract class Converter
                         new SF2GeneratorAmount { Amount = (short)(1200*Math.Log2(splitChunk.Release)) });
                 }
 
-                if (splitChunk.LfoTableIndex != 0x7F)
+                if (splitChunk.PitchBend != 12)
                 {
-                    sf2.AddInstrumentGenerator(SF2Generator.FreqModLFO, new SF2GeneratorAmount
+                    sf2.AddInstrumentGenerator(SF2Generator.ModLfoToPitch, new SF2GeneratorAmount
                     {
-                        Amount = (short)(instrument.VelocityTable[splitChunk.LfoTableIndex] * 160.15625f - 16000f)
+                        Amount = (short)(splitChunk.PitchBend * (prog.UnkPitchRelated_0x04 / 2))
                     });
                 }
 

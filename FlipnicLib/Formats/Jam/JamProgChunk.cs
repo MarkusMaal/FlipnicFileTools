@@ -97,11 +97,11 @@ public class JamProgChunk
                  """;
         string[] colHeaders =
         [
-            "Volume", "Pan", "Note min.", "Note max.", "Base note", "Fine tune", "LFO index", "Flags", "Offset", "Attack", "Decay", "Sustain", "Release"
+            "Volume", "Pan", "Note min.", "Note max.", "Base note", "Fine tune", "Pitch Bend", "LFO index", "Flags", "Offset", "Attack", "Decay", "Sustain", "Release"
         ];
         List<string[]> rows = [];
         rows.AddRange(SplitChunks.Select(s => (string[]) [StaticUtils.DotFloatString((float)Math.Round(s.Volume / 127f * 100f, 1)) + "%", (s.Pan - 64) + " (" + (s.Pan == 64 ? "C" : s.Pan < 64 ? "L" : "R")+ ")",
-            StaticUtils.SNote(s.NoteMin), StaticUtils.SNote(s.NoteMax), StaticUtils.SNote(s.BaseNote), s.FineTunePitch.ToString(), (s.LfoTableIndex!=127 ? s.LfoTableIndex.ToString() : "N/A"),
+            StaticUtils.SNote(s.NoteMin), StaticUtils.SNote(s.NoteMax), StaticUtils.SNote(s.BaseNote), s.FineTunePitch.ToString(), (s.PitchBend != 12 ? s.PitchBend.ToString() : "N/A"), (s.LfoTableIndex!=127 ? s.LfoTableIndex.ToString() : "N/A"),
             s.FlagsAsString(), (s.SampleOffset * 8).ToString("X"), $"{StaticUtils.DotFloatString((float)Math.Round(s.Attack, 4))} s",
             $"{StaticUtils.DotFloatString((float)Math.Round(s.Decay, 4))} s",
             $"{StaticUtils.DotFloatString((float)Math.Round(s.Sustain, 4))} s ({StaticUtils.DotFloatString((float)Math.Round(s.SustainL*100.0, 2))} %)",
