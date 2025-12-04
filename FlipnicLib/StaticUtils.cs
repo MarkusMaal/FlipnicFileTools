@@ -51,6 +51,8 @@ public abstract class StaticUtils
     public static bool AltSf2Method { get; set; } = false;
 
     public static bool IsModeSet { get; set; } = false;
+
+    public static short ReverbStrength { get; set; } = 70;
     
     /// <summary>
     /// Display an animated spinning line loader

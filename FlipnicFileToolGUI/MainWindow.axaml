@@ -250,6 +250,12 @@
                                                 <Button Name="BrowsButtonPath" Click="BrowsButtonPath_OnClick" Grid.Column="2" Content="Browse…"></Button>
                                             </Grid>
                                             <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <StackPanel Name="ReverbSliderPanel">
+                                                    <Slider Minimum="0" Maximum="1000" Width="200" Value="200" VerticalAlignment="Center" Name="ReverbSlider" ValueChanged="ReverbSlider_OnValueChanged">
+                                                    
+                                                    </Slider>
+                                                    <Label Name="ReverbStrengthLabel">Reverb strength: 20%</Label>
+                                                </StackPanel>
                                                 <CheckBox Name="PalToggle" Margin="0,2, 0,-8" IsChecked="False" Content="Use PAL instead of NTSC">
                                                     <ToolTip.Tip>If the output is at the wrong framerate or video de-syncs with audio, you may need to check this option.</ToolTip.Tip>
                                                 </CheckBox>

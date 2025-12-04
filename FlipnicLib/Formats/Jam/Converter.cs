@@ -173,7 +173,6 @@ public abstract class Converter
             // Preset has a specified range with 0xFF (otherwise instruments provide it)
             //if (prog.CountOrFlag == 0xFF)
             //    sf2.AddPresetGenerator(SF2Generator.KeyRange, new SF2GeneratorAmount { LowByte = prog.FullRangeMin, HighByte = prog.FullRangeMax });
-
             sf2.AddPresetGenerator(SF2Generator.Instrument, new SF2GeneratorAmount { Amount = (short)sf2.AddInstrument(name) });
             long offset = 0;
             for (int k = 0; k < prog.SplitChunks.Count; k++)
@@ -206,12 +205,10 @@ public abstract class Converter
                 {
                     (splitChunk.Attack, splitChunk.Decay) = (splitChunk.Decay, splitChunk.Attack);
                 }
-                /*if (StaticUtils.ExportVelocity)
-                {
-                    sf2.AddInstrumentGenerator(SF2Generator.Velocity,
-                        new SF2GeneratorAmount { Amount = (short)((prog.BaseVolume + splitChunk.Volume) / 2) }); // divide by 2, because SF2 specifies 127 as the max value, but the maximum for BaseVolume + Volume is 255
-                }*/
-                sf2.AddInstrumentGenerator(SF2Generator.InitialAttenuation, new SF2GeneratorAmount { Amount = (short)(127 - (instrument.VelocityTable[splitChunk.Volume] * instrument.VelocityTable[prog.BaseVolume] / 16129.0 * 32.0)) });
+                long vol = prog.BaseVolume * splitChunk.Volume;
+                // We divide the above value by 127^2 to get the percent vol it represents. 
+                var percentvol = vol / (double) (127 * 127);
+                sf2.AddInstrumentGenerator(SF2Generator.InitialAttenuation, new SF2GeneratorAmount() { Amount = (short)((1.0-percentvol) * 320.0)});
                 // sustain rate itself is not included in the final SF2, since there is no direct way to have support for it
                 if (StaticUtils.ExportEnvelopes)
                 {
@@ -220,7 +217,7 @@ public abstract class Converter
                     sf2.AddInstrumentGenerator(SF2Generator.SustainVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(1440-1400*splitChunk.SustainL) });
                     sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(1200*Math.Log2(splitChunk.Decay)) });
+                        new SF2GeneratorAmount { Amount = (short)(1200 * Math.Log2(splitChunk.Decay)) });
                     sf2.AddInstrumentGenerator(SF2Generator.ReleaseVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(1200*Math.Log2(splitChunk.Release)) });
                 }
@@ -235,8 +232,8 @@ public abstract class Converter
 
                 if (splitChunk.Reverb)
                 {
-                    sf2.AddInstrumentGenerator(SF2Generator.ReverbEffectsSend, new SF2GeneratorAmount { Amount = 200 });
-                    sf2.AddInstrumentGenerator(SF2Generator.ChorusEffectsSend, new SF2GeneratorAmount { Amount = 200 });
+                    sf2.AddInstrumentGenerator(SF2Generator.ReverbEffectsSend, new SF2GeneratorAmount { Amount = StaticUtils.ReverbStrength });
+                    //sf2.AddInstrumentGenerator(SF2Generator.ChorusEffectsSend, new SF2GeneratorAmount { Amount = StaticUtils.ReverbStrength });
                 }
 
                 if (prog.CountOrFlag == 0xFF)

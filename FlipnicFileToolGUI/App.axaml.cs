@@ -14,6 +14,7 @@ using Avalonia.Styling;
 using Avalonia.Threading;
 using FlipnicFileToolGUI.Helpers;
 using FlipnicFileToolGUI.ViewModels;
+using FlipnicLib;
 using SukiUI;
 using SukiUI.Controls;
 using SukiUI.Models;
@@ -145,6 +146,7 @@ public class App : Application
         p.StartInfo.Arguments = "ffmpeg";
         p.Start();
         DetectFromOutput(p, mw.FFmpegBox , "FFmpeg", mw);
+        mw.ReverbSlider.Value = StaticUtils.ReverbStrength;
         if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop) return;
         if (desktop.Args?.Length == 0) return;
         if (MainWindow.ErrorDisplayed || desktop.Args?[0] != "-e") return;

@@ -270,7 +270,7 @@ public class JamSplitChunk
 
         var sustainRateIdx = ((adsr2 & 0x1fc0) >> 6);
         var sustainMode = (SustainModes)((adsr2 & 0xe000) >> 13);
-        if (sustainRateIdx != 0x7F)
+        if (sustainRateIdx < posLinModeMs.Length)
         {
             switch (sustainMode)
             {

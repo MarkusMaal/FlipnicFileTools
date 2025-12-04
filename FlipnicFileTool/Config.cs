@@ -1,3 +1,4 @@
+using System.Globalization;
 using FlipnicLib;
 
 namespace FlipnicFileTool;
@@ -157,6 +158,10 @@ public class Config
                     break;
                 case "--scale-factor":
                     ScaleFactor = int.Parse(arg);
+                    break;
+                case "--reverb-strength":
+                    Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+                    StaticUtils.ReverbStrength = (short)(double.Parse(arg) * 10.0);
                     break;
                 case "--replace-file":
                 case "--replace-iso":

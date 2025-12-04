@@ -33,6 +33,7 @@ public class DebugTools(Exception e)
                                        PAL: {StaticUtils.Pal}
                                        Load index: {StaticUtils.LoadIdx}
                                        Window width: {StaticUtils.WindowWidth}
+                                       Reverb strength: {StaticUtils.ReverbStrength}
                                  
                                  Environment:
                                     FlipnicLib version: {StaticUtils.DotFloatString(StaticUtils.LibVersion)}

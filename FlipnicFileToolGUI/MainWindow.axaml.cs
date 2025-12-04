@@ -21,8 +21,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Threading;
+using Avalonia.Controls.Primitives;
 
 namespace FlipnicFileToolGUI;
 
@@ -678,5 +678,10 @@ public sealed partial class MainWindow : SukiWindow
         }
         RepackUtils.RepackFileUnsafe(offset, replacement, FileName, size, vf.Path[1..].Contains('\\') && !vf.Path[1..].EndsWith('\\') ? 1 : 2048);
         ShowDialog("Flipnic file tools", "File replaced successfully.", NotificationType.Success);
+    }
+
+    private void ReverbSlider_OnValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
+    {
+        ReverbStrengthLabel.Content = $"Reverb strength: {Math.Round(e.NewValue/10.0, 1)}%";
     }
 }
