@@ -23,19 +23,18 @@ public class Samples
         }
     }
 
-    private byte[] GetVag(Stream bs, out uint loopStart, out uint loopEnd)
+    private static byte[] GetVag(Stream bs, out uint loopStart, out uint loopEnd)
     {
         loopStart = 0;
         loopEnd = 0;
         // Size of vag is not provided, we must find it using vag flags
-        long basePos = bs.Position;
-        long absoluteSsaOffset = basePos;
-        bs.Position = absoluteSsaOffset;
+        var basePos = bs.Position;
+        bs.Position = basePos;
 
         uint lastSampleIndex = 0;
         while (bs.Position < bs.Length)
         {
-            byte decodingCoef = bs.Read1Byte();
+            var decodingCoef = bs.Read1Byte();
             var flag = (SonyVag.VagFlag)bs.Read1Byte();
 
             if (flag == SonyVag.VagFlag.VagfLoopStart)
@@ -55,11 +54,7 @@ public class Samples
             bs.Position += 0x0E;
         }
 
-        bs.Position = absoluteSsaOffset;
-        if (bs.Position + 0x10 * (int)(lastSampleIndex + 1) > bs.Length)
-        {
-            return bs.ReadBytes((int)(bs.Length - bs.Position));
-        }
-        return bs.ReadBytes(0x10 * (int)(lastSampleIndex + 1));
+        bs.Position = basePos;
+        return bs.Position + 0x10 * (int)(lastSampleIndex + 1) > bs.Length ? bs.ReadBytes((int)(bs.Length - bs.Position)) : bs.ReadBytes(0x10 * (int)(lastSampleIndex + 1));
     }
 }

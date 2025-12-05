@@ -6,7 +6,7 @@ namespace FlipnicLib.Formats.Jam;
 // Very very few events supported here, 4 bit channel number not used either
 public class SeSeq
 {
-    public List<SeMessage> Messages { get; set; } = new();
+    private List<SeMessage> Messages { get; set; } = [];
 
     public void Read(BinaryStream bs)
     {
@@ -76,7 +76,7 @@ public class SeMessage
 
     public void Read(BinaryStream bs, byte lastStatus)
     {
-        byte status = bs.Read1Byte();
+        var status = bs.Read1Byte();
         if ((status & 0x80) != 0)
             Status = status;
         else

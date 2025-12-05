@@ -119,10 +119,9 @@ public class SqMessage
 
     public void Read(BinaryStream bs, byte lastStatus)
     {
-        // SDDRV::SqSequencer::statusEventCaller (GT4O US: 0x535238) 
         // (yes i'm reading the delta first here)
         Delta = (uint)Midi.readVariable(bs);
-        byte status = bs.Read1Byte();
+        var status = bs.Read1Byte();
         if ((status & 0x80) != 0)
         {
             Status = status;
@@ -136,59 +135,62 @@ public class SqMessage
         Status = status;
 
         // This is all that's supported by the SqSequencer
-        // Note that SeSequencer may support more events/meta (not implemented for now, it's used by sfx - midi is bundled inside the ins header in that case)
+        // Note that SeSequencer may support more events/meta
         ISqEvent @event;
-        if ((Status & 0xF0) == 0x80) // SDDRV::SqSequencer::ev_8x (GT4O US: 0x535350)
+        switch (Status & 0xF0)
         {
-            Event = new SqNoteOffEvent()
-            {
-                ProgramID = (byte)(Status & 0x0F),
-            };
-            Event.Read(bs);
-        }
-        else if ((Status & 0xF0) == 0x90) // SDDRV::SqSequencer::ev_9x (GT4O US: 0x535390)
-        {
-            Event = new SqNoteOnEvent()
-            {
-                ProgramID = (byte)(Status & 0x0F),
-            };
-            Event.Read(bs);
-        }
-        else if ((Status & 0xF0) == 0xB0) // SDDRV::SqSequencer::ev_Bx (GT4O US: 0x535400)
-        {
-            Event = new SqControllerEvent()
-            {
-                ProgramID = (byte)(Status & 0x0F),
-            };
-            Event.Read(bs);
-        }
-        else if ((Status & 0xF0) == 0xC0) // SDDRV::SqSequencer::ev_Cx (GT4O US: 0x535700)
-        {
-            Event = new SqProgramEvent()
-            {
-                ProgramID = (byte)(Status & 0x0F),
-            };
+            case 0x80:
+                Event = new SqNoteOffEvent()
+                {
+                    ProgramID = (byte)(Status & 0x0F),
+                };
+                Event.Read(bs);
+                break;
+            case 0x90:
+                Event = new SqNoteOnEvent()
+                {
+                    ProgramID = (byte)(Status & 0x0F),
+                };
+                Event.Read(bs);
+                break;
+            case 0xB0:
+                Event = new SqControllerEvent()
+                {
+                    ProgramID = (byte)(Status & 0x0F),
+                };
+                Event.Read(bs);
+                break;
+            case 0xC0:
+                Event = new SqProgramEvent()
+                {
+                    ProgramID = (byte)(Status & 0x0F),
+                };
             
-            Event.Read(bs);
-        }
-        else if ((Status & 0xF0) == 0xE0) // SDDRV::SqSequencer::ev_Ex (GT4O US: 0x535770)
-        {
-            Event = new SqPitchBendEvent()
+                Event.Read(bs);
+                break;
+            case 0xE0:
+                Event = new SqPitchBendEvent()
+                {
+                    ProgramID = (byte)(Status & 0x0F),
+                };
+                Event.Read(bs);
+                break;
+            default:
             {
-                ProgramID = (byte)(Status & 0x0F),
-            };
-            Event.Read(bs);
-        }
-        else if (status == 0xFF) // SDDRV::SqSequencer::ev_Fx (GT4O US: 0x535820)
-        {
-            Event = new SqMetaEvent()
-            {
-                ProgramID = (byte)(Status & 0x0F),
-            };
-            Event.Read(bs);
+                if (status == 0xFF)
+                {
+                    Event = new SqMetaEvent()
+                    {
+                        ProgramID = (byte)(Status & 0x0F),
+                    };
+                    Event.Read(bs);
 
-            if (Event is SqMetaEvent meta && meta.Type == 0x2F)
-                return;
+                    if (Event is SqMetaEvent { Type: 0x2F })
+                        return;
+                }
+
+                break;
+            }
         }
     }
 }

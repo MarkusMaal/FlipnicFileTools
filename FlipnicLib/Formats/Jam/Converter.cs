@@ -11,11 +11,24 @@ public abstract class Converter
 {
  
     // Based on page 47 of SoundFont 2.01 specification (SFSPEC21.PDF)
+    // ReSharper disable once InconsistentNaming
     private enum SF2SampleModeFlags
     {
+        /// <summary>
+        /// Indicates a sound reproduced with no loop.
+        /// </summary>
         NoLoop,
+        /// <summary>
+        /// Indicates a sound which loops continuously.
+        /// </summary>
         Continuous,
+        /// <summary>
+        /// Unused but should be interpreted as indicating no loop.
+        /// </summary>
         UnusedNoLoop,
+        /// <summary>
+        /// Indicates a sound which loops for the duration of key depression then proceeds to play the remainder of the sample.
+        /// </summary>
         StartLoopEnd
     };
 
@@ -45,10 +58,10 @@ public abstract class Converter
         ms.Seek(0);
         var instrument = new JamHeader();
         instrument.Read(new BinaryStream(ms));
-        List<(byte Channel, byte Program)> channelToPrograms = new List<(byte Channel, byte Program)>();
+        var channelToPrograms = new List<(byte Channel, byte Program)>();
         byte _i = 1;
         var preset = 0;
-        foreach (SqMessage msg in ssqt.Track.Messages)
+        foreach (var msg in ssqt.Track.Messages)
         {
             if (msg.Event is not SqProgramEvent progChangeEvent) continue;
             var channel = (byte)((msg.Status & 0x0F));
@@ -57,15 +70,20 @@ public abstract class Converter
         }
         
         // Add metadata to the sf2
-        var sf2 = new SF2();
-        sf2.InfoChunk.Bank = Path.GetFileNameWithoutExtension(new FileInfo(hdFilePath).Name) + " (SCEI/JAM Voicebank)";
-        sf2.InfoChunk.Tools = "Flipnic File Tools " + StaticUtils.DotFloatString(StaticUtils.LibVersion);
-        sf2.InfoChunk.Designer = "Generated";
-        sf2.InfoChunk.Date = new FileInfo(hdFilePath).LastWriteTime.ToShortDateString();
-        sf2.InfoChunk.Products = "PS-SPU2";
-        sf2.InfoChunk.Copyright = "Sony Computer Entertainment Inc.";
-        sf2.InfoChunk.Comment = $"Header: {new FileInfo(hdFilePath).Name}\nBody: {new FileInfo(bdFilePath).Name}\nSequence: {new FileInfo(midiFile).Name}";
-        
+        var sf2 = new SF2
+        {
+            InfoChunk =
+            {
+                Bank = Path.GetFileNameWithoutExtension(new FileInfo(hdFilePath).Name) + " (SCEI/JAM Voicebank)",
+                Tools = "Flipnic File Tools " + StaticUtils.DotFloatString(StaticUtils.LibVersion),
+                Designer = "Generated",
+                Date = new FileInfo(hdFilePath).LastWriteTime.ToShortDateString(),
+                Products = "PS-SPU2",
+                Copyright = "Sony Computer Entertainment Inc.",
+                Comment = $"Header: {new FileInfo(hdFilePath).Name}\nBody: {new FileInfo(bdFilePath).Name}\nSequence: {new FileInfo(midiFile).Name}"
+            }
+        };
+
 
         // Start by adding all the instruments/samples to the sf2
         ms.Position = headerSize;
@@ -87,27 +105,20 @@ public abstract class Converter
 
             uint wavLoopStart = 0;
             uint wavLoopEnd = 0;
-            int wavLength = 0;
-            foreach (var splitChunk in prog.SplitChunks)
+            var wavLength = 0;
+            foreach (var splitChunk in prog.SplitChunks.Where(splitChunk => !vagSamples.ContainsKey(splitChunk.SampleOffset)))
             {
-                // May refer to same sample so offset
-                if (vagSamples.ContainsKey(splitChunk.SampleOffset))
-                {
-                    continue;
-                }
-
-
                 ms.Seek( headerSize + splitChunk.SampleOffset * 8,  SeekOrigin.Begin);
 
-                byte[] vag = splitChunk.GetData(new BinaryStream(ms), out uint loopStart, out uint loopEnd);
+                var vag = splitChunk.GetData(new BinaryStream(ms), out uint loopStart, out uint loopEnd);
                 
                 vagSamples.Add(splitChunk.SampleOffset, new SampleInfo(vag, (ushort)vagSamples.Count));
 
                 // Decode sony vag format into regular waveform (PCM16)
-                byte[] decoded = SonyVag.Decode(vag);
-                Span<short> pcm16 = MemoryMarshal.Cast<byte, short>(decoded);
+                var decoded = SonyVag.Decode(vag);
+                var pcm16 = MemoryMarshal.Cast<byte, short>(decoded);
 
-                bool looping = loopStart != 0;
+                var looping = loopStart != 0;
 
                 Console.WriteLine($"SF2: vag{j} (base note: {StaticUtils.SNote(splitChunk.BaseNote)}) - looping: {looping}");
                 if (StaticUtils.ExportEnvelopes)
@@ -118,20 +129,15 @@ public abstract class Converter
 
                 if (looping)
                 {
-                    double a = (pcm16.Length / ((double)vag.Length / 0x10));
+                    var a = (pcm16.Length / ((double)vag.Length / 0x10));
                     wavLoopStart = (uint)(a * loopStart);
                     wavLoopEnd = (uint)(a * loopEnd);
                     wavLength = pcm16.Length;
                 }
                 doLoops.Add(splitChunk.SampleOffset, looping);
+                
                 // Add the sample to the sound bank. Instruments will then pick which sample to use.
-                uint sampleId = sf2.AddSample(pcm16, $"sample{sampleIdx++}", looping, wavLoopStart, 44100, (byte)splitChunk.BaseNote, 0);
-                // Dump instrument noises (debug)
-                /*WaveFormat waveFormat = new WaveFormat(44100, 16, 1);
-                Directory.CreateDirectory("samples");
-                using (WaveFileWriter writer = new WaveFileWriter($"samples/instrument{j}_{splitChunk.BaseNote}.wav", waveFormat))
-                    writer.WriteSamples(pcm16.ToArray(), 0, pcm16.Length);*/
-
+                var sampleId = sf2.AddSample(pcm16, $"sample{sampleIdx++}", looping, wavLoopStart, 44100, (byte)splitChunk.BaseNote, 0);
             }
         }
 
@@ -141,20 +147,8 @@ public abstract class Converter
         // Essentially bags declare new incoming data for context (preset or instrument),
         // "generator" might sound complicated but it's a needlessly complicated name for a single parameter for either presets or instruments.
 
-        /*if (StaticUtils.ExportEnvelopes)
-        {
-            foreach (var pc in instrument.ProgramChunks)
-            {
-                if (pc is null) continue;
-                foreach (var sc in pc.SplitChunks)
-                {
-                    sc.ConvertADSR(instrument.VelocityTable);
-                }
-            }
-           // convert ADSR
-        }*/
         sampleIdx = 0;
-        for (int j = 0; j < channelToPrograms.Count; j++)
+        for (var j = 0; j < channelToPrograms.Count; j++)
         {
             if (channelToPrograms[j].Program >= instrument.ProgramChunks.Count) continue;
             var prog = instrument.ProgramChunks[channelToPrograms[j].Program];
@@ -175,7 +169,7 @@ public abstract class Converter
             //    sf2.AddPresetGenerator(SF2Generator.KeyRange, new SF2GeneratorAmount { LowByte = prog.FullRangeMin, HighByte = prog.FullRangeMax });
             sf2.AddPresetGenerator(SF2Generator.Instrument, new SF2GeneratorAmount { Amount = (short)sf2.AddInstrument(name) });
             long offset = 0;
-            for (int k = 0; k < prog.SplitChunks.Count; k++)
+            for (var k = 0; k < prog.SplitChunks.Count; k++)
             {
                 var splitChunk = prog.SplitChunks[k];
                 if ((byte)splitChunk.NoteMin == 0xFF && (byte)splitChunk.NoteMax == 0xFF) // (note does not have data)

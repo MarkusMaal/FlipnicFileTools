@@ -20,17 +20,17 @@ namespace FlipnicLib.Formats.Jam;
 public class JamHeader
 {
     /// <summary>
-    /// Program chunks for SqSequencer (sqt files)
+    /// Program chunks for sequencer
     /// </summary>
     public List<JamProgChunk> ProgramChunks { get; set; } = new List<JamProgChunk>();
 
     /// <summary>
-    /// Program chunks for SeSequencer
+    /// Program chunks for sound effect sequencer
     /// </summary>
     public List<JamProgChunk> SeProgramChunks { get; set; } = new List<JamProgChunk>();
 
     /// <summary>
-    /// Sequence chunks for SeSequencer
+    /// Sequence chunks for sound effect sequencer
     /// </summary>
     public List<(short, short Offset)> SeSeqChunks { get; set; } = [];
 

@@ -121,16 +121,15 @@ public class JamSplitChunk
     /// Fine tune pitch adjustment
     /// </summary>
     public sbyte FineTunePitch { get; set; }
-
-    /* 0x01 = ?? 
-     * 0x02 = SetNoiseShiftFrequency, // SE only
-     * 0x10 = UseProgChunkForUnkPitchValue - Use prog chunk's unk pitch (?) value
-     * 0x20 = PitchModulateSpeedAndDepth - 
-     * 0x40 = UseProgChunkForLfoTableIndex - Use prog chunk's lfo table index
-     * 0x80 = mixing? maybe for reverb - sets SD_S_VMIXL & SD_S_VMIXR
-
-       don't think there's more
-    */
+    
+    /// <summary>
+    /// 0x01 = High priority
+    /// 0x02 = Noise
+    /// 0x10 = Enable pitch bend
+    /// 0x20 = Modulation
+    /// 0x40 = BreathWaveFromProg
+    /// 0x80 = Reverb
+    /// </summary>
     public byte Flags { get; set; }
 
     /// <summary>
@@ -166,75 +165,70 @@ public class JamSplitChunk
     /// </summary>
     public byte LfoTableIndex { get; set; }
 
+    /// <summary>
+    /// In ADSR envelope, this is the time it takes for sound to rise from zero to maximum volume after the key is pressed.
+    /// </summary>
     public double Attack { get; set; }
+    
+    /// <summary>
+    /// In ADSR envelope, this is the time it takes to attenuate from maximum level to sustain level after the attack phase.
+    /// </summary>
     public double Decay { get; set; }
+    
+    /// <summary>
+    /// This is the sustain rate, this is the time it takes to attenuate from sustain level to off (kind of like a second decay). <br />
+    /// Not supported by SF2 or DLS.
+    /// </summary>
     public double Sustain { get; set; }
+    
+    /// <summary>
+    /// In ADSR envelope, this is the decrease in level, to which the volume ramps during the decay phase.
+    /// </summary>
     public double SustainL { get; set; }
+    
+    /// <summary>
+    /// In ADSR envelope, this is the time it takes for sound to reach a volume of zero in seconds after the key is depressed.
+    /// </summary>
     public double Release { get; set; }
     
-    // Constants from SPU2OverviewManual.pdf
-    private readonly double[] linearReleaseMs = [0.04,0.09,0.18,0.36,0.73,1.5,2.9,5.8,12,23,46,93,190,370,740,1500,3000,5900,12000,24000,48000,95000,190000,380000,760000,1520000,3040000,double.NaN,double.NaN,double.PositiveInfinity];
-    private readonly double[] exponentialReleaseMs = [0.07,0.18,0.39,0.81,1.6,3.3,6.7,13,27,53,110,210,430,860,1700,3400,6800,14000,27000,55000,109000,219000,438000,876000,1752000,3504000,7008000,double.NaN,double.NaN,double.PositiveInfinity];
-
-    private readonly double[] decayRateMs = [0.07, 0.18, 0.39, 0.81, 1.6, 3.3, 6.7, 13, 27, 53, 110, 210, 430, 860, 1700, 3400];
-    private readonly double[] sustainLevels = [0.0625d, 0.125d, 0.1875d, 0.25d, 0.3125d, 0.375d, 0.4375d, 0.5d, 0.5625d, 0.625d, 0.6875d, 0.75d, 0.8125d, 0.875d,  0.9375d, 1.0];
-
-    private readonly double[] posLinModeMs = [0.05,0.06,0.07,0.09,0.1,0.12,0.15,0.18,0.21,0.24,0.29,0.36,0.41,0.48,0.58,0.73,0.83,0.97,1.2,1.5,1.7,1.9,2.3,2.9,3.3,3.9,4.6,5.8,6.6,7.7,9.3,12,13,15,19,23,27,31,37,
-                                              46,53,62,74,93,110,120,150,190,210,250,300,370,420,500,590,740,850,990,1200,1500,1700,2000,2400,3000,3400,4000,4800,5900,6800,7900,9500,12000,14000,16000,19000,24000,27000,32000,
-                                              38000,48000,54000,63000,76000,95000,109000,127000,152000,190000,218000,254000,304000,380000,436000,508000,608000,760000,872000,1016000,1216000,1520000,1744000,2032000,2432000,3040000,3488000,4064000,4864000,6080000,
-                                              double.NaN,double.NaN,double.NaN,double.PositiveInfinity];
-
-    private readonly double[] posExpModMs =
-    [
-        0.09, 0.11, 0.13, 0.16, 0.18, 0.21, 0.25, 0.32, 0.36, 0.42, 0.51, 0.64, 0.73, 0.85, 1, 1.3, 1.5, 1.7, 2, 2.5,
-        2.9, 3.4, 4.1, 5.1, 5.8, 6.8, 8.1, 10, 12, 14, 16, 20, 23, 27, 33, 41,
-        46, 54, 65, 81, 93, 110, 130, 160, 190, 220, 260, 330, 370, 430, 520, 650, 740, 870, 1000, 1300, 1500, 1700,
-        2100, 2600, 3000, 3500, 4200, 5200, 5900, 6900, 8300, 10000, 12000, 14000, 17000, 21000,
-        24000, 28000, 33000, 42000, 48000, 55000, 67000, 83000, 95000, 111000, 133000, 166000, 190000, 222000, 266000,
-        333000, 380000, 444000, 532000, 666000, 760000, 888000, 1064000, 1332000, 1520000, 1776000, 2128000, 2664000,
-        double.NaN, double.NaN, double.NaN, double.PositiveInfinity
-    ];
-
-    private readonly double[] negLinModeMs = 
-    [
-        0.04, 0.05, 0.06, 0.07, 0.09, 0.1, 0.12, 0.15, 0.18, 0.21, 0.24, 0.29, 0.36, 0.41, 0.48, 0.58, 0.73, 0.83, 0.97, 1.2, 1.5,
-        1.7, 1.9, 2.3, 2.9, 3.3, 3.9, 4.6, 5.8, 6.6, 7.7, 9.3, 12, 13, 15, 19, 23, 27, 31,
-        37, 46, 53, 62, 74, 93, 110, 120, 150, 190, 210, 250, 300, 370, 420, 500, 590, 740, 850, 990, 1200, 1500, 1700, 2000, 2400,
-        3000, 3400, 4000, 4800, 5900, 6800, 7900, 9500, 12000, 14000, 16000, 19000, 24000, 27000,
-        32000, 38000, 48000, 54000, 63000, 76000, 95000, 109000, 127000, 152000, 190000, 218000, 254000, 304000, 380000, 436000,
-        508000, 608000, 760000, 872000, 1016000, 1216000, 1520000, 1744000, 2032000, 2432000, 3040000, 3488000, 4064000, 4864000,
-        double.NaN, double.NaN, double.NaN, double.PositiveInfinity
-    ];
-
-    private readonly double[] negExpModeMs =
-    [
-        0.07, 0.09, 0.11, 0.14, 0.18, 0.21, 0.25, 0.31, 0.39, 0.45, 0.53, 0.64, 0.81, 0.93, 1.1, 1.3, 1.6, 1.9, 2.2, 2.6, 3.3, 3.8,
-        4.4, 5.3, 6.7, 7.6, 8.9, 11, 13, 15, 18, 21, 27, 31, 36, 43, 53, 61, 71,
-        86, 110, 120, 140, 170, 210, 240, 290, 340, 430, 490, 570, 680, 860, 980, 1100, 1400, 1700, 2000, 2300, 2700, 3400, 3900, 4600,
-        5500, 6800, 7800, 9100, 11000, 14000, 16000, 18000, 22000, 27000, 31000, 36000, 44000, 55000, 63000,
-        73000, 88000, 109000, 125000, 146000, 175000, 219000, 250000, 292000, 350000, 438000, 500000, 584000, 700000, 876000, 1000000,
-        1168000, 1400000, 1752000, 2000000, 2336000, 2800000, 3504000, 4000000, 4672000, 5600000, 7008000, 8000000, 9344000, 11200000,
-        double.NaN, double.NaN, double.NaN, double.PositiveInfinity
-    ];
-    
     // Flags
+    
+    /// <summary>
+    /// Sets the VMIXL and VMIXR on the SPU for reverb effects
+    /// </summary>
     public bool Reverb => (Flags & 0x80) != 0;
+    
+    /// <summary>
+    /// Use prog chunk's LFO table index
+    /// </summary>
     public bool BreathWaveFromProg => (Flags & 0x40) != 0;
+    
+    /// <summary>
+    /// Modulate speed and depth of pitch 
+    /// </summary>
     public bool Modulation => (Flags & 0x20) != 0;
+    
+    /// <summary>
+    /// Use pitch value from ProgChunk 
+    /// </summary>
     public bool EnablePitchBend => (Flags & 0x10) != 0;
+    
+    /// <summary>
+    /// Set noise shift frequency (SFX only)
+    /// </summary>
     public bool Noise => (Flags & 0x02) != 0;
+    
+    /// <summary>
+    /// No idea honestly...
+    /// </summary>
     public bool HighPriority => (Flags & 0x01) != 0;
 
     private enum SustainModes
     {
         LinearIncrement,
-        Reserved1,
-        LinearDecrement,
-        Reserved2,
-        PseudoExponentialIncrement,
-        Reserved3,
-        PseudoExponentialDecrement,
-        Reserved4
+        LinearDecrement = 0x02,
+        PseudoExponentialIncrement = 0x04,
+        PseudoExponentialDecrement = 0x06
     };
 
     public void Read(BinaryStream bs, int headerSize)
@@ -262,38 +256,25 @@ public class JamSplitChunk
         
         var isPseudoExpIncrementMode = (((adsr1 & 0x80) >> 8) == 0x80);
         var attackIdx = (adsr1 & 0x7F00) >> 8;
-        Attack = (isPseudoExpIncrementMode ? posExpModMs[attackIdx] : posLinModeMs[attackIdx]) / 1000.0; // this one I'm fairly confident about
-        Decay = decayRateMs[(adsr1 & 0xf0) >> 4] / 250.0;
+        Attack = (isPseudoExpIncrementMode ? Constants.PosExpModMs[attackIdx] : Constants.PosLinModeMs[attackIdx]) / 1000.0; // this one I'm fairly confident about
+        Decay = Constants.DecayRateMs[(adsr1 & 0xf0) >> 4] / 250.0;
+        
         var isExponent = ((adsr2 & 0x20) == 0x20);
-        Release = (isExponent ? exponentialReleaseMs[adsr2 & 0x1F] : linearReleaseMs[adsr2 & 0x1F]) / 250.0; // this one maybe a bit confident 
-        SustainL = sustainLevels[adsr1 & 0x0f];
+        Release = (isExponent ? Constants.ExponentialReleaseMs[adsr2 & 0x1F] : Constants.LinearReleaseMs[adsr2 & 0x1F]) / 250.0; // this one maybe a bit confident 
+        SustainL = Constants.SustainLevels[adsr1 & 0x0f];
 
         var sustainRateIdx = ((adsr2 & 0x1fc0) >> 6);
         var sustainMode = (SustainModes)((adsr2 & 0xe000) >> 13);
-        if (sustainRateIdx < posLinModeMs.Length)
+        if (sustainRateIdx < Constants.PosLinModeMs.Length)
         {
-            switch (sustainMode)
+            Sustain = sustainMode switch
             {
-                case SustainModes.LinearDecrement:
-                    Sustain = negLinModeMs[sustainRateIdx];
-                    break;
-                case SustainModes.LinearIncrement:
-                    Sustain = posLinModeMs[sustainRateIdx];
-                    break;
-                case SustainModes.PseudoExponentialDecrement:
-                    Sustain = negExpModeMs[sustainRateIdx];
-                    break;
-                case SustainModes.PseudoExponentialIncrement:
-                    Sustain = posExpModMs[sustainRateIdx];
-                    break;
-                case SustainModes.Reserved1:
-                case SustainModes.Reserved2:
-                case SustainModes.Reserved3:
-                case SustainModes.Reserved4:
-                default:
-                    Sustain = 0.0;
-                    break;
-            }
+                SustainModes.LinearDecrement => Constants.NegLinModeMs[sustainRateIdx],
+                SustainModes.LinearIncrement => Constants.PosLinModeMs[sustainRateIdx],
+                SustainModes.PseudoExponentialDecrement => Constants.NegExpModeMs[sustainRateIdx],
+                SustainModes.PseudoExponentialIncrement => Constants.PosExpModMs[sustainRateIdx],
+                _ => 0.0
+            };
         }
         else
         {
