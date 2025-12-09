@@ -63,6 +63,7 @@ public abstract class Enums
         return Path.GetExtension(fileName.ToUpper()) switch
         {
             ".FPC" => Modes.ShowFpc,
+            ".FPD" => Modes.ShowFpd,
             ".SST" => Modes.ShowSstToc,
             ".MSG" => Modes.ShowMessages,
             ".PSS" => Modes.ListPssStreams,

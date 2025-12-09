@@ -6,12 +6,17 @@ public abstract class Filters
 {
     public static FilePickerFileType AllSupported { get; } = new("All supported file formats")
     {
-        Patterns = ["*.BIN", "*.FPC", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML", "*.ICO"]
+        Patterns = ["*.BIN", "*.FPC", "*.FPD", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML", "*.ICO"]
     };
     
     public static FilePickerFileType BinFile { get; } = new("BIN files")
     {
         Patterns = ["*.BIN"]
+    };
+    
+    public static FilePickerFileType FpdFile { get; } = new("Fixed Path Data")
+    {
+        Patterns = ["*.FPD"]
     };
     public static FilePickerFileType FpnFpc { get; } = new("Camera sequences")
     {

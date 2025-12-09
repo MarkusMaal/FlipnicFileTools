@@ -94,7 +94,9 @@ internal static class Program
                     Console.WriteLine($"Vibration Strength Data\n{vsd.ToString(StaticUtils.SimpleOutput)}");
                     break;
                 case Enums.Modes.ShowFpd:
-                    throw new NotImplementedException();
+                    var fpd = new FpnFpd(File.OpenRead(Cfg.FileName));
+                    Console.WriteLine(fpd);
+                    break;
                 case Enums.Modes.ShowIso:
                 case Enums.Modes.ExtractIso:
                 case Enums.Modes.ReplaceIso:

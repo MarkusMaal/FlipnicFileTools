@@ -167,6 +167,10 @@ public static class FileHelpers
                     midi.Read(ds);
                     LoadAsString(midi, "General MIDI", mw);
                     break;
+                case "FPD":
+                    var fpd = new FpnFpd(mw.FileName);
+                    LoadAsString(fpd, "Fixed Path Data", mw);
+                    break;
                 case "VSD":
                     var vsd = new FpnVsd(File.OpenRead(mw.FileName));
                     LoadAsString(vsd, "Vibration Strength Data", mw);

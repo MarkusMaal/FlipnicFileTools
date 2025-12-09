@@ -37,6 +37,13 @@ public abstract class HelpUtils
                 ]
             ),
             new(
+                "Path Sequences",
+                "*.FPD",
+                [
+                    new HelpLine("show-fpd*", "Display general information about the file"),
+                ]
+            ),
+            new(
                 "Stage information files",
                 "*.SST",
                 [
