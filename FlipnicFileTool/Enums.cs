@@ -50,7 +50,8 @@ public abstract class Enums
         ExtractIso,
         ReplaceIso,
         NoAction,
-        Quit
+        Quit,
+        NotImplemented
     }
     
     /// <summary>
@@ -78,6 +79,7 @@ public abstract class Enums
             ".IPU" => Modes.ShowIpu,
             ".ICO" => Modes.ShowIco,
             ".ISO" => Modes.ShowIso,
+            ".LIT" or ".COL" => Modes.NotImplemented,
             _ => Modes.ShowHelp
         };
     }

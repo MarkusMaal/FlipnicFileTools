@@ -105,7 +105,7 @@ public static class FileHelpers
     /// <param name="ds">Stream to decode data from</param>
     /// <param name="ext">File extension (without .)</param>
     /// <param name="mw">Main window instance</param>
-    public static void LoadFromData(Stream ds, string ext, MainWindow mw)
+    public static void LoadFromData(Stream ds, string? ext, MainWindow mw)
     {
         mw.FileTypeLabel.Content = "Please wait...";
         foreach (var t in mw.MainTabControl.Items)
@@ -120,7 +120,7 @@ public static class FileHelpers
 
         new Thread(() =>
         {
-            switch (ext.ToUpper())
+            switch (ext?.ToUpper())
             {
                 case "TM2":
                     var data = new byte[ds.Length];
@@ -358,6 +358,10 @@ public static class FileHelpers
                         mw.BdBrowserGrid.IsVisible = false;
                         mw.MidiBrowserGrid.IsVisible = false;
                     });
+                    break;
+                case "LIT":
+                case "COL":
+                    LoadAsString("This file format cannot be parsed by this version of Flipnic File Tools. Support will be added in a future version.", ext?.ToUpper() == "LIT" ? "Light map" : "Collision map", mw);
                     break;
                 case "LAY":
                     var da = new byte[ds.Length];

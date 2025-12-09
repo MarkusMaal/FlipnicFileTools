@@ -25,6 +25,10 @@ internal static class Program
 
             switch (Cfg.Mode)
             {
+                case Enums.Modes.NotImplemented:
+                    StaticUtils.DecodeColors("~-CError~--: This file format cannot be parsed by this version of Flipnic File Tools. Support will be added in a future version.");
+                    Console.WriteLine();
+                    return 9;
                 case Enums.Modes.ConflictingModes:
                     StaticUtils.DecodeColors("~-CError~--: Conflicting arguments detected. Please check syntax!");
                     Console.WriteLine();

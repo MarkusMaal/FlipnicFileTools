@@ -6,7 +6,7 @@ public abstract class Filters
 {
     public static FilePickerFileType AllSupported { get; } = new("All supported file formats")
     {
-        Patterns = ["*.BIN", "*.FPC", "*.FPD", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML", "*.ICO"]
+        Patterns = ["*.BIN", "*.FPC", "*.FPD", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML", "*.ICO", "*.LIT", "*.LAY", "*.COL"]
     };
     
     public static FilePickerFileType BinFile { get; } = new("BIN files")
@@ -17,6 +17,16 @@ public abstract class Filters
     public static FilePickerFileType FpdFile { get; } = new("Fixed Path Data")
     {
         Patterns = ["*.FPD"]
+    };
+    
+    public static FilePickerFileType ColFile { get; } = new("Collision maps")
+    {
+        Patterns = ["*.COL"]
+    };
+    
+    public static FilePickerFileType LitFile { get; } = new("Light maps")
+    {
+        Patterns = ["*.LIT"]
     };
     public static FilePickerFileType FpnFpc { get; } = new("Camera sequences")
     {

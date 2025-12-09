@@ -37,7 +37,7 @@ public class FpnFpd
         }
     }
 
-    public override string ToString()
+    public string ToString(bool asCsv)
     {
         string[] colHeaders = ["X", "Y", "Z", "W"];
         List<string[]> rows = [];
@@ -49,8 +49,13 @@ public class FpnFpd
                 Entries count: {EntriesCount}
 
                 Entries:
-                {StaticUtils.GenerateTable(colHeaders, rows, false)}
+                {StaticUtils.GenerateTable(colHeaders, rows, asCsv)}
                 """;
+    }
+
+    public override string ToString()
+    {
+        return ToString(StaticUtils.SimpleOutput);
     }
     
     private struct Entry
