@@ -219,4 +219,27 @@ public class FpnSst
             });
         }
     }
+
+    /// <summary>
+    /// Gets the metadata about cameras used by various areas on a stage
+    /// </summary>
+    /// <param name="asCsv">Use simple output</param>
+    /// <returns>Table containing the data</returns>
+    public string GetCamData(bool asCsv = false)
+    {
+        string[] colHeaders = ["Area code", "Reference file", "Lock axes", "Anchored", "Stiffness"];
+        List<CamData> cameras = [];
+        foreach (var (_, tocEntry) in TableOfContents.Where(e => e.Key == "CAMD"))
+        {
+            var camData = _data.Skip(tocEntry.Offset).Take(tocEntry.EntrySize * tocEntry.Count).ToArray();
+            for (var i = 0; i < tocEntry.Count; i++)
+            {
+                cameras.Add(new CamData(camData.Skip(i * tocEntry.EntrySize).Take(tocEntry.EntrySize).ToArray(), this));
+            }
+        }
+        List<string[]> rows = [];
+        rows.AddRange(cameras.Select(cam => (string[])[GetStringById("KUIDX", cam.CameraId), cam.CameraName, cam.GetAxisString(), (cam.AnchorToTarget ? "Yes" : "No"), cam.GetStiffnessXyz()]));
+
+        return StaticUtils.GenerateTable(colHeaders, rows, asCsv);
+    }
 }

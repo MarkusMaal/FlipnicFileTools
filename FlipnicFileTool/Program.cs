@@ -47,6 +47,7 @@ internal static class Program
                 case Enums.Modes.ShowSstToc:
                 case Enums.Modes.ShowPseudoCode:
                 case Enums.Modes.ShowGimmick:
+                case Enums.Modes.ShowCameras:
                     _ = new SstTools(Cfg);
                     break;
                 case Enums.Modes.ShowFpc:

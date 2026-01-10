@@ -1,3 +1,4 @@
+using FlipnicLib;
 using FlipnicLib.Formats;
 
 namespace FlipnicFileTool.Tools;
@@ -20,6 +21,9 @@ public class SstTools
                 break;
             case Enums.Modes.ShowGimmick:
                 new FpnSst(File.OpenRead(cfg.FileName)).ShowGimmick(cfg.SecondaryFileName);
+                break;
+            case Enums.Modes.ShowCameras:
+                Console.Write(new FpnSst(File.OpenRead(cfg.FileName)).GetCamData(StaticUtils.SimpleOutput));
                 break;
         }
     }

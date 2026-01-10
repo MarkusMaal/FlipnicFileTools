@@ -51,7 +51,8 @@ public abstract class Enums
         ReplaceIso,
         NoAction,
         Quit,
-        NotImplemented
+        NotImplemented,
+        ShowCameras
     }
     
     /// <summary>
@@ -134,6 +135,7 @@ public abstract class Enums
             "--show-iso" => Modes.ShowIso,
             "--extract-iso" => Modes.ExtractIso,
             "--replace-iso" => Modes.ReplaceIso,
+            "--show-cameras" => Modes.ShowCameras,
             _ => mode
         };
         
