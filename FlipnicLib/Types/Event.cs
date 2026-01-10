@@ -30,6 +30,57 @@ public class Event(byte[] data)
         StaticUtils.GetInt32(data, 0x38), StaticUtils.GetInt32(data, 0x3C)
     ];
 
+    // generate a comment for the user describing what the function should do
+    private static string GenerateComment(string label)
+    {
+        var c = label switch
+        {
+            "SYOKI_SETTEI" => "Initial setup",
+            "START" => "Initial entry point",
+            "RESET_EVENT" => "Reset the stage after completing it (also runs when you first start the stage)",
+            "EVENT_FLIES" => "Zero gravity",
+            "AIR_HOKKEY" => "Galaxy tennis",
+            "EVENT_AH" => "Galaxy tennis",
+            "EXP_COUNT_EVT" => "Total EXP Counts",
+            "EVENT_SOCCER" => "Setup 2P specific gameplay features (e.g. hiding the OSD, scoring, etc.)",
+            "BMP_VILLAGE" => "Bumper village",
+            "P_BMP_VILLAGE" => "Perfect bumper village",
+            "TEST_TUBE_AREA" => "Loop the loop",
+            "REBIRTH_BALL" => "Respawn",
+            "EVENT_PON" => "Point of no return (or \"Pong\" in VS4.SST)",
+            "LOST_BALL" =>
+                "Normally not used, but it's triggered in case the ball flies out of bounds without \"touching\" the outhole",
+            "CRAB_BABY" => "Crab baby shoot down",
+            "UFO_AREA_CLOSURE" => "Close the lane that normally takes you to the UFO area (pink)",
+            "COLOR_POLE_R" => "Red tower bumper (at initial spawn area)",
+            "COLOR_POLE_G" => "Green tower bumper (at initial spawn area)",
+            "WARP_EVENT" => "Teleport to Zero Gravity after going through the specified lane",
+            "DOMOGRAM_WARN" => "Spider crab warning",
+            "COIN_COMB_CHK" => "Coin combo checks",
+            "JACKPOTAGAIN" => "Jackpot revived",
+            "SMB_MAIN" => "Spider crab multiball (SMB = Small Multiball?)",
+            "STAGE_CLEAR" => "Stage clear sequence",
+            "SLOT_EVENT" => "Reset areas to default and reset music after a slot chance minigame",
+            "TAKI_WARI" => "Waterfall i.e. hidden path discovery",
+            "LUCKEY_FLAMINGOS" => "Lucky Flamingos (misspelled?)",
+            "HUNGLY_MONKEY" => "Hungry Monkey (misspelled?)",
+            "TREE_HIT_CHECK" => "At the multiball area",
+            "BANZAI_COIN" => "Waterfall coins",
+            "BANZAI_GOAL" => "Triggers when all coins are collected from the waterfall",
+            "HELP_UFO13131" =>
+                "\"Help ufo\" seems to refer to the idling UFOs that fly in and out every 25 bumpers hit",
+            "TOTAL_LANE_EVT" => "Total lane counts",
+            "TOTAL_BMP_EVT" => "Total bumper counts",
+            "MULTI_COMET" => "In Evolution/Theology stages, changing MaxBalls here will allow you to have more (or less) than 3 balls at once, setting the value to 0 will disable multiball",
+            "CONTINUE" => "Triggered when you lose all balls and are asked if you want to continue the game or give up",
+            "GAME_OVER" => "Triggered when you either lose all balls and extra credits, time runs out or when you select \"No\" from the \"CONTINUE?\" prompt",
+            "TILT" => "Triggered when you nudge the board too much",
+            _ => ""
+        };
+
+        return c == "" ? "" : $"#\n#  {c}\n#\n\n";
+    }
+
     private string GetGameEventArgs(FpnSst sst, FpnMsg? msg)
     {
         return (EventEnums.GameEventType) FuncArgs[1] + ", " +  (EventEnums.GameEventType)FuncArgs[1] switch
@@ -63,6 +114,7 @@ public class Event(byte[] data)
 
     private string GetSequenceEventArgs(FpnSst sst)
     {
+        if ((EventEnums.SequenceEventType)FuncArgs[1] == EventEnums.SequenceEventType.UnfreezeCamera) return "UnfreezeCamera";
         return (EventEnums.SequenceEventType)FuncArgs[1] + ", " + (EventEnums.SequenceEventType)FuncArgs[1] switch
         {
             EventEnums.SequenceEventType.BgmEvent => $"Filename: {sst.GetStringById("SEQN", FuncArgs[2])}",
@@ -91,12 +143,38 @@ public class Event(byte[] data)
     {
         var o = "";
         var extendArgs = EventMagic == 9 && Label != string.Empty;
+        var offsetStr = offset.ToString("X").PadLeft(4, '0');
         if (Label != string.Empty && FuncArgs.Sum() > 0)
         {
+
+            if ((EventMagic == 9) && (FuncArgs[1] == 2))
+            {
+                o += $"\n\t{Label}()\n";
+                return o;
+            }
+
+            if ((EventMagic == 3) && (Label == "THIS"))
+            {
+                o += $"\njump here when (value[{FuncArgs[1]}] == {FuncArgs[2]})\n";
+                return o;
+            }
             switch (Label)
             {
+                case "COMET_MULTI_BALL":
+                    if (EventMagic == 9)
+                    {
+                        o +=
+                            $"\nfunc {Label} (UnkValue0: {FuncArgs[1]}, MaxBalls: {FuncArgs[2]}, UnkValue2: {FuncArgs[3]}, UnkValue3: {EventArgs[0]}) @ 0x" +
+                            offsetStr + "\n";
+                    }
+                    break;
                 case "GAME_EVENT":
                     var args = "";
+                    if (EventMagic == 3)
+                    {
+                        o += $"\nswitchcase ({(EventEnums.ConditionChecks)FuncArgs[3]} == {FuncArgs[2]})\n";
+                        return o;
+                    }
                     switch (FuncArgs[1])
                     {
                         case 1:
@@ -110,7 +188,7 @@ public class Event(byte[] data)
 
                             break;
                     }
-                    o += $"\nfunc {Label} ({args}) @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n";
+                    o += $"\nfunc {Label} ({args}) @ 0x" + offsetStr + "\n";
                     return o;
                 case "FONT_EVENT":
                     o += $"\nfunc {Label} (Font: {sst.GetStringById("FNTN",  FuncArgs[2])}, Message: {GetMessageById(msg, FuncArgs[3])}, Duration: {EventArgs[0]}, Entrance: {EventArgs[1]}, Exit: {EventArgs[2]})".PadRight((int)(StaticUtils.WindowWidth / 1.25), ' ') + " @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n";
@@ -128,26 +206,27 @@ public class Event(byte[] data)
             }
 
             o += (EventEnums.EventType)EventMagic switch
-            {
-                EventEnums.EventType.GameEvent when FuncArgs[1] == 1 => $"\n\tget {Label}\n",
+            { 
+                EventEnums.EventType.GameEvent when FuncArgs[1] == 1 => $"\n:{Label}\n",
                 EventEnums.EventType.Setter => $"\nfunc {Label} (value={FuncArgs[1]})\n",
-                EventEnums.EventType.Breq => $"\n\tif value == {FuncArgs[1]} goto {Label}",
+                EventEnums.EventType.Breq => $"\ngoto {Label} when (value == {FuncArgs[1]})",
                 _ => $"\nfunc {Label} ({string.Join(", ", allArgs)}) @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n"
             };
         }
         else if (Label != string.Empty)
         { 
-            o += $"\nfunc {Label} () @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n";
+            o += $"\n{GenerateComment(Label)}func {Label} () @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n";
         }
 
         o += (EventEnums.EventType)EventMagic switch
         {
             EventEnums.EventType.Breq => "",
             EventEnums.EventType.NoOperation => "nop",
-            EventEnums.EventType.Do => "do",
-            EventEnums.EventType.EndEvent => "end\n",
+            EventEnums.EventType.Do => "loopstart",
+            EventEnums.EventType.Then => "\nnext",
+            EventEnums.EventType.EndEvent => "}\n",
             EventEnums.EventType.BallEvent => $"\t{(EventEnums.EventType)EventMagic} ({GetBallEventArgs(sst)})",
-            EventEnums.EventType.Loop => "loop",
+            EventEnums.EventType.Loop => "loopend",
             EventEnums.EventType.TextEvent => $"\t{(EventEnums.EventType)EventMagic} ({GetTextEventArgs(sst, msg)})",
             EventEnums.EventType.GameEvent => $"\t{(EventEnums.EventType)EventMagic} ({GetGameEventArgs(sst, msg)})",
             EventEnums.EventType.SequenceEvent => $"\t{(EventEnums.EventType)EventMagic} ({GetSequenceEventArgs(sst)})",

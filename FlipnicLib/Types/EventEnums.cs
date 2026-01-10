@@ -2,12 +2,20 @@ namespace FlipnicLib.Types;
 
 internal static class EventEnums
 {
+    internal enum ConditionChecks
+    {
+        HasExtraBall = 7,
+        NextStageLocked = 14,
+        Difficulty = 15
+    }
+    
     internal enum EventType
     {
         NoOperation,
         Do = 0x01,
         Loop,
-        Setter = 0x06,
+        Then = 0x05,
+        Setter,
         EndEvent = 0x08,
         GameEvent,
         TextEvent = 0xA,
@@ -31,7 +39,8 @@ internal static class EventEnums
         MuteEvent,
         ResetBgm,
         ScreenFade = 0x07,
-        CameraSequence = 0x09,
+        UnfreezeCamera,
+        CameraSequence,
         SwitchArea,
         WonderfulSequence = 0x0D,
         GuideSfxEvent
