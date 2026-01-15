@@ -213,6 +213,14 @@
                                 </Grid>
                             </sukiUi:SukiSideMenuItem.PageContent>
                         </sukiUi:SukiSideMenuItem>
+                        <sukiUi:SukiSideMenuItem Name="ColTab" Header="Hitboxes" IsVisible="False">
+                            <sukiUi:SukiSideMenuItem.Icon>
+                                <controls:CircleDot ColorA="Yellow" ColorB="DarkGreen" Text="⬡"></controls:CircleDot>
+                            </sukiUi:SukiSideMenuItem.Icon>
+                            <sukiUi:SukiSideMenuItem.PageContent>
+                                <controls:CollisionMap Name="ColMap" ColObject=""></controls:CollisionMap>
+                            </sukiUi:SukiSideMenuItem.PageContent>
+                        </sukiUi:SukiSideMenuItem>
                         <sukiUi:SukiSideMenuItem Name="ConvertTab" Header="Convert" IsVisible="False">
                             <sukiUi:SukiSideMenuItem.Icon>
                                 <controls:CircleDot ColorA="Yellow" ColorB="OrangeRed" Text="⋗"></controls:CircleDot>

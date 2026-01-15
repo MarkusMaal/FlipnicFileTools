@@ -359,9 +359,17 @@ public static class FileHelpers
                         mw.MidiBrowserGrid.IsVisible = false;
                     });
                     break;
-                case "LIT":
                 case "COL":
-                    LoadAsString("This file format cannot be parsed by this version of Flipnic File Tools. Support will be added in a future version.", ext?.ToUpper() == "LIT" ? "Light map" : "Collision map", mw);
+                    var col = new FpnCol(ds);
+                    LoadAsString(col, "Collision map", mw);
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        mw.ColTab.IsVisible = true;
+                        mw.ColMap.ColObject = col; 
+                    });
+                    break;
+                case "LIT":
+                    LoadAsString("This file format cannot be parsed by this version of Flipnic File Tools. Support will be added in a future version.", ext?.ToUpper() == "LIT" ? "Light map" : "Unknown", mw);
                     break;
                 case "LAY":
                     var da = new byte[ds.Length];

@@ -10,8 +10,8 @@ public class FpnCol
     private int WallCount = 0;
     private float[] DefaultValues = new float[4];
 
-    private List<ObjectDefinition> Grounds = [];
-    private List<ObjectDefinition> Walls = [];
+    public List<ObjectDefinition> Grounds { get; set; } = [];
+    public List<ObjectDefinition> Walls { get; set; } = [];
 
     
     public FpnCol(string filename) : this(File.OpenRead(filename)) {}
@@ -81,11 +81,16 @@ public class FpnCol
         };
     }
 
-    private struct ObjectDefinition
+    public struct ObjectDefinition
     {
         public string Label { get; init; }
         public List<float[]> CollFirst { get; set; }
         public List<float[]> CollMain { get; init; }
+
+        public override string ToString()
+        {
+            return Label;
+        }
     }
 
     public override string ToString()
