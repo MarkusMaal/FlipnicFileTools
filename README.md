@@ -36,6 +36,7 @@ Jump to section:
 * [VAB header files (*.HD)](#vab-header-files-hd)
 * [VAB body files (*.BD)](#vab-body-files-bd)
 * [Save file icon (*.ICO)](#save-file-icon-ico)
+* [Collision maps (*.COL)](#collision-maps-col)
 * [Layout files (*.LAY)](#layout-files-lay)
 * [FlipnicLib](#flipniclib)
 
@@ -455,6 +456,40 @@ You can extract the texture by running this command: `FlipnicFileTool --input FI
 
 You can convert it to Wavefront OBJ by running this command: `FlipnicFileTool --input FICON.ICO --convert-ico-obj --output FICON.OBJ`.
 
+## Collision maps (*.COL)
+
+Contains boundaries and hitboxes for various areas on a stage. These files contain various sections labelled "WAL" and "GRD" (short for wall and ground respectively).
+
+Example: `FlipnicFileTool --input COL_23_20.COL --show-col`
+
+Outputs
+````
+Collision map
+Walls: 10
+Grounds: 3
++-------+---------------+----------+
+| Label | Base vertices | Vertices | 
++-------+---------------+----------+
+| GRD02 | 4             | 33       | 
+| GRD04 | 4             | 42       | 
+| GRD05 | 4             | 129      | 
+| WAL08 | 4             | 156      | 
+| WAL09 | 4             | 222      | 
+| WAL10 | 4             | 78       | 
+| WAL11 | 4             | 186      | 
+| WAL12 | 4             | 156      | 
+| WAL13 | 4             | 30       | 
+| WAL14 | 4             | 6        | 
+| WAL15 | 4             | 42       | 
+| WAL16 | 4             | 42       | 
+| WAL17 | 4             | 6        | 
++-------+---------------+----------+
+````
+
+You can convert each individual part of the collision map to a Wavefront OBJ file using this command: `FlipnicFileTool --input COL_23_20.COL --export-col-obj GRD02 --output COL_02_05.GRD02.OBJ`
+
+You can convert all parts of the collision map at once to a Wavefront OBJ file using this command: `FlipnicFileTool --input COL_23_20.COL --export-col-obj ALL --output COL_02_05.OBJ`
+
 ## Layout files (*.LAY)
 
 Determines where things are placed on the stage and how they are scaled/skewed.
@@ -472,7 +507,6 @@ Outputs:
 | PIN1_BMP_SHADOW_                     | 1/1/1                                | 0/0/0                                | 480.3896/-3.5159056/522.5597         |
 ...
 ````
-
 
 ## FlipnicLib
 
