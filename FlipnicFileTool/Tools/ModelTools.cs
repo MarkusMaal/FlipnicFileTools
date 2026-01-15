@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using FlipnicLib;
 using FlipnicLib.Formats;
 
@@ -18,6 +19,8 @@ public class ModelTools
         {
             case Enums.Modes.ShowLp4: ShowLp4(); break;
             case Enums.Modes.ExportObj: ExportObj(); break;
+            case Enums.Modes.ShowCol: Console.WriteLine(new FpnCol(FileName).ToString()); break;
+            case Enums.Modes.ExportColObj: ExportColObj(FileName, cfg.SecondaryFileName, cfg.Output); break;
         }
     }
 
@@ -29,6 +32,28 @@ public class ModelTools
         var lp4 = new Lp4(File.ReadAllBytes(FileName), FileName);
         lp4.Read();
         Console.WriteLine(lp4.ToString());
+    }
+
+    /// <summary>
+    /// Generate Wavefront OBJ from a collision map
+    /// </summary>
+    /// <param name="input">Input .COL path</param>
+    /// <param name="label">Specific mesh to export</param>
+    /// <param name="output">Output .OBJ path</param>
+    private static void ExportColObj(string input, string label, string output)
+    {
+        try
+        {
+            var objData = new FpnCol(input).GenerateObj(label);
+            File.WriteAllText(output, objData);
+
+            StaticUtils.DecodeColors($"~-ASuccess~--: File exported as {output}");
+            Console.WriteLine();
+        }
+        catch (Exception e) when (!Debugger.IsAttached)
+        {
+            StaticUtils.DecodeColors($"~-CError~--: {e.Message}");
+        }
     }
 
     /// <summary>

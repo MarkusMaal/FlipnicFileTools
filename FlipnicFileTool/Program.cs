@@ -76,6 +76,8 @@ internal static class Program
                     break;
                 case Enums.Modes.ShowLp4:
                 case Enums.Modes.ExportObj:
+                case Enums.Modes.ShowCol:
+                case Enums.Modes.ExportColObj:
                     _ = new ModelTools(Cfg);
                     break;
                 case Enums.Modes.ShowTim2:

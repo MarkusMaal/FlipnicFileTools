@@ -127,6 +127,7 @@ public class Config
             switch (lastPar)
             {
                 case "--show-gimmick":
+                case "--export-col-obj":
                     SecondaryFileName = arg;
                     break;
                 case "--mlb-section":

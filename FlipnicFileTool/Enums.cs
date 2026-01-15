@@ -52,7 +52,9 @@ public abstract class Enums
         NoAction,
         Quit,
         NotImplemented,
-        ShowCameras
+        ShowCameras,
+        ShowCol,
+        ExportColObj
     }
     
     /// <summary>
@@ -80,7 +82,8 @@ public abstract class Enums
             ".IPU" => Modes.ShowIpu,
             ".ICO" => Modes.ShowIco,
             ".ISO" => Modes.ShowIso,
-            ".LIT" or ".COL" => Modes.NotImplemented,
+            ".COL" => Modes.ShowCol,
+            ".LIT" => Modes.NotImplemented,
             _ => Modes.ShowHelp
         };
     }
@@ -136,6 +139,8 @@ public abstract class Enums
             "--extract-iso" => Modes.ExtractIso,
             "--replace-iso" => Modes.ReplaceIso,
             "--show-cameras" => Modes.ShowCameras,
+            "--show-col" => Modes.ShowCol,
+            "--export-col-obj" => Modes.ExportColObj,
             _ => mode
         };
         

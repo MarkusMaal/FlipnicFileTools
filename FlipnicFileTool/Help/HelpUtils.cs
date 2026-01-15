@@ -93,6 +93,14 @@ public abstract class HelpUtils
                 ]
             ),
             new(
+                "Collision maps",
+                "*.COL",
+                [
+                    new HelpLine("show-col*", "Display information about the collision map"),
+                    new HelpLine("export-col-obj [mesh]", "Create 3D-model from the COL file specified, input = COL file, output = OBJ file, mesh = specify either a specific section from COL file or ALL to export everything"),
+                ]
+            ),
+            new(
                 "Menu files",
                 "*.MLB",
                 [
