@@ -437,6 +437,10 @@ public static class FileHelpers
                         mw.GimmickCombobox.SelectedIndex = 0;
                         mw.InfoTab.IsVisible = true;
                         mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "Stage information file");
+                        if (mw.PseudoCodeTab.IsVisible && StaticUtils.MsgFile == "")
+                        {
+                            mw.ShowDialog("Flipnic file tools", "JA.MSG not loaded. Event pseudo-code will show numbers instead of actual mission names. To fix this, select \"Import JA.MSG\" from the options menu and then reload the .SST file.", NotificationType.Warning);
+                        }
                     });
                     break;
                 case "BIN":
