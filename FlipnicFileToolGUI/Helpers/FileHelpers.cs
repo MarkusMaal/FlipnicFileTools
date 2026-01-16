@@ -115,6 +115,7 @@ public static class FileHelpers
 
         mw.DockPanel1.IsVisible = false;
         mw.Loader.IsVisible = true;
+        mw.ReverbSliderPanel.IsVisible = false;
 
         List<VirtualFile> fsEntries;
 
@@ -236,6 +237,7 @@ public static class FileHelpers
                         mw.ConvertMovAacButton.IsVisible = false;
                         mw.ConvertMovButton.IsVisible = false;
                         mw.DemuxButton.IsVisible = false;
+                        mw.ReverbSliderPanel.IsVisible = true;
 
                         var fileDirectory = new FileInfo(mw.FileName).Directory?.FullName ?? "";
                         var extension = Path.GetExtension(mw.FileName);

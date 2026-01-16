@@ -27,14 +27,13 @@ public partial class CollisionMap : UserControl
 
     private async void ExportClick(object? sender, RoutedEventArgs e)
     {
-        var label = "";
         if (sender is not Button button) return;
-        label = button.Name switch // find out what button the user pressed
+        var label = button.Name switch // find out what button the user pressed
         {
             "WtoButton" => WallList.SelectedItems?[0]?.ToString() ?? "",
             "GtoButton" => GroundList.SelectedItems?[0]?.ToString() ?? "",
             "EtoButton" => "ALL",
-            _ => label
+            _ => ""
         };
         if (label == "") return; // nobody here
         var file = await FileHelpers.SaveFile(this, [Filters.ObjFile], "Save as wavefront OBJ");

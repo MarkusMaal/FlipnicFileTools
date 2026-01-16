@@ -6,7 +6,7 @@ public abstract class Filters
 {
     public static FilePickerFileType AllSupported { get; } = new("All supported file formats")
     {
-        Patterns = ["*.BIN", "*.FPC", "*.FPD", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML", "*.ICO", "*.LIT", "*.LAY", "*.COL"]
+        Patterns = ["*.BIN", "*.FPC", "*.FPD", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML", "*.ICO", "*.IPU", "*.LIT", "*.LAY", "*.COL"]
     };
     
     public static FilePickerFileType BinFile { get; } = new("BIN files")

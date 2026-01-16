@@ -320,7 +320,7 @@ public sealed partial class MainWindow : SukiWindow
     {
         _dialogManager.CreateDialog()
             .WithTitle("Warning")
-            .WithContent("This operation is lossy meaning the video quality may be reduced. For lossless conversion, please demux the file first and convert the streams separately.")
+            .WithContent("This operation is lossy meaning the video quality may be reduced. For lossless conversion, please demux the file first and convert the streams separately.\n\nAre you sure you want to continue?")
             .WithActionButton("Yes", _ => { Converters.ConvertMovAac(this);}, true)
             .WithActionButton("No", _ => {}, true)
             .OfType(NotificationType.Warning)
