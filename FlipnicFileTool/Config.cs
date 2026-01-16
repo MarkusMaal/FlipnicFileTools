@@ -80,6 +80,11 @@ public class Config
     /// How many times to scale up the resolution (FMV conversion)
     /// </summary>
     public int ScaleFactor { get; set; } = 1;
+    
+    /// <summary>
+    /// Enable testing mode
+    /// </summary>
+    public bool Test { get; set; } = false;
 
     /// <summary>
     /// Set configuration based on the args specified by the user
@@ -113,6 +118,9 @@ public class Config
                     break;
                 case "--png":
                     UsePng = true;
+                    break;
+                case "--test":
+                    Test = true;
                     break;
                 case "--version":
                     Console.WriteLine(StaticUtils.DotFloatString(StaticUtils.LibVersion));

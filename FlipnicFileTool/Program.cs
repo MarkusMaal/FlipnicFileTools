@@ -119,6 +119,7 @@ internal static class Program
         }
         catch (Exception e) when (!Debugger.IsAttached)
         {
+            if (Cfg.Test) throw;
             var dt = new DebugTools(e);
             var exitCode = dt.Inspector();
             if (exitCode == -1) throw;

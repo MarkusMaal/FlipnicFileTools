@@ -25,6 +25,7 @@ public abstract class HelpUtils
                 new HelpLine("ffmpeg-path", "Path to FFmpeg (for audio/video conversion operations)"),
                 new HelpLine("msg-path", "Path to JA.MSG file (optional)"),
                 new HelpLine("png", "Use PNG instead of BMP (for transparency and smaller file sizes)"), 
+                new HelpLine("test", "Change how the program behaves specifically for automated testing"), 
                 new HelpLine("version", "Displays the version number for FlipnicLib"),]
             ),
             new
