@@ -118,9 +118,9 @@ public sealed partial class MainWindow : SukiWindow
             :
             [
                 Filters.AllSupported, Filters.BinFile, Filters.FpnFpc, Filters.FpdFile, Filters.FpnSst, Filters.FpnLp4,
-                Filters.FpnMlb,  Filters.SonyPss, Filters.SonyTim2, Filters.MidiFile, Filters.HdFile, Filters.VsdFile,
-                Filters.SvagFile, Filters.TxtFile, Filters.CsvFile, Filters.XmlFile, Filters.SaveIcon, Filters.ColFile,
-                Filters.LitFile
+                Filters.FpnMlb,  Filters.SonyPss, Filters.IpuFile, Filters.SonyTim2, Filters.MidiFile, Filters.HdFile,
+                Filters.VsdFile, Filters.SvagFile, Filters.TxtFile, Filters.CsvFile, Filters.XmlFile, Filters.SaveIcon,
+                Filters.ColFile, Filters.LitFile
             ]);
         if (file == null) return;
         if (jaMsg)
