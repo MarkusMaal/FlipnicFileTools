@@ -21,6 +21,7 @@
     <sukiUi:SukiWindow.Hosts>
         <sukiUi:SukiDialogHost Name="DialogHost"/>
     </sukiUi:SukiWindow.Hosts>
+    <!-- Menu bar (macOS) -->
     <NativeMenu.Menu>
         <NativeMenu>
             <NativeMenuItem Header="File" IsVisible="true">
@@ -39,6 +40,7 @@
             </NativeMenuItem>
         </NativeMenu>
     </NativeMenu.Menu>
+    <!-- Menu bar (other OS) -->
     <sukiUi:SukiWindow.MenuItems>
         <MenuItem Header="File" Name="FileMenu1">
             <MenuItem Header="New Window" Name="NewWindowMenuItem" Click="NewWindowMenuItem_OnClick"></MenuItem>
@@ -59,442 +61,292 @@
     </sukiUi:SukiWindow.MenuItems>
     <Grid>
         <Grid Name="DockPanel1">
-                <sukiUi:SukiSideMenu IsSearchEnabled="False" IsMenuExpanded="False" Name="MainTabControl" SelectionMode="AlwaysSelected" SelectionChanged="MainTabControl_OnSelectionChanged">
-                    <sukiUi:SukiSideMenu.Items>
-                        <sukiUi:SukiSideMenuItem Name="InfoTab" Header="Info">
-                            <sukiUi:SukiSideMenuItem.Icon>
-                                <controls:CircleDot ColorA="DeepSkyBlue" ColorB="DarkBlue" Text="i"></controls:CircleDot>
-                            </sukiUi:SukiSideMenuItem.Icon>
-                            <sukiUi:SukiSideMenuItem.PageContent>
-                                <controls:CLIBox Name="InfoBox" x:DataType="controls:CLIBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" />
-                            </sukiUi:SukiSideMenuItem.PageContent>
-                        </sukiUi:SukiSideMenuItem>
-                        <sukiUi:SukiSideMenuItem Name="ModelTab" Header="Models" IsVisible="False">
-                            <sukiUi:SukiSideMenuItem.Icon>
-                                <controls:CircleDot ColorA="Orange" ColorB="Brown" Text="⬡"></controls:CircleDot>
-                            </sukiUi:SukiSideMenuItem.Icon>
-                            <sukiUi:SukiSideMenuItem.PageContent>
-                              <Grid RowDefinitions="*,110">
-                                <controls:CubeRenderingTkOpenGlControl Grid.Row="0"  Focusable="True" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="GlControl"></controls:CubeRenderingTkOpenGlControl>
-                                <Button Grid.Row="1" Margin="10" VerticalAlignment="Bottom" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>
-                                <Grid ColumnDefinitions="150,150,*" Grid.Row="1">
-                                    <Label Margin="5" Name="FPSLabel">No info</Label>
-                                    <Label Grid.Column="1" Margin="5" Name="MoreInfoLabel">No info</Label>
-                                    <ScrollViewer Grid.Column="2">
-                                        <ListBox Margin="5" Name="Models" SelectionChanged="Models_OnSelectionChanged"></ListBox>
-                                    </ScrollViewer>
-                                </Grid>
-                               </Grid>
-                            </sukiUi:SukiSideMenuItem.PageContent>
-                        </sukiUi:SukiSideMenuItem>
-                        <sukiUi:SukiSideMenuItem Name="MessageEditorTab" Header="Messages" IsVisible="False">
-                            <sukiUi:SukiSideMenuItem.Icon>
-                                <controls:CircleDot ColorA="#AADAD3" ColorB="#675DF7" Text="🖊️"></controls:CircleDot>
-                            </sukiUi:SukiSideMenuItem.Icon>
-                            <sukiUi:SukiSideMenuItem.PageContent>
-                                <controls:MessageEditor Name="MsgEditor"></controls:MessageEditor>
-                            </sukiUi:SukiSideMenuItem.PageContent>
-                        </sukiUi:SukiSideMenuItem>
-                        <sukiUi:SukiSideMenuItem Name="CameraToolTab" Header="Camera sequences" IsVisible="False">
-                            <sukiUi:SukiSideMenuItem.Icon>
-                                <controls:CircleDot ColorA="#45F6DF" ColorB="#6C3A33" Text="📷"></controls:CircleDot>
-                            </sukiUi:SukiSideMenuItem.Icon>
-                            <sukiUi:SukiSideMenuItem.PageContent>
-                                <controls:CameraTool Name="CameraTool"></controls:CameraTool>
-                            </sukiUi:SukiSideMenuItem.PageContent>
-                        </sukiUi:SukiSideMenuItem>
-                        <sukiUi:SukiSideMenuItem Name="ImagePreviewTab" Header="Texture" IsVisible="False">
-                            <sukiUi:SukiSideMenuItem.Icon>
-                                <controls:CircleDot ColorA="Violet" ColorB="MidnightBlue" Text="🖼"></controls:CircleDot>
-                            </sukiUi:SukiSideMenuItem.Icon>
-                            <sukiUi:SukiSideMenuItem.PageContent>
-                                <Grid RowDefinitions="*,Auto">
-                                    <Image Name="PreviewImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" RenderOptions.BitmapInterpolationMode="None"></Image>
-                                    <Button Name="SaveImgAsBtn" Grid.Row="1" Margin="10" Content="Save as.." Click="SaveImgAsBtn_OnClick" />
-                                </Grid>
-                            </sukiUi:SukiSideMenuItem.PageContent>
-                        </sukiUi:SukiSideMenuItem>
-                        <sukiUi:SukiSideMenuItem Name="SoundPlayerTab" Header="Sound player" IsVisible="False">
-                            <sukiUi:SukiSideMenuItem.Icon>
-                                <controls:CircleDot ColorA="Cyan" ColorB="DarkCyan" Text="▶"></controls:CircleDot>
-                            </sukiUi:SukiSideMenuItem.Icon>
-                            <sukiUi:SukiSideMenuItem.PageContent>
-                                <sukiUi:GlassCard VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="20, 0">
-                                    <StackPanel Spacing="10">
-                                        <Label Name="AudioFilename">Filename: N/A</Label>
-                                        <Label Name="PlaybackStateLabel">Stopped</Label>
+            <sukiUi:SukiSideMenu IsSearchEnabled="False" IsMenuExpanded="False" Name="MainTabControl" SelectionMode="AlwaysSelected" SelectionChanged="MainTabControl_OnSelectionChanged">
+                <sukiUi:SukiSideMenu.Items>
+                    <!-- Info tab -->
+                    <sukiUi:SukiSideMenuItem Name="InfoTab" Header="Info">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="DeepSkyBlue" ColorB="DarkBlue" Text="i"></controls:CircleDot>
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                            <controls:CLIBox Name="InfoBox" x:DataType="controls:CLIBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" />
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
+                    <!-- Models tab -->
+                    <sukiUi:SukiSideMenuItem Name="ModelTab" Header="Models" IsVisible="False">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="Orange" ColorB="Brown" Text="⬡"></controls:CircleDot>
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                          <Grid RowDefinitions="*,110">
+                            <controls:CubeRenderingTkOpenGlControl Grid.Row="0"  Focusable="True" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="GlControl"></controls:CubeRenderingTkOpenGlControl>
+                            <Button Grid.Row="1" Margin="10" VerticalAlignment="Bottom" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>
+                            <Grid ColumnDefinitions="150,150,*" Grid.Row="1">
+                                <Label Margin="5" Name="FPSLabel">No info</Label>
+                                <Label Grid.Column="1" Margin="5" Name="MoreInfoLabel">No info</Label>
+                                <ScrollViewer Grid.Column="2">
+                                    <ListBox Margin="5" Name="Models" SelectionChanged="Models_OnSelectionChanged"></ListBox>
+                                </ScrollViewer>
+                            </Grid>
+                           </Grid>
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
+                    <!-- Messages tab -->
+                    <sukiUi:SukiSideMenuItem Name="MessageEditorTab" Header="Messages" IsVisible="False">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="#AADAD3" ColorB="#675DF7" Text="🖊️"></controls:CircleDot>
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                            <controls:MessageEditor Name="MsgEditor"></controls:MessageEditor>
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
+                    <!-- Camera sequences tab -->
+                    <sukiUi:SukiSideMenuItem Name="CameraToolTab" Header="Camera sequences" IsVisible="False">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="#45F6DF" ColorB="#6C3A33" Text="📷"></controls:CircleDot>
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                            <controls:CameraTool Name="CameraTool"></controls:CameraTool>
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
+                    <!-- Texture tab -->
+                    <sukiUi:SukiSideMenuItem Name="ImagePreviewTab" Header="Texture" IsVisible="False">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="Violet" ColorB="MidnightBlue" Text="🖼"></controls:CircleDot>
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                            <Grid RowDefinitions="*,Auto">
+                                <Image Name="PreviewImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" RenderOptions.BitmapInterpolationMode="None"></Image>
+                                <Button Name="SaveImgAsBtn" Grid.Row="1" Margin="10" Content="Save as.." Click="SaveImgAsBtn_OnClick" />
+                            </Grid>
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
+                    <!-- Sound player tab -->
+                    <sukiUi:SukiSideMenuItem Name="SoundPlayerTab" Header="Sound player" IsVisible="False">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="Cyan" ColorB="DarkCyan" Text="▶"></controls:CircleDot>
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                            <sukiUi:GlassCard VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="20, 0">
+                                <StackPanel Spacing="10">
+                                    <Label Name="AudioFilename">Filename: N/A</Label>
+                                    <Label Name="PlaybackStateLabel">Stopped</Label>
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Button Name="PlayButton" Content="Play" Click="PlayButton_OnClick"></Button>
+                                        <Button Name="SaveSoundAsButton" Content="Save as.." Click="SaveSoundAsButton_OnClick"></Button>
+                                    </StackPanel>
+                                </StackPanel>
+                            </sukiUi:GlassCard>
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
+                    <!-- Event script tab -->
+                    <sukiUi:SukiSideMenuItem Name="PseudoCodeTab" Header="Event script" IsVisible="False">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="Red" ColorB="#210" Text="⌘"></controls:CircleDot>
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                            <controls:CLIBox Name="EventBox" x:DataType="controls:CLIBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" />
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
+                    <!-- Gimmicks tab -->
+                    <sukiUi:SukiSideMenuItem Name="StageGimmickTab" Header="Gimmicks" IsVisible="False">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="Gray" ColorB="Black" Text="⚙"></controls:CircleDot>
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                            <Grid RowDefinitions="Auto, *">
+                                <ComboBox Grid.Row="0" Name="GimmickCombobox" SelectionChanged="GimmickCombobox_OnSelectionChanged"></ComboBox>                                        
+                                <controls:CLIBox Grid.Row="1" x:DataType="controls:CLIBox" Name="GimmickBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" />
+                            </Grid>
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
+                    <!-- Menu mockup tab -->
+                    <sukiUi:SukiSideMenuItem Name="MenuMockupTab" Header="Menu mockup" IsVisible="False">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="DeepPink" ColorB="DarkViolet" Text="M"></controls:CircleDot>
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                            <controls:MenuMockup Name="MenuMockup" Width="640" Height="480"></controls:MenuMockup>
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
+                    <!-- Samples tab -->
+                    <sukiUi:SukiSideMenuItem Name="BdSampleTab" Header="Samples" IsVisible="False">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="Salmon" ColorB="SaddleBrown" Text="S" />
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                            <Grid RowDefinitions="*,Auto">
+                                <DataGrid Grid.Row="0" Margin="0,0,0,10" GridLinesVisibility="All" ItemsSource="{Binding Samples}"
+                                          BorderThickness="1" BorderBrush="Gray" Name="SamplesGrid"
+                                          CanUserResizeColumns="True"
+                                          CanUserReorderColumns="True" SelectionChanged="SampleGridSelectionChanged"
+                                          CanUserSortColumns="True" SelectionMode="Single"
+                                          IsReadOnly="True">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Id" Binding="{Binding Id}"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Offset" Binding="{Binding OffsetX}"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Loop start" Binding="{Binding LoopStartX}"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Loop end" Binding="{Binding LoopEndX}"></DataGridTextColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <StackPanel Name="SamplesActionsButtons" Orientation="Horizontal" Grid.Row="1" Spacing="8" Margin="0,0,0,10">
+                                    <Button Name="ExtractLoopButton" IsVisible="False" Click="ExtractSampleButton_OnClick">Extract looping</Button>
+                                    <Button Name="ExtractSampleButton" Click="ExtractSampleButton_OnClick">Extract sample</Button>
+                                    <Button Name="PlaySampleButton" Click="ExtractSampleButton_OnClick">Play</Button>
+                                </StackPanel>
+                            </Grid>
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
+                    <!-- Files tab -->
+                    <sukiUi:SukiSideMenuItem Name="FileListTab" Header="Files" IsVisible="False">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="Lime" ColorB="DarkSlateGray" Text="📁"></controls:CircleDot>
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                            <Grid RowDefinitions="*,Auto">
+                                <DataGrid Grid.Row="0" Margin="0,0,0,10" GridLinesVisibility="All" ItemsSource="{Binding VirtualFiles}"
+                                          BorderThickness="1" BorderBrush="Gray" Name="FilesGrid"
+                                          CanUserResizeColumns="True"
+                                          CanUserReorderColumns="True"
+                                          CanUserSortColumns="True"
+                                          IsReadOnly="True" SelectionMode="Single"
+                                          SelectionChanged="DataGrid_OnSelectionChanged">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Path" Binding="{Binding Path}"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Offset" Binding="{Binding OffsetX}"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Size" Binding="{Binding LengthX}"></DataGridTextColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <StackPanel Name="FileActionButtons" Orientation="Horizontal" Grid.Row="1" Spacing="8" Margin="0,0,0,10">
+                                    <Button Name="OpenButton" IsEnabled="False" Click="OpenButton_OnClick">Open</Button>
+                                    <Button Name="ExtractButton" IsEnabled="False" Click="ExtractButton_OnClick">Extract</Button>
+                                    <Button Name="ReplaceButton" IsEnabled="False" Click="ReplaceButton_OnClick">Replace</Button>
+                                    <Button Name="ExtractAllButton" Click="ExtractAllButton_OnClick">Extract all</Button>
+                                </StackPanel>
+                            </Grid>
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
+                    <!-- Hitboxes tab -->
+                    <sukiUi:SukiSideMenuItem Name="ColTab" Header="Hitboxes" IsVisible="False">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="Yellow" ColorB="DarkGreen" Text="⬡"></controls:CircleDot>
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                            <controls:CollisionMap Name="ColMap" ColObject=""></controls:CollisionMap>
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
+                    <!-- Convert tab -->
+                    <sukiUi:SukiSideMenuItem Name="ConvertTab" Header="Convert" IsVisible="False">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="Yellow" ColorB="OrangeRed" Text="⋗"></controls:CircleDot>
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                            <sukiUi:GlassCard VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="30,0">
+                                <StackPanel Orientation="Vertical" Spacing="20" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Vertical" Spacing="8">
+                                        <Grid Name="FfmpegBrowserGrid" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
+                                            <Label Grid.Column="0" VerticalAlignment="Center">FFmpeg path:</Label>
+                                            <TextBox Name="FFmpegBox" Grid.Column="1" TextChanged="FFmpegBox_OnTextChanged" />
+                                            <Button Name="BrowseButtonFfmpeg" Click="BrowseButtonFfmpeg_OnClick" Grid.Column="2" Content="Browse…"></Button>
+                                        </Grid>
+                                      <Grid Name="MidiBrowserGrid" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
+                                        <Label Grid.Column="0" VerticalAlignment="Center">MIDI file:</Label>
+                                        <TextBox Name="MidiBox" Grid.Column="1" TextChanged="MidiBdBox_TextChanged">
+                                          <ToolTip.Tip>
+                                            <Label>A MIDI file is required to determine which channel each program should correspond to</Label>
+                                          </ToolTip.Tip>
+                                        </TextBox>
+                                        <Button Name="BrowseButtonMidi" Click="BrowseButtonBdMidi_OnClick" Grid.Column="2" Content="Browse…"></Button>
+                                      </Grid>
+                                      <Grid Name="BdBrowserGrid" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
+                                        <Label Grid.Column="0" VerticalAlignment="Center">JAM body file (.BD):</Label>
+                                        <TextBox Name="BdBox" Grid.Column="1" TextChanged="MidiBdBox_TextChanged">
+                                          <ToolTip.Tip>
+                                            <Label>The .BD fie contains samples and it should be paired with a corresponding .HD file</Label>
+                                          </ToolTip.Tip>
+                                        </TextBox>
+                                        <Button Name="BrowseButtonBd" Click="BrowseButtonBdMidi_OnClick" Grid.Column="2" Content="Browse…"></Button>
+                                      </Grid>
+                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
+                                            <Label Grid.Column="0" VerticalAlignment="Center">Save to:</Label>
+                                            <TextBox Name="FileBox" Grid.Column="1" TextChanged="FFmpegBox_OnTextChanged" />
+                                            <Button Name="BrowsButtonPath" Click="BrowsButtonPath_OnClick" Grid.Column="2" Content="Browse…"></Button>
+                                        </Grid>
                                         <StackPanel Orientation="Horizontal" Spacing="10">
-                                            <Button Name="PlayButton" Content="Play" Click="PlayButton_OnClick"></Button>
-                                            <Button Name="SaveSoundAsButton" Content="Save as.." Click="SaveSoundAsButton_OnClick"></Button>
+                                            <StackPanel Name="ReverbSliderPanel">
+                                                <Slider Minimum="0" Maximum="1000" Width="200" Value="200" VerticalAlignment="Center" Name="ReverbSlider" ValueChanged="ReverbSlider_OnValueChanged">
+                                                
+                                                </Slider>
+                                                <Label Name="ReverbStrengthLabel">Reverb strength: 20%</Label>
+                                            </StackPanel>
+                                            <CheckBox Name="PalToggle" Margin="0,2, 0,-8" IsChecked="False" Content="Use PAL instead of NTSC">
+                                                <ToolTip.Tip>If the output is at the wrong framerate or video de-syncs with audio, you may need to check this option.</ToolTip.Tip>
+                                            </CheckBox>
+                                            <CheckBox Name="EnvelopeToggle" Margin="0,2, 0,-8" IsChecked="True" Content="Export envelopes">
+                                                <ToolTip.Tip>
+                                                    <TextBlock>
+                                                        Tries to create the soundfont with proper envelopes (attack, decay, sustain, release). Uncheck this if you don't want that.
+                                                        <LineBreak/>
+                                                        NOTE: Sustain Rate will not be converted, because SF2 doesn't support it.
+                                                    </TextBlock>
+                                                </ToolTip.Tip>
+                                            </CheckBox>
                                         </StackPanel>
                                     </StackPanel>
-                                </sukiUi:GlassCard>
-                            </sukiUi:SukiSideMenuItem.PageContent>
-                        </sukiUi:SukiSideMenuItem>
-                        <sukiUi:SukiSideMenuItem Name="PseudoCodeTab" Header="Event script" IsVisible="False">
-                            <sukiUi:SukiSideMenuItem.Icon>
-                                <controls:CircleDot ColorA="Red" ColorB="#210" Text="⌘"></controls:CircleDot>
-                            </sukiUi:SukiSideMenuItem.Icon>
-                            <sukiUi:SukiSideMenuItem.PageContent>
-                                <controls:CLIBox Name="EventBox" x:DataType="controls:CLIBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" />
-                            </sukiUi:SukiSideMenuItem.PageContent>
-                        </sukiUi:SukiSideMenuItem>
-                        <sukiUi:SukiSideMenuItem Name="StageGimmickTab" Header="Gimmicks" IsVisible="False">
-                            <sukiUi:SukiSideMenuItem.Icon>
-                                <controls:CircleDot ColorA="Gray" ColorB="Black" Text="⚙"></controls:CircleDot>
-                            </sukiUi:SukiSideMenuItem.Icon>
-                            <sukiUi:SukiSideMenuItem.PageContent>
-                                <Grid RowDefinitions="Auto, *">
-                                    <ComboBox Grid.Row="0" Name="GimmickCombobox" SelectionChanged="GimmickCombobox_OnSelectionChanged"></ComboBox>                                        
-                                    <controls:CLIBox Grid.Row="1" x:DataType="controls:CLIBox" Name="GimmickBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" />
-                                </Grid>
-                            </sukiUi:SukiSideMenuItem.PageContent>
-                        </sukiUi:SukiSideMenuItem>
-                        <sukiUi:SukiSideMenuItem Name="MenuMockupTab" Header="Menu mockup" IsVisible="False">
-                            <sukiUi:SukiSideMenuItem.Icon>
-                                <controls:CircleDot ColorA="DeepPink" ColorB="DarkViolet" Text="M"></controls:CircleDot>
-                            </sukiUi:SukiSideMenuItem.Icon>
-                            <sukiUi:SukiSideMenuItem.PageContent>
-                                <controls:MenuMockup Name="MenuMockup" Width="640" Height="480"></controls:MenuMockup>
-                            </sukiUi:SukiSideMenuItem.PageContent>
-                        </sukiUi:SukiSideMenuItem>
-                        <sukiUi:SukiSideMenuItem Name="BdSampleTab" Header="Samples" IsVisible="False">
-                            <sukiUi:SukiSideMenuItem.Icon>
-                                <controls:CircleDot ColorA="Salmon" ColorB="SaddleBrown" Text="S" />
-                            </sukiUi:SukiSideMenuItem.Icon>
-                            <sukiUi:SukiSideMenuItem.PageContent>
-                                <Grid RowDefinitions="*,Auto">
-                                    <DataGrid Grid.Row="0" Margin="0,0,0,10" GridLinesVisibility="All" ItemsSource="{Binding Samples}"
-                                              BorderThickness="1" BorderBrush="Gray" Name="SamplesGrid"
-                                              CanUserResizeColumns="True"
-                                              CanUserReorderColumns="True" SelectionChanged="SampleGridSelectionChanged"
-                                              CanUserSortColumns="True" SelectionMode="Single"
-                                              IsReadOnly="True">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Header="Id" Binding="{Binding Id}"></DataGridTextColumn>
-                                            <DataGridTextColumn Header="Offset" Binding="{Binding OffsetX}"></DataGridTextColumn>
-                                            <DataGridTextColumn Header="Loop start" Binding="{Binding LoopStartX}"></DataGridTextColumn>
-                                            <DataGridTextColumn Header="Loop end" Binding="{Binding LoopEndX}"></DataGridTextColumn>
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-                                    <StackPanel Name="SamplesActionsButtons" Orientation="Horizontal" Grid.Row="1" Spacing="8" Margin="0,0,0,10">
-                                        <Button Name="ExtractLoopButton" IsVisible="False" Click="ExtractSampleButton_OnClick">Extract looping</Button>
-                                        <Button Name="ExtractSampleButton" Click="ExtractSampleButton_OnClick">Extract sample</Button>
-                                        <Button Name="PlaySampleButton" Click="ExtractSampleButton_OnClick">Play</Button>
+                                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
+                                        <Button Click="DemuxButton_OnClick" Name="DemuxButton">Demux</Button>
+                                        <Button Click="ConvertMovAacButton_OnClick" Name="ConvertMovAacButton" IsEnabled="False">Convert to MPEG4</Button>
+                                        <Button Click="ConvertMovButton_OnClick" Name="ConvertMovButton" IsEnabled="False">Convert to .M2V</Button>
+                                        <Button Click="ConvertSf2Button_OnClick" Name="ConvertSf2Button" IsEnabled="False">Convert to .SF2</Button>
                                     </StackPanel>
-                                </Grid>
-                            </sukiUi:SukiSideMenuItem.PageContent>
-                        </sukiUi:SukiSideMenuItem>
-                        <sukiUi:SukiSideMenuItem Name="FileListTab" Header="Files" IsVisible="False">
-                            <sukiUi:SukiSideMenuItem.Icon>
-                                <controls:CircleDot ColorA="Lime" ColorB="DarkSlateGray" Text="📁"></controls:CircleDot>
-                            </sukiUi:SukiSideMenuItem.Icon>
-                            <sukiUi:SukiSideMenuItem.PageContent>
-                                <Grid RowDefinitions="*,Auto">
-                                    <DataGrid Grid.Row="0" Margin="0,0,0,10" GridLinesVisibility="All" ItemsSource="{Binding VirtualFiles}"
-                                              BorderThickness="1" BorderBrush="Gray" Name="FilesGrid"
-                                              CanUserResizeColumns="True"
-                                              CanUserReorderColumns="True"
-                                              CanUserSortColumns="True"
-                                              IsReadOnly="True" SelectionMode="Single"
-                                              SelectionChanged="DataGrid_OnSelectionChanged">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Header="Path" Binding="{Binding Path}"></DataGridTextColumn>
-                                            <DataGridTextColumn Header="Offset" Binding="{Binding OffsetX}"></DataGridTextColumn>
-                                            <DataGridTextColumn Header="Size" Binding="{Binding LengthX}"></DataGridTextColumn>
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-                                    <StackPanel Name="FileActionButtons" Orientation="Horizontal" Grid.Row="1" Spacing="8" Margin="0,0,0,10">
-                                        <Button Name="OpenButton" IsEnabled="False" Click="OpenButton_OnClick">Open</Button>
-                                        <Button Name="ExtractButton" IsEnabled="False" Click="ExtractButton_OnClick">Extract</Button>
-                                        <Button Name="ReplaceButton" IsEnabled="False" Click="ReplaceButton_OnClick">Replace</Button>
-                                        <Button Name="ExtractAllButton" Click="ExtractAllButton_OnClick">Extract all</Button>
-                                    </StackPanel>
-                                </Grid>
-                            </sukiUi:SukiSideMenuItem.PageContent>
-                        </sukiUi:SukiSideMenuItem>
-                        <sukiUi:SukiSideMenuItem Name="ColTab" Header="Hitboxes" IsVisible="False">
-                            <sukiUi:SukiSideMenuItem.Icon>
-                                <controls:CircleDot ColorA="Yellow" ColorB="DarkGreen" Text="⬡"></controls:CircleDot>
-                            </sukiUi:SukiSideMenuItem.Icon>
-                            <sukiUi:SukiSideMenuItem.PageContent>
-                                <controls:CollisionMap Name="ColMap" ColObject=""></controls:CollisionMap>
-                            </sukiUi:SukiSideMenuItem.PageContent>
-                        </sukiUi:SukiSideMenuItem>
-                        <sukiUi:SukiSideMenuItem Name="ConvertTab" Header="Convert" IsVisible="False">
-                            <sukiUi:SukiSideMenuItem.Icon>
-                                <controls:CircleDot ColorA="Yellow" ColorB="OrangeRed" Text="⋗"></controls:CircleDot>
-                            </sukiUi:SukiSideMenuItem.Icon>
-                            <sukiUi:SukiSideMenuItem.PageContent>
-                                <sukiUi:GlassCard VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="30,0">
-                                    <StackPanel Orientation="Vertical" Spacing="20" VerticalAlignment="Center">
-                                        <StackPanel Orientation="Vertical" Spacing="8">
-                                            <Grid Name="FfmpegBrowserGrid" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
-                                                <Label Grid.Column="0" VerticalAlignment="Center">FFmpeg path:</Label>
-                                                <TextBox Name="FFmpegBox" Grid.Column="1" TextChanged="FFmpegBox_OnTextChanged" />
-                                                <Button Name="BrowseButtonFfmpeg" Click="BrowseButtonFfmpeg_OnClick" Grid.Column="2" Content="Browse…"></Button>
-                                            </Grid>
-                                          <Grid Name="MidiBrowserGrid" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
-                                            <Label Grid.Column="0" VerticalAlignment="Center">MIDI file:</Label>
-                                            <TextBox Name="MidiBox" Grid.Column="1" TextChanged="MidiBdBox_TextChanged">
-                                              <ToolTip.Tip>
-                                                <Label>A MIDI file is required to determine which channel each program should correspond to</Label>
-                                              </ToolTip.Tip>
-                                            </TextBox>
-                                            <Button Name="BrowseButtonMidi" Click="BrowseButtonBdMidi_OnClick" Grid.Column="2" Content="Browse…"></Button>
-                                          </Grid>
-                                          <Grid Name="BdBrowserGrid" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
-                                            <Label Grid.Column="0" VerticalAlignment="Center">JAM body file (.BD):</Label>
-                                            <TextBox Name="BdBox" Grid.Column="1" TextChanged="MidiBdBox_TextChanged">
-                                              <ToolTip.Tip>
-                                                <Label>The .BD fie contains samples and it should be paired with a corresponding .HD file</Label>
-                                              </ToolTip.Tip>
-                                            </TextBox>
-                                            <Button Name="BrowseButtonBd" Click="BrowseButtonBdMidi_OnClick" Grid.Column="2" Content="Browse…"></Button>
-                                          </Grid>
-                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
-                                                <Label Grid.Column="0" VerticalAlignment="Center">Save to:</Label>
-                                                <TextBox Name="FileBox" Grid.Column="1" TextChanged="FFmpegBox_OnTextChanged" />
-                                                <Button Name="BrowsButtonPath" Click="BrowsButtonPath_OnClick" Grid.Column="2" Content="Browse…"></Button>
-                                            </Grid>
-                                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                                <StackPanel Name="ReverbSliderPanel">
-                                                    <Slider Minimum="0" Maximum="1000" Width="200" Value="200" VerticalAlignment="Center" Name="ReverbSlider" ValueChanged="ReverbSlider_OnValueChanged">
-                                                    
-                                                    </Slider>
-                                                    <Label Name="ReverbStrengthLabel">Reverb strength: 20%</Label>
-                                                </StackPanel>
-                                                <CheckBox Name="PalToggle" Margin="0,2, 0,-8" IsChecked="False" Content="Use PAL instead of NTSC">
-                                                    <ToolTip.Tip>If the output is at the wrong framerate or video de-syncs with audio, you may need to check this option.</ToolTip.Tip>
-                                                </CheckBox>
-                                                <CheckBox Name="EnvelopeToggle" Margin="0,2, 0,-8" IsChecked="True" Content="Export envelopes">
-                                                    <ToolTip.Tip>
-                                                        <TextBlock>
-                                                            Tries to create the soundfont with proper envelopes (attack, decay, sustain, release). Uncheck this if you don't want that.
-                                                            <LineBreak/>
-                                                            NOTE: Sustain Rate will not be converted, because SF2 doesn't support it.
-                                                        </TextBlock>
-                                                    </ToolTip.Tip>
-                                                </CheckBox>
-                                            </StackPanel>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
-                                            <Button Click="DemuxButton_OnClick" Name="DemuxButton">Demux</Button>
-                                            <Button Click="ConvertMovAacButton_OnClick" Name="ConvertMovAacButton" IsEnabled="False">Convert to MPEG4</Button>
-                                            <Button Click="ConvertMovButton_OnClick" Name="ConvertMovButton" IsEnabled="False">Convert to .M2V</Button>
-                                            <Button Click="ConvertSf2Button_OnClick" Name="ConvertSf2Button" IsEnabled="False">Convert to .SF2</Button>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </sukiUi:GlassCard>
-                            </sukiUi:SukiSideMenuItem.PageContent>
-                        </sukiUi:SukiSideMenuItem>
-                        <sukiUi:SukiSideMenuItem Header="Save file editor" IsVisible="False" Name="SaveEditor">
-                            <sukiUi:SukiSideMenuItem.Icon>
-                                <controls:CircleDot ColorA="DodgerBlue" ColorB="DarkBlue" Text="💾"></controls:CircleDot>
-                            </sukiUi:SukiSideMenuItem.Icon>
-                            <sukiUi:SukiSideMenuItem.PageContent>
-                                <TabControl Name="SaveEditorTabControl" Margin="10">
-                                    <TabItem Header="Information" >
-                                        <Grid Name="SaveEditorInfoTab" RowDefinitions="30,30,30,30,30,30,45" Margin="10" DataContext="{Binding SaveData}">
-                                            <Grid ColumnDefinitions="200,200">
-                                                <Label>Primary checksum:</Label>
-                                                <Label Name="SaveEditorPrimaryChecksumLabel" Grid.Column="1" Content="{Binding ChecksumPrimary, TargetNullValue=Not loaded}"></Label>
-                                            </Grid>
-                                            <Grid Grid.Row="1" ColumnDefinitions="200,200">
-                                                <Label>Secondary checksum:</Label>
-                                                <Label Name="SaveEditorSecondaryChecksumLabel" Grid.Column="1" Content="{Binding ChecksumSecondary, TargetNullValue=Not loaded}"></Label>
-                                            </Grid>
-                                            <Grid Grid.Row="2" ColumnDefinitions="200,200">
-                                                <Label>Current score:</Label>
-                                                <Label Grid.Column="1" Content="{Binding Score, TargetNullValue=0}"></Label>
-                                            </Grid>
-                                            <Grid Grid.Row="3" ColumnDefinitions="200,200">
-                                                <Label>Original game difficulty:</Label>
-                                                <Label Grid.Column="1" Content="{Binding CurrentDifficulty, TargetNullValue=Easy}"></Label>
-                                            </Grid>
-                                            <Grid Grid.Row="4" ColumnDefinitions="200,200">
-                                                <Label>Current stage:</Label>
-                                                <Label Grid.Column="1" Content="{Binding CurrentStage, TargetNullValue=Biology A}"></Label>
-                                            </Grid>
-                                            <Grid Grid.Row="5" ColumnDefinitions="200,200">
-                                                <Label>Last stage played:</Label>
-                                                <Label Grid.Column="1" Content="{Binding LastStage, TargetNullValue=N/A}"></Label>
-                                            </Grid>
-                                            <StackPanel Grid.Row="6" Orientation="Horizontal" Spacing="10">
-                                                <Button Name="UpdateChecksumButton" Content="Update checksums" Click="UpdateChecksumButton_OnClick"></Button>
-                                                <Button Name="DiagnoseSaveFileButton" Content="Diagnose save file" Click="DiagnoseSaveFileButton_OnClick"></Button>
-                                            </StackPanel>
-                                        </Grid>
-                                    </TabItem>
-                                    <TabItem Header="Ranking">
-                                        <Grid RowDefinitions="30,30,*" Margin="10" DataContext="{Binding SaveData}">
-                                            <Label>Ranking data</Label>
-                                            <ComboBox Grid.Row="1" SelectedIndex="{Binding LeaderboardId}" SelectionChanged="ScoreGrid_SelectionChanged">
-                                                <ComboBoxItem>Original game</ComboBoxItem>
-                                                <ComboBoxItem>Biology A</ComboBoxItem>
-                                                <ComboBoxItem>Biology B</ComboBoxItem>
-                                                <ComboBoxItem>Metallurgy A</ComboBoxItem>
-                                                <ComboBoxItem>Metallurgy B</ComboBoxItem>
-                                                <ComboBoxItem>Optics A</ComboBoxItem>
-                                                <ComboBoxItem>Optics B</ComboBoxItem>
-                                                <ComboBoxItem>Geometry A</ComboBoxItem>
-                                                <ComboBoxItem>Biology A (Time Attack)</ComboBoxItem>
-                                                <ComboBoxItem>Biology B (Time Attack)</ComboBoxItem>
-                                                <ComboBoxItem>Metallurgy A (Time Attack)</ComboBoxItem>
-                                                <ComboBoxItem>Metallurgy B (Time Attack)</ComboBoxItem>
-                                                <ComboBoxItem>Optics A (Time Attack)</ComboBoxItem>
-                                                <ComboBoxItem>Optics B (Time Attack)</ComboBoxItem>
-                                                <ComboBoxItem>Geometry A (Time Attack)</ComboBoxItem>
-                                            </ComboBox>
-                                            <DataGrid Grid.Row="2" ItemsSource="{Binding Rank}" Margin="0,0,0,10" GridLinesVisibility="All"
-                                                      BorderThickness="1" BorderBrush="Gray" Name="RankGrid"
-                                                      CanUserResizeColumns="True" SelectionMode="Single"
-                                                      CanUserReorderColumns="True"
-                                                      CanUserSortColumns="True" 
-                                                      IsReadOnly="False">
-                                                <DataGrid.Columns>
-                                                    <DataGridTextColumn Header="Rank" x:DataType="types:Rank" Binding="{Binding Position}"></DataGridTextColumn>
-                                                    <DataGridTextColumn Header="Initials" x:DataType="types:Rank" Binding="{Binding Initials}"></DataGridTextColumn>
-                                                    <DataGridTextColumn Header="Score" x:DataType="types:Rank" Binding="{Binding Score}"></DataGridTextColumn>
-                                                    <DataGridTextColumn Header="Combos" x:DataType="types:Rank" Binding="{Binding Combos}"></DataGridTextColumn>
-                                                    <DataGridTextColumn Header="Difficulty" x:DataType="types:Rank" Binding="{Binding Difficulty}"/>
-                                                    <DataGridTextColumn Header="Offset" x:DataType="types:Rank" Binding="{Binding Offset}"></DataGridTextColumn>
-                                                </DataGrid.Columns>
-                                            </DataGrid>
-                                        </Grid>
-                                    </TabItem>
-                                    <TabItem Header="Options">
-                                        <Grid RowDefinitions="30,30,30,30,30,30,30,30,*" Margin="10" RowSpacing="8" DataContext="{Binding SaveData}">
-                                            <Grid ColumnDefinitions="200,*">
-                                                <Label VerticalAlignment="Center">Sound mode</Label>
-                                                <ComboBox Grid.Column="1" SelectedIndex="{Binding SoundMode}">
-                                                    <ComboBoxItem>Mono</ComboBoxItem>
-                                                    <ComboBoxItem>Stereo</ComboBoxItem>
-                                                </ComboBox>
-                                            </Grid>
-                                            <Grid Grid.Row="1" ColumnDefinitions="200,*,20">
-                                                <Label VerticalAlignment="Center">Volume: sound effects</Label>
-                                                <Slider Grid.Column="1" Minimum="0" Maximum="127" Value="{Binding SfxVolume}" IsSnapToTickEnabled="True" TickFrequency="1"></Slider>
-                                            </Grid>
-                                            <Grid Grid.Row="2" ColumnDefinitions="200,*,20">
-                                                <Label VerticalAlignment="Center">Volume: music</Label>
-                                                <Slider Grid.Column="1" Minimum="0" Maximum="127" Value="{Binding BgmVolume}" IsSnapToTickEnabled="True" TickFrequency="1"></Slider>
-                                            </Grid>
-                                            <Grid Grid.Row="3" ColumnDefinitions="200,*">
-                                                <Label VerticalAlignment="Center">Vibration</Label>
-                                                <ToggleSwitch Name="SaveFileVibrate" Grid.Column="1" IsChecked="{Binding Vibration}"></ToggleSwitch>
-                                            </Grid>
-                                            <Grid Grid.Row="4" ColumnDefinitions="200,*">
-                                                <Label VerticalAlignment="Center">Left Flipper</Label>
-                                                <ComboBox ItemsSource="{Binding $parent[ns:MainWindow].Controls}" Grid.Column="1" SelectedIndex="{Binding LeftFlipper}"></ComboBox>
-                                            </Grid>
-                                            <Grid Grid.Row="5" ColumnDefinitions="200,*">
-                                                <Label VerticalAlignment="Center">Right Flipper</Label>
-                                                <ComboBox ItemsSource="{Binding $parent[ns:MainWindow].Controls}" Grid.Column="1" SelectedIndex="{Binding RightFlipper}"></ComboBox>
-                                            </Grid>
-                                            <Grid Grid.Row="6" ColumnDefinitions="200,*">
-                                                <Label VerticalAlignment="Center">Left Nudge</Label>
-                                                <ComboBox ItemsSource="{Binding $parent[ns:MainWindow].Controls}" Grid.Column="1" SelectedIndex="{Binding LeftNudge}"></ComboBox>
-                                            </Grid>
-                                            <Grid Grid.Row="7" ColumnDefinitions="200,*">
-                                                <Label VerticalAlignment="Center">Right Nudge</Label>
-                                                <ComboBox ItemsSource="{Binding $parent[ns:MainWindow].Controls}" Grid.Column="1" SelectedIndex="{Binding RightNudge}"></ComboBox>
-                                            </Grid>
-                                            <Button Grid.Row="8" VerticalAlignment="Bottom" MinHeight="40" Margin="-5" HorizontalAlignment="Left" Name="SaveEditorResetControlButton" Content="Reset controls" Click="SaveEditorResetControlButton_OnClick"></Button>
-                                        </Grid>
-                                    </TabItem>
-                                    <TabItem Header="Unlocks">
-                                        <Grid RowDefinitions="40,*,40" Margin="10" DataContext="{Binding SaveData}">
-                                            <Grid ColumnDefinitions="*,80">
-                                                <StackPanel Orientation="Horizontal" Spacing="20">
-                                                    <RadioButton Name="SaveEditorOriginalGameRadioButton" Content="Original game" IsChecked="True" IsCheckedChanged="SaveEditorOriginalGameRadioButton_OnIsCheckedChanged"></RadioButton>
-                                                    <RadioButton Name="SaveEditorFreePlayRadioButton" Content="Free play" IsChecked="False" IsCheckedChanged="SaveEditorOriginalGameRadioButton_OnIsCheckedChanged"></RadioButton>
-                                                </StackPanel>
-                                                <Button Name="SaveEditorUnlockResetButton" Content="Reset" Grid.Column="1" Click="SaveEditorUnlockResetButton_OnClick"></Button>
-                                            </Grid>
-                                            <Grid Grid.Row="1" Margin="0, 10">
-                                                <ItemsRepeater Name="OriginalUnlocks" ItemsSource="{Binding OriginalUnlocks}">
-                                                    <ItemsRepeater.Layout>
-                                                        <WrapLayout Orientation="Horizontal" HorizontalSpacing="10" VerticalSpacing="10"></WrapLayout>
-                                                    </ItemsRepeater.Layout>
-                                                    <ItemsRepeater.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <CheckBox x:DataType="types:Unlock" IsChecked="{Binding IsUnlocked}" Content="{Binding Label}"></CheckBox>
-                                                        </DataTemplate>
-                                                    </ItemsRepeater.ItemTemplate>
-                                                </ItemsRepeater>
-                                                <ItemsRepeater Name="FreeUnlocks" IsVisible="False" ItemsSource="{Binding FreeUnlocks}">
-                                                    <ItemsRepeater.Layout>
-                                                        <WrapLayout Orientation="Horizontal" HorizontalSpacing="10" VerticalSpacing="10"></WrapLayout>
-                                                    </ItemsRepeater.Layout>
-                                                    <ItemsRepeater.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <CheckBox x:DataType="types:Unlock" IsChecked="{Binding IsUnlocked}" Content="{Binding Label}"></CheckBox>
-                                                        </DataTemplate>
-                                                    </ItemsRepeater.ItemTemplate>
-                                                </ItemsRepeater>
-                                            </Grid>
-                                        </Grid>
-                                    </TabItem>
-                                    <TabItem Header="Missions">
-                                        <Grid DataContext="{Binding SaveData}" RowDefinitions="40,*,40">
-                                            <ComboBox Name="StageIdComboBox" SelectedIndex="0"
-                                                      SelectionChanged="StageIdComboBox_OnSelectionChanged">
-                                                <ComboBoxItem Content="Biology A"/>
-                                                <ComboBoxItem Content="Evolution A"/>
-                                                <ComboBoxItem Content="Metallurgy A"/>
-                                                <ComboBoxItem Content="Evolution B"/>
-                                                <ComboBoxItem Content="Optics A"/>
-                                                <ComboBoxItem Content="Evolution C"/>
-                                                <ComboBoxItem Content="Biology B"/>
-                                                <ComboBoxItem Content="Metallurgy B"/>
-                                                <ComboBoxItem Content="Optics B"/>
-                                                <ComboBoxItem Content="Geometry A"/>
-                                                <ComboBoxItem Content="Evolution D"/>
-                                            </ComboBox>
-                                            <DataGrid Grid.Row="1" ItemsSource="{Binding Missions}" Margin="0,0,0,10" GridLinesVisibility="All"
-                                                      BorderThickness="1" BorderBrush="Gray"
-                                                      CanUserResizeColumns="True"
-                                                      CanUserReorderColumns="True"
-                                                      CanUserSortColumns="True"  SelectionMode="Single"
-                                                      IsReadOnly="False">
-                                                <DataGrid.Columns>
-                                                    <DataGridTextColumn Header="Type" x:DataType="types:Mission" Binding="{Binding MissionColor}"></DataGridTextColumn>
-                                                    <DataGridTextColumn Header="Mission" x:DataType="types:Mission" Binding="{Binding MissionLabel}"></DataGridTextColumn>
-                                                    <DataGridTextColumn Header="Status" x:DataType="types:Mission" Binding="{Binding Status}"></DataGridTextColumn>
-                                                    <DataGridTextColumn Header="Index" x:DataType="types:Mission" Binding="{Binding ThumbnailIndex}"></DataGridTextColumn>
-                                                    <DataGridTextColumn Header="Pages" x:DataType="types:Mission" Binding="{Binding ThumbnailPages}"/>
-                                                </DataGrid.Columns>
-                                            </DataGrid>
-                                            <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10">
-                                                <TextBlock Text="Mission data source:" VerticalAlignment="Center"></TextBlock>
-                                                <RadioButton Name="SaveEditorMissionOriginalGameRadioButton" Content="Original game" IsChecked="True" IsCheckedChanged="SaveEditorMissionOriginalGameRadioButton_OnIsCheckedChanged"></RadioButton>
-                                                <RadioButton Name="SaveEditorMissionFreePlayRadioButton" Content="Free play" IsCheckedChanged="SaveEditorMissionOriginalGameRadioButton_OnIsCheckedChanged"></RadioButton>
-                                                <RadioButton Name="SaveEditorMissionLastPlaythroughRadioButton" Content="Last playthrough" IsCheckedChanged="SaveEditorMissionOriginalGameRadioButton_OnIsCheckedChanged"></RadioButton>
-                                            </StackPanel>
-                                        </Grid>
-                                    </TabItem>
-                                    <TabItem Header="Stages">
-                                        <Grid DataContext="{Binding SaveData}" RowDefinitions="*,40">
-                                            
-                                            <DataGrid ItemsSource="{Binding Dirs}" Margin="0,0,0,10" GridLinesVisibility="All"
-                                                      BorderThickness="1" BorderBrush="Gray"
-                                                      CanUserResizeColumns="True"
-                                                      CanUserReorderColumns="True"
-                                                      CanUserSortColumns="True" SelectionMode="Single"
-                                                      IsReadOnly="False">
-                                                <DataGrid.Columns>
-                                                    <DataGridTextColumn Header="Stage" x:DataType="types:StageDirectory" Binding="{Binding StageName}"></DataGridTextColumn>
-                                                    <DataGridTextColumn Header="Directory" x:DataType="types:StageDirectory" Binding="{Binding StageDir}"></DataGridTextColumn>
-                                                </DataGrid.Columns>
-                                            </DataGrid>
-                                            <TextBlock Grid.Row="1" Text="This section allows you to modify the stages that will load in original game. Selecting 'DEMO1' will cause the game to crash upon selecting the stage." TextWrapping="Wrap"/>
-                                        </Grid>
-                                    </TabItem>
-                                </TabControl>
-                            </sukiUi:SukiSideMenuItem.PageContent>
-                        </sukiUi:SukiSideMenuItem>
-                    </sukiUi:SukiSideMenu.Items>
+                                </StackPanel>
+                            </sukiUi:GlassCard>
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
+                    <!-- Save file tab -->
+                    <sukiUi:SukiSideMenuItem Header="Save file" IsVisible="False" Name="SaveEditor">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="DodgerBlue" ColorB="DarkBlue" Text="💾"></controls:CircleDot>
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                            <Grid RowDefinitions="30,30,*" Margin="10" DataContext="{Binding SaveData}">
+                                <Label>Ranking data</Label>
+                                <ComboBox Grid.Row="1" SelectedIndex="{Binding LeaderboardId}" SelectionChanged="ScoreGrid_SelectionChanged">
+                                    <ComboBoxItem>Original game</ComboBoxItem>
+                                    <ComboBoxItem>Biology A</ComboBoxItem>
+                                    <ComboBoxItem>Biology B</ComboBoxItem>
+                                    <ComboBoxItem>Metallurgy A</ComboBoxItem>
+                                    <ComboBoxItem>Metallurgy B</ComboBoxItem>
+                                    <ComboBoxItem>Optics A</ComboBoxItem>
+                                    <ComboBoxItem>Optics B</ComboBoxItem>
+                                    <ComboBoxItem>Geometry A</ComboBoxItem>
+                                    <ComboBoxItem>Biology A (Time Attack)</ComboBoxItem>
+                                    <ComboBoxItem>Biology B (Time Attack)</ComboBoxItem>
+                                    <ComboBoxItem>Metallurgy A (Time Attack)</ComboBoxItem>
+                                    <ComboBoxItem>Metallurgy B (Time Attack)</ComboBoxItem>
+                                    <ComboBoxItem>Optics A (Time Attack)</ComboBoxItem>
+                                    <ComboBoxItem>Optics B (Time Attack)</ComboBoxItem>
+                                    <ComboBoxItem>Geometry A (Time Attack)</ComboBoxItem>
+                                </ComboBox>
+                                <DataGrid Grid.Row="2" ItemsSource="{Binding Rank}" Margin="0,0,0,10" GridLinesVisibility="All"
+                                          BorderThickness="1" BorderBrush="Gray" Name="RankGrid"
+                                          CanUserResizeColumns="True" SelectionMode="Single"
+                                          CanUserReorderColumns="True"
+                                          CanUserSortColumns="True" 
+                                          IsReadOnly="False">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Rank" x:DataType="types:Rank" Binding="{Binding Position}"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Initials" x:DataType="types:Rank" Binding="{Binding Initials}"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Score" x:DataType="types:Rank" Binding="{Binding Score}"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Combos" x:DataType="types:Rank" Binding="{Binding Combos}"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Difficulty" x:DataType="types:Rank" Binding="{Binding Difficulty}"/>
+                                        <DataGridTextColumn Header="Offset" x:DataType="types:Rank" Binding="{Binding Offset}"></DataGridTextColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
+                </sukiUi:SukiSideMenu.Items>
             </sukiUi:SukiSideMenu>
         </Grid>
     

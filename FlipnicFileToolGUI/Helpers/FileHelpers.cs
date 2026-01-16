@@ -421,19 +421,7 @@ public static class FileHelpers
                         if (sst.HasScoreRecord())
                         {
                             mw.GetViewModel().SaveData = sst.GetSaveFromRecord();
-                            mw.SaveEditorTabControl.SelectedIndex = 1;
                             mw.SaveEditor.IsVisible = true;
-                            foreach (var o in mw.SaveEditorTabControl.Items)
-                            {
-                                if (o is not TabItem ti) continue;
-                                if ((string)(ti.Header ?? "") == "Ranking")
-                                {
-                                    ti.IsVisible = true;
-                                    continue;
-                                }
-
-                                ti.IsVisible = false;
-                            }
                         }
 
                         mw.GimmickCombobox.SelectedIndex = 0;
@@ -495,35 +483,11 @@ public static class FileHelpers
                     });
                     break;
                 default:
-                    var d = ds.ReadBytes(ds.Length <= 0x2780 ? (int)ds.Length : 0x2780);
-                    var sd = new FpnSave(d);
-                    Dispatcher.UIThread.Post(() => mw.GetViewModel().SaveData = sd);
-                    if (!sd.IsValidHeader())
-                    {
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.InfoBox.Text = "Unrecognized file type";
-                            mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "Unknown");
-                            mw.InfoTab.IsVisible = true;
-                        });
-                        break;
-                    }
-
                     Dispatcher.UIThread.Post(() =>
                     {
-                        mw.GetViewModel().SaveData = new FpnSave(d);
-                        mw.InfoTab.IsVisible = false;
-                        mw.SaveEditor.IsVisible = true;
-                        mw.SaveEditorTabControl.SelectedIndex = 0;
-                        foreach (var o in mw.SaveEditorTabControl.Items)
-                        {
-                            if (o is TabItem ti)
-                            {
-                                ti.IsVisible = true;
-                            }
-                        }
-
-                        mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "Flipnic save data");
+                        mw.InfoBox.Text = "Unrecognized file type";
+                        mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "Unknown");
+                        mw.InfoTab.IsVisible = true;
                     });
                     break;
             }

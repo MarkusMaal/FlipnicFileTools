@@ -470,12 +470,6 @@ public sealed partial class MainWindow : SukiWindow
         FileHelpers.PasteFile(this, clipboard);
     }
 
-    private void UpdateChecksumButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-        GetViewModel().SaveData.UpdateChecksum();
-        ForceRefresh();
-    }
-
     private void UpdateThemeContainer(ScrollViewer cb)
     {
         if (cb.Name != "CliBox") return;
@@ -496,61 +490,11 @@ public sealed partial class MainWindow : SukiWindow
                 UpdateThemeContainer(cb);
             }
         }
-        o = SaveEditorTabControl.SelectedItem;
-        if (o is not TabItem tab) return;
-        if (tab.GetLogicalChildren().FirstOrDefault() is not Grid g) return;
-        g.DataContext = null;
-        g.DataContext = GetViewModel().SaveData;
     }
 
-    private void DiagnoseSaveFileButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-        var fixes = GetViewModel().SaveData.FixStructure();
-        ForceRefresh();
-        if (fixes.Length > 0)
-        {
-            ShowDialog("The following fixes were applied", string.Join('\n', fixes), NotificationType.Success);
-            return;
-        }
-        ShowDialog("No fixes were applied", "Save file appears to have the correct structure", NotificationType.Information);
-    }
-    
     private void ScoreGrid_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         RankGrid.ItemsSource = GetViewModel().SaveData.Rank;
-    }
-
-    private void SaveEditorResetControlButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-        GetViewModel().SaveData.ResetControls();
-        ForceRefresh();
-    }
-
-    private void SaveEditorOriginalGameRadioButton_OnIsCheckedChanged(object? sender, RoutedEventArgs e)
-    {
-        OriginalUnlocks.IsVisible = SaveEditorOriginalGameRadioButton.IsChecked ?? false;
-        FreeUnlocks.IsVisible = SaveEditorFreePlayRadioButton.IsChecked ?? false;
-    }
-
-    private void SaveEditorUnlockResetButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-        GetViewModel().SaveData.ResetGame(SaveEditorFreePlayRadioButton.IsChecked ?? false);
-        ForceRefresh();
-    }
-
-    private void StageIdComboBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        if (StageIdComboBox == null) return;
-        GetViewModel().SaveData.StageId = StageIdComboBox.SelectedIndex;
-        ForceRefresh();
-    }
-
-    private void SaveEditorMissionOriginalGameRadioButton_OnIsCheckedChanged(object? sender, RoutedEventArgs e)
-    {
-        if (SaveEditorMissionOriginalGameRadioButton.IsChecked ?? false) GetViewModel().SaveData.DataSourceId = 0;
-        if (SaveEditorMissionFreePlayRadioButton.IsChecked ?? false) GetViewModel().SaveData.DataSourceId = 1;
-        if (SaveEditorMissionLastPlaythroughRadioButton.IsChecked ?? false) GetViewModel().SaveData.DataSourceId = 2;
-        ForceRefresh();
     }
 
     private void UpdateSpecialTabThemes()
