@@ -15,6 +15,7 @@ public class HelpTopic(string title, string ext, HelpLine[] lines)
     public void DisplayTopic()
     {
         var t = Strings.ChrW(0x23F5);
+        if (OperatingSystem.IsWindows()) t = Strings.ChrW(0x25BA);
         var encoded = "~--\n";
         if (Title != "")
         {
