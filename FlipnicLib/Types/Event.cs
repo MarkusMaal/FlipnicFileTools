@@ -101,8 +101,14 @@ public class Event(byte[] data)
     {
         if (FuncArgs[3] == 0x0A)
         {
-            return
-                $"ToggleLight, AreaCode: {sst.GetStringById("KUIDX", FuncArgs[1])[3..]}, ObjectID: {FuncArgs[2]}, FlashType::{(EventEnums.HexagonFlashType)EventArgs[0]}";
+            if (EventArgs[0] > 0x9)
+            {
+                return
+                    $"ToggleGate, AreaCode: {sst.GetStringById("KUIDX", FuncArgs[1])[3..]}, ObjectID: {FuncArgs[2]}, GateState::{(EventEnums.GateState)EventArgs[0]}";
+            } else { 
+                return
+                    $"ToggleLight, AreaCode: {sst.GetStringById("KUIDX", FuncArgs[1])[3..]}, ObjectID: {FuncArgs[2]}, FlashType::{(EventEnums.HexagonFlashType)EventArgs[0]}";
+            }
         }
         return (EventEnums.BallEventType) FuncArgs[1] + ", " +  (EventEnums.BallEventType)FuncArgs[1] switch
         {
@@ -121,7 +127,7 @@ public class Event(byte[] data)
             EventEnums.SequenceEventType.ScreenFade => "FadeOut: " + (FuncArgs[2] == 1 ? "true" : "false") + $", Ticks: {FuncArgs[3]}",
             EventEnums.SequenceEventType.CameraSequence => $"Filename: {sst.GetStringById("CAMN", FuncArgs[2])}",
             EventEnums.SequenceEventType.WonderfulSequence => "DisplayText: " + (FuncArgs[2] == 1 ? "true" : "false") + $", MsgId: {FuncArgs[3]}",
-            EventEnums.SequenceEventType.FreezeAndPlaySound => $"Filename: {sst.GetStringById("SEQN", FuncArgs[2])}",
+            EventEnums.SequenceEventType.FreezeAndPlaySound => $"Filename: {sst.GetStringById("SEQN", FuncArgs[2])}, RestoreFilename: {sst.GetStringById("SEQN", FuncArgs[0])}",
             EventEnums.SequenceEventType.SfxEvent  => $"SoundID: {FuncArgs[2]}",
             EventEnums.SequenceEventType.GuideSfxEvent  => $"Filename: {sst.GetStringById("INTN", FuncArgs[2])}",
             EventEnums.SequenceEventType.VideoEvent => $"Filename: {sst.GetStringById("IPUN", FuncArgs[2])}, Randomize: " + (FuncArgs[3] == 1 ? "true" : "false") + $", RandomizerSeed: {EventArgs[0]}",
@@ -166,6 +172,18 @@ public class Event(byte[] data)
                         o +=
                             $"\nfunc {Label} (UnkValue0: {FuncArgs[1]}, MaxBalls: {FuncArgs[2]}, UnkValue2: {FuncArgs[3]}, UnkValue3: {EventArgs[0]}) @ 0x" +
                             offsetStr + "\n";
+                    }
+                    break;
+                case "TIMER_EVENT":
+                    if (FuncArgs[1] == 1)
+                    {
+                        o += $"\n\t{Label} (Flag: {FuncArgs[1]}, FrameCount: {FuncArgs[2]}, GracePeriodFrameCount: {FuncArgs[3]}, Font: {sst.GetStringById("FNTN", EventArgs[0])}, AnimFont: {sst.GetStringById("FNTN", EventArgs[1])})";
+                    }
+                    break;
+                case "SMART_BALL":
+                    if (EventMagic == 9)
+                    {
+                        o += $"\nfunc {Label} (AreaId1: {sst.GetStringById("KUIDX", FuncArgs[2])}, AreaId2: {sst.GetStringById("KUIDX", FuncArgs[3])}, Balls: {EventArgs[0]}, BuzzerSoundId: {(EventArgs[1] >> 16) & 0xFF }, ???: {EventArgs[2]}, ???: {EventArgs[3]}) @ 0x" + offsetStr + "\n";
                     }
                     break;
                 case "GAME_EVENT":
