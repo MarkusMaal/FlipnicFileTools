@@ -61,10 +61,32 @@ internal static class EventEnums
         FastFlashing
     }
 
+    internal enum GateState
+    {
+        /// <summary>
+        /// Initial state, should be interpreted as open
+        /// </summary>
+        Initial,
+        /// <summary>
+        /// Allows the player to selectively go through a gate (left flipper = back, right flipper = go)
+        /// </summary>
+        SpringLoaded,
+        /// <summary>
+        /// Opened state means there is no gate and if the gate was originally in front of a lane, the ball needs to be fast enough to go through it
+        /// </summary>
+        Open = 0xA,
+        /// <summary>
+        /// Blocked state means the ball can't go through the gate
+        /// </summary>
+        Blocked
+    }
+
     internal enum BallEventType
     {
         ToggleControl = 0x02,
-        PoleEvent = 0x0F
+        PoleEvent = 0x0F,
+        LightRedMissionHexagon = 0x14,
+        ToggleGate = 0x19
     }
 
     internal enum ControllerToggles
