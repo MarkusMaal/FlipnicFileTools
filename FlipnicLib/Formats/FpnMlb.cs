@@ -2,7 +2,7 @@ namespace FlipnicLib.Formats;
 
 public class FpnMlb
 {
-    public Dictionary<string, MenuElement[]> Sections { get; set; } = new();
+    public Dictionary<string, MenuElement[]> Sections { get; set; } = [];
     
     public FpnMlb(byte[] data)
     {

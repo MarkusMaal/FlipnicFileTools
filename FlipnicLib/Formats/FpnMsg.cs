@@ -9,7 +9,7 @@ public class FpnMsg
 
     public string[] Messages
     {
-        get => _messages.ToArray();
+        get => [.. _messages];
         set
         {
             _messages.Clear();
@@ -96,6 +96,6 @@ public class FpnMsg
             data.Add(0x00);
             data.Add(0x00);
         }
-        return data.ToArray();
+        return [.. data];
     }
 }

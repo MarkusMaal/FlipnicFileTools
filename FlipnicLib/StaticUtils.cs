@@ -471,11 +471,11 @@ public abstract class StaticUtils
     }
 
     /// <summary>
-    /// Paints text characters inside the string to specific colors specified by my custom encoding and displays them.
+    /// Paints text characters inside the string to specific colors specified by my custom encoding and displays them.<br/><br/>
     ///
-    /// Colors are encoded like so: ~[BG][FG], where BG represents a background color using a hex nibble (0-F)
-    /// or dash character (-), FG is the same, but for foreground color. The first character of the encoded string MUST
-    /// be a tilde (~).
+    /// Colors are encoded like so: ~[BG][FG], where BG represents a background color using a hex nibble (0-F)<br/>
+    /// or dash character (-), FG is the same, but for foreground color. The first character of the encoded string MUST<br/>
+    /// be a tilde (~).<br/><br/>
     ///
     /// Example: "~1FThis is white on blue.~-- This is default. ~-AThis is green on default.~4-This is default on red.~--"
     /// </summary>

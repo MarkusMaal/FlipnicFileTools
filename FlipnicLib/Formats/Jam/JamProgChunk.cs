@@ -121,13 +121,13 @@ public class JamSplitChunk
     /// Fine tune pitch adjustment
     /// </summary>
     public sbyte FineTunePitch { get; set; }
-    
+
     /// <summary>
-    /// 0x01 = High priority
-    /// 0x02 = Noise
-    /// 0x10 = Enable pitch bend
-    /// 0x20 = Modulation
-    /// 0x40 = BreathWaveFromProg
+    /// 0x01 = High priority <br />
+    /// 0x02 = Noise <br />
+    /// 0x10 = Enable pitch bend <br />
+    /// 0x20 = Modulation <br />
+    /// 0x40 = BreathWaveFromProg <br />
     /// 0x80 = Reverb
     /// </summary>
     public byte Flags { get; set; }
