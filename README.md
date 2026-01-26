@@ -12,6 +12,7 @@ Useful links:
 * [Freecam mod](https://www.youtube.com/watch?v=31-pnJw6PFo)
 * [Gameplay guide (with illustrations)](https://paktc.markusmaal.ee/?doc=en/FlipnicGuide.md)
 * [Teleporting the ball to other areas (guide)](https://paktc.markusmaal.ee/?doc=en/flipnic_ball_tp.md)
+* [Decompilation](https://github.com/MarkusMaal/FlipnicDecomp)
 
 Prerequisites:
 
