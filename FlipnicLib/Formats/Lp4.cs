@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace FlipnicLib.Formats;
 
 public class Lp4(byte[] data, string fileName)
@@ -172,7 +174,7 @@ public class Lp4(byte[] data, string fileName)
             Models.Clear();
             OldMethod();
         }
-        catch
+        catch when (!Debugger.IsAttached)
         {
             OldMethod();
         }
@@ -216,9 +218,9 @@ public class Lp4(byte[] data, string fileName)
     {
         var len = BitConverter.ToInt32(data, offset);
         var texOffset = offset + (len * 0x18) + 0x10;
-        var div = 4096f;
         var uvOffset = texOffset;
-        for (var j = offset + 0x10; j < offset + len * 0x10 - 0x10; j += 0x30)
+        var comp = -1;
+        for (var j = offset + 0x10; j < offset + len * 0x10 - 0x10; j += 0x10)
         {
             rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset).Take(8).ToArray())[0]);
             rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset).Take(8).ToArray())[1]);
@@ -232,15 +234,32 @@ public class Lp4(byte[] data, string fileName)
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x10).Take(4).ToArray(), 0));
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x14).Take(4).ToArray(), 0));
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x18).Take(4).ToArray(), 0));
-            rawVerticies.AddRange(Model.DecodeNormals(data.Skip(uvOffset - (len * 0x8) + 8).Take(8).ToArray()));
+            rawVerticies.AddRange(Model.DecodeNormals(data.Skip(uvOffset - (len * 0x8)).Take(8).ToArray()));
 
             rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset + 16).Take(8).ToArray())[0]);
             rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset + 16).Take(8).ToArray())[1]);
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x20).Take(4).ToArray(), 0));
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x24).Take(4).ToArray(), 0));
             rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x28).Take(4).ToArray(), 0));
-            rawVerticies.AddRange(Model.DecodeNormals(data.Skip(uvOffset - (len * 0x8) + 16).Take(8).ToArray()));
-            uvOffset += 24;
+            rawVerticies.AddRange(Model.DecodeNormals(data.Skip(uvOffset - (len * 0x8)).Take(8).ToArray()));
+            
+            //
+            // see Model.AppendVertices for explanation
+            //
+            var pattern = StaticUtils.GetInt16(data.Skip(uvOffset + 6).Take(2).ToArray(), 0);
+            if (comp == -1)
+            {
+                comp = pattern;
+            }
+            var pattern2 = StaticUtils.GetInt16(data.Skip(uvOffset + 24 + 6).Take(2).ToArray(), 0);
+            if (comp == pattern2)
+            {
+                j += 0x20;
+                uvOffset += 24;
+                comp = -1;
+                continue;
+            }
+            uvOffset += 8;
         }
     }
     
@@ -315,28 +334,61 @@ public class Model
     {
         var len = BitConverter.ToInt32(data, offset);
         var texOffset = offset + (len * 0x18) + 0x10;
-        var div = 4096f;
         var uvOffset = texOffset;
-        for (var j = offset + 0x10; j < offset + len * 0x10 - 0x10; j += 0x30)
+        var comp = -1;
+        for (var j = offset + 0x10; j < offset + len * 0x10 - 0x10; j += 0x10)
         {
+            var x1 = BitConverter.ToSingle(data.Skip(j).Take(4).ToArray(), 0);
+            var y1 = BitConverter.ToSingle(data.Skip(j + 0x4).Take(4).ToArray(), 0);
+            var z1 = BitConverter.ToSingle(data.Skip(j + 0x8).Take(4).ToArray(), 0);
+            var x2 = BitConverter.ToSingle(data.Skip(j + 0x10).Take(4).ToArray(), 0);
+            var y2 = BitConverter.ToSingle(data.Skip(j + 0x14).Take(4).ToArray(), 0);
+            var z2 = BitConverter.ToSingle(data.Skip(j + 0x18).Take(4).ToArray(), 0);
+            var x3 = BitConverter.ToSingle(data.Skip(j + 0x20).Take(4).ToArray(), 0);
+            var y3 = BitConverter.ToSingle(data.Skip(j + 0x24).Take(4).ToArray(), 0);
+            var z3 = BitConverter.ToSingle(data.Skip(j + 0x28).Take(4).ToArray(), 0);
+            
             RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset).Take(8).ToArray()));
-            RawVertices.Add(BitConverter.ToSingle(data.Skip(j).Take(4).ToArray(), 0));
-            RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 4).Take(4).ToArray(), 0));
-            RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 8).Take(4).ToArray(), 0));
-            RawVertices.AddRange(DecodeNormals(data.Skip(uvOffset - (len * 0x8)).Take(8).ToArray()));
+            RawVertices.Add(x1);
+            RawVertices.Add(y1);
+            RawVertices.Add(z1);
+            RawVertices.AddRange(DecodeNormals(data.Skip(uvOffset - (len * 0x8) + 16).Take(8).ToArray()));
 
-            RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset+8).Take(8).ToArray()));
-            RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 0x10).Take(4).ToArray(), 0));
-            RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 0x14).Take(4).ToArray(), 0));
-            RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 0x18).Take(4).ToArray(), 0));
+            RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset + 8).Take(8).ToArray()));
+            RawVertices.Add(x2);
+            RawVertices.Add(y2);
+            RawVertices.Add(z2);
             RawVertices.AddRange(DecodeNormals(data.Skip(uvOffset - (len * 0x8) + 8).Take(8).ToArray()));
 
-            RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset+16).Take(8).ToArray()));
-            RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 0x20).Take(4).ToArray(), 0));
-            RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 0x24).Take(4).ToArray(), 0));
-            RawVertices.Add(BitConverter.ToSingle(data.Skip(j + 0x28).Take(4).ToArray(), 0));
-            RawVertices.AddRange(DecodeNormals(data.Skip(uvOffset - (len * 0x8) + 16).Take(8).ToArray()));
-            uvOffset += 24;
+            RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset + 16).Take(8).ToArray()));
+            RawVertices.Add(x3);
+            RawVertices.Add(y3);
+            RawVertices.Add(z3);
+            RawVertices.AddRange(DecodeNormals(data.Skip(uvOffset - (len * 0x8)).Take(8).ToArray()));
+            
+            //
+            // let's define a comparison variable x (comp)
+            // if x is -1, then set x to the value of UvFlags of the first point (pattern)
+            //
+            // let's define a variable y (pattern2)
+            // if y = x, then the next point is located at position + 0x30
+            // this also resets x to -1
+            //
+            var pattern = StaticUtils.GetInt16(data.Skip(uvOffset + 6).Take(2).ToArray(), 0);
+            if (comp == -1)
+            {
+                comp = pattern;
+            }
+            var pattern2 = StaticUtils.GetInt16(data.Skip(uvOffset + 24 + 6).Take(2).ToArray(), 0);
+            if (comp == pattern2)
+            {
+                j += 0x20;
+                uvOffset += 24;
+                comp = -1;
+                continue;
+            }
+
+            uvOffset += 8;
         }
     }
 
@@ -347,8 +399,9 @@ public class Model
     /// <returns>X and Y coordinates</returns>
     public static float[] DecodeCoords(byte[] data)
     {
+        // at +0x6h is the UV flags value, it describes how vertices should be parsed
+        // explanation in Model.AppendVertices
         var div = BitConverter.ToInt16(data.Skip(4).Take(2).ToArray(), 0);
-        var unk = BitConverter.ToInt16(data.Skip(6).Take(2).ToArray(), 0); // no idea, reflection mapping maybe?
         var fx = BitConverter.ToInt16(data.Take(2).ToArray(), 0);
         var fy = BitConverter.ToInt16(data.Skip(2).Take(2).ToArray(), 0);
         return [(float)fx/div, -(float)fy/div]; // invert, because otherwise it's upside-down
