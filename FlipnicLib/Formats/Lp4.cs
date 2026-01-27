@@ -247,7 +247,7 @@ public class Lp4(byte[] data, string fileName)
             // see Model.AppendVertices for explanation
             //
             var pattern = StaticUtils.GetInt16(data.Skip(uvOffset + 6).Take(2).ToArray(), 0);
-            if (comp == -1)
+            if (comp == -1 && (pattern & 0x01) == 0)
             {
                 comp = pattern;
             }
@@ -334,9 +334,10 @@ public class Model
     {
         var len = BitConverter.ToInt32(data, offset);
         var texOffset = offset + (len * 0x18) + 0x10;
-        var uvOffset = texOffset;
+        var uvOffset = texOffset ;
         var comp = -1;
-        for (var j = offset + 0x10; j < offset + len * 0x10 - 0x10; j += 0x10)
+        var mask = 0x01;
+        for (var j = offset + 0x10; j < offset + (len) * 0x10 - 0x10; j += 0x10)
         {
             var x1 = BitConverter.ToSingle(data.Skip(j).Take(4).ToArray(), 0);
             var y1 = BitConverter.ToSingle(data.Skip(j + 0x4).Take(4).ToArray(), 0);
@@ -353,7 +354,6 @@ public class Model
             RawVertices.Add(y1);
             RawVertices.Add(z1);
             RawVertices.AddRange(DecodeNormals(data.Skip(uvOffset - (len * 0x8) + 16).Take(8).ToArray()));
-
             RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset + 8).Take(8).ToArray()));
             RawVertices.Add(x2);
             RawVertices.Add(y2);
@@ -365,7 +365,7 @@ public class Model
             RawVertices.Add(y3);
             RawVertices.Add(z3);
             RawVertices.AddRange(DecodeNormals(data.Skip(uvOffset - (len * 0x8)).Take(8).ToArray()));
-            
+
             //
             // let's define a comparison variable x (comp)
             // if x is -1, then set x to the value of UvFlags of the first point (pattern)
@@ -375,7 +375,7 @@ public class Model
             // this also resets x to -1
             //
             var pattern = StaticUtils.GetInt16(data.Skip(uvOffset + 6).Take(2).ToArray(), 0);
-            if (comp == -1)
+            if ((comp == -1) && (pattern & mask) == 0)
             {
                 comp = pattern;
             }
