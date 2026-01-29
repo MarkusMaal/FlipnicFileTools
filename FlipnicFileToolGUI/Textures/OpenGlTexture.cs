@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using FlipnicLib;
 using FlipnicLib.Formats;
 using OpenTK.Graphics.OpenGL;
 using SixLabors.ImageSharp;
@@ -40,7 +41,7 @@ namespace FlipnicFileToolGUI.Textures
             }
             catch
             {
-                Console.WriteLine("Unable to load texture!");
+                StaticUtils.DecodeColors("~-C\rError~--: Unable to load texture!\n");
             }
 
             byte[] rndCol = [(byte)r.Next(0, 255), (byte)r.Next(0, 255), (byte)r.Next(0, 255)];

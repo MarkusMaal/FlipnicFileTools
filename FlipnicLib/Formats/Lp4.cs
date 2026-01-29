@@ -101,6 +101,12 @@ public class Lp4(byte[] data, string fileName)
                 if (animationJoints > 0) // this is an animated model, ignore the animation stuff and just get the default pose
                 {
                     i += 0x10;
+                    if (attributeSetCount > 65536)
+                    {
+                        StaticUtils.DecodeColors("~-CError~--: Attribute set count was too large, continuing would cause hangs! Parser was halted!\n");
+                        OldMethod();
+                        return;
+                    }
                     for (var j = 0; j < attributeSetCount; j++) // joint definitions
                     {
                         animationJoints = StaticUtils.GetInt32(data, i + 0x14);
@@ -120,6 +126,12 @@ public class Lp4(byte[] data, string fileName)
                     // animations
                     var numAnimations = StaticUtils.GetInt32(data, i);
                     i += 0x10;
+                    if (numAnimations > 65536)
+                    {
+                        StaticUtils.DecodeColors("~-CError~--: Animation count was too large, continuing would cause hangs! Parser was halted!\n");
+                        OldMethod();
+                        return;
+                    }
                     for (var j = 0; j < numAnimations - 1; j++)
                     {
                         i += 0x20; // animation name
@@ -170,7 +182,12 @@ public class Lp4(byte[] data, string fileName)
             {
                 SelectedModel = Models[0];
             }
-            if (SelectedModel.RawVertices.Count != 0) return;
+
+            if (SelectedModel.RawVertices.Count != 0)
+            {
+                StaticUtils.DecodeColors("~-ASuccess~--: Successfully decoded the LP4 file!");
+                return;
+            }
             Models.Clear();
             OldMethod();
         }
@@ -182,85 +199,73 @@ public class Lp4(byte[] data, string fileName)
     
     private void OldMethod()
     {
-        Console.WriteLine("Warning: failed to parse LP4 file correctly, falling back to brute-force method!");
+        StaticUtils.DecodeColors("~-EWarning~--: failed to parse LP4 file correctly, falling back to brute-force method!\n");
         var i = 0;
         while (i < data.Length - 0x20)
         {
-            int f, f2, f3, f4;
-            f = BitConverter.ToInt32([.. data.Skip(i).Take(4)], 0);
-            f2 = BitConverter.ToInt32([.. data.Skip(i + 0x10).Take(4)], 0);
-            f3 = BitConverter.ToInt32([.. data.Skip(i + 0x14).Take(4)], 0);
-            f4 = BitConverter.ToInt32([.. data.Skip(i + 0x1c).Take(4)], 0);
-            if ((f > 0) && (f2 == f3) && (f3 == f4))
+            int f2;
+            float f, f3;
+            short f4;
+            f2 = BitConverter.ToInt32([.. data.Skip(i).Take(4)], 0);
+            if (i + f2 * 0x10 >= data.Length - 0x20)
+            {
+                i += 0x10;
+                continue;
+            }
+            f = BitConverter.ToSingle([.. data.Skip(i+0x1C).Take(4)], 0);
+            f3 = BitConverter.ToSingle([.. data.Skip(i+f2*0x10+0xC).Take(4)]);
+            f4 = BitConverter.ToInt16([.. data.Skip(i+f2*0x10+0x1E).Take(4)], 0);
+            if ((f == 1.0f) && (f3 == 1.0f) && (f4 == 0))
             {
                 var len = f2;
                 if ((len > 0) && (len < data.Length))
                 {
-                    AppendVerticies(i+0x10, len);
-                    i += 2*len * 0x10 + 0xA0;
-                    break;
+                    try
+                    {
+                        var tm = new Model();
+                        tm.AppendVerticies(i, data);
+
+                        rawVerticies = tm.RawVertices;
+                        if (rawVerticies.Count > 0)
+                        {
+                            StaticUtils.DecodeColors($"~-ASuccess~--: Detected valid model data at offset 0x{i:X}\n");
+                        }
+                        else
+                        {
+                            StaticUtils.DecodeColors($"~-EWarning~--: Offset 0x{i:X} contains 0 vertices, continue searching...\n");
+                            i += 0x10;
+                            continue;
+                        }
+                        i += 2 * len * 0x10 + 0xA0;
+                        break;
+                    }
+                    catch
+                    {
+                        StaticUtils.DecodeColors($"~-CError~--: Attempt to read from offset 0x{i:X} threw an error, continue searching...\n");
+                    }
                 }
             }
             i += 0x10;
         }
+
+        if (rawVerticies.Count == 0)
+        {
+            StaticUtils.DecodeColors("~-CError~--: No model data found\n");
+            return;
+        }
         TexturePath = StaticUtils.GetString(data.Skip(i).Take(0x20).ToArray());
 
         if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-                TexturePath.ToUpper()))) return;
+                TexturePath.ToUpper())))
+        {
+            StaticUtils.DecodeColors("~-EWarning~--: The model does not have a texture\n");
+            return;
+        }
         var fs = File.OpenRead(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
             TexturePath.ToUpper()));
         var d = new byte[fs.Length];
         fs.ReadExactly(d, 0, d.Length);
         Texture = new Tim2(d, TexturePath);
-    }
-
-    private void AppendVerticies(int offset, int forced_length = -1)
-    {
-        var len = BitConverter.ToInt32(data, offset);
-        var texOffset = offset + (len * 0x18) + 0x10;
-        var uvOffset = texOffset;
-        var comp = -1;
-        for (var j = offset + 0x10; j < offset + len * 0x10 - 0x10; j += 0x10)
-        {
-            rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset).Take(8).ToArray())[0]);
-            rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset).Take(8).ToArray())[1]);
-            rawVerticies.Add(BitConverter.ToSingle(data.Skip(j).Take(4).ToArray(), 0));
-            rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 4).Take(4).ToArray(), 0));
-            rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 8).Take(4).ToArray(), 0));
-            rawVerticies.AddRange(Model.DecodeNormals(data.Skip(uvOffset - (len * 0x8)).Take(8).ToArray()));
-
-            rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset + 8).Take(8).ToArray())[0]);
-            rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset + 8).Take(8).ToArray())[1]);
-            rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x10).Take(4).ToArray(), 0));
-            rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x14).Take(4).ToArray(), 0));
-            rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x18).Take(4).ToArray(), 0));
-            rawVerticies.AddRange(Model.DecodeNormals(data.Skip(uvOffset - (len * 0x8)).Take(8).ToArray()));
-
-            rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset + 16).Take(8).ToArray())[0]);
-            rawVerticies.Add(Model.DecodeCoords(data.Skip(uvOffset + 16).Take(8).ToArray())[1]);
-            rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x20).Take(4).ToArray(), 0));
-            rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x24).Take(4).ToArray(), 0));
-            rawVerticies.Add(BitConverter.ToSingle(data.Skip(j + 0x28).Take(4).ToArray(), 0));
-            rawVerticies.AddRange(Model.DecodeNormals(data.Skip(uvOffset - (len * 0x8)).Take(8).ToArray()));
-            
-            //
-            // see Model.AppendVertices for explanation
-            //
-            var pattern = StaticUtils.GetInt16(data.Skip(uvOffset + 6).Take(2).ToArray(), 0);
-            if (comp == -1 && (pattern & 0x01) == 0)
-            {
-                comp = pattern;
-            }
-            var pattern2 = StaticUtils.GetInt16(data.Skip(uvOffset + 24 + 6).Take(2).ToArray(), 0);
-            if (comp == pattern2)
-            {
-                j += 0x20;
-                uvOffset += 24;
-                comp = -1;
-                continue;
-            }
-            uvOffset += 8;
-        }
     }
     
     /// <summary>
@@ -268,19 +273,27 @@ public class Lp4(byte[] data, string fileName)
     /// </summary>
     public void Read()
     {
-        GetModelOffset();
-        if (rawVerticies.Count > 0) return;
-        if (Models.Count == 0)
+        try
         {
+            GetModelOffset();
+            if (rawVerticies.Count > 0) return;
+            if (Models.Count == 0)
+            {
+                return;
+            }
+            if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
+                    SelectedModel.Texture.ToUpper()))) return;
+            var fs = File.OpenRead(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
+                SelectedModel.Texture.ToUpper()));
+            var d = new byte[fs.Length];
+            fs.ReadExactly(d, 0, d.Length);
+            Texture = new Tim2(d, SelectedModel.Texture);
+        }
+        catch (Exception ex) when (!Debugger.IsAttached)
+        {
+            StaticUtils.DecodeColors($"~-CError~--: LP4.Read method exception — {ex.Message}\n");
             return;
         }
-        if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-                SelectedModel.Texture.ToUpper()))) return;
-        var fs = File.OpenRead(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-            SelectedModel.Texture.ToUpper()));
-        var d = new byte[fs.Length];
-        fs.ReadExactly(d, 0, d.Length);
-        Texture = new Tim2(d, SelectedModel.Texture);
     }
 
     /// <summary>
@@ -289,7 +302,7 @@ public class Lp4(byte[] data, string fileName)
     /// <returns>An array containing chunks of 8 * sizeof(float), where first 2 entries are XY UV coordinates, next 3 are XYZ vertex coordinates, final 3 are XYZ normal coordinates</returns>
     public float[] GetVerticies()
     {
-        if ((rawVerticies.Count == 0) && (Models.Count > 0))
+        if ((rawVerticies.Count == 0) && (Models.Count > 0) && (SelectedModel != null))
         {
             return SelectedModel.RawVertices.ToArray();
         }
@@ -375,7 +388,7 @@ public class Model
             // this also resets x to -1
             //
             var pattern = StaticUtils.GetInt16(data.Skip(uvOffset + 6).Take(2).ToArray(), 0);
-            if ((comp == -1) && (pattern & mask) == 0)
+            if ((comp == -1) && (pattern & mask) != mask)
             {
                 comp = pattern;
             }

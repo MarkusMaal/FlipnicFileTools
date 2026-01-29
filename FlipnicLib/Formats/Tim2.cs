@@ -31,6 +31,12 @@ public class Tim2
         ColorType = (ColorMode)BitConverter.ToInt32(data, 0x23);
         this.Width = BitConverter.ToInt16(data, 0x24);
         this.Height = BitConverter.ToInt16(data, 0x26);
+
+        if (Height * Width > 1048576)
+        {
+            StaticUtils.DecodeColors($"~-CFatal error~--: TIM2 dimensions are too large! Exception was thrown to avoid excessive RAM usage or lock-ups!");
+            throw new Exception("Texture dimensions are too large!");
+        }
         this._bitmap = data.Skip(0x10+headerSize).Take(bitmapSize).ToArray();
         if (ColorType == ColorMode.Tim4Bpp)
         {
@@ -177,13 +183,20 @@ public class Tim2
         {
             var y = i / Width;
             var x = i % Width;
-            builder.SetPixel(pixels[_bitmap[i]], x, y);
+            try
+            {
+                builder.SetPixel(pixels[_bitmap[i]], x, y);
+            }
+            catch
+            {
+                builder.SetPixel(new Pixel(255, 0, 255, 255, false), x, y);
+            }
         }
 
         builder.Save(output);
         if (output is not FileStream fs)
         {
-            Console.WriteLine($"\rLoaded image data to memory ({StaticUtils.GetFilesizeString(output.Length)})");
+            StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded image data to memory ({StaticUtils.GetFilesizeString(output.Length)})\n");
             return;
         }
         Console.WriteLine($"\rSaved as: {fs.Name}");
@@ -217,7 +230,7 @@ public class Tim2
         output.Write(imageData.ToArray(), 0, imageData.Count);
         if (output is not FileStream fs)
         {
-            Console.WriteLine($"\rLoaded image data to memory ({StaticUtils.GetFilesizeString(output.Length)})");
+            StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded image data to memory ({StaticUtils.GetFilesizeString(output.Length)})\n");
             return;
         }
 

@@ -115,7 +115,7 @@ public class Tim
         builder.Save(output);
         if (output is not FileStream fs)
         {
-            Console.WriteLine($"\rLoaded image data to memory ({StaticUtils.GetFilesizeString(output.Length)})");
+            StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded image data to memory ({StaticUtils.GetFilesizeString(output.Length)})\n");
             return;
         }
         Console.WriteLine($"\rSaved as: {fs.Name}");
