@@ -70,11 +70,13 @@ public class Tim
 
         var bp = 0;
         const int alpha = 0xFF;
+        var pixelData = BitConverter.ToInt16(decompressed, 0);
+        int[] fallBack = [8 * (pixelData & 0x1F), 8 * ((pixelData >> 5) & 0x1F), 8 * (pixelData >> 10)];
         for (var i = 0; i < Width * Height * 2; i += 2)
         {
             try
             {
-                var pixelData = BitConverter.ToInt16(decompressed, i);
+                pixelData = BitConverter.ToInt16(decompressed, i);
                 var red = 8 * (pixelData & 0x1F);
                 var green = 8 * ((pixelData >> 5) & 0x1F);
                 var blue = 8 * (pixelData >> 10);
@@ -86,9 +88,9 @@ public class Tim
             }
             catch
             {
-                bitmap[bp] = 0;
-                bitmap[bp + 1] = 0;
-                bitmap[bp + 2] = 0;
+                bitmap[bp] = (byte)fallBack[0];
+                bitmap[bp + 1] = (byte)fallBack[1];
+                bitmap[bp + 2] = (byte)fallBack[2];
                 bitmap[bp + 3] = alpha;
                 bp += 4;
             }

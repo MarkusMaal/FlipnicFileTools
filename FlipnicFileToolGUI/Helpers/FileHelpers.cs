@@ -151,7 +151,6 @@ public static class FileHelpers
                         mw.ModelTab.IsSelected = true;
                         mw.InfoTab.IsSelected = false;
                     });
-                    Thread.Sleep(1000);
                     LoadAsString(ico, "PlayStation 2 save file icon", mw);
                     Dispatcher.UIThread.Post(() =>
                     {
@@ -324,7 +323,6 @@ public static class FileHelpers
                         mw.ModelTab.IsSelected = true;
                         mw.InfoTab.IsSelected = false;
                     });
-                    Thread.Sleep(1000);
                     Dispatcher.UIThread.Post(() => { mw.GlControl.ImportLP4(lp4); });
 
                     LoadAsString(lp4, "Flipnic resource file", mw);

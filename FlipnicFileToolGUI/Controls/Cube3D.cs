@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using FlipnicFileToolGUI.Shaders;
 using FlipnicFileToolGUI.Textures;
+using FlipnicFileToolGUI.ViewModels;
 using FlipnicLib;
 using FlipnicLib.Formats;
 using OpenTK.Graphics.OpenGL;
@@ -30,12 +31,25 @@ namespace FlipnicFileToolGUI.Controls
         private float _fov = 45;
         private double _pitch = -40;
         private double _yaw = 90f;
-        private const float ModelRotationDegrees = 0f;
+        private float ModelRotationDegrees = 0f;
         private bool _isDragging;
         private Point _lastPos;
 
         private const float Speed = 0.015f;
         private object? _texture;
+        
+        public new bool Rotate
+        {
+            get => GetValue(RotateProperty);
+            set
+            {
+                if (!value)
+                {
+                    ModelRotationDegrees = 0f;
+                }
+                SetValue(RotateProperty, value);
+            }
+        }
 
         private float[] _vertices = [];
         private readonly uint[] _indices =
@@ -43,6 +57,8 @@ namespace FlipnicFileToolGUI.Controls
             0, 1, 3, // first triangle
             1, 2, 3, // second triangle
         };
+
+        public bool ReloadModel = false;
         
         public Lp4 OpenContainer { get; set; }
 
@@ -58,25 +74,6 @@ namespace FlipnicFileToolGUI.Controls
         {
             StaticUtils.ExportObj(fileName, _vertices, _texture);
         }
-
-        public string GetVertices()
-        {
-            StringBuilder sb = new();
-            for (int i = 0; i < _vertices.Length; i += 4)
-            {
-                try
-                {
-                    sb.Append($"X={_vertices[i]},Y={_vertices[i + 1]},Z={_vertices[i + 2]}\n");
-                }
-                catch
-                {
-                    sb.Append($"---\n");
-                }
-            }
-
-            return sb.Length > 0 ? sb.ToString()[..(sb.Length - 1)] : "";
-        }
-
 
         public void ImportLP4(Lp4 lp4)
         {
@@ -112,15 +109,6 @@ namespace FlipnicFileToolGUI.Controls
                 _texture = lp4.Texture;
             }
             previewImg.Source = new BitmapTools(){Image = (Tim2?)_texture}.ToBitmap();
-            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            OpenContainer = lp4;
-            _vertices = lp4.GetVerticies();
-            OpenTkTeardown();
-            OpenTkInit();
-            GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            UpdateCameraFront();
         }
 
         public void ImportICO(SaveIcon saveIcon)
@@ -178,7 +166,7 @@ namespace FlipnicFileToolGUI.Controls
                                 in vec3 aPosition;
                                 in vec2 aTexCoord;
                                 in vec3 aNormal;
-                                
+
                                 out vec3 Normal;
                                 out vec2 texCoord;
 
@@ -233,12 +221,12 @@ namespace FlipnicFileToolGUI.Controls
             _vertexBufferObject = GL.GenBuffer();
             
 
-            //Set bg colour to a dark forest green
-            GL.ClearColor(0.6f, 0.5f, 0.9f, 1.0f);
+            //Set bg colour
+            GL.ClearColor(0.25f, 0.2f, 0.4f, 0.5f);
 
             //Bind to the VAO
             GL.BindVertexArray(_vertexArrayObject);
-            GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.Nicest);
+            GL.Hint(HintTarget.PerspectiveCorrectionHint, HintMode.DontCare);
             //Set up the buffer for the triangle
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
 
@@ -260,7 +248,7 @@ namespace FlipnicFileToolGUI.Controls
             
             var normalLocation = _shader.GetAttribLocation("aNormal");
             GL.VertexAttribPointer(normalLocation, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 5 * sizeof(float));
-            GL.EnableVertexAttribArray(texCoordLocation);
+            GL.EnableVertexAttribArray(normalLocation);
 
             
             //Set up the EBO
@@ -350,19 +338,36 @@ namespace FlipnicFileToolGUI.Controls
             {
                 _cameraPosition += _up * effectiveSpeed; //Down
             }
+
         }
 
+        private void ReloadModelNow()
+        {
+            DefaultShaders();
+            _shader = new(Path.GetTempPath() + "Shaders/shader.vert", Path.GetTempPath() + "Shaders/shader.frag");
+            DeleteShadersIfExist();
+            //Load textures
+            _brickTexture = new();
+            _brickTexture.Use();
+            _brickTexture.LoadFromFile(_texture);
+            _shader.Use();
+            _shader.SetInt("texture0", 2);
+            ReloadModel = false;
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * (OperatingSystem.IsMacOS() ? 1 : 1) * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+        }
+        
         private void DoRender()
         {
             //Bind shaders and textures
             _shader!.Use();
             _brickTexture.Use(TextureUnit.Texture2);
+            if (ReloadModel) ReloadModelNow();
 
-            //3d projection matrices
+            //3d projection matricesSwdw
             var model = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(ModelRotationDegrees));
             var view = Matrix4.LookAt(_cameraPosition, _cameraPosition + _cameraFront, _up);
             var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(_fov), (float)(Bounds.Width / Bounds.Height), 0.1f, 100.0f);
-
+            if (Rotate) ModelRotationDegrees++;
             _shader.SetMatrix4("model", model);
             _shader.SetMatrix4("view", view);
             _shader.SetMatrix4("projection", projection);
@@ -444,5 +449,6 @@ namespace FlipnicFileToolGUI.Controls
             _cameraFront.Z = -(float)Math.Cos(MathHelper.DegreesToRadians(_pitch)) * (float)Math.Sin(MathHelper.DegreesToRadians(_yaw));
             _cameraFront = Vector3.Normalize(_cameraFront);
         }
+        public new static readonly StyledProperty<bool> RotateProperty = AvaloniaProperty.Register<CubeRenderingTkOpenGlControl, bool>(nameof(Rotate));
     }
 }

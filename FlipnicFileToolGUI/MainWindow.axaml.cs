@@ -515,26 +515,19 @@ public sealed partial class MainWindow : SukiWindow
     {
         if (Models.SelectedIndex < 0) return;
         GlControl.SwitchModel(Models.SelectedItems?[0]?.ToString(), PreviewImage);
+        GlControl.ReloadModel = true;
         new Thread(() =>
         {
             var bck = false;
             var bckType = "";
             Dispatcher.UIThread.Post(() =>
             {
-                Loader.IsVisible = true;
-                MainTabControl.IsVisible = false;
                 LoadStatus.Text = "Generating model";
                 bckType = FileTypeLabel.Content?.ToString();
                 FileTypeLabel.Content = "Please wait...";
                 bck = ModelTab.IsSelected;
-                ModelTab.IsSelected = false;
-                ModelTab.IsVisible = false;
-            });
-            Thread.Sleep(800);   
+            });   
             Dispatcher.UIThread.Post(() => {
-                Loader.IsVisible = false;
-                MainTabControl.IsVisible = true;
-                ModelTab.IsVisible = true;
                 ModelTab.IsSelected = bck;
                 FileTypeLabel.Content = bckType;
                 LoadStatus.Text = "Loading";
@@ -628,5 +621,12 @@ public sealed partial class MainWindow : SukiWindow
     private void ReverbSlider_OnValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
     {
         ReverbStrengthLabel.Content = $"Reverb strength: {Math.Round(e.NewValue/10.0, 1)}%";
+    }
+
+    private void RotateModelCheck_OnIsCheckedChanged(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not CheckBox cb) return;
+        if (cb.IsChecked is null) return;
+        GlControl.Rotate = (bool)cb.IsChecked;
     }
 }
