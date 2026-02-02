@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Input.Platform;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using FlipnicFileToolGUI.ViewModels;
@@ -163,16 +164,26 @@ public static class FileHelpers
                     });
                     break;
                 case "MID":
+                    if (!File.Exists(mw.FileName))
+                    {
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            mw.InfoBox.Text = "You must extract this file before opening it";
+                            mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "General MIDI");
+                            mw.InfoTab.IsVisible = true;
+                        });
+                        break;
+                    }
                     var midi = new Midi(mw.FileName);
                     midi.Read(ds);
                     LoadAsString(midi, "General MIDI", mw);
                     break;
                 case "FPD":
-                    var fpd = new FpnFpd(mw.FileName);
+                    var fpd = new FpnFpd(ds);
                     LoadAsString(fpd, "Fixed Path Data", mw);
                     break;
                 case "VSD":
-                    var vsd = new FpnVsd(File.OpenRead(mw.FileName));
+                    var vsd = new FpnVsd(ds);
                     LoadAsString(vsd, "Vibration Strength Data", mw);
                     break;
                 case "BD":
@@ -279,6 +290,7 @@ public static class FileHelpers
                     var menuIndex = 0;
                     Dispatcher.UIThread.Post(() => mw.LoadProgress.IsIndeterminate = false);
                     Dispatcher.UIThread.Post(() => mw.LoadProgress.Maximum = mlb.Sections.Count);
+                    var mbCheckerboard = new Bitmap(StaticUtils.GenerateCheckerboardPng(128, 128));
                     foreach (var sect in mlb.Sections)
                     {
                         try
@@ -288,7 +300,8 @@ public static class FileHelpers
                                     Path.Combine(Path.GetDirectoryName(mw.FileName) ?? string.Empty,
                                         ima.Texture.Split('\\')[^1].ToUpper())
                                 let bmp =
-                                    new BitmapTools { Image = new Tim2(File.ReadAllBytes(p), mw.FileName), }.ToBitmap()
+                                    
+                                    File.Exists(p) ? new BitmapTools { Image = new Tim2(File.ReadAllBytes(p), mw.FileName), }.ToBitmap() : mbCheckerboard
                                 select new MenuElementViewModel
                                     { Layer = sect.Key, MenuElement = ima, ImageSource = bmp };
                             Dispatcher.UIThread.Post(() => mw.GetViewModel().Menu.AddRange(r));
@@ -307,9 +320,19 @@ public static class FileHelpers
 
                     Dispatcher.UIThread.Post(() =>
                     {
+                        var idx = -32768;
+                        var orderedMenus = new List<MenuElementViewModel>();
+                        while (true)
+                        {
+                            var layer = mw.GetViewModel().Menu.Where(iter => iter.MenuElement.Dipth == idx);
+                            if (idx == 32768) break;
+                            orderedMenus.AddRange(layer);
+                            idx++;
+                        }
+
                         mw.MenuMockupTab.IsVisible = true;
                         mw.MenuMockup.MenuElementSource =
-                            new ObservableCollection<MenuElementViewModel>(mw.GetViewModel().Menu);
+                            new ObservableCollection<MenuElementViewModel>(orderedMenus);
                     });
                     LoadAsString(mlb, "Menu layout file", mw);
                     break;

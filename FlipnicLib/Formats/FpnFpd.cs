@@ -11,7 +11,7 @@ public class FpnFpd
     
     public FpnFpd(string filename) : this(File.OpenRead(filename)) {}
 
-    public FpnFpd(FileStream fileStream)
+    public FpnFpd(Stream fileStream)
     {
         fileStream.Seek(0x10, SeekOrigin.Begin);
         var buffer = new byte[0x20];

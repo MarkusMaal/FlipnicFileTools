@@ -110,6 +110,7 @@ public class ExtractUtils
     public static async void ExtractAll(MainWindow mw)
     {
         var outputDir = await FileHelpers.SelectFolder(mw);
+        if (outputDir is null) return;
         mw.DockPanel1.IsVisible = false;
         mw.Loader.IsVisible = true;
         mw.LoadProgress.IsIndeterminate = false;

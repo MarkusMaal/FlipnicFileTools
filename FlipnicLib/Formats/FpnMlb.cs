@@ -16,7 +16,7 @@ public class FpnMlb
             List<MenuElement> elements = [];
             for (var i = 0; i < ElementCount; i++)
             {
-                elements.Add(new MenuElement(data.Skip(offset+0x30+(i*0x60)).Take(0x60).ToArray()));
+                elements.Add(new MenuElement(data.Skip(offset+0x30+(i*0x60)).Take(0x60).ToArray(), SectionLabel));
             }
             Sections.Add(SectionLabel, elements.ToArray());
             offset += 0x30 + ElementCount * 0x60;
@@ -39,7 +39,7 @@ public class FpnMlb
         return ToString(false);
     }
 
-    public struct MenuElement(byte[] data)
+    public struct MenuElement(byte[] data, string sectionLabel)
     {
         public string Texture { get; set; } = StaticUtils.GetString(data.Take(0x30).ToArray());
 
@@ -54,5 +54,10 @@ public class FpnMlb
         public int Dipth { get; set; } = StaticUtils.GetInt32(data, 0x54);
         public int Blend { get; set; } = StaticUtils.GetInt32(data, 0x58);
         public int Index { get; set; } = StaticUtils.GetInt32(data, 0x5C);
+        
+        public override string ToString()
+        {
+            return $"{sectionLabel} | {Texture} ({Index})";
+        }
     }
 }

@@ -44,7 +44,7 @@ public partial class MenuMockup : UserControl
         List<MenuElementViewModel> menuElements = [];
         foreach (var menuElement in MenuElementSource)
         {
-            if (menuElement.MenuElement.Texture == ((string?)((CheckBox?)sender)?.Content ?? ""))
+            if (menuElement.MenuElement.ToString() == (((CheckBox?)sender)?.Content?.ToString() ?? ""))
             {
                 menuElement.IsVisible = ((CheckBox?)sender)?.IsChecked ?? false;
             }

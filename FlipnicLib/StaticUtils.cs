@@ -324,6 +324,34 @@ public abstract class StaticUtils
     }
 
     /// <summary>
+    /// Generate a PNG file with the magenta/black checkerboard pattern
+    /// </summary>
+    /// <param name="width">Width of the image</param>
+    /// <param name="height">Height of the image</param>
+    public static Stream GenerateCheckerboardPng(int width, int height)
+    {
+        var output = new MemoryStream();
+        var builder = PngBuilder.Create(width, height, true);
+        var black = new Pixel(0, 0, 0, 255, false);
+        var magenta = new Pixel(255, 0, 255, 255, false);
+        var invert = false;
+        for (var y = 0; y < height; y++)
+        {
+            if (y % 16 == 0) invert = !invert;
+            var invert2 = invert;
+            for (var x = 0; x < width; x++)
+            {
+                if (x % 16 == 0)  invert2 = !invert2;
+                builder.SetPixel(invert2 ? black : magenta, x, y);
+            }
+        }
+
+        builder.Save(output);
+        output.Position = 0;
+        return output;
+    }
+
+    /// <summary>
     /// Runs FFmpeg command with the OS shell
     /// </summary>
     /// <param name="ffmpegPath">Full path to FFmpeg executable</param>
