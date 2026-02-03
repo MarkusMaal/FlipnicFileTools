@@ -37,6 +37,77 @@ public class FpnFpd
         }
     }
 
+    public float[] DrawPath()
+    {
+        int thickness = 50;
+        List<float> f = new();
+        var uv = 0f;
+        for (var i = 1; i < EntriesCount; i+=1)
+        {
+            f.Add(uv);
+            f.Add(uv);
+            
+            f.Add(Entries[i - 1].X / 4096f);
+            f.Add(Entries[i - 1].Y / 4096f);
+            f.Add(Entries[i - 1].Z / 4096f);
+
+            for (var j = 0; j < 5; j++)
+            {
+                f.Add(uv);   
+            }
+            
+            f.Add((Entries[i].X - thickness) / 4096f);
+            f.Add((Entries[i].Y - thickness) / 4096f);
+            f.Add((Entries[i].Z - thickness) / 4096f);
+            
+
+            for (var j = 0; j < 5; j++)
+            {
+                f.Add(uv);   
+            }
+            
+            f.Add((Entries[i - 1].X - thickness) / 4096f);
+            f.Add((Entries[i - 1].Y - thickness) / 4096f);
+            f.Add((Entries[i - 1].Z - thickness) / 4096f);
+            
+
+            for (var j = 0; j < 5; j++)
+            {
+                f.Add(uv);   
+            }
+            
+            f.Add(Entries[i - 1].X / 4096f);
+            f.Add(Entries[i - 1].Y / 4096f);
+            f.Add(Entries[i - 1].Z / 4096f);
+            
+            for (var j = 0; j < 5; j++)
+            {
+                f.Add(uv);   
+            }
+            f.Add((Entries[i].X) / 4096f);
+            f.Add((Entries[i].Y) / 4096f);
+            f.Add((Entries[i].Z) / 4096f);
+            for (var j = 0; j < 5; j++)
+            {
+                f.Add(uv);   
+            }
+            
+            f.Add((Entries[i].X - thickness) / 4096f);
+            f.Add((Entries[i].Y - thickness) / 4096f);
+            f.Add((Entries[i].Z - thickness) / 4096f);
+            for (var j = 0; j < 3; j++)
+            {
+                f.Add(uv);   
+            }
+
+            if (i == 1)
+            {
+                uv += 0.1428571429f;
+            }
+        }
+        return f.ToArray();
+    }
+
     public string ToString(bool asCsv)
     {
         string[] colHeaders = ["X", "Y", "Z", "W"];
@@ -46,7 +117,7 @@ public class FpnFpd
                 Fixed Path Data
 
                 Label: {Label}
-                Entries count: {EntriesCount}
+                Points: {EntriesCount}
 
                 Entries:
                 {StaticUtils.GenerateTable(colHeaders, rows, asCsv)}

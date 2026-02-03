@@ -37,6 +37,7 @@ namespace FlipnicFileToolGUI.Controls
 
         private const float Speed = 0.015f;
         private object? _texture;
+        private bool CycleUV;
         
         public new bool Rotate
         {
@@ -89,6 +90,7 @@ namespace FlipnicFileToolGUI.Controls
             _vertices = lp4.GetVerticies();
             OpenContainer = lp4;
             GL.GenBuffer();
+            CycleUV = false;
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
         }
 
@@ -111,6 +113,20 @@ namespace FlipnicFileToolGUI.Controls
             previewImg.Source = new BitmapTools(){Image = (Tim2?)_texture}.ToBitmap();
         }
 
+        public void ImportFPD(FpnFpd pathTrace, object? texture)
+        {
+            _texture = texture;
+            OpenTkInit();
+            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            List<float> vertices = new();
+            vertices.AddRange(pathTrace.DrawPath());
+            _vertices = vertices.ToArray();
+            CycleUV = true;
+            GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
+        }
+        
         public void ImportICO(SaveIcon saveIcon)
         {
             _texture = saveIcon.Texture;
@@ -130,6 +146,7 @@ namespace FlipnicFileToolGUI.Controls
                 vertices.Add(vertex.NormalCoordZ / 4096f);
             }
             _vertices = vertices.ToArray();
+            CycleUV = false;
             GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
         }
@@ -362,6 +379,40 @@ namespace FlipnicFileToolGUI.Controls
             _shader!.Use();
             _brickTexture.Use(TextureUnit.Texture2);
             if (ReloadModel) ReloadModelNow();
+            if (CycleUV)
+            {
+                for (var i = 0; i < _vertices.Length; i+=8)
+                {
+                    if (!(_vertices[i] > 0)) continue;
+                    if (i + 25 > _vertices.Length)
+                    {
+                        _vertices[0] = 0f;
+                        _vertices[1] = 0f;
+                        _vertices[8] = 0f;
+                        _vertices[9] = 0f;
+                        for (var j = 16; j < _vertices.Length; j += 8)
+                        {
+                            _vertices[j] = 0.1428571429f;
+                            _vertices[j+1] = 0.1428571429f;
+                        }
+
+                        break;
+                    }
+                    _vertices[i] = 0f;
+                    _vertices[i + 1] = 0f;
+                    _vertices[i + 8] = 0f;
+                    _vertices[i + 9] = 0f;
+                    _vertices[i + 16] = 0.1428571429f;
+                    _vertices[i + 17] = 0.1428571429f;
+                    _vertices[i + 24] = 0.1428571429f;
+                    _vertices[i + 25] = 0.1428571429f;
+                    break;
+                }
+                
+                GL.BufferData(BufferTarget.ArrayBuffer,
+                    _vertices.Length * (OperatingSystem.IsMacOS() ? 1 : 1) * sizeof(float), _vertices,
+                    BufferUsageHint.StaticDraw);
+            }
 
             //3d projection matricesSwdw
             var model = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(ModelRotationDegrees));

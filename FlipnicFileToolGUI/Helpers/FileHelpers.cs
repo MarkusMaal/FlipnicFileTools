@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -12,6 +13,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using BigGustave;
 using FlipnicFileToolGUI.ViewModels;
 using FlipnicLib;
 using FlipnicLib.Formats;
@@ -152,6 +154,7 @@ public static class FileHelpers
                         mw.ModelTab.IsSelected = true;
                         mw.InfoTab.IsSelected = false;
                     });
+                    Thread.Sleep(1000);
                     LoadAsString(ico, "PlayStation 2 save file icon", mw);
                     Dispatcher.UIThread.Post(() =>
                     {
@@ -180,7 +183,31 @@ public static class FileHelpers
                     break;
                 case "FPD":
                     var fpd = new FpnFpd(ds);
+
+                    StaticUtils.LiveLoadStatus = "Initializing OpenGL";
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        mw.ModelTab.IsSelected = true;
+                        mw.InfoTab.IsSelected = false;
+                    });
+                    
+                    Thread.Sleep(1000);
                     LoadAsString(fpd, "Fixed Path Data", mw);
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        var texture = StaticUtils.GenerateCheckerboardPng(16, 32,
+                            new Pixel(64, 51, 102, 180, false), new Pixel(0, 255, 0, 255, false));
+                        mw.GlControl.ImportFPD(fpd, texture);
+                        mw.Init3DStuff();
+                        if (Debugger.IsAttached)
+                        {
+                            mw.ImagePreviewTab.IsVisible = true;
+                            mw.PreviewImage.Source = new Bitmap(texture);
+                        }
+
+                        mw.ModelTab.IsSelected = false;
+                        mw.ModelTab.IsVisible = true;
+                    });
                     break;
                 case "VSD":
                     var vsd = new FpnVsd(ds);
@@ -346,8 +373,8 @@ public static class FileHelpers
                         mw.ModelTab.IsSelected = true;
                         mw.InfoTab.IsSelected = false;
                     });
+                    Thread.Sleep(1000);
                     Dispatcher.UIThread.Post(() => { mw.GlControl.ImportLP4(lp4); });
-
                     LoadAsString(lp4, "Flipnic resource file", mw);
                     Dispatcher.UIThread.Post(() =>
                     {

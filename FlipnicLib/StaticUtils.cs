@@ -328,12 +328,12 @@ public abstract class StaticUtils
     /// </summary>
     /// <param name="width">Width of the image</param>
     /// <param name="height">Height of the image</param>
-    public static Stream GenerateCheckerboardPng(int width, int height)
+    public static Stream GenerateCheckerboardPng(int width, int height, Pixel? black = null, Pixel? magenta = null)
     {
         var output = new MemoryStream();
         var builder = PngBuilder.Create(width, height, true);
-        var black = new Pixel(0, 0, 0, 255, false);
-        var magenta = new Pixel(255, 0, 255, 255, false);
+        black ??= new Pixel(0, 0, 0, 255, false);
+        magenta ??= new Pixel(255, 0, 255, 255, false);
         var invert = false;
         for (var y = 0; y < height; y++)
         {
@@ -342,7 +342,7 @@ public abstract class StaticUtils
             for (var x = 0; x < width; x++)
             {
                 if (x % 16 == 0)  invert2 = !invert2;
-                builder.SetPixel(invert2 ? black : magenta, x, y);
+                builder.SetPixel(invert2 ? (Pixel)black : (Pixel)magenta, x, y);
             }
         }
 

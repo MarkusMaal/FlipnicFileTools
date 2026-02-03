@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using FlipnicLib;
 using FlipnicLib.Formats;
 using OpenTK.Graphics.OpenGL;
@@ -27,17 +28,16 @@ namespace FlipnicFileToolGUI.Textures
 
         public void LoadFromFile(object? texture)
         {
-            Image<Rgba32> image = null;
+            Image<Rgba32>? image = null;
             try
             {
-                if (texture is Tim2 tx)
+                image = texture switch
                 {
-                    image = Image.Load<Rgba32>(new BitmapTools { Image = tx }.ToMemoryStream());
-                }
-                else if (texture is Tim tx2)
-                {
-                    image = Image.Load<Rgba32>(new BitmapTools { Icon = tx2 }.ToMemoryStream());
-                }
+                    Tim2 tx => Image.Load<Rgba32>(new BitmapTools { Image = tx }.ToMemoryStream()),
+                    Tim tx2 => Image.Load<Rgba32>(new BitmapTools { Icon = tx2 }.ToMemoryStream()),
+                    MemoryStream stream => Image.Load<Rgba32>(stream.ToArray()),
+                    _ => image
+                };
             }
             catch
             {
