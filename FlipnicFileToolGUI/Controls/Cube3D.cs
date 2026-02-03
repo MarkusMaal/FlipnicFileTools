@@ -5,10 +5,10 @@ using System.IO;
 using System.Text;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
 using Avalonia.Input;
 using FlipnicFileToolGUI.Shaders;
 using FlipnicFileToolGUI.Textures;
-using FlipnicFileToolGUI.ViewModels;
 using FlipnicLib;
 using FlipnicLib.Formats;
 using OpenTK.Graphics.OpenGL;
@@ -38,6 +38,7 @@ namespace FlipnicFileToolGUI.Controls
         private const float Speed = 0.015f;
         private object? _texture;
         private bool CycleUV;
+        private Window? fs3;
         
         public new bool Rotate
         {
@@ -50,6 +51,12 @@ namespace FlipnicFileToolGUI.Controls
                 }
                 SetValue(RotateProperty, value);
             }
+        }
+
+        public bool FsControl
+        {
+            get => GetValue(FsControlProperty);
+            set => SetValue(FsControlProperty, value);
         }
 
         private float[] _vertices = [];
@@ -345,6 +352,101 @@ namespace FlipnicFileToolGUI.Controls
                 _cameraPosition += Vector3.Normalize(Vector3.Cross(_cameraFront, _up)) * effectiveSpeed; //Right
             }
 
+            if (TopLevel.GetTopLevel(this) is Fullscreen3D fs3d)
+            {
+                if (KeyboardState.IsKeyDown(Key.Escape))
+                {
+                    fs3d.Close();
+                }
+                if (KeyboardState.IsKeyDown(Key.R))
+                {
+                    Rotate = true;
+                }
+                if (KeyboardState.IsKeyDown(Key.T))
+                {
+                    Rotate = false;
+                }
+            }
+
+            if (KeyboardState.IsKeyDown(Key.U))
+            {
+                CycleUV = true;
+            }
+            if (KeyboardState.IsKeyDown(Key.I))
+            {
+                CycleUV = false;
+            }
+            if (KeyboardState.IsKeyDown(Key.X))
+            {
+                _texture = null;
+                ReloadModelNow();
+                if (TopLevel.GetTopLevel(this) is MainWindow mw2)
+                {
+                    mw2.Models.SelectedItems?.Clear();
+                }
+            }
+            if (TopLevel.GetTopLevel(this) is MainWindow mw)
+            {
+                
+                if (KeyboardState.IsKeyDown(Key.F1))
+                {
+                    mw.ShowDialog("Hotkeys", """
+                                                        F1 - Show hotkeys
+                                                        WASD - Move camera
+                                                        Left mouse drag - Pitch/Yaw adjustment
+                                                        Ctrl (hold) - Speed up
+                                                        Left shift/Space - Move down/up
+                                                        F/Escape - Toggle fullscreen mode
+                                                        R/T - Rotate model/Disable rotation (fullscreen only)
+                                                        U/I - Play/Pause UV cycle (for FPD files)
+                                                        Mouse wheel scroll - Increase/decrease FOV
+                                                        Middle/mouse wheel click - Reset FOV
+                                                        X - Disable texture, use test pattern instead
+                                                        H/J - Hide/Show interface (windowed only)
+                                                        """, NotificationType.Information);
+                }
+                if (KeyboardState.IsKeyDown(Key.H))
+                {
+                    mw.ModelInfoSection.IsVisible = false;
+                    mw.ModelBottomSection.IsVisible = false;
+                }
+
+                if (KeyboardState.IsKeyDown(Key.F))
+                {
+                    
+                    fs3 ??= new Fullscreen3D
+                    {
+                        GlControl =
+                        {
+                            FsControl = true
+                        }
+                    };
+                    if (fs3.IsVisible) return;
+                    fs3 = new Fullscreen3D
+                    {
+                        GlControl =
+                        {
+                            _vertices = _vertices,
+                            _shader = _shader,
+                            CycleUV = CycleUV,
+                            Rotate = Rotate,
+                            _texture = _texture,
+                            _brickTexture = _brickTexture,
+                            _cameraFront =  _cameraFront,
+                            _cameraPosition =  _cameraPosition,
+                        }
+                    };
+                    ((Fullscreen3D)fs3).GlControl.OpenTkInit();
+                    fs3.Show();
+                }
+
+                if (KeyboardState.IsKeyDown(Key.J))
+                {
+                    mw.ModelInfoSection.IsVisible = true;
+                    mw.ModelBottomSection.IsVisible = true;
+                }
+            }
+
             if (KeyboardState.IsKeyDown(Key.LeftShift))
             {
                 //Note this is subtracting up, because..? I think avalonia renders the scene upside down.
@@ -434,6 +536,10 @@ namespace FlipnicFileToolGUI.Controls
         //It would appear pointer capture doesn't work, at least not as I would expect it to, which is unfortunate
         protected override void OnPointerPressed(PointerPressedEventArgs e)
         {
+            if (e.Properties.IsMiddleButtonPressed)
+            {
+                _fov = 45;
+            }
             _isDragging = true;
             e.Pointer.Capture(this);
             _lastPos = e.GetPosition(null);
@@ -501,5 +607,6 @@ namespace FlipnicFileToolGUI.Controls
             _cameraFront = Vector3.Normalize(_cameraFront);
         }
         public new static readonly StyledProperty<bool> RotateProperty = AvaloniaProperty.Register<CubeRenderingTkOpenGlControl, bool>(nameof(Rotate));
+        public new static readonly StyledProperty<bool> FsControlProperty = AvaloniaProperty.Register<CubeRenderingTkOpenGlControl, bool>(nameof(FsControl));
     }
 }

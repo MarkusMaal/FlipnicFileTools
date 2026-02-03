@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         d:DesignWidth="800" d:DesignHeight="800"
         Width="700" Height="500"
-        Icon="Assets\F.PNG"
+        Icon="Assets\F.PNG" Name="SukiWin"
         xmlns:sukiUi="clr-namespace:SukiUI.Controls;assembly=SukiUI"
         xmlns:types="clr-namespace:FlipnicLib.Types;assembly=FlipnicLib"
         xmlns:viewModels="clr-namespace:FlipnicFileToolGUI.ViewModels"
@@ -78,19 +78,20 @@
                             <controls:CircleDot ColorA="Orange" ColorB="Brown" Text="⬡"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
-                          <Grid RowDefinitions="*,110">
-                            <controls:CubeRenderingTkOpenGlControl Rotate="False" Grid.Row="0"  Focusable="True" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="GlControl"></controls:CubeRenderingTkOpenGlControl>
-                            <Button Grid.Row="1" Margin="10" VerticalAlignment="Bottom" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>
-                            <Grid ColumnDefinitions="150,150,*" Grid.Row="1">
-                                <Label Margin="5" Name="FPSLabel">No info</Label>
-                                <StackPanel Grid.Column="1">
-                                    <Label Margin="5" Name="MoreInfoLabel">No info</Label>
-                                    <CheckBox Margin="5,10" Name="RotateModelCheck" IsCheckedChanged="RotateModelCheck_OnIsCheckedChanged">Spin</CheckBox>
-                                </StackPanel>
-                                <ScrollViewer Grid.Column="2">
-                                    <ListBox Margin="5" Name="Models" SelectionChanged="Models_OnSelectionChanged"></ListBox>
-                                </ScrollViewer>
-                            </Grid>
+                          <Grid>
+                              
+                              <StackPanel Orientation="Horizontal" Name="ModelInfoSection">
+                                  <Label Margin="5" Name="MoreInfoLabel">No info</Label>
+                                  <Label Margin="5" Name="FPSLabel">No info</Label>
+                              </StackPanel>
+                              <controls:CubeRenderingTkOpenGlControl Rotate="False" Grid.Row="0"  Focusable="True" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="GlControl"></controls:CubeRenderingTkOpenGlControl>
+                              <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0" Name="ModelBottomSection">
+                                <Button Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>
+                                <CheckBox Margin="5,10" Name="RotateModelCheck" IsCheckedChanged="RotateModelCheck_OnIsCheckedChanged">Spin</CheckBox>
+                                  <ScrollViewer>
+                                      <ListBox Margin="5" Name="Models" SelectionChanged="Models_OnSelectionChanged"></ListBox>
+                                  </ScrollViewer>
+                              </StackPanel>
                            </Grid>
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>

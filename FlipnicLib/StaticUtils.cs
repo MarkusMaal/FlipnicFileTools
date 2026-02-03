@@ -540,6 +540,7 @@ public abstract class StaticUtils
     public static void ExportObj(string fileName, float[] vertices, object? texture)
     {
         // generate .png file
+        var hasTexture = true;
         switch (texture)
         {
             case Tim2 tm2:
@@ -548,20 +549,29 @@ public abstract class StaticUtils
             case Tim tm:
                 tm.SavePng(new FileStream(fileName[..^4] + ".png", FileMode.Create, FileAccess.Write));
                 break;
+            default:
+                hasTexture = false;
+                break;
         }
             
         // generate .mtl file
-        using var mtlwriter = new StreamWriter(fileName[..^4] + ".mtl");
-        mtlwriter.WriteLine($"newmtl {new FileInfo(fileName).Name[..^4]}");
-        mtlwriter.WriteLine($"map_Kd {new FileInfo(fileName).Name[..^4]}.png");
-        mtlwriter.Close();
-        Console.WriteLine($"Saved as: {fileName[..^4]}.mtl");
-            
+        if (hasTexture)
+        {
+            using var mtlwriter = new StreamWriter(fileName[..^4] + ".mtl");
+            mtlwriter.WriteLine($"newmtl {new FileInfo(fileName).Name[..^4]}");
+            mtlwriter.WriteLine($"map_Kd {new FileInfo(fileName).Name[..^4]}.png");
+            mtlwriter.Close();
+            Console.WriteLine($"Saved as: {fileName[..^4]}.mtl");
+        }
+
         var vertexCount = vertices.Length / 8;
         using var writer = new StreamWriter(fileName);
         var culture = CultureInfo.InvariantCulture;
-        writer.WriteLine($"mtllib {new FileInfo(fileName).Name[..^4]}.mtl");
-        writer.WriteLine($"usemtl {new FileInfo(fileName).Name[..^4]}");
+        if (hasTexture)
+        {
+            writer.WriteLine($"mtllib {new FileInfo(fileName).Name[..^4]}.mtl");
+            writer.WriteLine($"usemtl {new FileInfo(fileName).Name[..^4]}");
+        }
 
         // Write vertex positions and texture coordinates
         for (var i = 0; i < vertexCount; i++)
