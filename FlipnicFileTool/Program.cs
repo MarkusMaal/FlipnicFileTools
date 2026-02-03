@@ -104,6 +104,9 @@ internal static class Program
                     var fpd = new FpnFpd(File.OpenRead(Cfg.FileName));
                     Console.WriteLine(fpd);
                     break;
+                case Enums.Modes.ExportFpdObj:
+                    StaticUtils.ExportObj(Cfg.Output, new FpnFpd(File.OpenRead(Cfg.FileName)).DrawPath(), null);
+                    break;
                 case Enums.Modes.ShowIso:
                 case Enums.Modes.ExtractIso:
                 case Enums.Modes.ReplaceIso:

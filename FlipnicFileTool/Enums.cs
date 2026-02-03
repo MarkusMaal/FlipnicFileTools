@@ -54,7 +54,8 @@ public abstract class Enums
         NotImplemented,
         ShowCameras,
         ShowCol,
-        ExportColObj
+        ExportColObj,
+        ExportFpdObj
     }
     
     /// <summary>
@@ -141,6 +142,7 @@ public abstract class Enums
             "--show-cameras" => Modes.ShowCameras,
             "--show-col" => Modes.ShowCol,
             "--export-col-obj" => Modes.ExportColObj,
+            "--export-fpd-obj" => Modes.ExportFpdObj,
             _ => mode
         };
         

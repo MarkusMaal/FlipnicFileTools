@@ -42,6 +42,7 @@ public abstract class HelpUtils
                 "*.FPD",
                 [
                     new HelpLine("show-fpd*", "Display general information about the file"),
+                    new HelpLine("export-fpd-obj", "Export .FPD file as a 3D model (Wavefront OBJ), where the trajectory is drawn as a line"),
                 ]
             ),
             new(
