@@ -44,6 +44,10 @@ class Program
             return;
         }
 
+        if (OperatingSystem.IsLinux()) // restart not supported in Linux, just throw the damn exception
+        {
+            throw ex ?? new NullReferenceException();
+        }
         Process.Start(ex is not null
             ? new ProcessStartInfo(exePath)
             {
@@ -52,7 +56,6 @@ class Program
                             (ex.StackTrace ?? "").Replace("\"", "\\\"") + "\""
             }
             : new ProcessStartInfo(exePath) { UseShellExecute = true });
-
         Environment.Exit(0);
     }
 

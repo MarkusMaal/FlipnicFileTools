@@ -6,7 +6,7 @@ public abstract class Filters
 {
     public static FilePickerFileType AllSupported { get; } = new("All supported file formats")
     {
-        Patterns = ["*.BIN", "*.FPC", "*.FPD", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML", "*.ICO", "*.IPU", "*.LIT", "*.LAY", "*.COL"]
+        Patterns = ["*.BIN", "*.FPC", "*.FPD", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML", "*.ICO", "*.IPU", "*.LIT", "*.LAY", "*.COL", "*.ISO", "*.iso"]
     };
     
     public static FilePickerFileType BinFile { get; } = new("BIN files")
@@ -87,6 +87,10 @@ public abstract class Filters
     public static FilePickerFileType SaveIcon { get; } = new("PlayStation 2 save icon")
     {
         Patterns = ["*.ICO"]
+    };
+    public static FilePickerFileType IsoFile { get; } = new("Disc image")
+    {
+        Patterns = ["*.ISO", "*.iso"]
     };
 
     public static FilePickerFileType TxtFile { get; } = new("Text files")

@@ -45,7 +45,6 @@
         <MenuItem Header="File" Name="FileMenu1">
             <MenuItem Header="New Window" Name="NewWindowMenuItem" Click="NewWindowMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Open" Name="OpenMenuItem" Click="OpenMenuItem_OnClick"></MenuItem>
-            <MenuItem Header="Open from clipboard" Name="PasteMenuItem" IsVisible="{OnPlatform False, Linux=True}" HotKey="Ctrl+Alt+V" Click="PasteMenuItem_OnClick"></MenuItem>
             <Separator/>
             <MenuItem Header="Close window" Name="CloseMenuItem" Click="CloseMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Exit" Name="ExitMenuItem" Click="ExitMenuItem_OnClick"></MenuItem>

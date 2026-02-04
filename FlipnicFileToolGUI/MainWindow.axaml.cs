@@ -120,7 +120,7 @@ public sealed partial class MainWindow : SukiWindow
                 Filters.AllSupported, Filters.BinFile, Filters.FpnFpc, Filters.FpdFile, Filters.FpnSst, Filters.FpnLp4,
                 Filters.FpnMlb,  Filters.SonyPss, Filters.IpuFile, Filters.SonyTim2, Filters.MidiFile, Filters.HdFile,
                 Filters.VsdFile, Filters.SvagFile, Filters.TxtFile, Filters.CsvFile, Filters.XmlFile, Filters.SaveIcon,
-                Filters.ColFile, Filters.LitFile
+                Filters.ColFile, Filters.LitFile, Filters.IsoFile
             ]);
         if (file == null) return;
         if (jaMsg)
@@ -461,13 +461,6 @@ public sealed partial class MainWindow : SukiWindow
         if (file is null) return;
         GlControl.SaveAs(Uri.UnescapeDataString(file));
         ShowDialog("Flipnic file tools", "File saved successfully", NotificationType.Success);
-    }
-
-    private void PasteMenuItem_OnClick(object? sender, RoutedEventArgs e)
-    {
-        var clipboard = GetTopLevel(this)?.Clipboard;
-        if (clipboard == null) return;
-        FileHelpers.PasteFile(this, clipboard);
     }
 
     private void UpdateThemeContainer(ScrollViewer cb)
