@@ -576,14 +576,27 @@ public sealed partial class MainWindow : SukiWindow
         var offset = vf.Offset;
         var size = vf.Length;
         var rfi = new FileInfo(replacement);
-        var binFiles = new BinFile().GetListBin(File.OpenRead(replacement));
+        var binFiles = new BinFile().GetListBin(File.OpenRead(FileName));
         if (rfi.Length > size)
         {
-            var nSize = new FileInfo(FileName).Length;
-            while ((nSize - vf.Length) % 0x800 != 0)
+            var nSize = new FileInfo(replacement).Length;
+            var rootDirName = "";
+            var rootDirOffset = 0L;
+            var rootDirSize = 0L;
+            if (vf.LargeBuffer)
             {
-                nSize++;
+                while ((nSize - vf.Length) % 0x800 != 0)
+                {
+                    nSize++;
+                }
+            } 
+            else
+            {
+                rootDirName = vf.Path[1..].Split('\\')[0] + "\\";
+                rootDirOffset = binFiles.First(bf => bf.Path == $"\\{rootDirName}").Offset;
+                rootDirSize = binFiles.First(bf => bf.Path == $"\\{rootDirName}").Length;
             }
+
             _dialogManager.CreateDialog()
                 .WithTitle("CAUTION")
                 .WithContent("It appears the replacement file is bigger than the original file. We will need to update other file records and increase the size of the .BIN file. This should only be done if you know exactly what you're doing. Are you sure you want to continue?")
@@ -593,8 +606,44 @@ public sealed partial class MainWindow : SukiWindow
                     LoadStatus.Text = "Rebuilding .BIN file";
                     new Thread(() =>
                     {
-                        RepackUtils.ResizeFile(vf.Path, (int)nSize, File.Open(FileName, FileMode.Open), binFiles);
-                        RepackUtils.RepackFileUnsafe(offset, replacement, FileName, size, vf.Path[1..].Contains('\\') && !vf.Path[1..].EndsWith('\\') ? 1 : 2048);
+                        if (vf.LargeBuffer)
+                        {
+                            RepackUtils.ResizeFile(vf.Path, (int)nSize, File.Open(FileName, FileMode.Open), binFiles);
+                            RepackUtils.RepackFileUnsafe(offset, File.OpenRead(replacement), FileName, size,
+                                vf.Path[1..].Contains('\\') && !vf.Path[1..].EndsWith('\\') ? 1 : 2048);
+                        }
+                        else
+                        {
+                            // Load the entire subfolder to memory
+                            var s2 = File.OpenRead(FileName);
+                            s2.Seek(rootDirOffset, SeekOrigin.Begin);
+                            var ms = new MemoryStream();
+                            for (var i = 0; i < rootDirSize; i++)
+                            {
+                                ms.WriteByte((byte)s2.ReadByte());
+                            }
+
+                            s2.Close();
+                            
+                            // Resize subfolder entry and overwrite the contents
+                            var subF = new Subfolder(ms);
+                            var ns = new MemoryStream();
+                            var ns1 = subF.ResizeFile(vf.Path.Split('\\')[^1], (int)nSize, ns);
+                            var ns2 = subF.WriteFileUnsafe(vf.Path.Split('\\')[^1], File.ReadAllBytes(replacement), ns1);
+                
+                            // Ensure that the length can be addressed by 2048 bytes
+                            for (var i = 0; i < ns2.Length % 0x800; i++)
+                            {
+                                ns2.WriteByte(0);
+                            }
+                
+                            if (ns2.Length % 0x800 != 0) throw new FormatException("Stream length is not divisible by 2048");
+                            ns2.Position = 0;
+                            // Resize the subfolder container
+                            RepackUtils.ResizeFile(rootDirName, (int)ns2.Length, File.Open(FileName, FileMode.Open), binFiles);
+                            RepackUtils.RepackFileUnsafe(rootDirOffset, ns2, FileName, rootDirSize);
+                            ns2.Close();
+                        }
 
                         Dispatcher.UIThread.Post(() => {
                             ShowDialog("Flipnic file tools", "File replaced successfully.", NotificationType.Success);
@@ -614,7 +663,7 @@ public sealed partial class MainWindow : SukiWindow
                 .TryShow();
             return;
         }
-        RepackUtils.RepackFileUnsafe(offset, replacement, FileName, size, vf.Path[1..].Contains('\\') && !vf.Path[1..].EndsWith('\\') ? 1 : 2048);
+        RepackUtils.RepackFileUnsafe(offset, File.OpenRead(replacement), FileName, size, vf.Path[1..].Contains('\\') && !vf.Path[1..].EndsWith('\\') ? 1 : 2048);
         ShowDialog("Flipnic file tools", "File replaced successfully.", NotificationType.Success);
     }
 

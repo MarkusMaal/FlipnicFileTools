@@ -33,12 +33,21 @@ public class BinTools
         var vfOffset = -1L;
         var vfSize = -1L;
         var largeBuffer = true;
+        var rootDirOffset = 0L;
+        var rootDirSize = 0L;
+        var rootDirName = "";
         foreach (var vf in binFiles)
         {
-            if (vf.Path != vFile && vf.Path[1..] != vFile) continue;
-            vfOffset = vf.Offset;
-            vfSize = vf.Length;
-            largeBuffer = !vf.Path[1..].Contains('\\') || vf.Path[1..].EndsWith('\\');
+            if (vf.Path == vFile || vf.Path[1..] == vFile)
+            {
+                vfOffset = vf.Offset;
+                vfSize = vf.Length;
+                largeBuffer = !vf.Path[1..].Contains('\\') || vf.Path[1..].EndsWith('\\');
+            }
+            if (!vf.Path.EndsWith('\\')) continue;
+            rootDirOffset = vf.Offset;
+            rootDirSize = vf.Length;
+            rootDirName = vf.Path;
         }
 
         if ((vfOffset == -1L) || (vfSize == -1L))
@@ -74,10 +83,48 @@ public class BinTools
 
             Console.WriteLine();
             Console.Write("\rRebuilding .BIN file...");
+            // The contents of this if-statement get executed when we need to resize a file
+            // inside a subfolder (small buffer)
+            if (!largeBuffer)
+            {
+                // Load the entire subfolder to memory
+                var s2 = File.OpenRead(outFile);
+                s2.Seek(rootDirOffset, SeekOrigin.Begin);
+                var ms = new MemoryStream();
+                for (var i = 0; i < rootDirSize; i++)
+                {
+                    ms.WriteByte((byte)s2.ReadByte());
+                }
+
+                s2.Close();
+
+                // Resize subfolder entry and overwrite the contents
+                var subF = new Subfolder(ms);
+                var ns = new MemoryStream();
+                var ns1 = subF.ResizeFile(vFile[(rootDirName.Length-1)..], (int)nSize, ns);
+                var ns2 = subF.WriteFileUnsafe(vFile[(rootDirName.Length-1)..], File.ReadAllBytes(filename), ns1);
+                
+                // Ensure that the length can be addressed by 2048 bytes
+                for (var i = 0; i < ns2.Length % 0x800; i++)
+                {
+                    ns2.WriteByte(0);
+                }
+                
+                if (ns2.Length % 0x800 != 0) throw new FormatException("Stream length is not divisible by 2048");
+                ns2.Position = 0;
+                // Resize the subfolder container
+                RepackUtils.ResizeFile(rootDirName, (int)ns2.Length, File.Open(outFile, FileMode.Open), binFiles);
+                RepackUtils.RepackFileUnsafe(rootDirOffset, ns2, outFile, rootDirSize);
+                ns2.Close();
+                // Skip the normal repack process
+                StaticUtils.DecodeColors("~-A\rSuccess~--: The file has been replaced!");
+                Console.WriteLine();
+                return;
+            }
             RepackUtils.ResizeFile(vFile, (int)nSize, File.Open(outFile, FileMode.Open), binFiles);
         }
         Console.Write("\rRepacking...".PadRight(Console.WindowWidth, ' '));
-        RepackUtils.RepackFileUnsafe(vfOffset, filename, outFile, vfSize, largeBuffer ? 2048 : 1);
+        RepackUtils.RepackFileUnsafe(vfOffset, File.OpenRead(filename), outFile, vfSize, largeBuffer ? 2048 : 1);
         StaticUtils.DecodeColors("~-A\rSuccess~--: The file has been replaced!");
         Console.WriteLine();
     }
