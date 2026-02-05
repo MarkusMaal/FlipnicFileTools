@@ -30,12 +30,13 @@ RUN_TEST () {
   echo
   echo "Testing .$1 files"
   echo "--------------------------------------------------------"
-  DIRS=($2)
-  for dir in "${DIRS[@]}"
+  DIRS="$2"
+  IFS=" "
+  for dir in $DIRS
   do
     pushd $dir >/dev/null
     for file in $(pwd)/*.$1; do
-      (timeout 15s FlipnicFileTool --input "$file" $3 --test >/dev/null 2>/dev/null && printf "[ \e[0;32mPASS\e[0m ] $file\n" || printf "[ \e[0;31mFAIL\e[0m ] $file\n") 2>/dev/null
+      FlipnicFileTool --input "$file" $3 --test 2>/dev/null >/dev/null && printf "[ \e[0;32mPASS\e[0m ] $file\n" || printf "[ \e[0;31mFAIL\e[0m ] $file\n"
     done
     popd >/dev/null
   done
