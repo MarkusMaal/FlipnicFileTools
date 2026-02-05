@@ -38,16 +38,19 @@ public class BinTools
         var rootDirName = "";
         foreach (var vf in binFiles)
         {
-            if (vf.Path == vFile || vf.Path[1..] == vFile)
-            {
-                vfOffset = vf.Offset;
-                vfSize = vf.Length;
-                largeBuffer = !vf.Path[1..].Contains('\\') || vf.Path[1..].EndsWith('\\');
-            }
-            if (!vf.Path.EndsWith('\\')) continue;
-            rootDirOffset = vf.Offset;
-            rootDirSize = vf.Length;
-            rootDirName = vf.Path;
+            if (vf.Path != vFile && vf.Path[1..] != vFile) continue;
+            vfOffset = vf.Offset;
+            vfSize = vf.Length;
+            largeBuffer = !vf.Path[1..].Contains('\\') || vf.Path[1..].EndsWith('\\');
+        }
+
+        if (!largeBuffer)
+        {
+            if (vFile.StartsWith('\\')) vFile = vFile[1..];
+            var rootDir = binFiles.Where(bf => bf.Path == "\\" + vFile.Split('\\')[0] + "\\").ToArray()[0];
+            rootDirName = rootDir.Path;
+            rootDirOffset = rootDir.Offset;
+            rootDirSize = rootDir.Length;
         }
 
         if ((vfOffset == -1L) || (vfSize == -1L))
@@ -62,6 +65,7 @@ public class BinTools
             var nSize = new FileInfo(filename).Length;
             while ((nSize - vfSize) % 0x800 != 0)
             {
+                if (!largeBuffer) break;
                 nSize++;
             }
             StaticUtils.DecodeColors("~-EWarning~--: It seems like the input file is bigger than the original. This means, we are going to have to update file records and increase the size of the .BIN file. This operation is POTENTIALLY DANGEROUS and should only be done if you know exactly what you are doing!!! Are you sure you want to continue? ~-8[y/n]~--");
@@ -101,8 +105,8 @@ public class BinTools
                 // Resize subfolder entry and overwrite the contents
                 var subF = new Subfolder(ms);
                 var ns = new MemoryStream();
-                var ns1 = subF.ResizeFile(vFile[(rootDirName.Length-1)..], (int)nSize, ns);
-                var ns2 = subF.WriteFileUnsafe(vFile[(rootDirName.Length-1)..], File.ReadAllBytes(filename), ns1);
+                var ns1 = subF.ResizeFile(vFile.Split('\\')[^1], (int)nSize, ns);
+                var ns2 = subF.WriteFileUnsafe(vFile.Split('\\')[^1], File.ReadAllBytes(filename), ns1);
                 
                 // Ensure that the length can be addressed by 2048 bytes
                 for (var i = 0; i < ns2.Length % 0x800; i++)
