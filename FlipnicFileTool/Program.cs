@@ -112,6 +112,10 @@ internal static class Program
                 case Enums.Modes.ReplaceIso:
                     _ = new IsoTools(Cfg);
                     break;
+                case Enums.Modes.ShowLit:
+                    var lit = new FpnLit(File.OpenRead(Cfg.FileName));
+                    Console.Write(lit.ToString(StaticUtils.SimpleOutput));
+                    break;
                 case Enums.Modes.Quit:
                     break;
                 default:

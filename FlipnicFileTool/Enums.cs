@@ -55,7 +55,8 @@ public abstract class Enums
         ShowCameras,
         ShowCol,
         ExportColObj,
-        ExportFpdObj
+        ExportFpdObj,
+        ShowLit
     }
     
     /// <summary>
@@ -84,7 +85,7 @@ public abstract class Enums
             ".ICO" => Modes.ShowIco,
             ".ISO" => Modes.ShowIso,
             ".COL" => Modes.ShowCol,
-            ".LIT" => Modes.NotImplemented,
+            ".LIT" => Modes.ShowLit,
             _ => Modes.ShowHelp
         };
     }
@@ -143,6 +144,7 @@ public abstract class Enums
             "--show-col" => Modes.ShowCol,
             "--export-col-obj" => Modes.ExportColObj,
             "--export-fpd-obj" => Modes.ExportFpdObj,
+            "--show-lit" => Modes.ShowLit,
             _ => mode
         };
         

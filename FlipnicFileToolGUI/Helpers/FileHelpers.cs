@@ -419,7 +419,8 @@ public static class FileHelpers
                     });
                     break;
                 case "LIT":
-                    LoadAsString("This file format cannot be parsed by this version of Flipnic File Tools. Support will be added in a future version.", ext?.ToUpper() == "LIT" ? "Light map" : "Unknown", mw);
+                    var lit = new FpnLit(ds);
+                    LoadAsString(lit, "Light map", mw);
                     break;
                 case "LAY":
                     var da = new byte[ds.Length];

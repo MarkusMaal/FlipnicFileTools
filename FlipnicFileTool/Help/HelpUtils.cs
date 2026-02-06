@@ -170,6 +170,13 @@ public abstract class HelpUtils
                 ]
             ),
             new(
+                "Environment lighting",
+                "*.LIT",
+                [
+                    new HelpLine("show-lit*", "Display color intensity values")
+                ]
+            ),
+            new(
                 "Save file icon",
                 "*.ICO",
                 [
