@@ -26,7 +26,10 @@ public class FpnLit()
         string[] colHeaders = ["Red", "Green", "Blue"];
         List<string[]> rows = [];
         rows.AddRange(LightMaps.Select(value => (string[]) [StaticUtils.DotFloatString(value.Red), StaticUtils.DotFloatString(value.Green), StaticUtils.DotFloatString(value.Blue)]));
-        return StaticUtils.GenerateTable(colHeaders, rows, asCsv);
+        return """
+               Color intensities:
+               
+               """ + StaticUtils.GenerateTable(colHeaders, rows, asCsv);
     }
     
     public override string ToString()
