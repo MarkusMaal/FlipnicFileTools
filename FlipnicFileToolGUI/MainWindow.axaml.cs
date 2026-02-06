@@ -132,6 +132,7 @@ public sealed partial class MainWindow : SukiWindow
                 Filters.FpnLp4,
                 Filters.MidiFile,
                 Filters.FpnMlb,
+                Filters.FpnMsg,
                 Filters.SonyPss,
                 Filters.FpnSst,
                 Filters.SvagFile,
