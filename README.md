@@ -26,7 +26,7 @@ Jump to section:
 * [Disc images (*.ISO)](#disc-images-iso)
 * [Blob files (*.BIN)](#blob-files-bin)
 * [Movies (*.PSS)](#movies-pss)
-* [Sound files (*.INT / *.SVAG)](#sound-files-int-svag)
+* [Sound files (*.INT / *.SVAG)](#sound-files-int--svag)
 * [Texture files (*.TM2)](#texture-files-tm2)
 * [Menu files (*.MLB)](#menu-files-mlb)
 * [Camera sequences (*.FPC)](#camera-sequences-fpc)
@@ -38,6 +38,7 @@ Jump to section:
 * [VAB body files (*.BD)](#vab-body-files-bd)
 * [Save file icon (*.ICO)](#save-file-icon-ico)
 * [Collision maps (*.COL)](#collision-maps-col)
+* [Environment lighting (*.LIT)](#environment-lighting-lit)
 * [Layout files (*.LAY)](#layout-files-lay)
 * [FlipnicLib](#flipniclib)
 
@@ -490,6 +491,28 @@ Grounds: 3
 You can convert each individual part of the collision map to a Wavefront OBJ file using this command: `FlipnicFileTool --input COL_23_20.COL --export-col-obj GRD02 --output COL_02_05.GRD02.OBJ`
 
 You can convert all parts of the collision map at once to a Wavefront OBJ file using this command: `FlipnicFileTool --input COL_23_20.COL --export-col-obj ALL --output COL_02_05.OBJ`
+
+## Environment lighting (*.LIT)
+
+Determines how the environment of a stage is lit using RGB light intensity values.
+
+Example: `FlipnicFileTool --input LIT_DEF.LIT --show-lit`
+
+Outputs:
+```
+Color intensities:
++-----------+-----------+------------+
+| Red       | Green     | Blue       | 
++-----------+-----------+------------+
+| -73.21529 | 3.9162624 | -52.386494 | 
+| 54.085926 | 6.349018  | -35.757645 | 
+| 32.440845 | -79.44349 | 61.301685  | 
+| 0.2       | 0.2       | 0.2        | 
+| 0.2       | 0.2       | 0.2        | 
+| 0.9       | 0.9       | 0.9        | 
+| 0.1       | 0.1       | 0.1        | 
++-----------+-----------+------------+
+```
 
 ## Layout files (*.LAY)
 
