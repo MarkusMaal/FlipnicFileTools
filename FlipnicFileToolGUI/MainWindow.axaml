@@ -6,7 +6,7 @@
         xmlns:ns="clr-namespace:FlipnicFileToolGUI"
         mc:Ignorable="d"
         d:DesignWidth="800" d:DesignHeight="800"
-        Width="700" Height="500"
+        Width="712" Height="512"
         Icon="Assets\F.PNG" Name="SukiWin"
         xmlns:sukiUi="clr-namespace:SukiUI.Controls;assembly=SukiUI"
         xmlns:types="clr-namespace:FlipnicLib.Types;assembly=FlipnicLib"
@@ -343,7 +343,6 @@
                                         <DataGridTextColumn Header="Score" x:DataType="types:Rank" Binding="{Binding Score}"></DataGridTextColumn>
                                         <DataGridTextColumn Header="Combos" x:DataType="types:Rank" Binding="{Binding Combos}"></DataGridTextColumn>
                                         <DataGridTextColumn Header="Difficulty" x:DataType="types:Rank" Binding="{Binding Difficulty}"/>
-                                        <DataGridTextColumn Header="Offset" x:DataType="types:Rank" Binding="{Binding Offset}"></DataGridTextColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </Grid>
