@@ -4,6 +4,7 @@ Several command line tools with a GUI front-end for various file formats used by
 
 Useful links:
 
+* [READ ME before using GUI version](GUIREADME.md)
 * [Build instructions](BUILD.md)
 * [Progress report](https://github.com/MarkusMaal/FlipnicPatterns?tab=readme-ov-file#progress)
 * [ImHex patterns](https://github.com/MarkusMaal/FlipnicPatterns/?tab=readme-ov-file#flipnic-hex-patterns)
@@ -45,6 +46,8 @@ Jump to section:
 ## GUI version
 
 There's also a graphical front-end for this CLI tool, which is easier to use, but also gives you better preview for stuff like textures, audio samples, stuff like that without having to type down a bunch of commands with the disadvantages being lack of automation options and in some cases compatibility.
+
+[More information](GUIREADME.md)
 
 ![Screenshot of GUI version](preview.png)
 
