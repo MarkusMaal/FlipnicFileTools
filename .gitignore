@@ -438,3 +438,4 @@ riderModule.iml
 # JetBrains IDE files
 .idea
 /FlipnicFileTool/Properties/launchSettings.json
+.DS_Store
