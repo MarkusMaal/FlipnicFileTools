@@ -19,10 +19,12 @@ using SukiUI.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using Avalonia.Controls.Primitives;
+using Avalonia.Media;
 
 namespace FlipnicFileToolGUI;
 
@@ -36,7 +38,7 @@ public sealed partial class MainWindow : SukiWindow
 
     public ObservableCollection<string> Controls => GetViewModel().Controls;
     
-    public bool IsLightTheme => GetViewModel().IsLightTheme;
+    public bool IsLightTheme => !Design.IsDesignMode && GetViewModel().IsLightTheme;
 
     internal static bool ErrorDisplayed = false;
     
@@ -69,6 +71,11 @@ public sealed partial class MainWindow : SukiWindow
         });
         AddHandler(DragDrop.DragOverEvent, DragOver);
         AddHandler(DragDrop.DropEvent, WindowDropped);
+
+        if (Design.IsDesignMode)
+        {
+            PreviewImage.Source = new Bitmap(StaticUtils.GenerateCheckerboardPng(320, 240));
+        }
     }
 
     public MainWindowViewModel GetViewModel()
@@ -681,7 +688,27 @@ public sealed partial class MainWindow : SukiWindow
 
     private void ReverbSlider_OnValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
     {
-        ReverbStrengthLabel.Content = $"Reverb strength: {Math.Round(e.NewValue/10.0, 1)}%";
+        switch (((Slider?)e.Source)!.Name)
+        {
+            case "ReverbSlider":
+                ReverbStrengthLabel.Content = $"Reverb strength: {Math.Round(e.NewValue/10.0, 1)}%";
+                break;
+            case "AttackSlider":
+                AttackMultiplierLabel.Content = $"Attack strength: {Math.Round(e.NewValue/10.0, 1)}%";
+                break;
+            case "SustainSlider":
+                SustainMultiplierLabel.Content = $"Sustain strength: {Math.Round(e.NewValue/10.0, 1)}%";
+                break;
+            case "DecaySlider":
+                DecayMultiplierLabel.Content = $"Decay strength: {Math.Round(e.NewValue/10.0, 1)}%";
+                break;
+            case "ReleaseSlider":
+                ReleaseMultiplierLabel.Content = $"Release strength: {Math.Round(e.NewValue/10.0, 1)}%";
+                break;
+            case "AttenuationSlider":
+                AttenuationMultiplierLabel.Content = $"Attenuation strength: {Math.Round(e.NewValue/10.0, 1)}%";
+                break;
+        }
     }
 
     private void RotateModelCheck_OnIsCheckedChanged(object? sender, RoutedEventArgs e)
@@ -689,5 +716,14 @@ public sealed partial class MainWindow : SukiWindow
         if (sender is not CheckBox cb) return;
         if (cb.IsChecked is null) return;
         GlControl.Rotate = (bool)cb.IsChecked;
+    }
+
+    private void GlControl_OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        if (Design.IsDesignMode) return;
+        if (GetTopLevel(this) is MainWindow mw)
+        {
+            mw.ModelGrid.Background = new SolidColorBrush(Colors.Transparent);
+        }
     }
 }

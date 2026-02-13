@@ -167,6 +167,11 @@ public static class Converters
         mw.Loader.IsVisible = true;
         StaticUtils.ExportEnvelopes = mw.EnvelopeToggle.IsChecked ?? false;
         StaticUtils.ReverbStrength = (short)mw.ReverbSlider.Value;
+        StaticUtils.AdsrMultipliers =
+        [
+            (int)mw.AttackSlider.Value * 10, (int)mw.DecaySlider.Value * 10, (int)mw.SustainSlider.Value * 10,
+            (int)mw.ReleaseSlider.Value * 10, (int)mw.AttenuationSlider.Value * 10
+        ];
         var outFile = mw.FileBox.Text;
         var midiFile = mw.MidiBox.Text ?? "/no.where";
         var bdFile = mw.BdBox.Text ?? "/no.where";

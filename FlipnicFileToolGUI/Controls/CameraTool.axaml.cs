@@ -20,6 +20,10 @@ public partial class CameraTool : UserControl
     public CameraTool()
     {
         InitializeComponent();
+        if (Design.IsDesignMode)
+        {
+            CameraObject = new FpnFpc();
+        }
     }
 
     private async void Button_OnClick(object? sender, RoutedEventArgs e)

@@ -49,6 +49,20 @@ public class FpnFpc
         TargetZ,
         Fov = 0x07
     }
+
+    public FpnFpc()
+    {
+        Data = [];
+        OriginX = 0f;
+        OriginY = 0f;
+        OriginZ = 0f;
+        TargetX = 0f;
+        TargetY = 0f;
+        TargetZ = 0f;
+        FOV = 90;
+        NumSequences = 0;
+        NumFrames = 0;
+    }
     
     public FpnFpc(string filename) : this(File.OpenRead(filename)) {}
 

@@ -34,6 +34,13 @@ public partial class MessageEditor : UserControl
     public MessageEditor()
     {
         InitializeComponent();
+        if (Design.IsDesignMode)
+        {
+            MsgObject =  new FpnMsg
+            {
+                Messages = ["Message A", "Message B", "Message C"]
+            };
+        }
     }
 
     private async void ExportTxtButton_OnClick(object? sender, RoutedEventArgs e)

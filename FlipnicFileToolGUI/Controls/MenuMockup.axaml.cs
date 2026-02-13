@@ -8,6 +8,8 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using FlipnicFileToolGUI.Helpers;
 using FlipnicFileToolGUI.ViewModels;
+using FlipnicLib;
+using FlipnicLib.Formats;
 
 namespace FlipnicFileToolGUI.Controls;
 
@@ -16,6 +18,19 @@ public partial class MenuMockup : UserControl
     public MenuMockup()
     {
         InitializeComponent();
+        if (!Design.IsDesignMode) return;
+        var menuEls = new List<MenuElementViewModel>();
+        for (var i = 0; i < 10; i++)
+        {
+            menuEls.Add(new MenuElementViewModel
+            {
+                ImageSource = new Bitmap(StaticUtils.GenerateCheckerboardPng(320, 240)),
+                IsVisible = true,
+                Layer = "Example " + i,
+                MenuElement = new FpnMlb.MenuElement(new byte[0x60], "Dummy " + i)
+            });
+        }
+        MenuElementSource = new ObservableCollection<MenuElementViewModel>(menuEls);
     }
     public ObservableCollection<MenuElementViewModel> MenuElementSource
     {

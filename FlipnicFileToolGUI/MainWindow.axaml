@@ -77,13 +77,13 @@
                             <controls:CircleDot ColorA="Orange" ColorB="Brown" Text="⬡"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
-                          <Grid>
+                          <Grid Background="DarkBlue" Name="ModelGrid">
                               
                               <StackPanel Orientation="Horizontal" Name="ModelInfoSection">
                                   <Label Margin="5" Name="MoreInfoLabel">No info</Label>
                                   <Label Margin="5" Name="FPSLabel">No info</Label>
                               </StackPanel>
-                              <controls:CubeRenderingTkOpenGlControl Rotate="False" Grid.Row="0"  Focusable="True" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="GlControl"></controls:CubeRenderingTkOpenGlControl>
+                              <controls:CubeRenderingTkOpenGlControl Rotate="False" Grid.Row="0"  Focusable="True" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="GlControl" Loaded="GlControl_OnLoaded"></controls:CubeRenderingTkOpenGlControl>
                               <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0" Name="ModelBottomSection">
                                 <Button Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>
                                 <CheckBox Margin="5,10" Name="RotateModelCheck" IsCheckedChanged="RotateModelCheck_OnIsCheckedChanged">Spin</CheckBox>
@@ -276,12 +276,6 @@
                                             <Button Name="BrowsButtonPath" Click="BrowsButtonPath_OnClick" Grid.Column="2" Content="Browse…"></Button>
                                         </Grid>
                                         <StackPanel Orientation="Horizontal" Spacing="10">
-                                            <StackPanel Name="ReverbSliderPanel">
-                                                <Slider Minimum="0" Maximum="1000" Width="200" Value="200" VerticalAlignment="Center" Name="ReverbSlider" ValueChanged="ReverbSlider_OnValueChanged">
-                                                
-                                                </Slider>
-                                                <Label Name="ReverbStrengthLabel">Reverb strength: 20%</Label>
-                                            </StackPanel>
                                             <CheckBox Name="PalToggle" Margin="0,2, 0,-8" IsChecked="False" Content="Use PAL instead of NTSC">
                                                 <ToolTip.Tip>If the output is at the wrong framerate or video de-syncs with audio, you may need to check this option.</ToolTip.Tip>
                                             </CheckBox>
@@ -295,6 +289,53 @@
                                                 </ToolTip.Tip>
                                             </CheckBox>
                                         </StackPanel>
+                                        <Expander Margin="0,15, 0, 0" Name="AdsrPanel">
+                                            <Expander.Header>
+                                                Advanced
+                                            </Expander.Header>
+                                            <Expander.Content>
+                                                
+                                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                            <StackPanel>
+                                                <Slider Minimum="0" Maximum="1000" Width="200" Value="200" VerticalAlignment="Center" Name="ReverbSlider" ValueChanged="ReverbSlider_OnValueChanged">
+                                                
+                                                </Slider>
+                                                <Label Name="ReverbStrengthLabel">Reverb strength: 20%</Label>
+                                            </StackPanel>
+                                            <StackPanel>
+                                            <Slider Minimum="0" Maximum="1000" Width="200" Value="120" VerticalAlignment="Center" Name="AttackSlider" ValueChanged="ReverbSlider_OnValueChanged">
+                                                
+                                            </Slider>
+                                            <Label Name="AttackMultiplierLabel">Attack strength: 12%</Label>
+                                            </StackPanel>
+                                            <StackPanel>
+                                            <Slider Minimum="0" Maximum="1000" Width="200" Value="120" VerticalAlignment="Center" Name="DecaySlider" ValueChanged="ReverbSlider_OnValueChanged">
+                                                
+                                            </Slider>
+                                            <Label Name="DecayMultiplierLabel">Decay strength: 12%</Label>
+                                            </StackPanel>
+                                            <StackPanel>
+                                            <Slider Minimum="0" Maximum="1000" Width="200" Value="140" VerticalAlignment="Center" Name="SustainSlider" ValueChanged="ReverbSlider_OnValueChanged">
+                                                
+                                            </Slider>
+                                            <Label Name="SustainMultiplierLabel">Sustain strength: 14%</Label>
+                                                
+                                            </StackPanel>
+                                            <StackPanel>
+                                                <Slider Minimum="0" Maximum="1000" Width="200" Value="120" VerticalAlignment="Center" Name="ReleaseSlider" ValueChanged="ReverbSlider_OnValueChanged">
+                                                
+                                                </Slider>
+                                                <Label Name="ReleaseMultiplierLabel">Release strength: 12%</Label>
+                                            </StackPanel>
+                                            <StackPanel>
+                                                <Slider Minimum="0" Maximum="1000" Width="200" Value="32" VerticalAlignment="Center" Name="AttenuationSlider" ValueChanged="ReverbSlider_OnValueChanged">
+                                                
+                                                </Slider>
+                                                <Label Name="AttenuationMultiplierLabel">Attenuation strength: 3.2%</Label>
+                                            </StackPanel>
+                                        </WrapPanel>
+                                            </Expander.Content>
+                                        </Expander>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
                                         <Button Click="DemuxButton_OnClick" Name="DemuxButton">Demux</Button>

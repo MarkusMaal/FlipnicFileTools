@@ -202,18 +202,18 @@ public abstract class Converter
                 long vol = prog.BaseVolume * splitChunk.Volume;
                 // We divide the above value by 127^2 to get the percent vol it represents. 
                 var percentvol = vol / (double) (127 * 127);
-                sf2.AddInstrumentGenerator(SF2Generator.InitialAttenuation, new SF2GeneratorAmount() { Amount = (short)((1.0-percentvol) * 320.0)});
+                sf2.AddInstrumentGenerator(SF2Generator.InitialAttenuation, new SF2GeneratorAmount() { Amount = (short)((1.0-percentvol) * StaticUtils.AdsrMultipliers[4])});
                 // sustain rate itself is not included in the final SF2, since there is no direct way to have support for it
                 if (StaticUtils.ExportEnvelopes)
                 {
                     sf2.AddInstrumentGenerator(SF2Generator.AttackVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(1200*Math.Log2(splitChunk.Attack)) });
+                        new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[0]*Math.Log2(splitChunk.Attack)) });
                     sf2.AddInstrumentGenerator(SF2Generator.SustainVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(1440-1400*splitChunk.SustainL) });
+                        new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[1]+40-StaticUtils.AdsrMultipliers[1]*splitChunk.SustainL) });
                     sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(1200 * Math.Log2(splitChunk.Decay)) });
+                        new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[2] * Math.Log2(splitChunk.Decay)) });
                     sf2.AddInstrumentGenerator(SF2Generator.ReleaseVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(1200*Math.Log2(splitChunk.Release)) });
+                        new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[3] * Math.Log2(splitChunk.Release)) });
                 }
 
                 if (splitChunk.PitchBend != 12)

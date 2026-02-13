@@ -16,6 +16,8 @@ public abstract class StaticUtils
     private static char[] Loaders = ['/', '-', '\\', '|'];
     public static int LoadIdx = 0;
 
+    public static int[] AdsrMultipliers = [1200, 1200, 1400, 1200, 320];
+
     public static float LibVersion = 2.2f;
     public enum ControllerButtons : byte {
         Disabled = 0xFF,
