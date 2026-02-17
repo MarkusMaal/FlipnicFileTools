@@ -2,15 +2,14 @@ using FlipnicFileToolWww.Components;
 
 public class Program
 {
-    public static string? SelectedFile = null;
+    public const string FileString = """
+                                     ---------------------------------
+                                     Flipnic file tools
+                                     ---------------------------------
+                                     No file loaded, open a file by clicking Open
+                                     or drag a file to this window.
+                                     """;
 
-    public static string FileString = """
-                                      ---------------------------------
-                                      Flipnic file tools
-                                      ---------------------------------
-                                      No file loaded, open a file by clicking Open
-                                      or drag a file to this window.
-                                      """;
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -30,7 +29,6 @@ public class Program
         }
 
         app.UseHttpsRedirection();
-
 
         app.UseAntiforgery();
 

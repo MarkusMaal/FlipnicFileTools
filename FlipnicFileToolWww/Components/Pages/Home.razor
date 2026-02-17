@@ -1,8 +1,111 @@
 ﻿@page "/"
+@using System.Text
+@using FlipnicLib.Formats
+@using FlipnicLib.Formats.Jam
+@using FlipnicLib.Formats.Midi
+@using Syroot.BinaryData
 @rendermode InteractiveServer
+@inject ILogger<Home> Logger
 
 <PageTitle>Info</PageTitle>
 
-<pre style="background: black; color: lime; min-height: 100%; margin: 0; padding: 2em;">
-@Program.FileString
+<InputFile OnChange="LoadFiles" style="color: whitesmoke; margin: 1em; "></InputFile>
+<pre role="status" style="position: relative; color: springgreen; padding: 1em; overflow-x: scroll; max-width: calc(100% - 2.5em); max-height: calc(100vh - 6em);" id="file-string">
+@if (_fileString is null)
+{
+    <span>Please wait...</span>
+}
+else
+{
+    @_fileString
+}
 </pre>
+
+@code {
+    private string? _fileString = Program.FileString;
+    private long maxFileSize = 1024 * 15;
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        _fileString = null;
+        foreach (var file in e.GetMultipleFiles(1))
+        {
+            try
+            {
+                var data = await Task.Run(() => file.OpenReadStream().ReadBytesAsync((int)file.Size));
+                var ms = new MemoryStream(data);
+                ms.Position = 0;
+                string? str;
+                switch (file.Name[^3..])
+                {
+                    case "SST":
+                        var sst = new FpnSst(ms);
+                        str = $"Entries\n{sst.ListEntries()}\n\nCameras:\n{sst.GetCamData()}\n\nResources\n{sst.GenerateMagicNumbers()}";
+                        break;
+                    case "FPC":
+                        str = new FpnFpc(ms).ToString();
+                        break;
+                    case "LP4":
+                        str = new Lp4(data, file.Name).ToString();
+                        break;
+                    case ".HD":
+                        var jh = new JamHeader();
+                        jh.Read(new BinaryStream(ms));
+                        str = jh.ToString(false);
+                        break;
+                    case "MSG":
+                        str = new FpnMsg(ms).ToSimpleString();
+                        break;
+                    case "VSD":
+                        str = new FpnVsd(ms).ToString();
+                        break;
+                    case "LIT":
+                        str = new FpnLit(ms).ToString();
+                        break;
+                    case "LAY":
+                        str = new FpnLay(data).ToString();
+                        break;
+                    case "COL":
+                        str = new FpnCol(ms).ToString();
+                        break;
+                    case "FPD":
+                        str = new FpnFpd(ms).ToString();
+                        break;
+                    case "TM2":
+                        str = new Tim2(data, file.Name).ToString();
+                        break;
+                    case "ICO":
+                        str = new SaveIcon(data).ToString();
+                        break;
+                    case "MLB":
+                        str = new FpnMlb(data).ToString();
+                        break;
+                    case "MID":
+                        var mid = new Midi(file.Name);
+                        mid.Read(new BinaryStream(ms));
+                        str = mid.ToString();
+                        break;
+                    case "CSV":
+                    case "XML":
+                    case "TXT":
+                        str = Encoding.UTF8.GetString(data);
+                        break;
+                    default:
+                        str = "This file type is currently unsupported";
+                        break;
+                }
+
+                Logger.LogInformation("Loaded file: {FileName}", 
+                    file.Name);
+                _fileString = str;
+                
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("File: {FileName} Error: {Error}", 
+                    file.Name, ex.Message);
+                _fileString = $"Error: {ex.Message}\n{ex.StackTrace}";
+            }
+        }
+    }
+}
