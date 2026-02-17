@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlipnicFileToolGUI", "Flipn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SoundFont2", "SoundFont2\SoundFont2\SoundFont2.csproj", "{94F894B0-867A-4FAF-BA9E-7CD4D7E1684A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlipnicFileToolWww", "FlipnicFileToolWww\FlipnicFileToolWww.csproj", "{F7AC77CD-D234-411D-A3B1-EF9D20D966E7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,5 +42,11 @@ Global
 		{94F894B0-867A-4FAF-BA9E-7CD4D7E1684A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{94F894B0-867A-4FAF-BA9E-7CD4D7E1684A}.Publish|Any CPU.ActiveCfg = Release|Any CPU
 		{94F894B0-867A-4FAF-BA9E-7CD4D7E1684A}.Publish|Any CPU.Build.0 = Release|Any CPU
+		{F7AC77CD-D234-411D-A3B1-EF9D20D966E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7AC77CD-D234-411D-A3B1-EF9D20D966E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7AC77CD-D234-411D-A3B1-EF9D20D966E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7AC77CD-D234-411D-A3B1-EF9D20D966E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7AC77CD-D234-411D-A3B1-EF9D20D966E7}.Publish|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7AC77CD-D234-411D-A3B1-EF9D20D966E7}.Publish|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 EndGlobal

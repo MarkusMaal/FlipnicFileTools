@@ -1,0 +1,36 @@
+﻿@using FlipnicFileToolWww.Components.Pages
+@inherits LayoutComponentBase
+
+<div class="page" selectedfile="null">
+    <div class="sidebar">
+        <NavMenu/>
+    </div>
+
+    <main>
+        <div class="top-row px-4 bg-primary-dark">
+            <input type="file" @onchange="args => Program.SelectedFile = args.Value?.ToString()">
+            <a class="btn btn-secondary-dark" href="#" @onclick="Open">Open</a>
+        </div>
+
+        <article class="content">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+
+
+@code {
+
+    private void Open()
+    {
+        Program.FileString = Program.SelectedFile ?? "null";
+    }
+
+}
