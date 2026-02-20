@@ -345,11 +345,19 @@ public class Model
     /// <param name="data">LP4 binary data</param>
     public void AppendVerticies(int offset, byte[] data)
     {
-        var len = BitConverter.ToInt32(data, offset);
-        var texOffset = offset + (len * 0x18) + 0x10;
+        var len = BitConverter.ToInt32(data, offset); // vertex count
+        var nlen = BitConverter.ToInt32(data, offset + 4); // normal count
+        var plen = BitConverter.ToInt32(data, offset + 8); // parameter count
+        var uvlen = BitConverter.ToInt32(data, offset + 12); // UV count
+        var texOffset = offset + (len * 0x10) + (nlen * 0x8) + (plen * 4) + 0x10;
+        if (Debugger.IsAttached)
+        {
+            Console.WriteLine($"Debug: UV offset: 0x{texOffset:X}");
+        }
         var uvOffset = texOffset ;
         var comp = -1;
         var mask = 0x01;
+        var matchId = 0;
         for (var j = offset + 0x10; j < offset + (len) * 0x10 - 0x10; j += 0x10)
         {
             var x1 = BitConverter.ToSingle(data.Skip(j).Take(4).ToArray(), 0);
@@ -361,7 +369,6 @@ public class Model
             var x3 = BitConverter.ToSingle(data.Skip(j + 0x20).Take(4).ToArray(), 0);
             var y3 = BitConverter.ToSingle(data.Skip(j + 0x24).Take(4).ToArray(), 0);
             var z3 = BitConverter.ToSingle(data.Skip(j + 0x28).Take(4).ToArray(), 0);
-            
             RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset).Take(8).ToArray()));
             RawVertices.Add(x1);
             RawVertices.Add(y1);
@@ -384,17 +391,20 @@ public class Model
             // if x is -1, then set x to the value of UvFlags of the first point (pattern)
             //
             // let's define a variable y (pattern2)
-            // if y = x, then the next point is located at position + 0x30
+            // if y XOR x is x, then the next point is located at position + 0x30
             // this also resets x to -1
             //
-            var pattern = StaticUtils.GetInt16(data.Skip(uvOffset + 6).Take(2).ToArray(), 0);
-            if ((comp == -1) && (pattern & mask) != mask)
+            var pattern = StaticUtils.GetUInt16(data.Skip(uvOffset + 6).Take(2).ToArray(), 0);
+            if ((comp == -1) && ((pattern & mask) != mask))
             {
                 comp = pattern;
             }
-            var pattern2 = StaticUtils.GetInt16(data.Skip(uvOffset + 24 + 6).Take(2).ToArray(), 0);
-            if (comp == pattern2)
+            var pattern2 = StaticUtils.GetUInt16(data.Skip(uvOffset + 24 + 6).Take(2).ToArray(), 0);
+            
+            if ((pattern2 & comp) == comp)
             {
+                matchId++;
+                if (Debugger.IsAttached) { Console.WriteLine($"u16 splitA{matchId} @0x{uvOffset + 6:X};\nu16 splitB{matchId} @0x{uvOffset + 24 + 6:X};\n"); }
                 j += 0x20;
                 uvOffset += 24;
                 comp = -1;

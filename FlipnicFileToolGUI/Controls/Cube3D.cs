@@ -608,5 +608,14 @@ namespace FlipnicFileToolGUI.Controls
         }
         public new static readonly StyledProperty<bool> RotateProperty = AvaloniaProperty.Register<CubeRenderingTkOpenGlControl, bool>(nameof(Rotate));
         public new static readonly StyledProperty<bool> FsControlProperty = AvaloniaProperty.Register<CubeRenderingTkOpenGlControl, bool>(nameof(FsControl));
+
+        public void Teleport()
+        {
+            if (_vertices.Length < 5) return;
+            var x = _vertices[2];
+            var y = _vertices[3];
+            var z = _vertices[4];
+            _cameraPosition = new Vector3(x, y, z);
+        }
     }
 }

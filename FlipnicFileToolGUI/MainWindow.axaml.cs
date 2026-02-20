@@ -726,4 +726,9 @@ public sealed partial class MainWindow : SukiWindow
             mw.ModelGrid.Background = new SolidColorBrush(Colors.Transparent);
         }
     }
+
+    private void TpModelButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        GlControl.Teleport();
+    }
 }
