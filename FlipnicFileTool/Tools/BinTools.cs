@@ -10,7 +10,7 @@ public class BinTools
         switch (cfg.Mode)
         {
             case Enums.Modes.ListBin:
-                new BinFile().ListBin(File.OpenRead(cfg.FileName));
+                Console.Write(new BinFile().ListBin(File.OpenRead(cfg.FileName)));
                 break;
             case Enums.Modes.ExtractBin:
                 new BinFile().ExtractBin(File.OpenRead(cfg.FileName), cfg.Output);

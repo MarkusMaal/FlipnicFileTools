@@ -1,0 +1,65 @@
+@page "/preview"
+@using BigGustave
+@using FlipnicLib
+@using FlipnicLib.Formats
+@using Syroot.BinaryData
+@rendermode InteractiveServer
+@inject ILogger<Preview> Logger
+
+<PageTitle>Preview</PageTitle>
+
+<InputFile OnChange="LoadFiles" style="color: whitesmoke; margin: 1em; width: 100%; "></InputFile>
+@if (_imageData == null)
+{
+    <p style="color: whitesmoke">@StaticUtils.LiveLoadStatus</p>
+}
+else
+{
+    <img style="width: 100%; image-rendering: pixelated;" src="data:image;base64,@_imageData">   
+}
+
+
+@code {
+    private string? _imageData = Convert.ToBase64String(Program.StreamToBase64(StaticUtils.GenerateCheckerboardPng(640, 480, new Pixel(255, 255, 255), new Pixel(0, 0, 255))));
+   
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        _imageData = null;
+        foreach (var file in e.GetMultipleFiles(1))
+        {
+            try
+            {
+                var st = file.OpenReadStream(4096000L);
+                var data = await Program.StreamToBytes(st);
+                var ms = new MemoryStream(data);
+                ms.Position = 0;
+                switch (file.Name[^3..])
+                {
+                    case "TM2":
+                        var tm2 = new Tim2(data, file.Name);
+                        var ms2 = new MemoryStream();
+                        tm2.SavePng(ms2);
+                        ms2.Position = 0;
+                        _imageData = Convert.ToBase64String(await Program.StreamToBytes(ms2));
+                        break;
+                    case "ICO":
+                        var ico = new SaveIcon(data);
+                        var ms3 = new MemoryStream();
+                        ico.Read();
+                        ico.Texture?.SavePng(ms3);
+                        ms3.Position = 0;
+                        _imageData = Convert.ToBase64String(await Program.StreamToBytes(ms3));
+
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("File: {FileName} Error: {Error}", 
+                    file.Name, ex.Message);
+            }
+        }
+    }
+
+}
+

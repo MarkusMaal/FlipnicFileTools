@@ -12,7 +12,7 @@ public class BinFile
     /// Generate a table containing a list of all the files stored inside the .BIN file
     /// </summary>
     /// <param name="src">The source .BIN file stream</param>
-    public void ListBin(Stream src)
+    public string ListBin(Stream src)
     {
         string[] colHeader = ["Path", "Offset", "Size", "TOC offset", "Large buffer"];
         var rows = GetFsEntriesNew(src);
@@ -21,7 +21,7 @@ public class BinFile
             t[2] = StaticUtils.GetFilesizeString(long.Parse(t[2]));
         }
         src.Close();
-        Console.Write(StaticUtils.GenerateTable(colHeader, rows, StaticUtils.SimpleOutput));
+        return StaticUtils.GenerateTable(colHeader, rows, StaticUtils.SimpleOutput);
     }
     
     /// <summary>

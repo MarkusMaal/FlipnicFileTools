@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using System.Text
+@using FlipnicLib
 @using FlipnicLib.Formats
 @using FlipnicLib.Formats.Jam
 @using FlipnicLib.Formats.Midi
@@ -13,7 +14,7 @@
 <pre role="status" style="position: relative; color: springgreen; padding: 1em; overflow-x: scroll; max-width: calc(100% - 2.5em); max-height: calc(100vh - 6em);" id="file-string">
 @if (_fileString is null)
 {
-    <span>Please wait...</span>
+    <span>@StaticUtils.LiveLoadStatus</span>
 }
 else
 {
@@ -23,16 +24,18 @@ else
 
 @code {
     private string? _fileString = Program.FileString;
-    private long maxFileSize = 1024 * 15;
 
     private async Task LoadFiles(InputFileChangeEventArgs e)
     {
         _fileString = null;
+        StaticUtils.LiveLoadStatus = "Please wait...";
         foreach (var file in e.GetMultipleFiles(1))
         {
             try
             {
-                var data = await Task.Run(() => file.OpenReadStream().ReadBytesAsync((int)file.Size));
+                var st = file.OpenReadStream(1073741824L);
+                var data = await Program.StreamToBytes(st);
+                StaticUtils.LiveLoadStatus = "Processing...";
                 var ms = new MemoryStream(data);
                 ms.Position = 0;
                 string? str;
@@ -40,13 +43,31 @@ else
                 {
                     case "SST":
                         var sst = new FpnSst(ms);
-                        str = $"Entries\n{sst.ListEntries()}\n\nCameras:\n{sst.GetCamData()}\n\nResources\n{sst.GenerateMagicNumbers()}";
+                        var evt = "N/A";
+                        try
+                        {
+                            evt = sst.TableOfContents.ContainsKey("EVENT") ? sst.GeneratePseudoCode() : "N/A";
+                        }
+                        catch
+                        {
+                            // ignore this
+                        }
+
+                        var gmks = "";
+                        foreach (var gmk in sst.GetGimmicks()!)
+                        {
+                            gmks += $"{gmk.Key}\n";
+                            gmks += sst.ShowGimmick(gmk.Key) + "\n\n";
+                        }
+                        str = $"Entries\n{sst.ListEntries()}\n\nCameras:\n{sst.GetCamData()}\n\nResources\n{sst.GenerateMagicNumbers()}\n\nGimmicks:\n\n{gmks}\nEvent script:\n{evt}";
                         break;
                     case "FPC":
                         str = new FpnFpc(ms).ToString();
                         break;
                     case "LP4":
-                        str = new Lp4(data, file.Name).ToString();
+                        var lp4 = new Lp4(data, file.Name);
+                        lp4.Read();
+                        str = lp4.ToString();
                         break;
                     case ".HD":
                         var jh = new JamHeader();
@@ -75,7 +96,9 @@ else
                         str = new Tim2(data, file.Name).ToString();
                         break;
                     case "ICO":
-                        str = new SaveIcon(data).ToString();
+                        var si = new SaveIcon(data);
+                        si.Read();
+                        str = si.ToString();
                         break;
                     case "MLB":
                         str = new FpnMlb(data).ToString();
@@ -88,7 +111,13 @@ else
                     case "CSV":
                     case "XML":
                     case "TXT":
+                    case "CNF":
                         str = Encoding.UTF8.GetString(data);
+                        break;
+                    case "BIN":
+                        var bf = new BinFile();
+                        var ms4 = new MemoryStream(data);
+                        str = bf.ListBin(ms4);
                         break;
                     default:
                         str = "This file type is currently unsupported";
