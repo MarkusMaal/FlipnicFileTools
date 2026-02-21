@@ -30,7 +30,7 @@ public class Lp4(byte[] data, string fileName)
 
     public List<Model> Models { get; set; } = [];
     
-    public Model SelectedModel { get; set; }
+    public Model? SelectedModel { get; set; }
 
     public override string ToString()
     {
@@ -215,10 +215,11 @@ public class Lp4(byte[] data, string fileName)
             f = BitConverter.ToSingle([.. data.Skip(i+0x1C).Take(4)], 0);
             f3 = BitConverter.ToSingle([.. data.Skip(i+f2*0x10+0xC).Take(4)]);
             f4 = BitConverter.ToInt16([.. data.Skip(i+f2*0x10+0x1E).Take(4)], 0);
-            if ((f == 1.0f) && (f3 == 1.0f) && (f4 == 0))
+            var endModelData = i + 0x10 + StaticUtils.GetInt32(data, i) * 10 + StaticUtils.GetInt32(data, i+4) * 8 + StaticUtils.GetInt32(data, i+8) * 4 +  StaticUtils.GetInt32(data, i+12) * 8;
+            if ((f == 1.0f) && (f3 == 1.0f) && (f4 == 0 || StaticUtils.GetStringAt(data, endModelData).StartsWith("mat")))
             {
                 var len = f2;
-                if ((len > 0) && (len < data.Length))
+                if ((len > 0) && (len < data.Length) && i > 0x80)
                 {
                     try
                     {
@@ -277,6 +278,7 @@ public class Lp4(byte[] data, string fileName)
         {
             GetModelOffset();
             if (rawVerticies.Count > 0) return;
+            if (SelectedModel == null) return;
             if (Models.Count == 0)
             {
                 return;
@@ -345,6 +347,7 @@ public class Model
     /// <param name="data">LP4 binary data</param>
     public void AppendVerticies(int offset, byte[] data)
     {
+        if ((offset >= data.Length) || (offset < 0)) return;
         var len = BitConverter.ToInt32(data, offset); // vertex count
         var nlen = BitConverter.ToInt32(data, offset + 4); // normal count
         var plen = BitConverter.ToInt32(data, offset + 8); // parameter count
@@ -358,8 +361,22 @@ public class Model
         var comp = -1;
         var mask = 0x01;
         var matchId = 0;
-        for (var j = offset + 0x10; j < offset + (len) * 0x10 - 0x10; j += 0x10)
+        var modelBounds = offset + len * 0x10;
+        var normalIdx = 0;
+        var nexNormal = offset + 0x40;
+        for (var j = offset + 0x10; j < offset + (Math.Max(len, uvlen)) * 0x10 - 0x10; j += 0x10)
         {
+            if (nexNormal == j)
+            {
+                if (Debugger.IsAttached) Console.WriteLine("Update normal");
+                nexNormal = j + 0x30;
+                normalIdx += 3;
+            } else if (nexNormal < j)
+            {
+                if (Debugger.IsAttached) Console.WriteLine($"Update normal (partial mode) (+{3 - (j - nexNormal) / 0x10})");
+                normalIdx += (3 - (j - nexNormal) / 0x10);
+                nexNormal = j + 0x30;
+            }
             var x1 = BitConverter.ToSingle(data.Skip(j).Take(4).ToArray(), 0);
             var y1 = BitConverter.ToSingle(data.Skip(j + 0x4).Take(4).ToArray(), 0);
             var z1 = BitConverter.ToSingle(data.Skip(j + 0x8).Take(4).ToArray(), 0);
@@ -369,22 +386,40 @@ public class Model
             var x3 = BitConverter.ToSingle(data.Skip(j + 0x20).Take(4).ToArray(), 0);
             var y3 = BitConverter.ToSingle(data.Skip(j + 0x24).Take(4).ToArray(), 0);
             var z3 = BitConverter.ToSingle(data.Skip(j + 0x28).Take(4).ToArray(), 0);
+
+            if (j >= modelBounds)
+            {
+                x1 = BitConverter.ToSingle(data.Skip(j - modelBounds).Take(4).ToArray(), 0);
+                y1 = BitConverter.ToSingle(data.Skip(j - modelBounds + 0x4).Take(4).ToArray(), 0);
+                z1 = BitConverter.ToSingle(data.Skip(j - modelBounds + 0x8).Take(4).ToArray(), 0);
+                x2 = BitConverter.ToSingle(data.Skip(j - modelBounds + 0x10).Take(4).ToArray(), 0);
+                y2 = BitConverter.ToSingle(data.Skip(j - modelBounds + 0x14).Take(4).ToArray(), 0);
+                z2 = BitConverter.ToSingle(data.Skip(j - modelBounds + 0x18).Take(4).ToArray(), 0);
+                x3 = BitConverter.ToSingle(data.Skip(j - modelBounds + 0x20).Take(4).ToArray(), 0);
+                y3 = BitConverter.ToSingle(data.Skip(j - modelBounds + 0x24).Take(4).ToArray(), 0);
+                z3 = BitConverter.ToSingle(data.Skip(j - modelBounds + 0x28).Take(4).ToArray(), 0);
+            }
+            
             RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset).Take(8).ToArray()));
             RawVertices.Add(x1);
             RawVertices.Add(y1);
             RawVertices.Add(z1);
-            RawVertices.AddRange(DecodeNormals(data.Skip(uvOffset - (len * 0x8) + 16).Take(8).ToArray()));
+            RawVertices.AddRange(DecodeNormals(data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx+2))).Take(8).ToArray(), StaticUtils.GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0)));
+            if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V1 {j:X}/{j+4:X}/{j+8:X}");
+            
             RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset + 8).Take(8).ToArray()));
             RawVertices.Add(x2);
             RawVertices.Add(y2);
             RawVertices.Add(z2);
-            RawVertices.AddRange(DecodeNormals(data.Skip(uvOffset - (len * 0x8) + 8).Take(8).ToArray()));
+            RawVertices.AddRange(DecodeNormals(data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx+1))).Take(8).ToArray(), StaticUtils.GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0)));
+            if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V2 {j+0x10:X}/{j+0x14:X}/{j+0x18:X}");
 
             RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset + 16).Take(8).ToArray()));
             RawVertices.Add(x3);
             RawVertices.Add(y3);
             RawVertices.Add(z3);
-            RawVertices.AddRange(DecodeNormals(data.Skip(uvOffset - (len * 0x8)).Take(8).ToArray()));
+            RawVertices.AddRange(DecodeNormals(data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx+0))).Take(8).ToArray(), StaticUtils.GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0)));
+            if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V3 {j+0x20:X}/{j+0x24:X}/{j+0x28:X}");
 
             //
             // let's define a comparison variable x (comp)
@@ -403,7 +438,6 @@ public class Model
             
             if ((pattern2 & comp) == comp)
             {
-                matchId++;
                 if (Debugger.IsAttached) { Console.WriteLine($"u16 splitA{matchId} @0x{uvOffset + 6:X};\nu16 splitB{matchId} @0x{uvOffset + 24 + 6:X};\n"); }
                 j += 0x20;
                 uvOffset += 24;
@@ -435,11 +469,11 @@ public class Model
     /// </summary>
     /// <param name="data">8 byte chunk containing the normal coordinate</param>
     /// <returns>X, Y and Z coordinates</returns>
-    public static float[] DecodeNormals(byte[] data)
+    public static float[] DecodeNormals(byte[] data, short div)
     {
-        var x =  BitConverter.ToInt16(data.Take(2).ToArray(), 0) / 4096f;
-        var y =  BitConverter.ToInt16(data.Skip(2).Take(2).ToArray(), 0) / 4096f;
-        var z =  BitConverter.ToInt16(data.Skip(4).Take(2).ToArray(), 0) / 4096f;
-        return [x, y, z];
+        var x =  BitConverter.ToInt16(data.Take(2).ToArray(), 0) / (float)div;
+        var y =  BitConverter.ToInt16(data.Skip(2).Take(2).ToArray(), 0) / (float)div;
+        var z =  BitConverter.ToInt16(data.Skip(4).Take(2).ToArray(), 0) / (float)div;
+        return [z, y, x];
     }
 }

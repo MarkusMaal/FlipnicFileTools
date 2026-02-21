@@ -117,6 +117,13 @@ namespace FlipnicFileToolGUI.Controls
             {
                 _texture = lp4.Texture;
             }
+            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            if (lp4.SelectedModel != null)
+            {
+                _vertices = lp4.SelectedModel.RawVertices.ToArray();
+            }
+
             previewImg.Source = new BitmapTools(){Image = (Tim2?)_texture}.ToBitmap();
         }
 
