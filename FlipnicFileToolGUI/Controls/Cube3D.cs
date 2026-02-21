@@ -155,8 +155,8 @@ namespace FlipnicFileToolGUI.Controls
                 vertices.Add(-vertex.CoordX / 4096f);
                 vertices.Add(-vertex.CoordY / 4096f);
                 vertices.Add(vertex.CoordZ / 4096f);
-                vertices.Add(-vertex.NormalCoordX / 4096f);
-                vertices.Add(-vertex.NormalCoordY / 4096f);
+                vertices.Add(vertex.NormalCoordX / 4096f);
+                vertices.Add(vertex.NormalCoordY / 4096f);
                 vertices.Add(vertex.NormalCoordZ / 4096f);
             }
             _vertices = vertices.ToArray();
@@ -267,7 +267,7 @@ namespace FlipnicFileToolGUI.Controls
 
             //Configure structure of the vertices
             //					  (position parameter in vertex shader, 3 points, data is stored as floats, non-normalized, 5 floats/point, first point at offset 0 in data array)
-            GL.VertexAttribPointer(_shader.GetAttribLocation("aPosition"), 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 2 * sizeof(float));
+            GL.VertexAttribPointer(_shader.GetAttribLocation("aPosition"), 3, VertexAttribPointerType.Float, true, 8 * sizeof(float), 2 * sizeof(float));
             GL.EnableVertexAttribArray(_shader.GetAttribLocation("aPosition"));
 
 
