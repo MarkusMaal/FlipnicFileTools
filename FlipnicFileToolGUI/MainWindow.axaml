@@ -34,6 +34,7 @@
             <NativeMenuItem Header="Options">
                 <NativeMenu>                    
                     <NativeMenuItem Header="Toggle dark theme" Click="ToggleDarkNative" />
+                    <NativeMenuItem Header="Use alternate method for decoding normal vectors" Click="AltNormalMethod_NativeClick" />
                     <NativeMenuItemSeparator/>
                     <NativeMenuItem Header="Import JA.MSG" Click="OpenNativeMenuItem_OnClick"></NativeMenuItem>
                 </NativeMenu>
@@ -51,6 +52,7 @@
         </MenuItem>
         <MenuItem Header="Options" Name="OptionMenu1">
             <MenuItem Header="Toggle dark theme" Click="PalMenuItem_OnClick"></MenuItem>
+            <MenuItem Header="Normal vectors decoding: Method A" Click="AltNormalMethod_Click"></MenuItem>
             <Separator/>
           <MenuItem Header="Import JA.MSG" Click="OpenMenuItem_OnClick"></MenuItem>
         </MenuItem>

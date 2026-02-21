@@ -363,20 +363,10 @@ public class Model
         var matchId = 0;
         var modelBounds = offset + len * 0x10;
         var normalIdx = 0;
-        var nexNormal = offset + 0x40;
+        bool sw = false;
+        var partIdx = StaticUtils.AlternateNormals ? 0 : 1;
         for (var j = offset + 0x10; j < offset + (Math.Max(len, uvlen)) * 0x10 - 0x10; j += 0x10)
         {
-            if (nexNormal == j)
-            {
-                if (Debugger.IsAttached) Console.WriteLine("Update normal");
-                nexNormal = j + 0x30;
-                normalIdx += 3;
-            } else if (nexNormal < j)
-            {
-                if (Debugger.IsAttached) Console.WriteLine($"Update normal (partial mode) (+{3 - (j - nexNormal) / 0x10})");
-                normalIdx += (3 - (j - nexNormal) / 0x10);
-                nexNormal = j + 0x30;
-            }
             var x1 = BitConverter.ToSingle(data.Skip(j).Take(4).ToArray(), 0);
             var y1 = BitConverter.ToSingle(data.Skip(j + 0x4).Take(4).ToArray(), 0);
             var z1 = BitConverter.ToSingle(data.Skip(j + 0x8).Take(4).ToArray(), 0);
@@ -399,26 +389,28 @@ public class Model
                 y3 = BitConverter.ToSingle(data.Skip(j - modelBounds + 0x24).Take(4).ToArray(), 0);
                 z3 = BitConverter.ToSingle(data.Skip(j - modelBounds + 0x28).Take(4).ToArray(), 0);
             }
+
+            var mul = partIdx % 2 == 0 ? 1 : -1;
             
             RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset).Take(8).ToArray()));
             RawVertices.Add(x1);
             RawVertices.Add(y1);
             RawVertices.Add(z1);
-            RawVertices.AddRange(DecodeNormals(data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx+2))).Take(8).ToArray(), StaticUtils.GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0)));
+            RawVertices.AddRange(DecodeNormals(data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx+0))).Take(8).ToArray(), StaticUtils.GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0), mul));
             if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V1 {j:X}/{j+4:X}/{j+8:X}");
             
             RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset + 8).Take(8).ToArray()));
             RawVertices.Add(x2);
             RawVertices.Add(y2);
             RawVertices.Add(z2);
-            RawVertices.AddRange(DecodeNormals(data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx+1))).Take(8).ToArray(), StaticUtils.GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0)));
+            RawVertices.AddRange(DecodeNormals(data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx+1))).Take(8).ToArray(), StaticUtils.GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0), mul));
             if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V2 {j+0x10:X}/{j+0x14:X}/{j+0x18:X}");
 
             RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset + 16).Take(8).ToArray()));
             RawVertices.Add(x3);
             RawVertices.Add(y3);
             RawVertices.Add(z3);
-            RawVertices.AddRange(DecodeNormals(data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx+0))).Take(8).ToArray(), StaticUtils.GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0)));
+            RawVertices.AddRange(DecodeNormals(data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx+2))).Take(8).ToArray(), StaticUtils.GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0), mul));
             if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V3 {j+0x20:X}/{j+0x24:X}/{j+0x28:X}");
 
             //
@@ -436,16 +428,28 @@ public class Model
             }
             var pattern2 = StaticUtils.GetUInt16(data.Skip(uvOffset + 24 + 6).Take(2).ToArray(), 0);
             
+            partIdx++;
             if ((pattern2 & comp) == comp)
             {
                 if (Debugger.IsAttached) { Console.WriteLine($"u16 splitA{matchId} @0x{uvOffset + 6:X};\nu16 splitB{matchId} @0x{uvOffset + 24 + 6:X};\n"); }
                 j += 0x20;
                 uvOffset += 24;
                 comp = -1;
+                if (nlen % 0x20 / 0x10 == 0x10)
+                {
+                    partIdx = (((pattern2 & 0x01) != 0x01)) ? 0 : 1;
+                }
+                else
+                {
+                    partIdx = (((pattern2 & 0x01) != 0x01)) ? 1 : 0;
+                }
+
+                normalIdx+=3;
                 continue;
             }
 
             uvOffset += 8;
+            normalIdx += 1;
         }
     }
 
@@ -469,11 +473,11 @@ public class Model
     /// </summary>
     /// <param name="data">8 byte chunk containing the normal coordinate</param>
     /// <returns>X, Y and Z coordinates</returns>
-    public static float[] DecodeNormals(byte[] data, short div)
+    public static float[] DecodeNormals(byte[] data, short div, int mul)
     {
-        var x =  BitConverter.ToInt16(data.Take(2).ToArray(), 0) / (float)div;
-        var y =  BitConverter.ToInt16(data.Skip(2).Take(2).ToArray(), 0) / (float)div;
-        var z =  BitConverter.ToInt16(data.Skip(4).Take(2).ToArray(), 0) / (float)div;
+        var x =  mul * BitConverter.ToInt16(data.Take(2).ToArray(), 0) / (float)div;
+        var y =  mul * BitConverter.ToInt16(data.Skip(2).Take(2).ToArray(), 0) / (float)div;
+        var z =  mul * BitConverter.ToInt16(data.Skip(4).Take(2).ToArray(), 0) / (float)div;
         return [z, y, x];
     }
 }

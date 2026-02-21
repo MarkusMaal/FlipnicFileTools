@@ -731,4 +731,25 @@ public sealed partial class MainWindow : SukiWindow
     {
         GlControl.Teleport();
     }
+
+    private void AltNormalMethod_NativeClick(object? sender, EventArgs e)
+    {
+        if (sender is not NativeMenuItem nmi) return;
+        StaticUtils.AlternateNormals = !StaticUtils.AlternateNormals;
+        nmi.IsChecked = StaticUtils.AlternateNormals;
+        if (FileName is null) return;
+        FileHelpers.LoadFromData(new FileStream(FileName, FileMode.Open, FileAccess.Read), FileName[^3..], this);
+        Title = "Flipnic file tool - " + new FileInfo(FileName).Name;
+    }
+
+    private void AltNormalMethod_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem mi) return;
+        StaticUtils.AlternateNormals = !StaticUtils.AlternateNormals;
+        var letter = StaticUtils.AlternateNormals ? "B" : "A";
+        mi.Header = $"Normal vectors decoding: Method {letter}";
+        if (FileName is null) return;
+        FileHelpers.LoadFromData(new FileStream(FileName, FileMode.Open, FileAccess.Read), FileName[^3..], this);
+        Title = "Flipnic file tool - " + new FileInfo(FileName).Name;
+    }
 }

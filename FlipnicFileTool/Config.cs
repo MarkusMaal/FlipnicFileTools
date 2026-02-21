@@ -116,6 +116,9 @@ public class Config
                 case "--crop-alpha":
                     CropAlpha = true;
                     break;
+                case "--alternate-normals":
+                    StaticUtils.AlternateNormals = true;
+                    break;
                 case "--png":
                     UsePng = true;
                     break;
