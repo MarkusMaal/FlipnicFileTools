@@ -83,8 +83,15 @@ public abstract class StaticUtils
     /// <param name="data">Source data</param>
     /// <param name="offset">Offset of the location within the data provided, which contains the float requested</param>
     public static float GetFloat(byte[] data, int offset)
-    { 
-        return BitConverter.ToSingle(data.Skip(offset).Take(4).ToArray());
+    {
+        try
+        {
+            return BitConverter.ToSingle(data.Skip(offset).Take(4).ToArray());
+        }
+        catch
+        {
+            return float.NaN;
+        }
     }
 
     /// <summary>
@@ -124,7 +131,14 @@ public abstract class StaticUtils
     /// <param name="offset">Offset of the location within the data provided, which contains the integer requested</param>
     public static int GetInt32(byte[] data, int offset)
     {
-        return BitConverter.ToInt32(data.Skip(offset).Take(4).ToArray());
+        try
+        {
+            return BitConverter.ToInt32(data.Skip(offset).Take(4).ToArray());
+        }
+        catch
+        {
+            return 0;
+        }
     }
     
     
