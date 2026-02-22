@@ -27,6 +27,7 @@
             <NativeMenuItem Header="File" IsVisible="true">
                 <NativeMenu>                    
                     <NativeMenuItem Header="Open" Gesture="Meta+O" Click="OpenNativeMenuItem_OnClick"/>
+                    <NativeMenuItem IsVisible="{Binding CanOpenImhex}" Header="Open in ImHex" Click="OpenImHexNativeMenuItemClick"></NativeMenuItem>
                     <NativeMenuItemSeparator />
                     <NativeMenuItem Header="Close" Gesture="Meta+W" Click="CloseNativeMenuItem_Click" />
                 </NativeMenu>
@@ -39,13 +40,21 @@
                     <NativeMenuItem Header="Import JA.MSG" Click="OpenNativeMenuItem_OnClick"></NativeMenuItem>
                 </NativeMenu>
             </NativeMenuItem>
+            <NativeMenuItem Header="Info">
+                <NativeMenu>
+                    <NativeMenuItem Header="Tutorial" Click="DocsNativeMenuClick"></NativeMenuItem>
+                    <NativeMenuItem Header="Flipnic data structures" Click="DataStructsNativeMenuClick"></NativeMenuItem>
+                    <NativeMenuItem Header="Save file editing" Click="SaveEditorNativeMenuClick"></NativeMenuItem>
+                </NativeMenu>
+            </NativeMenuItem>
         </NativeMenu>
     </NativeMenu.Menu>
     <!-- Menu bar (other OS) -->
     <sukiUi:SukiWindow.MenuItems>
-        <MenuItem Header="File" Name="FileMenu1">
+        <MenuItem Header="File" Name="FileMenu1" SubmenuOpened="FileMenu1_OnSubmenuOpened">
             <MenuItem Header="New Window" Name="NewWindowMenuItem" Click="NewWindowMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Open" Name="OpenMenuItem" Click="OpenMenuItem_OnClick"></MenuItem>
+            <MenuItem Header="Open in ImHex" Name="OpenImHexMenuItem" IsEnabled="False" Click="OpenImHexMenuItem_OnClick"></MenuItem>
             <Separator/>
             <MenuItem Header="Close window" Name="CloseMenuItem" Click="CloseMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Exit" Name="ExitMenuItem" Click="ExitMenuItem_OnClick"></MenuItem>
@@ -56,8 +65,14 @@
             <Separator/>
           <MenuItem Header="Import JA.MSG" Click="OpenMenuItem_OnClick"></MenuItem>
         </MenuItem>
-        <MenuItem Name="AboutMenu1" Header="About" Click="AboutClick">
+        <MenuItem Header="Info" Name="InfoMenu1">
+            <MenuItem Name="DocsMenu1" Header="Tutorial" Click="DocsMenu1_OnClick"></MenuItem>
+            <MenuItem Name="DataStructsMenu1" Header="Flipnic data structures" Click="DataStructsMenu1_OnClick"></MenuItem>
+            <MenuItem Name="SaveEditorMenu1" Header="Save file editing" Click="SaveEditorMenu1_OnClick"></MenuItem>
+            <Separator/>
+            <MenuItem Name="AboutMenu1" Header="About" Click="AboutClick">
             
+            </MenuItem>
         </MenuItem>
     </sukiUi:SukiWindow.MenuItems>
     <Grid>

@@ -555,7 +555,8 @@ public abstract class StaticUtils
     /// <param name="fileName">Full path to output OBJ file (including extension)</param>
     /// <param name="vertices">Array containing raw model data (each chunk is 7*sizeof(float), where first 2 items are XY UV coordinates, next 3 items are XYZ vertex coordinates and final 3 items are XYZ normal coordinates)</param>
     /// <param name="texture">Texture object (either Tim or Tim2 is accepted here)</param>
-    public static void ExportObj(string fileName, float[] vertices, object? texture)
+    /// <param name="ignoreNormals">Optional: If set to true, ensures that no normal vectors will get exported to the final OBJ file</param>
+    public static void ExportObj(string fileName, float[] vertices, object? texture, bool ignoreNormals = false)
     {
         // generate .png file
         var hasTexture = true;
@@ -605,7 +606,7 @@ public abstract class StaticUtils
 
             writer.WriteLine($"v {x.ToString(culture)} {y.ToString(culture)} {z.ToString(culture)}");
             writer.WriteLine($"vt {u.ToString(culture)} {v.ToString(culture)}");
-            writer.WriteLine($"vn {nx.ToString(culture)} {ny.ToString(culture)} {nz.ToString(culture)}");
+            if (!ignoreNormals) writer.WriteLine($"vn {nx.ToString(culture)} {ny.ToString(culture)} {nz.ToString(culture)}");
         }
 
         // Write face assuming every 3 vertices = 1 triangle

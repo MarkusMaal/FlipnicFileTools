@@ -17,9 +17,21 @@ public class Lp4(byte[] data, string fileName)
     public int ModelCount { get; set; } = StaticUtils.GetInt32(data, 0); // not sure if that's what it is anymore
     public bool HasEmbeddedResources { get; set; } = data[0x11] == 0x01;
     public bool Is2dAnimation { get; set; } = data[0x13] == 0x01;
-    private List<float[]> verticies = new();
-    
-    private List<float> rawVerticies = new();
+    private List<float[]> verticies = [];
+
+    private readonly List<float[]> _boundingBox = [];
+
+    private int _animationJoints
+    {
+        get
+        {
+            if (data[0x11] != 0x01) return 0;
+            var additionalDataLength = StaticUtils.GetInt32(data, 8);
+            return StaticUtils.GetInt32(data.Skip(0xF4 + additionalDataLength * 0x10).Take(4).ToArray(), 0);
+        }
+    }
+
+    private List<float> rawVerticies = [];
 
     private string TexturePath { get; set; } = "";
     
@@ -41,16 +53,27 @@ public class Lp4(byte[] data, string fileName)
                 Model count: {ModelOffsets.Count}
                 Has embedded resources: {er}
                 Is 2D animation: {i2}
+                Timelines: {StaticUtils.GetInt32(data.Skip(8).Take(4).ToArray(), 0)}
+                Animation joints: {_animationJoints}
                 
                 """;
-        if (Type != FileType.StaticModel) return o;
+        string[] cols = ["X", "Y", "Z"];
+        List<string[]> rows = [];
+        rows.AddRange(_boundingBox.Select(vertex => (string[])[StaticUtils.DotFloatString(vertex[0]), StaticUtils.DotFloatString(vertex[1]), StaticUtils.DotFloatString(vertex[2])]));
+        o += $"""
+              
+              Bounding box:
+              {StaticUtils.GenerateTable(cols, rows, StaticUtils.SimpleOutput)}
+              
+              """;
+        rows.Clear();
+        //if (Type != FileType.StaticModel) return o;
         o += $"""
 
               Models:
               
               """;
-        string[] cols = ["Name", "Address", "Scale", "Offset", "Texture", "Polygons"];
-        List<string[]> rows = [];
+        cols = ["Name", "Address", "Scale", "Offset", "Texture", "Polygons"];
         rows.AddRange(Models.Select(model => model.GetRow()));
         o += StaticUtils.GenerateTable(cols, rows, StaticUtils.SimpleOutput);
         return o;
@@ -277,6 +300,7 @@ public class Lp4(byte[] data, string fileName)
         try
         {
             GetModelOffset();
+            ParseBoundingBox();
             if (rawVerticies.Count > 0) return;
             if (SelectedModel == null) return;
             if (Models.Count == 0)
@@ -310,6 +334,43 @@ public class Lp4(byte[] data, string fileName)
         }
         return rawVerticies.ToArray();
     }
+
+    private void ParseBoundingBox()
+    {
+        if (data[0x11] != 0x01) return;
+        var additionalDataLength = StaticUtils.GetInt32(data, 8);
+        var boxRaw = data.Skip(0x20 + additionalDataLength * 0x10).Take(0x80).ToArray();
+        var boxRawFloats = new List<float[]>();
+        for (var i = 0; i < boxRaw.Length; i += 0x10)
+        {
+            boxRawFloats.Add([StaticUtils.GetFloat(boxRaw, i), StaticUtils.GetFloat(boxRaw, i+4), StaticUtils.GetFloat(boxRaw, i+8)]);
+        }
+        // basically the points in the file define the top and bottom side of the rectangle let's call these 0 1 2 3 4 5 6 7,
+        // where 0 1 2 3 are the points of the first rectangle in a 3D space and 4 5 6 7 define the second rectangle
+        //
+        // with some very basic 3D geometry we can simply "connect the dots" to get the remaining triangles required to generate a full
+        // box shape
+        foreach (var i in new[]{ 0, 1, 2, 1, 2, 3, 4, 5, 6, 6, 7, 5, 2, 3, 6, 3, 7, 6, 0, 1, 5, 0, 5, 4, 2, 0, 4, 6, 4, 2, 1, 3, 7, 1, 5, 7 })
+        {
+            _boundingBox.Add(boxRawFloats[i]);   
+        }
+    }
+
+    public float[] GetBoundingBox()
+    {
+        var floats = new List<float>();
+        foreach (var vtx in _boundingBox)
+        {
+            floats.Add(0f);
+            floats.Add(0f);
+            floats.AddRange(vtx);
+            floats.Add(0f);
+            floats.Add(0f);
+            floats.Add(0f);
+        }
+
+        return floats.ToArray();
+    }
 }
 
 public class Model
@@ -338,8 +399,7 @@ public class Model
             RawVertices.Count.ToString()
         ];
     }
-    
-    
+
     /// <summary>
     /// Once we figure out where the vertex data is, call this method to append vertices from the data and offset provided
     /// </summary>
@@ -357,7 +417,8 @@ public class Model
         {
             Console.WriteLine($"Debug: UV offset: 0x{texOffset:X}");
         }
-        var uvOffset = texOffset ;
+
+        var uvOffset = texOffset;
         var comp = -1;
         var mask = 0x01;
         var matchId = 0;
@@ -391,27 +452,33 @@ public class Model
             }
 
             var mul = partIdx % 2 == 0 ? 1 : -1;
-            
+
             RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset).Take(8).ToArray()));
             RawVertices.Add(x1);
             RawVertices.Add(y1);
             RawVertices.Add(z1);
-            RawVertices.AddRange(DecodeNormals(data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx+0))).Take(8).ToArray(), StaticUtils.GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0), mul));
-            if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V1 {j:X}/{j+4:X}/{j+8:X}");
-            
+            RawVertices.AddRange(DecodeNormals(
+                data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx + 0))).Take(8).ToArray(),
+                StaticUtils.GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0), mul));
+            if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V1 {j:X}/{j + 4:X}/{j + 8:X}");
+
             RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset + 8).Take(8).ToArray()));
             RawVertices.Add(x2);
             RawVertices.Add(y2);
             RawVertices.Add(z2);
-            RawVertices.AddRange(DecodeNormals(data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx+1))).Take(8).ToArray(), StaticUtils.GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0), mul));
-            if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V2 {j+0x10:X}/{j+0x14:X}/{j+0x18:X}");
+            RawVertices.AddRange(DecodeNormals(
+                data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx + 1))).Take(8).ToArray(),
+                StaticUtils.GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0), mul));
+            if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V2 {j + 0x10:X}/{j + 0x14:X}/{j + 0x18:X}");
 
             RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset + 16).Take(8).ToArray()));
             RawVertices.Add(x3);
             RawVertices.Add(y3);
             RawVertices.Add(z3);
-            RawVertices.AddRange(DecodeNormals(data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx+2))).Take(8).ToArray(), StaticUtils.GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0), mul));
-            if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V3 {j+0x20:X}/{j+0x24:X}/{j+0x28:X}");
+            RawVertices.AddRange(DecodeNormals(
+                data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx + 2))).Take(8).ToArray(),
+                StaticUtils.GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0), mul));
+            if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V3 {j + 0x20:X}/{j + 0x24:X}/{j + 0x28:X}");
 
             //
             // let's define a comparison variable x (comp)
@@ -426,12 +493,18 @@ public class Model
             {
                 comp = pattern;
             }
+
             var pattern2 = StaticUtils.GetUInt16(data.Skip(uvOffset + 24 + 6).Take(2).ToArray(), 0);
-            
+
             partIdx++;
             if ((pattern2 & comp) == comp)
             {
-                if (Debugger.IsAttached) { Console.WriteLine($"u16 splitA{matchId} @0x{uvOffset + 6:X};\nu16 splitB{matchId} @0x{uvOffset + 24 + 6:X};\n"); }
+                if (Debugger.IsAttached)
+                {
+                    Console.WriteLine(
+                        $"u16 splitA{matchId} @0x{uvOffset + 6:X};\nu16 splitB{matchId} @0x{uvOffset + 24 + 6:X};\n");
+                }
+
                 j += 0x20;
                 uvOffset += 24;
                 comp = -1;
@@ -444,7 +517,7 @@ public class Model
                     partIdx = (((pattern2 & 0x01) != 0x01)) ? 1 : 0;
                 }
 
-                normalIdx+=3;
+                normalIdx += 3;
                 continue;
             }
 
