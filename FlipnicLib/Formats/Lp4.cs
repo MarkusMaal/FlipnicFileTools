@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 
 namespace FlipnicLib.Formats;
 
@@ -20,6 +21,7 @@ public class Lp4(byte[] data, string fileName)
     private List<float[]> verticies = [];
 
     private readonly List<float[]> _boundingBox = [];
+    
 
     private int _animationJoints
     {
@@ -76,6 +78,16 @@ public class Lp4(byte[] data, string fileName)
         cols = ["Name", "Address", "Scale", "Offset", "Texture", "Polygons"];
         rows.AddRange(Models.Select(model => model.GetRow()));
         o += StaticUtils.GenerateTable(cols, rows, StaticUtils.SimpleOutput);
+        if (_animationJoints <= 0) return o;
+        o += $"""
+
+              Joints:
+
+              """;
+        cols = ["Name", "Vertices", "Position", "Size"];
+        rows.Clear();
+        rows.AddRange(Models[0].AnimationJoints.Values.Select(jnt => new[] { jnt.Name, (jnt.Indicies ?? []).Length.ToString(), $"{StaticUtils.DotFloatString(jnt.Position?[0] ?? float.NaN)}x{StaticUtils.DotFloatString(jnt.Position?[1] ?? float.NaN)}x{StaticUtils.DotFloatString(jnt.Position?[2] ?? float.NaN)}", $"{StaticUtils.DotFloatString(jnt.Skew?[0] ?? float.NaN)}x{StaticUtils.DotFloatString(jnt.Skew?[5] ?? float.NaN)}x{StaticUtils.DotFloatString(jnt.Skew?[8] ?? float.NaN)}" }));
+        o += StaticUtils.GenerateTable(cols, rows, StaticUtils.SimpleOutput);
         return o;
     }
 
@@ -100,8 +112,10 @@ public class Lp4(byte[] data, string fileName)
     {
         try
         {
+            var hasBoundingBox = data[17] == 0x01;
             var additionalDataLength = StaticUtils.GetInt32(data, 8); 
-            var i = 0xA0;
+            var i = 0x20;
+            if (hasBoundingBox) i += 0x80;
             i += additionalDataLength * 0x10;
             while ((i < data.Length) && (i >= 0))
             {
@@ -109,83 +123,129 @@ public class Lp4(byte[] data, string fileName)
                 var extraUnknownDataCount = StaticUtils.GetInt32(data, i + 12);
                 var modelOffset = i + 0x20;
                 var model = new Model { Address = modelOffset, Name = StaticUtils.GetStringAt(data, modelOffset) };
+                var layoutCounts = StaticUtils.GetInt32(data, i + 4);
+                var hasHitbox = data[i + 0xC] == 0x01;
                 i += 0x30; // name and params
-                model.Scale =
-                [
-                    StaticUtils.GetFloat(data, i + 0x40), StaticUtils.GetFloat(data, i + 0x54),
-                    StaticUtils.GetFloat(data, i + 0x68)
-                ];
-                model.Offset =
-                [
-                    StaticUtils.GetFloat(data, i + 0x70), StaticUtils.GetFloat(data, i + 0x74),
-                    StaticUtils.GetFloat(data, i + 0x78)
-                ];
-                var animationJoints = StaticUtils.GetInt32(data, i + 0x24);
-                if (animationJoints > 0) // this is an animated model, ignore the animation stuff and just get the default pose
+                model.Lightmap = [];
+                i += 0x10;
+                for (var k = 0; k < layoutCounts; k++)
                 {
-                    i += 0x10;
-                    if (attributeSetCount > 65536)
+                    var keyframeCount = StaticUtils.GetInt32(data, i);
+                    var animationJoints = StaticUtils.GetInt32(data, i + 0x14);
+                    var hasLightMapData = data[i + 0x20] == 0x01;
+                    var hasUnknownData = data[i + 0x24] == 0x01;
+                    var lightMapLength = StaticUtils.GetInt32(data, i + 0x28);
+                    
+                    if (animationJoints > 65536)
                     {
-                        StaticUtils.DecodeColors("~-CError~--: Attribute set count was too large, continuing would cause hangs! Parser was halted!\n");
+                        StaticUtils.DecodeColors("~-CError~--: Animation joint count was too large, continuing would cause hangs! Parser was halted!\n");
                         OldMethod();
                         return;
                     }
-                    for (var j = 0; j < attributeSetCount; j++) // joint definitions
+                    if (keyframeCount > 65536)
                     {
-                        animationJoints = StaticUtils.GetInt32(data, i + 0x14);
-                        var extraDataLength =  StaticUtils.GetInt32(data, i + 0x28) - 1;
-                        i += 0x90;
-                        i += animationJoints * 0x60;
-                        i +=  extraDataLength * 0x10;
+                        StaticUtils.DecodeColors("~-CError~--: Keyframe count was too large, continuing would cause hangs! Parser was halted!\n");
+                        OldMethod();
+                        return;
                     }
-
+                    if (lightMapLength > 65536)
+                    {
+                        StaticUtils.DecodeColors("~-CError~--: Lightmap length was too large, continuing would cause hangs! Parser was halted!\n");
+                        OldMethod();
+                        return;
+                    }
+                    model.Scale =
+                    [
+                        StaticUtils.GetFloat(data, i + 0x30), StaticUtils.GetFloat(data, i + 0x44),
+                        StaticUtils.GetFloat(data, i + 0x58)
+                    ];
+                    model.Offset =
+                    [
+                        StaticUtils.GetFloat(data, i + 0x60), StaticUtils.GetFloat(data, i + 0x64),
+                        StaticUtils.GetFloat(data, i + 0x68)
+                    ];
                     i += 0x80;
-                    
-                    // model definition
-                    var extraData = StaticUtils.GetInt32(data, i + 0x18);
-                    i += 0x10 * extraData;
-                    i += 0x20;
+                    if (hasUnknownData)
+                    {
+                        i += 0x30 * (StaticUtils.GetInt32(data, 0x24));
+                    }
+                    for (var j = 0; j < (hasLightMapData ? lightMapLength : 0); j++)
+                    {
+                        model.Lightmap.Add([
+                            StaticUtils.GetFloat(data, i), StaticUtils.GetFloat(data, i + 0x4),
+                            StaticUtils.GetFloat(data, i + 0x8), StaticUtils.GetFloat(data, i + 0xC)
+                        ]);
+                        i += 0x10;
+                    }
 
-                    // animations
-                    var numAnimations = StaticUtils.GetInt32(data, i);
-                    i += 0x10;
-                    if (numAnimations > 65536)
+                    i += keyframeCount * 0x30;
+                    for (var a = 0; a < animationJoints; a++)
                     {
-                        StaticUtils.DecodeColors("~-CError~--: Animation count was too large, continuing would cause hangs! Parser was halted!\n");
-                        OldMethod();
-                        return;
+                        var sp = i + (0x60 * a);
+                        var name = StaticUtils.GetString(data.Skip(sp - 0x10).ToArray());
+                        if (!Ascii.IsValid(name) || (name == "")) continue;
+                        var skew = new List<float?>();
+                        var pos = new List<float?>();
+                        for (var b = sp + 0x20; b < sp + 0x50; b+=4)
+                        {
+                            skew.Add(StaticUtils.GetFloat(data, b));
+                        }
+                        for (var b = sp + 0x50; b < sp + 0x5C; b+=4)
+                        {
+                            pos.Add(StaticUtils.GetFloat(data, b));
+                        }
+
+                        while (model.AnimationJoints.ContainsKey(name))
+                        {
+                            name += " (1)";
+                        }
+                        model.AnimationJoints.Add(name, new Joint()
+                        {
+                            Name = name,
+                            Skew = skew.ToArray(),
+                            Position = pos.ToArray()
+                        });
                     }
-                    for (var j = 0; j < numAnimations - 1; j++)
-                    {
-                        i += 0x20; // animation name
-                        var keyFrames = StaticUtils.GetInt32(data, i);
-                        i += 0x10; // keyframe count
-                        i += 0x10 * keyFrames; // keyframes
-                    }
-                    
-                    i += 0x20; // animation name
-                    i += 0x10; // keyframe count
-                    i += 0x10 * StaticUtils.GetInt32(data, i-0x10); // keyframes
-                    // model
-                    var modelVertCount = StaticUtils.GetInt32(data, i);
-                    var modelNormalCount = StaticUtils.GetInt32(data, i + 4);
-                    var modelTextureCoordCount = StaticUtils.GetInt32(data, i + 12);
-                    model.AppendVerticies(i, data);
-                    i += 0x10 * modelVertCount;
-                    i += 0x8 * modelNormalCount;
-                    i += 0x8 * modelTextureCoordCount;
-                    i += 0x90;
-                    model.Texture = StaticUtils.GetStringAt(data, i);
-                    Models.Add(model);
-                    break;
+                    i += 0x60 * animationJoints;
                 }
-                i += 0x90 * attributeSetCount; // position, size, etc
-                i += 0x90 * extraUnknownDataCount; // some unknown sections
+
+                if (hasHitbox)
+                {
+                    i += 0x80;
+                }
 
                 // model
+                var animIndices = StaticUtils.GetInt32(data, i + 0x1C);
+                if (animIndices > 65536)
+                {
+                    StaticUtils.DecodeColors("~-CError~--: Animation indices count was too large, continuing would cause hangs! Parser was halted!\n");
+                    OldMethod();
+                    return;
+                }
                 var padding = 0x10 * (StaticUtils.GetInt32(data, i + 0x18));
                 i += 0x20; // model identifier, I guess?
                 i += padding;
+                if (animIndices > 0) i += 0x10;
+                for (var h = 0; h < animIndices; h++)
+                {
+                    var count = StaticUtils.GetInt32(data, i+0x20);
+                    var name = StaticUtils.GetString(data.Skip(i).Take(20).ToArray());
+                    if (model.AnimationJoints.ContainsKey(name))
+                    {
+                        model.AnimationJoints[name].DecodeIndicies(data.Skip(i).Take(0x30 + count * 0x10).ToArray());
+                    }
+                    else
+                    {
+                        var j = new Joint()
+                        {
+                            Name = name
+                        };
+                        j.DecodeIndicies(data.Skip(i).Take(0x30 + count * 0x10).ToArray());
+                        model.AnimationJoints.Add(name, j);
+                    }
+
+                    i += 0x30 + count * 0x10;
+                }
                 var vectCount = StaticUtils.GetInt32(data, i);
                 var normalCount = StaticUtils.GetInt32(data, i + 4);
                 var textureCoordCount = StaticUtils.GetInt32(data, i + 12);
@@ -198,6 +258,7 @@ public class Lp4(byte[] data, string fileName)
                 model.Texture = StaticUtils.GetStringAt(data, i);
                 i += 0x30; // footer containing the name of the texture
                 Models.Add(model);
+                if (model.AnimationJoints.Count > 0) break;
             }
 
 
@@ -206,7 +267,7 @@ public class Lp4(byte[] data, string fileName)
                 SelectedModel = Models[0];
             }
 
-            if (SelectedModel.RawVertices.Count != 0)
+            if (SelectedModel?.RawVertices.Count != 0)
             {
                 StaticUtils.DecodeColors("~-ASuccess~--: Successfully decoded the LP4 file!");
                 return;
@@ -373,6 +434,34 @@ public class Lp4(byte[] data, string fileName)
     }
 }
 
+public class Joint
+{
+    public string Name { get; set; }
+    public int[] Indicies { get; set; }
+    public float[] UnknownFloats { get; set; }
+    
+    public float?[] Skew { get; set; }
+    public float?[] Position { get; set; }
+    
+    public Joint() {}
+
+    public void DecodeIndicies(byte[] data)
+    {
+        Name = StaticUtils.GetString(data.Take(0x20).ToArray());
+        var count =  StaticUtils.GetInt32(data, 0x20);
+        List<int> indicies = [];
+        List<float> unknownFloats = [];
+        for (var i = 0x30; i < count * 0x10 + 0x30; i += 0x10)
+        {
+            indicies.Add(StaticUtils.GetInt32(data, i));
+            unknownFloats.Add(StaticUtils.GetFloat(data, i + 4));
+        }
+
+        Indicies = indicies.ToArray();
+        UnknownFloats = unknownFloats.ToArray();
+    }
+}
+
 public class Model
 {
     public string Name { get; set; }
@@ -382,7 +471,10 @@ public class Model
     public float[] Offset { get; set; }
     public int Address { get; set; }
 
+    public List<float[]> Lightmap { get; set; } = [];
     public List<float> RawVertices { get; set; } = [];
+
+    public Dictionary<string, Joint> AnimationJoints { get; set; } = [];
 
     /// <summary>
     /// Generate a table row of this model

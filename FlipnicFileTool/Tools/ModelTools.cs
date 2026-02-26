@@ -32,6 +32,7 @@ public class ModelTools
     {
         var lp4 = new Lp4(File.ReadAllBytes(FileName), FileName);
         lp4.Read();
+        Console.Write("\r".PadRight(Console.WindowWidth) + "\r");
         Console.WriteLine(lp4.ToString());
     }
 
