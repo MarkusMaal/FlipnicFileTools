@@ -86,6 +86,7 @@ public class Lp4(byte[] data, string fileName)
               """;
         cols = ["Name", "Vertices", "Position", "Size"];
         rows.Clear();
+        if (Models.Count <= 0) return o;
         rows.AddRange(Models[0].AnimationJoints.Values.Select(jnt => new[] { jnt.Name, (jnt.Indicies ?? []).Length.ToString(), $"{StaticUtils.DotFloatString(jnt.Position?[0] ?? float.NaN)}x{StaticUtils.DotFloatString(jnt.Position?[1] ?? float.NaN)}x{StaticUtils.DotFloatString(jnt.Position?[2] ?? float.NaN)}", $"{StaticUtils.DotFloatString(jnt.Skew?[0] ?? float.NaN)}x{StaticUtils.DotFloatString(jnt.Skew?[5] ?? float.NaN)}x{StaticUtils.DotFloatString(jnt.Skew?[8] ?? float.NaN)}" }));
         o += StaticUtils.GenerateTable(cols, rows, StaticUtils.SimpleOutput);
         return o;
@@ -139,19 +140,19 @@ public class Lp4(byte[] data, string fileName)
                     if (animationJoints > 65536)
                     {
                         StaticUtils.DecodeColors("~-CError~--: Animation joint count was too large, continuing would cause hangs! Parser was halted!\n");
-                        OldMethod();
+                        BruteForceMethod();
                         return;
                     }
                     if (keyframeCount > 65536)
                     {
                         StaticUtils.DecodeColors("~-CError~--: Keyframe count was too large, continuing would cause hangs! Parser was halted!\n");
-                        OldMethod();
+                        BruteForceMethod();
                         return;
                     }
                     if (lightMapLength > 65536)
                     {
                         StaticUtils.DecodeColors("~-CError~--: Lightmap length was too large, continuing would cause hangs! Parser was halted!\n");
-                        OldMethod();
+                        BruteForceMethod();
                         return;
                     }
                     model.Scale =
@@ -219,7 +220,7 @@ public class Lp4(byte[] data, string fileName)
                 if (animIndices > 65536)
                 {
                     StaticUtils.DecodeColors("~-CError~--: Animation indices count was too large, continuing would cause hangs! Parser was halted!\n");
-                    OldMethod();
+                    BruteForceMethod();
                     return;
                 }
                 var padding = 0x10 * (StaticUtils.GetInt32(data, i + 0x18));
@@ -273,84 +274,120 @@ public class Lp4(byte[] data, string fileName)
                 return;
             }
             Models.Clear();
-            OldMethod();
+            BruteForceMethod();
         }
         catch when (!Debugger.IsAttached)
         {
-            OldMethod();
+            BruteForceMethod();
         }
     }
     
-    private void OldMethod()
+    private void BruteForceMethod()
     {
         StaticUtils.DecodeColors("~-EWarning~--: failed to parse LP4 file correctly, falling back to brute-force method!\n");
-        var i = 0;
-        while (i < data.Length - 0x20)
+        int i;
+        Console.WriteLine("Searching for models (brute-force)");
+        var modelIdx = 0;
+        for (i = 0; i < data.Length - 0x20; i+=0x10)
         {
-            int f2;
-            float f, f3;
-            short f4;
-            f2 = BitConverter.ToInt32([.. data.Skip(i).Take(4)], 0);
-            if (i + f2 * 0x10 >= data.Length - 0x20)
+            var c1 = StaticUtils.GetInt32(data, i);
+            var c2 = StaticUtils.GetInt32(data, i+4);
+            var c3 = StaticUtils.GetInt32(data, i+8);
+            var c4 = StaticUtils.GetInt32(data, i+12);
+            if (c1 > 0)
             {
-                i += 0x10;
-                continue;
-            }
-            f = BitConverter.ToSingle([.. data.Skip(i+0x1C).Take(4)], 0);
-            f3 = BitConverter.ToSingle([.. data.Skip(i+f2*0x10+0xC).Take(4)]);
-            f4 = BitConverter.ToInt16([.. data.Skip(i+f2*0x10+0x1E).Take(4)], 0);
-            var endModelData = i + 0x10 + StaticUtils.GetInt32(data, i) * 10 + StaticUtils.GetInt32(data, i+4) * 8 + StaticUtils.GetInt32(data, i+8) * 4 +  StaticUtils.GetInt32(data, i+12) * 8;
-            if ((f == 1.0f) && (f3 == 1.0f) && (f4 == 0 || StaticUtils.GetStringAt(data, endModelData).StartsWith("mat")))
-            {
-                var len = f2;
-                if ((len > 0) && (len < data.Length) && i > 0x80)
+                if (i + 0x10 + c1 * 0x10 > data.Length) continue;
+                var ok = true;
+                for (var j = i + 0x10; j < i + 0x10 + c1 * 0x10; j += 0x10)
                 {
-                    try
-                    {
-                        var tm = new Model();
-                        tm.AppendVerticies(i, data);
+                    if (float.IsNaN(StaticUtils.GetFloat(data, j))) ok = false;
+                    if (float.IsNaN(StaticUtils.GetFloat(data, j+4))) ok = false;
+                    if (float.IsNaN(StaticUtils.GetFloat(data, j+8))) ok = false;
+                    if (Math.Abs(StaticUtils.GetFloat(data, j+12) - 1f) > 0.0001) ok = false;
+                }
 
-                        rawVerticies = tm.RawVertices;
-                        if (rawVerticies.Count > 0)
-                        {
-                            StaticUtils.DecodeColors($"~-ASuccess~--: Detected valid model data at offset 0x{i:X}\n");
-                        }
-                        else
-                        {
-                            StaticUtils.DecodeColors($"~-EWarning~--: Offset 0x{i:X} contains 0 vertices, continue searching...\n");
-                            i += 0x10;
-                            continue;
-                        }
-                        i += 2 * len * 0x10 + 0xA0;
-                        break;
-                    }
-                    catch
+                if (!ok) continue;
+            }
+
+            if (c2 > 0)
+            {
+                if (i + 0x10 + c1 * 0x10 + c2 * 0x8 > data.Length) continue;
+                var ok = true;
+                for (var j = i + 0x10 + c1 * 0x10; j < i + 0x10 * c1 + 0x10 + c2 * 0x8; j += 0x8)
+                {
+                    if (StaticUtils.GetInt16(data, j + 6) == 0) continue;
+                    ok = false;
+                    break;
+                }
+
+                if (!ok) continue;
+            }
+
+            if (c4 > 0)
+            {
+                if (i + 0x10 + c1 * 0x10 + c2 * 0x8 + c3 * 0x4 + c4 * 0x8 > data.Length) continue;
+                var ok = true;
+                var start = i + 0x10 + c1 * 0x10 + c2 * 0x8 + c3 * 0x4;
+                var end =  i + 0x10 + c1 * 0x10 + c2 * 0x8 + c3 * 0x4 + c4 * 0x8;
+                for (var j = start; j < end; j += 0x8)
+                {
+                    ok = StaticUtils.GetUInt16(data, j + 6) == 0x00 ||
+                         StaticUtils.GetUInt16(data, j + 6) == 0x01 ||
+                         StaticUtils.GetUInt16(data, j + 6) == 0x8000 ||
+                         StaticUtils.GetUInt16(data, j + 6) == 0x8001;
+                    if (!ok) break;
+                }
+
+                if (!ok) continue;
+            }
+
+            if (c1 == 0) continue;
+            if (i < 0x80) continue;
+            try {
+                var tm = new Model
+                {
+                    Name = $"Unrecognized model {modelIdx++}"
+                };
+                tm.AppendVerticies(i, data);
+                tm.Offset = [0, 0 ,0];
+                tm.Address = i;
+                tm.Scale = [1, 1, 1];
+                
+
+                if (tm.RawVertices.Count > 0)
+                {
+                    StaticUtils.DecodeColors($"~-ASuccess~--: Detected valid model data at offset 0x{i:X}\n");
+
+                    for (var j = -0x20; j < 0x20; j++)
                     {
-                        StaticUtils.DecodeColors($"~-CError~--: Attempt to read from offset 0x{i:X} threw an error, continue searching...\n");
+                        tm.Texture = StaticUtils.GetString(data.Skip(i + (0x10 * j)).Take(0x20).ToArray());
+                        if (Ascii.IsValid(tm.Texture) && tm.Texture.Length != 0 && tm.Texture.ToLower().EndsWith(".tm2"))
+                        {
+                            break;
+                        }
                     }
+
+                    if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
+                            tm.Texture.ToUpper())))
+                    {
+                        StaticUtils.DecodeColors("~-EWarning~--: The model does not have a texture\n");
+                    }
+
+                    Models.Add(tm);
+                }
+                else
+                {
+                    StaticUtils.DecodeColors($"~-EWarning~--: Offset 0x{i:X} contains 0 vertices, continue searching...\n");
+                    i += 0x10;
                 }
             }
-            i += 0x10;
+            catch
+            {
+                StaticUtils.DecodeColors($"~-CError~--: Attempt to read from offset 0x{i:X} threw an error, continue searching...\n");
+            }
         }
+        
 
-        if (rawVerticies.Count == 0)
-        {
-            StaticUtils.DecodeColors("~-CError~--: No model data found\n");
-            return;
-        }
-        TexturePath = StaticUtils.GetString(data.Skip(i).Take(0x20).ToArray());
-
-        if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-                TexturePath.ToUpper())))
-        {
-            StaticUtils.DecodeColors("~-EWarning~--: The model does not have a texture\n");
-            return;
-        }
-        var fs = File.OpenRead(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-            TexturePath.ToUpper()));
-        var d = new byte[fs.Length];
-        fs.ReadExactly(d, 0, d.Length);
-        Texture = new Tim2(d, TexturePath);
     }
     
     /// <summary>
@@ -482,14 +519,21 @@ public class Model
     /// <returns>Table row containing information about the model, including name, address, scale, offset, texture and vertex count</returns>
     public string[] GetRow()
     {
-        return
-        [
-            Name, Address.ToString("X"),
-            $"{StaticUtils.DotFloatString(Scale[0])}x{StaticUtils.DotFloatString(Scale[1])}x{StaticUtils.DotFloatString(Scale[2])}",
-            $"{StaticUtils.DotFloatString(Offset[0])}x{StaticUtils.DotFloatString(Offset[1])}x{StaticUtils.DotFloatString(Offset[2])}",
-            Texture,
-            RawVertices.Count.ToString()
-        ];
+        try
+        {
+            return
+            [
+                Name, Address.ToString("X"),
+                $"{StaticUtils.DotFloatString(Scale[0])}x{StaticUtils.DotFloatString(Scale[1])}x{StaticUtils.DotFloatString(Scale[2])}",
+                $"{StaticUtils.DotFloatString(Offset[0])}x{StaticUtils.DotFloatString(Offset[1])}x{StaticUtils.DotFloatString(Offset[2])}",
+                Ascii.IsValid(Texture) ? Texture : "N/A",
+                RawVertices.Count.ToString()
+            ];
+        }
+        catch
+        {
+            return ["Error", "Error", "Error", "Error", "Error", "Error"];
+        }
     }
 
     /// <summary>

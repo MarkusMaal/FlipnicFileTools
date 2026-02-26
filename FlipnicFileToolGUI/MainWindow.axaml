@@ -105,7 +105,7 @@
                                   <Button Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>
                                   <Button Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Name="TpModelButton" Click="TpModelButton_OnClick">Teleport to model</Button>
                                 <CheckBox Margin="5,10" Name="RotateModelCheck" IsCheckedChanged="RotateModelCheck_OnIsCheckedChanged">Spin</CheckBox>
-                                  <ScrollViewer>
+                                  <ScrollViewer MaxHeight="100">
                                       <ListBox Margin="5" Name="Models" SelectionChanged="Models_OnSelectionChanged"></ListBox>
                                   </ScrollViewer>
                               </StackPanel>
