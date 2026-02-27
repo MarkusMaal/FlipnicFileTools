@@ -292,6 +292,20 @@ public class Lp4(byte[] data, string fileName)
         StaticUtils.DecodeColors("~-EWarning~--: failed to parse LP4 file correctly, falling back to brute-force method!\n");
         int i;
         var modelIdx = 0;
+        List<string> names = [];
+        for (i = 0x30; i < data.Length - 0x20; i += 0x10)
+        {
+            if (StaticUtils.GetInt32(data, i + 0x2C) == 0 && StaticUtils.GetInt32(data, i + 0x3C) == 0) continue; // joint definition, ignore those
+            var nameTest =  StaticUtils.GetStringAt(data, i);
+            if (nameTest.Contains("JNT")) continue;
+            if (names.Contains(nameTest)) continue;
+            var validLetters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_";
+            var isValid = nameTest.All(letter => validLetters.Contains(letter));
+            if (!isValid || !Ascii.IsValid(nameTest) || nameTest.Length < 0x3) continue;
+            names.Add(nameTest);
+        }
+
+        names = names[1..];
         for (i = 0; i < data.Length - 0x20; i+=0x10)
         {
             StaticUtils.LiveLoadStatus = $"Scanning for 3D model data ({StaticUtils.DotFloatString((float)Math.Round(i/(double)data.Length*100.0, 2))}% complete)";
@@ -348,30 +362,35 @@ public class Lp4(byte[] data, string fileName)
 
             if (c1 == 0) continue;
             if (i < 0x80) continue;
-            try {
+            try
+            {
+                var modelEnd = i + 0x10 + (c1 * 0x10) + (c2 * 0x8) + (c3 * 0x4) + (c4 * 0x08);
                 var tm = new Model
                 {
                     Name = $"Unrecognized model {modelIdx++}"
                 };
+                if (names.Count > Models.Count)
+                {
+                    tm.Name = names[Models.Count];
+                }
                 tm.AppendVerticies(i, data);
                 tm.Offset = [0, 0 ,0];
                 tm.Address = i;
                 tm.Scale = [1, 1, 1];
-                
 
                 if (tm.RawVertices.Count > 0)
                 {
                     StaticUtils.DecodeColors($"~-ASuccess~--: Detected valid model data at offset 0x{i:X}\n");
 
-                    for (var j = -0x20; j < 0x20; j++)
+                    for (var j = 0x0; j < 0x500; j++)
                     {
-                        tm.Texture = StaticUtils.GetString(data.Skip(i + (0x10 * j)).Take(0x20).ToArray());
-                        if (Ascii.IsValid(tm.Texture) && tm.Texture.Length != 0 && tm.Texture.ToLower().EndsWith(".tm2"))
-                        {
-                            break;
-                        }
+                        var texOffset = modelEnd + (0x10 * j);
+                        if (texOffset >= data.Length) break;
+                        tm.Texture = StaticUtils.GetString(data.Skip(texOffset).Take(0x20).ToArray());
+                        if (!Ascii.IsValid(tm.Texture) || tm.Texture.Length == 0 ||
+                            !tm.Texture.ToLower().EndsWith(".tm2")) continue;
+                        break;
                     }
-
                     if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
                             tm.Texture.ToUpper())))
                     {
