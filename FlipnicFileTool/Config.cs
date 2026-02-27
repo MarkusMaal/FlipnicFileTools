@@ -126,7 +126,7 @@ public class Config
                     Test = true;
                     break;
                 case "--version":
-                    Console.WriteLine(StaticUtils.DotFloatString(StaticUtils.LibVersion));
+                    Console.WriteLine(StaticUtils.DotFloatString(StaticUtils.LibVersion) + (StaticUtils.IsBeta ? " BETA" : ""));
                     Mode = Enums.Modes.Quit;
                     break;
                 case "--disclaimer":
@@ -231,8 +231,9 @@ public class Config
     {
         if (!StaticUtils.SimpleOutput)
         {
+            var suff = (StaticUtils.IsBeta ? " BETA" : "");
             StaticUtils.DecodeColors(
-                $"~-BFlipnic File Tools {StaticUtils.DotFloatString(StaticUtils.LibVersion)}~--\n");
+                $"~-BFlipnic File Tools {StaticUtils.DotFloatString(StaticUtils.LibVersion)}{suff}~--\n");
         }
 
         if (FileName == "" || StaticUtils.SimpleOutput) return;

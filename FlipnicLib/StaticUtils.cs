@@ -18,7 +18,8 @@ public abstract class StaticUtils
 
     public static int[] AdsrMultipliers = [1200, 1200, 1400, 1200, 320];
 
-    public static float LibVersion = 2.2f;
+    public static float LibVersion = 2.3f;
+    public static bool IsBeta = true;
     public enum ControllerButtons : byte {
         Disabled = 0xFF,
         L2 = 0x0,

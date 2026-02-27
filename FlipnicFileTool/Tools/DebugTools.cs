@@ -14,6 +14,7 @@ public class DebugTools(Exception e)
         var indentedTrace = "";
         if (e.StackTrace != null) indentedTrace = "  " + string.Join("\n     ", e.StackTrace.Split("\n"));
         Console.Clear();
+        var betaStr = StaticUtils.IsBeta ? "Yes" : "No";
         StaticUtils.DecodeColors($"""
                                  ~-C
                                  Unhandled fatal exception~--
@@ -37,6 +38,7 @@ public class DebugTools(Exception e)
                                  
                                  Environment:
                                     FlipnicLib version: {StaticUtils.DotFloatString(StaticUtils.LibVersion)}
+                                    Beta version: {betaStr}
                                     Microsoft .NET version: {Environment.Version}
                                     Operating system: {Environment.OSVersion}
                                     Working directory: {Environment.CurrentDirectory}
