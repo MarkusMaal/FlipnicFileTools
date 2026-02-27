@@ -359,21 +359,91 @@ Outputs:
 ```
 Type: StaticModel
 Model count: 0
-Has embedded resources: Yes
+Has bounding box: Yes
 Is 2D animation: No
+Timelines: 3
+Animation joints: 15
+
+Bounding box:
++-----------+------------+------------+
+| X         | Y          | Z          | 
++-----------+------------+------------+
+| 6.7750607 | -1.4439601 | -5.1376605 | 
+| -6.77506  | -1.4439601 | -5.1376605 | 
+| 6.7750607 | -1.4439601 | 4.9989805  | 
+| -6.77506  | -1.4439601 | -5.1376605 | 
+| 6.7750607 | -1.4439601 | 4.9989805  | 
+| -6.77506  | -1.4439601 | 4.9989805  | 
+| 6.7750607 | 0.22978    | -5.1376605 | 
+| -6.77506  | 0.22978    | -5.1376605 | 
+| 6.7750607 | 0.22978    | 4.9989805  | 
+| 6.7750607 | 0.22978    | 4.9989805  | 
+| -6.77506  | 0.22978    | 4.9989805  | 
+| -6.77506  | 0.22978    | -5.1376605 | 
+| 6.7750607 | -1.4439601 | 4.9989805  | 
+| -6.77506  | -1.4439601 | 4.9989805  | 
+| 6.7750607 | 0.22978    | 4.9989805  | 
+| -6.77506  | -1.4439601 | 4.9989805  | 
+| -6.77506  | 0.22978    | 4.9989805  | 
+| 6.7750607 | 0.22978    | 4.9989805  | 
+| 6.7750607 | -1.4439601 | -5.1376605 | 
+| -6.77506  | -1.4439601 | -5.1376605 | 
+| -6.77506  | 0.22978    | -5.1376605 | 
+| 6.7750607 | -1.4439601 | -5.1376605 | 
+| -6.77506  | 0.22978    | -5.1376605 | 
+| 6.7750607 | 0.22978    | -5.1376605 | 
+| 6.7750607 | -1.4439601 | 4.9989805  | 
+| 6.7750607 | -1.4439601 | -5.1376605 | 
+| 6.7750607 | 0.22978    | -5.1376605 | 
+| 6.7750607 | 0.22978    | 4.9989805  | 
+| 6.7750607 | 0.22978    | -5.1376605 | 
+| 6.7750607 | -1.4439601 | 4.9989805  | 
+| -6.77506  | -1.4439601 | -5.1376605 | 
+| -6.77506  | -1.4439601 | 4.9989805  | 
+| -6.77506  | 0.22978    | 4.9989805  | 
+| -6.77506  | -1.4439601 | -5.1376605 | 
+| -6.77506  | 0.22978    | -5.1376605 | 
+| -6.77506  | 0.22978    | 4.9989805  | 
++-----------+------------+------------+
+
 
 Models:
 +------------+---------+-------+--------+-------------------+----------+
 | Name       | Address | Scale | Offset | Texture           | Polygons | 
 +------------+---------+-------+--------+-------------------+----------+
-| MO_CHOU_UV | F0      | 1x1x1 | 0x0x0  | mo_chou_tex_1.tm2 | 11232    | 
+| MO_CHOU_UV | F0      | 1x1x1 | 0x0x0  | mo_chou_tex_1.tm2 | 8304     | 
 +------------+---------+-------+--------+-------------------+----------+
+
+Joints:
++--------------------+----------+-------------+-------------+
+| Name               | Vertices | Position    | Size        | 
++--------------------+----------+-------------+-------------+
+| CHOU_ASHI_2_L_NULL | 63       | NaNxNaNxNaN | NaNxNaNxNaN | 
+| CHOU_ASHI_2_R_NULL | 63       | NaNxNaNxNaN | NaNxNaNxNaN | 
+| HANE_L_L_NULL      | 10       | NaNxNaNxNaN | NaNxNaNxNaN | 
+| HANE_L_R_NULL      | 12       | NaNxNaNxNaN | NaNxNaNxNaN | 
+| HANE_S_L_NULL      | 8        | NaNxNaNxNaN | NaNxNaNxNaN | 
+| HANE_S_R_NULL      | 10       | NaNxNaNxNaN | NaNxNaNxNaN | 
+| JNT1_1             | 69       | NaNxNaNxNaN | NaNxNaNxNaN | 
+| JNT11_1            | 21       | NaNxNaNxNaN | NaNxNaNxNaN | 
+| JNT2_1             | 201      | NaNxNaNxNaN | NaNxNaNxNaN | 
+| JNT2_2             | 30       | NaNxNaNxNaN | NaNxNaNxNaN | 
+| JNT3_1             | 6        | NaNxNaNxNaN | NaNxNaNxNaN | 
+| JNT5_1             | 6        | NaNxNaNxNaN | NaNxNaNxNaN | 
+| JNT6_1             | 8        | NaNxNaNxNaN | NaNxNaNxNaN | 
+| JNT8_1             | 10       | NaNxNaNxNaN | NaNxNaNxNaN | 
+| JNT9_1             | 22       | NaNxNaNxNaN | NaNxNaNxNaN | 
++--------------------+----------+-------------+-------------+
 
 ```
 
 You can also attempt to convert the 3D models stored inside LP4 files to Wavefront OBJ by running the following command: `FlipnicFileTool --input CHOU01.LP4 --convert-obj --output CHOU01.OBJ`
 
-**Note**: LP4 implementation is still kind of unreliable, so this may fail. Also, not all LP4 files contain model data.
+**Note**: LP4 parser is unreliable, so this will often fall back to a brute-force method, which will comb through the entire file trying to find patterns that match 3D model data. Also, not all LP4 files contain model data.
+
+Sometimes this will produce a file, which has incorrect normals (shading looks weird). If that's the case, you may need to append `--alternate-normals` parameter to the above command.
+
+In addition, you can extract the bounding box of the LP4 file (if it has one) and save it as a Wavefront OBJ by running the following command: `FlipnicFileTool --input CHOU01.LP4 --convert-box-obj --output CHOU01_BOX.OBJ`
 
 ## VAB header files (*.HD)
 
