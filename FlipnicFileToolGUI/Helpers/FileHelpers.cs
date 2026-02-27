@@ -367,15 +367,20 @@ public static class FileHelpers
                     var lp4Da = new byte[ds.Length];
                     ds.ReadExactly(lp4Da);
                     var lp4 = new Lp4(lp4Da, mw.FileName);
-                    StaticUtils.LiveLoadStatus = "Initializing OpenGL";
-                    Dispatcher.UIThread.Post(() =>
+                    if (lp4.HasEmbeddedResources)
                     {
-                        mw.ModelTab.IsSelected = true;
-                        mw.InfoTab.IsSelected = false;
-                    });
-                    Thread.Sleep(1000);
-                    Dispatcher.UIThread.Post(() => { mw.GlControl.ImportLP4(lp4); });
+                        StaticUtils.LiveLoadStatus = "Initializing OpenGL";
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            mw.ModelTab.IsSelected = true;
+                            mw.InfoTab.IsSelected = false;
+                        });
+                        Thread.Sleep(1000);
+                        StaticUtils.LiveLoadStatus = "Parsing LP4";
+                        mw.GlControl.ImportLP4(lp4);
+                    }
                     LoadAsString(lp4, "Flipnic resource file", mw);
+                    if (!lp4.HasEmbeddedResources) break;
                     Dispatcher.UIThread.Post(() =>
                     {
                         mw.Init3DStuff(lp4);
@@ -387,6 +392,11 @@ public static class FileHelpers
                             mw.PreviewImage.Source = new BitmapTools { Image = lp4.Texture }.ToBitmap();
                         }
                         catch
+                        {
+                            mw.ImagePreviewTab.IsVisible = false;
+                        }
+
+                        if (!mw.GlControl.IsTextureValid())
                         {
                             mw.ImagePreviewTab.IsVisible = false;
                         }
@@ -564,8 +574,21 @@ public static class FileHelpers
             Thread.Sleep(100);
             while (true)
             {
-                if (StaticUtils.LiveLoadStatus == "") break;
-                Dispatcher.UIThread.Post(() => mw.LoadStatus.Text = StaticUtils.LiveLoadStatus);
+                if (StaticUtils.LiveLoadStatus == "")
+                {
+                    Dispatcher.UIThread.Post(() => mw.LoadProgress.IsIndeterminate = true);
+                    break;
+                }
+                Dispatcher.UIThread.Post(() =>
+                {
+                    mw.LoadProgress.IsIndeterminate = !StaticUtils.LiveLoadStatus.Contains('%');
+                    if (!mw.LoadProgress.IsIndeterminate)
+                    {
+                        mw.LoadProgress.Maximum = 100;
+                        mw.LoadProgress.Value = int.Parse(StaticUtils.LiveLoadStatus.Split(" (")[1].Split('%')[0].Split('.')[0]);
+                    }
+                    mw.LoadStatus.Text = StaticUtils.LiveLoadStatus;
+                });
                 Thread.Sleep(100);
             }
         }).Start();

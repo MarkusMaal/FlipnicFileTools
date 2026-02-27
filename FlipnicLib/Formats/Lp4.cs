@@ -53,7 +53,7 @@ public class Lp4(byte[] data, string fileName)
         var o = $"""
                 Type: {Type.ToString()}
                 Model count: {ModelOffsets.Count}
-                Has embedded resources: {er}
+                Has bounding box: {er}
                 Is 2D animation: {i2}
                 Timelines: {StaticUtils.GetInt32(data.Skip(8).Take(4).ToArray(), 0)}
                 Animation joints: {_animationJoints}
@@ -131,6 +131,7 @@ public class Lp4(byte[] data, string fileName)
                 i += 0x10;
                 for (var k = 0; k < layoutCounts; k++)
                 {
+                    StaticUtils.LiveLoadStatus = $"Parsing layouts ({StaticUtils.DotFloatString((float)Math.Round(k/(double)layoutCounts*100.0, 2))}% complete)";
                     var keyframeCount = StaticUtils.GetInt32(data, i);
                     var animationJoints = StaticUtils.GetInt32(data, i + 0x14);
                     var hasLightMapData = data[i + 0x20] == 0x01;
@@ -172,6 +173,7 @@ public class Lp4(byte[] data, string fileName)
                     }
                     for (var j = 0; j < (hasLightMapData ? lightMapLength : 0); j++)
                     {
+                        StaticUtils.LiveLoadStatus = $"Parsing lightmaps";
                         model.Lightmap.Add([
                             StaticUtils.GetFloat(data, i), StaticUtils.GetFloat(data, i + 0x4),
                             StaticUtils.GetFloat(data, i + 0x8), StaticUtils.GetFloat(data, i + 0xC)
@@ -182,6 +184,7 @@ public class Lp4(byte[] data, string fileName)
                     i += keyframeCount * 0x30;
                     for (var a = 0; a < animationJoints; a++)
                     {
+                        StaticUtils.LiveLoadStatus = $"Parsing animation joints ({StaticUtils.DotFloatString((float)Math.Round(a/(double)animationJoints*100.0, 2))}% complete)";
                         var sp = i + (0x60 * a);
                         var name = StaticUtils.GetString(data.Skip(sp - 0x10).ToArray());
                         if (!Ascii.IsValid(name) || (name == "")) continue;
@@ -229,6 +232,7 @@ public class Lp4(byte[] data, string fileName)
                 if (animIndices > 0) i += 0x10;
                 for (var h = 0; h < animIndices; h++)
                 {
+                    StaticUtils.LiveLoadStatus = $"Parsing animation indicies ({StaticUtils.DotFloatString((float)Math.Round(h/(double)animIndices*100.0, 2))}% complete)";
                     var count = StaticUtils.GetInt32(data, i+0x20);
                     var name = StaticUtils.GetString(data.Skip(i).Take(20).ToArray());
                     if (model.AnimationJoints.ContainsKey(name))
@@ -271,6 +275,7 @@ public class Lp4(byte[] data, string fileName)
             if (SelectedModel?.RawVertices.Count != 0)
             {
                 StaticUtils.DecodeColors("~-ASuccess~--: Successfully decoded the LP4 file!");
+                Console.WriteLine();
                 return;
             }
             Models.Clear();
@@ -286,10 +291,10 @@ public class Lp4(byte[] data, string fileName)
     {
         StaticUtils.DecodeColors("~-EWarning~--: failed to parse LP4 file correctly, falling back to brute-force method!\n");
         int i;
-        Console.WriteLine("Searching for models (brute-force)");
         var modelIdx = 0;
         for (i = 0; i < data.Length - 0x20; i+=0x10)
         {
+            StaticUtils.LiveLoadStatus = $"Scanning for 3D model data ({StaticUtils.DotFloatString((float)Math.Round(i/(double)data.Length*100.0, 2))}% complete)";
             var c1 = StaticUtils.GetInt32(data, i);
             var c2 = StaticUtils.GetInt32(data, i+4);
             var c3 = StaticUtils.GetInt32(data, i+8);
@@ -377,13 +382,12 @@ public class Lp4(byte[] data, string fileName)
                 }
                 else
                 {
-                    StaticUtils.DecodeColors($"~-EWarning~--: Offset 0x{i:X} contains 0 vertices, continue searching...\n");
                     i += 0x10;
                 }
             }
             catch
             {
-                StaticUtils.DecodeColors($"~-CError~--: Attempt to read from offset 0x{i:X} threw an error, continue searching...\n");
+                StaticUtils.DecodeColors($"~-CError~--: Attempt to read from offset 0x{i:X} threw an error\n");
             }
         }
         

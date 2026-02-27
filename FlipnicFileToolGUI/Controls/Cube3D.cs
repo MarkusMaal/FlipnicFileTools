@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Input;
+using Avalonia.Threading;
 using FlipnicFileToolGUI.Shaders;
 using FlipnicFileToolGUI.Textures;
 using FlipnicLib;
@@ -91,29 +93,34 @@ namespace FlipnicFileToolGUI.Controls
             {
                 _texture = lp4.Texture;
             }
-            OpenTkInit();
-            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            _vertices = lp4.GetVerticies();
-            OpenContainer = lp4;
-            GL.GenBuffer();
-            CycleUV = false;
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
+            Dispatcher.UIThread.Post(() => 
+            {
+                OpenTkInit();
+                GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
+                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+                _vertices = lp4.GetVerticies();
+                OpenContainer = lp4;
+                GL.GenBuffer();
+                CycleUV = false;
+                GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject); 
+            });
         }
 
+        public bool IsTextureValid()
+        {
+            return _texture != null;
+        }
+        
         public void SwitchModel(string? name, Image previewImg)
         {
             if (name is null) return;
             var lp4 = OpenContainer;
-            foreach (var model in lp4.Models)
+            foreach (var model in lp4.Models.Where(model => model.Name == name))
             {
-                if (model.Name == name)
-                {
-                    lp4.SetSelectedModel(model);
-                }
+                lp4.SetSelectedModel(model);
             }
             _texture = null;
-            if (lp4.Texture != null)
+            if (lp4.SelectedModel?.Texture != null && lp4.Texture != null)
             {
                 _texture = lp4.Texture;
             }
@@ -456,7 +463,7 @@ namespace FlipnicFileToolGUI.Controls
 
             if (KeyboardState.IsKeyDown(Key.LeftShift))
             {
-                //Note this is subtracting up, because..? I think avalonia renders the scene upside down.
+                //Note this is subtracting up, because...? I think avalonia renders the scene upside down.
                 _cameraPosition -= _up * effectiveSpeed; //Up 
             }
 

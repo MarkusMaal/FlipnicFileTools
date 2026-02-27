@@ -18,7 +18,7 @@
                     </LinearGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
-            <TextBlock FontSize="15" Text="{Binding Text}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
+            <TextBlock FontSize="12" Text="{Binding Text}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
         </Grid>
     </Viewbox>
 </UserControl>

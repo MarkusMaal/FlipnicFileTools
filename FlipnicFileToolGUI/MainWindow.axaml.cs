@@ -538,6 +538,7 @@ public sealed partial class MainWindow : SukiWindow
     {
         if (Models.SelectedIndex < 0) return;
         GlControl.SwitchModel(Models.SelectedItems?[0]?.ToString(), PreviewImage);
+        ImagePreviewTab.IsVisible = GlControl.IsTextureValid();
         GlControl.ReloadModel = true;
         new Thread(() =>
         {
