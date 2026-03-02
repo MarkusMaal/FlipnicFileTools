@@ -144,6 +144,16 @@ public abstract class StaticUtils
         }
     }
     
+    /// <summary>
+    /// Read unsigned 64-bit integer (ulong) from the offset specified (assuming little-endian)
+    /// </summary>
+    /// <param name="data">Source data</param>
+    /// <param name="offset">Offset of the location within the data provided, which contains the integer requested</param>
+    public static ulong GetUInt64(byte[] data, int offset)
+    {
+        return BitConverter.ToUInt64(data.Skip(offset).Take(8).ToArray());
+    }
+    
     
     /// <summary>
     /// Read unsigned 32-bit integer (uint) from the offset specified (assuming little-endian)

@@ -12,18 +12,12 @@ public class ImageTools
     
     private string MlbSect { get; set; }
     
-    private bool Grayscale { get; set; }
-    
-    private bool UsePng { get; set; }
-    
     private string MagickPath { get; set; }
 
     public ImageTools(Config cfg)
     {
         FileName = cfg.FileName;
         Output = cfg.Output;
-        UsePng = cfg.UsePng;
-        Grayscale = cfg.Grayscale;
         MlbSect = cfg.MlbSect;
         MagickPath = cfg.MagickPath;
         
@@ -50,15 +44,9 @@ public class ImageTools
     /// </summary>
     private void ConvertTim2()
     {
-        var texture = new Tim2(File.ReadAllBytes(FileName), FileName, Grayscale);
-        if (UsePng)
-        {
-            texture.SavePng(new FileStream(Output, FileMode.Create));
-            return;
-        }
-
+        var texture = new Tim2(File.ReadAllBytes(FileName), FileName);
         var fs = new FileStream(Output, FileMode.Create);
-        texture.SaveBitmap(fs);
+        texture.SavePng(fs);
     }
 
     /// <summary>
@@ -76,7 +64,7 @@ public class ImageTools
             {
                 var textureFile = sect.Texture.Split('\\')[^1].ToUpper();
                 new Tim2(File.ReadAllBytes(Path.Combine(root, textureFile)),
-                    Path.Combine(root, textureFile), Grayscale).SavePng(
+                    Path.Combine(root, textureFile)).SavePng(
                     new FileStream(Path.Combine(root, textureFile.Replace(".TM2", ".TEMP.PNG")),
                         FileMode.Create));
 

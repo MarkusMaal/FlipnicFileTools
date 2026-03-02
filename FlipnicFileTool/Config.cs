@@ -36,19 +36,9 @@ public class Config
     public string FFmpegPath { get; set; } = "ffmpeg";
     
     /// <summary>
-    /// Render textures in grayscale
-    /// </summary>
-    public bool Grayscale { get; set; }
-    
-    /// <summary>
     /// Section name of a .MLB file
     /// </summary>
     public string MlbSect { get; set; } = "";
-    
-    /// <summary>
-    /// Export textures as PNG instead of BMP
-    /// </summary>
-    public bool UsePng { get; set; }
     
     /// <summary>
     /// Path to a .MID file (when doing soundfont conversions)
@@ -104,9 +94,6 @@ public class Config
                 case "--low-memory":
                     StaticUtils.LowMem = true;
                     break;
-                case "--grayscale":
-                    Grayscale = true;
-                    break;
                 case "--pal":
                     StaticUtils.Pal = true;
                     break;
@@ -118,9 +105,6 @@ public class Config
                     break;
                 case "--alternate-normals":
                     StaticUtils.AlternateNormals = true;
-                    break;
-                case "--png":
-                    UsePng = true;
                     break;
                 case "--test":
                     Test = true;
