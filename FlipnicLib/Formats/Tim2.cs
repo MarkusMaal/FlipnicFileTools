@@ -35,13 +35,7 @@ namespace FlipnicLib.Formats;
  */
 public class Tim2
 {
-    private readonly byte[] _bitmap;
-    private readonly byte[] _pallette;
-    
     public string? Filename { get; set; }
-
-    private int Width { get; }
-    private int Height { get; }
 
     private const byte Tim2FormatVersion = 0x04; // Official TIM2 version (0x04 per spec)
     private const byte Tim2Align16 = 0x00;       // 16-byte alignment mode
@@ -97,8 +91,8 @@ public class Tim2
         public uint GsTexaFbaPabe { get; } = StaticUtils.GetUInt32(data, 0x28);  // Packed TEXA, FBA, PABE register bits
         public uint GsTexClut { get; } = StaticUtils.GetUInt32(data, 0x2C);  // TEXCLUT register (only valid if CSM2 mode)
 
-        public bool IsClutCSM2 => (ClutType & 0x80) != 0;
-        public bool IsClutCompound => (ClutType & 0x40) != 0;
+        public bool IsClutCSM2 => (ClutType & (1 << 6)) == 0;
+        public bool IsClutCompound => (ClutType & (1 << 5)) == 0;
 
         public PixelFormat GetImagePixelFormat() => (PixelFormat)ImageType;
         public PixelFormat GetClutPixelFormat() => (PixelFormat)(ClutType & 0x3F);
@@ -311,71 +305,82 @@ public class Tim2
          *   incorrect colors for certain CSM1 CLUTs, implement that swap step here.
          *   (See TIM2 spec §4.5 for the exact byte swap rules.)
          */
-        public Color32[] GetClutColors()
+        public Color32[] GetClutColors(bool forceNoCompound = false)
         {
-            Color32[] colors = [];
-            if (!Header.HasClut) return colors;
-            colors = new Color32[Header.ClutColors];
-            
-            var data = ClutData;
-
-            var fmt = Header.GetClutPixelFormat();
-            var isCompound = Header.IsClutCompound;
-
-            for (var i = 0; i < Header.ClutColors; ++i)
+            try
             {
-                var index = i;
-                
-                // CSM1 “compound” mode shuffles palette indices inside 32-color blocks.
-                // This implements the index remap table described in §4.5 (the 0..31 matrix).
-                if (!Header.IsClutCSM2 && isCompound) {
-                    var block    = i / 32;
-                    var localIdx = i % 32;
+                Color32[] colors = [];
+                if (!Header.HasClut) return colors;
+                colors = new Color32[Header.ClutColors];
 
-                    // This is the minimal reordering that matches the 32-entry table.
-                    // (It swaps [8..15] with [16..23] by +8 / -8.)
-                    if (localIdx >= 8 && localIdx < 16) {
-                        localIdx += 8;
-                    } else if (localIdx >= 16 && localIdx < 24) {
-                        localIdx -= 8;
+                var data = ClutData;
+
+                var fmt = Header.GetClutPixelFormat();
+                var isCompound = Header.IsClutCompound;
+
+                for (var i = 0; i < Header.ClutColors; ++i)
+                {
+                    var index = i;
+
+                    // CSM1 “compound” mode shuffles palette indices inside 32-color blocks.
+                    // This implements the index remap table described in §4.5 (the 0..31 matrix).
+                    if (!forceNoCompound) // this hacky solution will be here until I figure out how to properly detect if CLUT has compound or not 
+                    {
+                        var block = i / 32;
+                        var localIdx = i % 32;
+
+                        // This is the minimal reordering that matches the 32-entry table.
+                        // (It swaps [8..15] with [16..23] by +8 / -8.)
+                        if (localIdx >= 8 && localIdx < 16)
+                        {
+                            localIdx += 8;
+                        }
+                        else if (localIdx >= 16 && localIdx < 24)
+                        {
+                            localIdx -= 8;
+                        }
+
+                        index = block * 32 + localIdx;
                     }
 
-                    index = block * 32 + localIdx;
+                    Color32 color = new();
+
+                    int byteIdx;
+                    switch (fmt)
+                    {
+                        case PixelFormat.Tim2Rgb16:
+                            byteIdx = index * 2;
+                            var val = StaticUtils.GetUInt16(data, byteIdx);
+                            Color16 c16 = new(val);
+                            color = c16.ToColor32();
+                            break;
+                        case PixelFormat.Tim2Rgb24:
+                            byteIdx = index * 3;
+                            color.R = data[byteIdx + 0];
+                            color.G = data[byteIdx + 1];
+                            color.B = data[byteIdx + 2];
+                            color.A = 255;
+                            break;
+                        case PixelFormat.Tim2Rgb32:
+                            byteIdx = index * 4;
+                            color.R = data[byteIdx + 0];
+                            color.G = data[byteIdx + 1];
+                            color.B = data[byteIdx + 2];
+                            color.A = data[byteIdx + 3];
+                            break;
+                        default:
+                            break;
+                    }
+
+                    colors[i] = color;
                 }
 
-                Color32 color = new();
-
-                int byteIdx;
-                switch (fmt)
-                {
-                    case PixelFormat.Tim2Rgb16:
-                        byteIdx = index * 2;
-                        var val = StaticUtils.GetUInt16(data, byteIdx);
-                        Color16 c16 = new(val);
-                        color = c16.ToColor32();
-                        break;
-                    case PixelFormat.Tim2Rgb24:
-                        byteIdx = index * 3;
-                        color.R = data[byteIdx + 0];
-                        color.G = data[byteIdx + 1];
-                        color.B = data[byteIdx + 2];
-                        color.A = 255;
-                        break;
-                    case PixelFormat.Tim2Rgb32:
-                        byteIdx = index * 4;
-                        color.R = data[byteIdx + 0];
-                        color.G = data[byteIdx + 1];
-                        color.B = data[byteIdx + 2];
-                        color.A = data[byteIdx + 3];
-                        break;
-                    default:
-                        break;
-                }
-
-                colors[i] = color;
+                return colors;
             }
-
-            return colors;
+            catch (IndexOutOfRangeException)
+            {
+                return GetClutColors(true);
+            }
         }
         /**
          * Return the color of a single pixel at (x, y) for a given mip level.
