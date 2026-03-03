@@ -58,6 +58,8 @@ public abstract class StaticUtils
     public static short ReverbStrength { get; set; } = 70;
 
     public static bool AlternateNormals { get; set; } = false;
+
+    public static bool ForceNoColors { get; set; } = false;
     
     /// <summary>
     /// Display an animated spinning line loader

@@ -330,9 +330,21 @@ public static class FileHelpers
                                 StaticUtils.LiveLoadStatus = "Parsing " + ima.Texture;
                                 var p = Path.Combine(Path.GetDirectoryName(mw.FileName) ?? string.Empty,
                                     ima.Texture.Split('\\')[^1].ToUpper());
+                                Tim2? tim2 = null;
+                                if (File.Exists(p))
+                                {
+                                    tim2 = new Tim2(File.ReadAllBytes(p), mw.FileName);
+                                    foreach (var check in mlb.MenuColors)
+                                    {
+                                        if ((key == check.SectionLabel) && (check.Index == ima.Index))
+                                        {
+                                            tim2.ReplaceColor(check.Color);
+                                        }
+                                    }
+                                }
                                 var bmp = File.Exists(p)
                                     ? new BitmapTools
-                                        { Image = new Tim2(File.ReadAllBytes(p), mw.FileName), }.ToBitmap()
+                                        { Image = tim2, }.ToBitmap()
                                     : mbCheckerboard;
                                 Dispatcher.UIThread.Post(() => mevm.Add(new MenuElementViewModel(){Layer = key, MenuElement = ima, ImageSource = bmp}));
                             }

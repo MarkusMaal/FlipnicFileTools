@@ -785,4 +785,21 @@ public class Tim2
     {
         return ToString(false);
     }
+
+    public void ReplaceColor(byte[] rgb)
+    {
+        foreach (var img in m_pictures)
+        {
+            if (img.ClutData == null) continue;
+            var newClutData = new byte[img.ClutData.Length];
+            for (var i = 0; i <  img.ClutData.Length; i+=4)
+            {
+                newClutData[i] = StaticUtils.ForceNoColors ? (byte)0x00 : rgb[0];
+                newClutData[i+1] = StaticUtils.ForceNoColors ? (byte)0x00 :rgb[1];
+                newClutData[i+2] = StaticUtils.ForceNoColors ? (byte)0x00 :rgb[2];
+                newClutData[i+3] = img.ClutData[i+3];
+            }
+            img.ClutData = newClutData;
+        }
+    }
 }
