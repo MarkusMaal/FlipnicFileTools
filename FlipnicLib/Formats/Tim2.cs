@@ -281,14 +281,74 @@ public class Tim2
             
             var result = new Color32[width * height];
 
-            for (var y = 0; y < height; ++y)
+            var done = 0;
+            // multithreading here helps speed up the conversion up to 4x
+            new Thread(() =>
             {
-                for (var x = 0; x < width; ++x)
-                {
-                    result[y * width + x] = GetPixelColor(x, y, mipLevel);
-                }
-            }
 
+                for (var y = 0; y < height; ++y)
+                {
+                    if (y % 2 == 0) continue;
+                    for (var x = 0; x < width; ++x)
+                    {
+                        if (x % 2 == 0) continue;
+                        result[y * width + x] = GetPixelColor(x, y, mipLevel);
+                    }
+                }
+
+                done++;
+            }).Start();
+
+            new Thread(() =>
+            {
+
+                for (var y = 0; y < height; ++y)
+                {
+                    if (y % 2 == 1) continue;
+                    for (var x = 0; x < width; ++x)
+                    {
+                        if (x % 2 == 1) continue;
+                        result[y * width + x] = GetPixelColor(x, y, mipLevel);
+                    }
+                }
+
+                done++;
+            }).Start();
+            new Thread(() =>
+            {
+
+                for (var y = 0; y < height; ++y)
+                {
+                    if (y % 2 == 0) continue;
+                    for (var x = 0; x < width; ++x)
+                    {
+                        if (x % 2 == 1) continue;
+                        result[y * width + x] = GetPixelColor(x, y, mipLevel);
+                    }
+                }
+
+                done++;
+            }).Start();
+            new Thread(() =>
+            {
+
+                for (var y = 0; y < height; ++y)
+                {
+                    if (y % 2 == 1) continue;
+                    for (var x = 0; x < width; ++x)
+                    {
+                        if (x % 2 == 0) continue;
+                        result[y * width + x] = GetPixelColor(x, y, mipLevel);
+                    }
+                }
+
+                done++;
+            }).Start();
+            
+            while (done != 4)
+            {
+                Thread.Sleep(1);
+            }
             return result;
         }
 
@@ -667,14 +727,9 @@ public class Tim2
         }).Start();
         var builder = PngBuilder.Create(m_pictures[0].Header.ImageWidth, m_pictures[0].Header.ImageHeight, true);
         var i = 0;
+        StaticUtils.LiveLoadStatus = "Converting image(s)";
         foreach (var pixel in m_pictures[0].DecodeImage(m_pictures[0].Header.MipMapTextures - 1))
         {
-            if (i % 24 == 0)
-            {
-                StaticUtils.LiveLoadStatus =
-                    $"Converting image ({StaticUtils.DotFloatString((float)Math.Round(i / (float)(m_pictures[0].Header.ImageHeight * m_pictures[0].Header.ImageWidth) * 100f, 2))}%)";
-            }
-
             var y = i / m_pictures[0].Header.ImageWidth;
             var x = i % m_pictures[0].Header.ImageWidth;
             builder.SetPixel(new Pixel(pixel.R, pixel.G, pixel.B, pixel.A, false), x, y);
