@@ -33,9 +33,9 @@ namespace FlipnicFileToolGUI.Textures
             {
                 image = texture switch
                 {
-                    Tim2 tx => Image.Load<Rgba32>(new BitmapTools { Image = tx }.ToMemoryStream()),
                     Tim tx2 => Image.Load<Rgba32>(new BitmapTools { Icon = tx2 }.ToMemoryStream()),
                     MemoryStream stream => Image.Load<Rgba32>(stream.ToArray()),
+                    byte[] ba => Image.Load<Rgba32>(ba),
                     _ => image
                 };
             }

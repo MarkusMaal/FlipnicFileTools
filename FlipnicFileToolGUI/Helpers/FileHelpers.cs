@@ -127,16 +127,18 @@ public static class FileHelpers
             switch (ext?.ToUpper())
             {
                 case "TM2":
+                    StaticUtils.LiveLoadStatus = "Parsing TIM2";
                     var data = new byte[ds.Length];
                     ds.ReadExactly(data);
                     ds.Position = 0;
                     var img = new Tim2(data, mw.FileName);
                     var bt = new BitmapTools { Image = img };
+                    var finalBmp = bt.ToBitmap();
                     LoadAsString(img, "PlayStation 2 texture file", mw);
                     Dispatcher.UIThread.Post(() =>
                     {
                         mw.ImagePreviewTab.IsVisible = true;
-                        mw.PreviewImage.Source = bt.ToBitmap();
+                        mw.PreviewImage.Source = finalBmp;
                     });
                     break;
                 case "ICO":
@@ -318,20 +320,23 @@ public static class FileHelpers
                     Dispatcher.UIThread.Post(() => mw.LoadProgress.IsIndeterminate = false);
                     Dispatcher.UIThread.Post(() => mw.LoadProgress.Maximum = mlb.Sections.Count);
                     var mbCheckerboard = new Bitmap(StaticUtils.GenerateCheckerboardPng(128, 128));
-                    foreach (var sect in mlb.Sections)
+                    foreach (var (key, value) in mlb.Sections)
                     {
                         try
                         {
-                            var r = from ima in sect.Value
-                                let p =
-                                    Path.Combine(Path.GetDirectoryName(mw.FileName) ?? string.Empty,
-                                        ima.Texture.Split('\\')[^1].ToUpper())
-                                let bmp =
-                                    
-                                    File.Exists(p) ? new BitmapTools { Image = new Tim2(File.ReadAllBytes(p), mw.FileName), }.ToBitmap() : mbCheckerboard
-                                select new MenuElementViewModel
-                                    { Layer = sect.Key, MenuElement = ima, ImageSource = bmp };
-                            Dispatcher.UIThread.Post(() => mw.GetViewModel().Menu.AddRange(r));
+                            var mevm = new List<MenuElementViewModel>();
+                            foreach (var ima in value)
+                            {
+                                StaticUtils.LiveLoadStatus = "Parsing " + ima.Texture;
+                                var p = Path.Combine(Path.GetDirectoryName(mw.FileName) ?? string.Empty,
+                                    ima.Texture.Split('\\')[^1].ToUpper());
+                                var bmp = File.Exists(p)
+                                    ? new BitmapTools
+                                        { Image = new Tim2(File.ReadAllBytes(p), mw.FileName), }.ToBitmap()
+                                    : mbCheckerboard;
+                                Dispatcher.UIThread.Post(() => mevm.Add(new MenuElementViewModel(){Layer = key, MenuElement = ima, ImageSource = bmp}));
+                            }
+                            Dispatcher.UIThread.Post(() => mw.GetViewModel().Menu.AddRange(mevm));
                         }
                         catch (Exception ex)
                         {
@@ -389,7 +394,8 @@ public static class FileHelpers
                         mw.ImagePreviewTab.IsVisible = true;
                         try
                         {
-                            mw.PreviewImage.Source = new BitmapTools { Image = lp4.Texture }.ToBitmap();
+                            var ms = new MemoryStream(lp4.Texture);
+                            mw.PreviewImage.Source = new Bitmap(ms);
                         }
                         catch
                         {
@@ -585,7 +591,15 @@ public static class FileHelpers
                     if (!mw.LoadProgress.IsIndeterminate)
                     {
                         mw.LoadProgress.Maximum = 100;
-                        mw.LoadProgress.Value = int.Parse(StaticUtils.LiveLoadStatus.Split(" (")[1].Split('%')[0].Split('.')[0]);
+                        try
+                        {
+                            mw.LoadProgress.Value =
+                                int.Parse(StaticUtils.LiveLoadStatus.Split(" (")[1].Split('%')[0].Split('.')[0]);
+                        }
+                        catch
+                        {
+                            mw.LoadProgress.Value = 0;
+                        }
                     }
                     mw.LoadStatus.Text = StaticUtils.LiveLoadStatus;
                 });

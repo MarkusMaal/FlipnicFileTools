@@ -256,6 +256,7 @@ public class Tim2
         public byte[]? ClutData { get; set; }
         public ExtendedHeader? ExtHeader { get; set; }
         public string Comment { get; set; }
+        public bool ClutCompoundFailed = false;
 
         /**
          * Turn one TIM2 picture into a flat RGBA8 buffer.
@@ -379,6 +380,7 @@ public class Tim2
             }
             catch (IndexOutOfRangeException)
             {
+                ClutCompoundFailed = true;
                 return GetClutColors(true);
             }
         }
@@ -631,7 +633,9 @@ public class Tim2
         string[] colHeaders = ["ID", "RGB", "Alpha"];
         List<string[]> rows = [];
         if (this.m_pictures[0].ClutData == null)
-            return "Palette:\n" + StaticUtils.GenerateTable(colHeaders, rows, asCsv);
+        {
+            return "This texture does not contain an indexed palette";
+        }
         for (var i = 0; i < this.m_pictures[0].ClutData.Length; i += 4)
         {
             var pal = Color.FromArgb(this.m_pictures[0].ClutData[i + 3], this.m_pictures[0].ClutData[i],
@@ -639,7 +643,6 @@ public class Tim2
                 this.m_pictures[0].ClutData[i + 2]);
             rows.Add(["0x" + (i / 4).ToString("X"), $"#{pal.R:X2}{pal.G:X2}{pal.B:X2}", pal.A.ToString()]);
         }
-
         return "Palette:\n" + StaticUtils.GenerateTable(colHeaders, rows, asCsv);
     }
 
@@ -649,25 +652,38 @@ public class Tim2
     /// <param name="output">Output .PNG file stream</param>
     public void SavePng(Stream output)
     {
-        Console.Write("Converting...");
+        var complete = false;
+        new Thread(() =>
+        {
+            StaticUtils.LoadIdx = 1;
+            while (!complete)
+            {
+                StaticUtils.PrintLoader();
+                Console.Write("  Converting...    \r");
+                Thread.Sleep(100);
+                StaticUtils.LoadIdx+=1000;
+            }
+            Console.Write("                    \r");
+        }).Start();
         var builder = PngBuilder.Create(m_pictures[0].Header.ImageWidth, m_pictures[0].Header.ImageHeight, true);
         var i = 0;
         foreach (var pixel in m_pictures[0].DecodeImage(m_pictures[0].Header.MipMapTextures - 1))
         {
+            if (i % 24 == 0)
+            {
+                StaticUtils.LiveLoadStatus =
+                    $"Converting image ({StaticUtils.DotFloatString((float)Math.Round(i / (float)(m_pictures[0].Header.ImageHeight * m_pictures[0].Header.ImageWidth) * 100f, 2))}%)";
+            }
+
             var y = i / m_pictures[0].Header.ImageWidth;
             var x = i % m_pictures[0].Header.ImageWidth;
-            try
-            {
-                builder.SetPixel(new Pixel(pixel.R, pixel.G, pixel.B, pixel.A, false), x, y);
-            }
-            catch
-            {
-                builder.SetPixel(new Pixel(255, 0, 255, 255, false), x, y);
-            }
+            builder.SetPixel(new Pixel(pixel.R, pixel.G, pixel.B, pixel.A, false), x, y);
+
 
             i++;
         }
 
+        complete = true;
         builder.Save(output);
         if (output is not FileStream fs)
         {
@@ -683,6 +699,9 @@ public class Tim2
         var ct = PixelFormatToString((PixelFormat)m_pictures[0].Header.ImageType);
         var fn = Filename != null ? new FileInfo(Filename).Name : "???";
         var cC = (uint)(m_pictures[0].ClutData != null ? m_pictures[0].ClutData!.Length / 4 : 0);
+        var cmpC = (!m_pictures[0].ClutCompoundFailed) ? "Compound" : "Non-compound";
+        var pT = $"Palette type: {ct} ({cmpC})";
+        pT = pT.Replace(") (", "/");
         if (cC == 0)
         {
             cC = (PixelFormat)m_pictures[0].Header.ImageType switch
@@ -700,7 +719,8 @@ public class Tim2
                 Width: {m_pictures[0].Header.ImageWidth}
                 Height: {m_pictures[0].Header.ImageHeight}
                 Colors: {cC}
-                Palette type: {ct}
+                {pT}
+                Pictures: {m_pictures.Length}
 
                 {DisplayPalette(asCsv)}
                 """;

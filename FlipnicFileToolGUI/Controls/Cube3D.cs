@@ -8,6 +8,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Input;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using FlipnicFileToolGUI.Shaders;
 using FlipnicFileToolGUI.Textures;
@@ -119,11 +120,7 @@ namespace FlipnicFileToolGUI.Controls
             {
                 lp4.SetSelectedModel(model);
             }
-            _texture = null;
-            if (lp4.SelectedModel?.Texture != null && lp4.Texture != null)
-            {
-                _texture = lp4.Texture;
-            }
+            _texture = lp4.Texture;
             GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             if (lp4.SelectedModel != null)
@@ -131,7 +128,15 @@ namespace FlipnicFileToolGUI.Controls
                 _vertices = lp4.SelectedModel.RawVertices.ToArray();
             }
 
-            previewImg.Source = new BitmapTools(){Image = (Tim2?)_texture}.ToBitmap();
+            var ms = new MemoryStream((byte[])(_texture ?? new byte[]{}));
+            try
+            {
+                previewImg.Source = new Bitmap(ms);
+            }
+            catch
+            {
+                previewImg.Source = new Bitmap(StaticUtils.GenerateCheckerboardPng(256, 256));
+            }
         }
 
         public void ImportFPD(FpnFpd pathTrace, object? texture)

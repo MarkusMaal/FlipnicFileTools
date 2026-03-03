@@ -579,6 +579,9 @@ public abstract class StaticUtils
             case Tim tm:
                 tm.SavePng(new FileStream(fileName[..^4] + ".png", FileMode.Create, FileAccess.Write));
                 break;
+            case byte[] ba:
+                File.WriteAllBytes(fileName[..^4] + ".png", ba);
+                break;
             default:
                 hasTexture = false;
                 break;

@@ -40,7 +40,7 @@ public class Lp4(byte[] data, string fileName)
     private string FileName { get; set; } = fileName;
     private List<int> ModelOffsets { get; set; } = [];
 
-    public Tim2? Texture { get; set; }
+    public byte[] Texture { get; set; }
 
     public List<Model> Models { get; set; } = [];
     
@@ -105,7 +105,18 @@ public class Lp4(byte[] data, string fileName)
             SelectedModel.Texture.ToUpper()));
         var d = new byte[fs.Length];
         fs.ReadExactly(d, 0, d.Length);
-        Texture = new Tim2(d, SelectedModel.Texture);
+        if (SelectedModel.TextureCache == null)
+        {
+            var tim2 = new Tim2(d, SelectedModel.Texture);
+            var ms = new MemoryStream();
+            tim2.SavePng(ms);
+            Texture = ms.ToArray();
+            SelectedModel.TextureCache = ms.ToArray();
+        }
+        else
+        {
+            Texture = SelectedModel.TextureCache;
+        }
     }
 
     // this parser seems to fail most of the time, so further adjustments maybe needed
@@ -409,7 +420,13 @@ public class Lp4(byte[] data, string fileName)
                 StaticUtils.DecodeColors($"~-CError~--: Attempt to read from offset 0x{i:X} threw an error\n");
             }
         }
-        
+
+        if (Models.Count <= 0) return;
+        foreach (var model in Models.ToArray().Reverse().ToArray())
+        {
+            StaticUtils.LiveLoadStatus = "Precaching textures";
+            SetSelectedModel(model);
+        }
 
     }
     
@@ -434,7 +451,15 @@ public class Lp4(byte[] data, string fileName)
                 SelectedModel.Texture.ToUpper()));
             var d = new byte[fs.Length];
             fs.ReadExactly(d, 0, d.Length);
-            Texture = new Tim2(d, SelectedModel.Texture);
+            var tim2 = new Tim2(d, SelectedModel.Texture);
+            var ms = new MemoryStream();
+            tim2.SavePng(ms);
+            Texture = ms.ToArray();
+            foreach (var model in Models.ToArray().Reverse().ToArray())
+            {
+                StaticUtils.LiveLoadStatus = "Precaching textures";
+                SetSelectedModel(model);
+            }
         }
         catch (Exception ex) when (!Debugger.IsAttached)
         {
@@ -530,6 +555,7 @@ public class Model
     public float[] Scale { get; set; }
     public float[] Offset { get; set; }
     public int Address { get; set; }
+    public byte[]? TextureCache { get; set; }
 
     public List<float[]> Lightmap { get; set; } = [];
     public List<float> RawVertices { get; set; } = [];
