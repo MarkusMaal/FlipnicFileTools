@@ -127,16 +127,18 @@ public static class FileHelpers
             switch (ext?.ToUpper())
             {
                 case "TM2":
+                    StaticUtils.LiveLoadStatus = "Parsing TIM2";
                     var data = new byte[ds.Length];
                     ds.ReadExactly(data);
                     ds.Position = 0;
                     var img = new Tim2(data, mw.FileName);
                     var bt = new BitmapTools { Image = img };
+                    var finalBmp = bt.ToBitmap();
                     LoadAsString(img, "PlayStation 2 texture file", mw);
                     Dispatcher.UIThread.Post(() =>
                     {
                         mw.ImagePreviewTab.IsVisible = true;
-                        mw.PreviewImage.Source = bt.ToBitmap();
+                        mw.PreviewImage.Source = finalBmp;
                     });
                     break;
                 case "ICO":
@@ -318,20 +320,35 @@ public static class FileHelpers
                     Dispatcher.UIThread.Post(() => mw.LoadProgress.IsIndeterminate = false);
                     Dispatcher.UIThread.Post(() => mw.LoadProgress.Maximum = mlb.Sections.Count);
                     var mbCheckerboard = new Bitmap(StaticUtils.GenerateCheckerboardPng(128, 128));
-                    foreach (var sect in mlb.Sections)
+                    foreach (var (key, value) in mlb.Sections)
                     {
                         try
                         {
-                            var r = from ima in sect.Value
-                                let p =
-                                    Path.Combine(Path.GetDirectoryName(mw.FileName) ?? string.Empty,
-                                        ima.Texture.Split('\\')[^1].ToUpper())
-                                let bmp =
-                                    
-                                    File.Exists(p) ? new BitmapTools { Image = new Tim2(File.ReadAllBytes(p), mw.FileName), }.ToBitmap() : mbCheckerboard
-                                select new MenuElementViewModel
-                                    { Layer = sect.Key, MenuElement = ima, ImageSource = bmp };
-                            Dispatcher.UIThread.Post(() => mw.GetViewModel().Menu.AddRange(r));
+                            var mevm = new List<MenuElementViewModel>();
+                            foreach (var ima in value)
+                            {
+                                StaticUtils.LiveLoadStatus = "Parsing " + ima.Texture;
+                                var p = Path.Combine(Path.GetDirectoryName(mw.FileName) ?? string.Empty,
+                                    ima.Texture.Split('\\')[^1].ToUpper());
+                                Tim2? tim2 = null;
+                                if (File.Exists(p))
+                                {
+                                    tim2 = new Tim2(File.ReadAllBytes(p), mw.FileName);
+                                    foreach (var check in mlb.MenuColors)
+                                    {
+                                        if ((key == check.SectionLabel) && (check.Index == ima.Index))
+                                        {
+                                            tim2.ReplaceColor(check.Color);
+                                        }
+                                    }
+                                }
+                                var bmp = File.Exists(p)
+                                    ? new BitmapTools
+                                        { Image = tim2, }.ToBitmap()
+                                    : mbCheckerboard;
+                                Dispatcher.UIThread.Post(() => mevm.Add(new MenuElementViewModel(){Layer = key, MenuElement = ima, ImageSource = bmp}));
+                            }
+                            Dispatcher.UIThread.Post(() => mw.GetViewModel().Menu.AddRange(mevm));
                         }
                         catch (Exception ex)
                         {
@@ -367,15 +384,20 @@ public static class FileHelpers
                     var lp4Da = new byte[ds.Length];
                     ds.ReadExactly(lp4Da);
                     var lp4 = new Lp4(lp4Da, mw.FileName);
-                    StaticUtils.LiveLoadStatus = "Initializing OpenGL";
-                    Dispatcher.UIThread.Post(() =>
+                    if (lp4.HasEmbeddedResources)
                     {
-                        mw.ModelTab.IsSelected = true;
-                        mw.InfoTab.IsSelected = false;
-                    });
-                    Thread.Sleep(1000);
-                    Dispatcher.UIThread.Post(() => { mw.GlControl.ImportLP4(lp4); });
+                        StaticUtils.LiveLoadStatus = "Initializing OpenGL";
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            mw.ModelTab.IsSelected = true;
+                            mw.InfoTab.IsSelected = false;
+                        });
+                        Thread.Sleep(1000);
+                        StaticUtils.LiveLoadStatus = "Parsing LP4";
+                        mw.GlControl.ImportLP4(lp4);
+                    }
                     LoadAsString(lp4, "Flipnic resource file", mw);
+                    if (!lp4.HasEmbeddedResources) break;
                     Dispatcher.UIThread.Post(() =>
                     {
                         mw.Init3DStuff(lp4);
@@ -384,9 +406,15 @@ public static class FileHelpers
                         mw.ImagePreviewTab.IsVisible = true;
                         try
                         {
-                            mw.PreviewImage.Source = new BitmapTools { Image = lp4.Texture }.ToBitmap();
+                            var ms = new MemoryStream(lp4.Texture);
+                            mw.PreviewImage.Source = new Bitmap(ms);
                         }
                         catch
+                        {
+                            mw.ImagePreviewTab.IsVisible = false;
+                        }
+
+                        if (!mw.GlControl.IsTextureValid())
                         {
                             mw.ImagePreviewTab.IsVisible = false;
                         }
@@ -564,8 +592,29 @@ public static class FileHelpers
             Thread.Sleep(100);
             while (true)
             {
-                if (StaticUtils.LiveLoadStatus == "") break;
-                Dispatcher.UIThread.Post(() => mw.LoadStatus.Text = StaticUtils.LiveLoadStatus);
+                if (StaticUtils.LiveLoadStatus == "")
+                {
+                    Dispatcher.UIThread.Post(() => mw.LoadProgress.IsIndeterminate = true);
+                    break;
+                }
+                Dispatcher.UIThread.Post(() =>
+                {
+                    mw.LoadProgress.IsIndeterminate = !StaticUtils.LiveLoadStatus.Contains('%');
+                    if (!mw.LoadProgress.IsIndeterminate)
+                    {
+                        mw.LoadProgress.Maximum = 100;
+                        try
+                        {
+                            mw.LoadProgress.Value =
+                                int.Parse(StaticUtils.LiveLoadStatus.Split(" (")[1].Split('%')[0].Split('.')[0]);
+                        }
+                        catch
+                        {
+                            mw.LoadProgress.Value = 0;
+                        }
+                    }
+                    mw.LoadStatus.Text = StaticUtils.LiveLoadStatus;
+                });
                 Thread.Sleep(100);
             }
         }).Start();

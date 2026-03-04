@@ -20,9 +20,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
 
@@ -534,6 +538,7 @@ public sealed partial class MainWindow : SukiWindow
     {
         if (Models.SelectedIndex < 0) return;
         GlControl.SwitchModel(Models.SelectedItems?[0]?.ToString(), PreviewImage);
+        ImagePreviewTab.IsVisible = GlControl.IsTextureValid();
         GlControl.ReloadModel = true;
         new Thread(() =>
         {
@@ -730,5 +735,167 @@ public sealed partial class MainWindow : SukiWindow
     private void TpModelButton_OnClick(object? sender, RoutedEventArgs e)
     {
         GlControl.Teleport();
+    }
+
+    private void AltNormalMethod_NativeClick(object? sender, EventArgs e)
+    {
+        if (sender is not NativeMenuItem nmi) return;
+        StaticUtils.AlternateNormals = !StaticUtils.AlternateNormals;
+        nmi.IsChecked = StaticUtils.AlternateNormals;
+        if (FileName is null) return;
+        FileHelpers.LoadFromData(new FileStream(FileName, FileMode.Open, FileAccess.Read), FileName[^3..], this);
+        Title = "Flipnic file tool - " + new FileInfo(FileName).Name;
+    }
+
+    private void AltNormalMethod_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem mi) return;
+        StaticUtils.AlternateNormals = !StaticUtils.AlternateNormals;
+        var letter = StaticUtils.AlternateNormals ? "B" : "A";
+        mi.Header = $"Normal vectors decoding: Method {letter}";
+        if (FileName is null) return;
+        FileHelpers.LoadFromData(new FileStream(FileName, FileMode.Open, FileAccess.Read), FileName[^3..], this);
+        Title = "Flipnic file tool - " + new FileInfo(FileName).Name;
+    }
+
+    private void DocsMenu1_OnClick(object? sender, RoutedEventArgs e)
+    {    
+        OpenUrl("https://github.com/MarkusMaal/FlipnicFileTools/blob/master/GUIREADME.md");
+    }
+
+    private void OpenUrl(string url)
+    {
+        try
+        {
+            Process.Start(url);
+        }
+        catch
+        {
+            // hack because of this: https://github.com/dotnet/corefx/issues/10361
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                url = url.Replace("&", "^&");
+                Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Process.Start("xdg-open", url);
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                Process.Start("open", url);
+            }
+            else
+            {
+                ShowDialog("Error", $"Couldn't open URL. Please visit it manually:\n\n{url}", NotificationType.Error);
+            }
+        }
+    }
+
+    private void DataStructsMenu1_OnClick(object? sender, RoutedEventArgs e)
+    {
+        OpenUrl("https://github.com/MarkusMaal/FlipnicPatterns");
+    }
+
+    private void SaveEditorMenu1_OnClick(object? sender, RoutedEventArgs e)
+    {
+        OpenUrl("https://github.com/MarkusMaal/FlipnicSaveEditor");
+    }
+
+    private void OpenImHexMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (!File.Exists(FileName)) return;
+        new Thread(async void () =>
+        {
+            try
+            {
+                new Process()
+                {
+                    StartInfo = new ProcessStartInfo("imhex")
+                    {
+                        Arguments = "--open \"" + FileName + "\""
+                    }
+                }.Start();
+                Thread.Sleep(1000);
+                var patternUrl = FileName[^3..].ToUpper() switch
+                {
+                    "LP4" => "lp4.hexpat",
+                    "BIN" => "binfile.hexpat",
+                    "FPC" => "fpc.hexpat",
+                    ".HD" => "hd.hexpat",
+                    "IPU" => "ipu.hexpat",
+                    "MSG" => "msg.hexpat",
+                    "PSS" => "pss.hexpat",
+                    "SCC" => "scc.hexpat",
+                    "SST" => "sst.hexpat",
+                    "TM2" => "tim2.hexpat",
+                    "ICO" => "ico.hexpat",
+                    "LIT" => "lit.hexpat",
+                    "VSD" => "vsd.hexpat",
+                    "COL" => "col.hexpat",
+                    "FPD" => "fpd.hexpat",
+                    "FTL" => "ftl.hexpat",
+                    "MLB" => "mlb.hexpat",
+                    "LAY" => "LAY.hexpat",
+                    _ => ""
+                };
+                if (patternUrl == "") return;
+                var tmpFile =  Path.GetTempFileName();
+                await DownloadFile(
+                    $"https://raw.githubusercontent.com/MarkusMaal/FlipnicPatterns/refs/heads/main/patterns/{patternUrl}",
+                    tmpFile);
+                new Process()
+                {
+                    StartInfo = new ProcessStartInfo("imhex")
+                    {
+                        Arguments = "--pattern \"" + tmpFile + "\""
+                    }
+                }.Start();
+            }
+            catch
+            {
+                // ignore
+            }
+        }).Start();
+    }
+
+    private void FileMenu1_OnSubmenuOpened(object? sender, RoutedEventArgs e)
+    {
+        OpenImHexMenuItem.IsEnabled = File.Exists(FileName);
+    }
+    static async Task<byte[]?> GetUrlContent(string url)
+    {
+        using (var client = new HttpClient())
+        using (var result = await client.GetAsync(url))
+            return result.IsSuccessStatusCode ? await result.Content.ReadAsByteArrayAsync():null;
+    }
+    
+    static async Task DownloadFile(string url, string pathToSave)
+    {
+        var content = await GetUrlContent(url);
+        if (content != null)
+        {
+            await File.WriteAllBytesAsync($"{pathToSave}", content);
+        }
+    }
+
+    private void OpenImHexNativeMenuItemClick(object? sender, EventArgs e)
+    {
+        OpenImHexMenuItem_OnClick(sender, null);
+    }
+
+    private void DocsNativeMenuClick(object? sender, EventArgs e)
+    {
+        DocsMenu1_OnClick(sender, null);
+    }
+
+    private void DataStructsNativeMenuClick(object? sender, EventArgs e)
+    {
+        DataStructsMenu1_OnClick(sender, null);
+    }
+
+    private void SaveEditorNativeMenuClick(object? sender, EventArgs e)
+    {
+        SaveEditorMenu1_OnClick(sender, null);
     }
 }

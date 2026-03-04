@@ -18,7 +18,8 @@ public abstract class StaticUtils
 
     public static int[] AdsrMultipliers = [1200, 1200, 1400, 1200, 320];
 
-    public static float LibVersion = 2.2f;
+    public static float LibVersion = 2.3f;
+    public static bool IsBeta = true;
     public enum ControllerButtons : byte {
         Disabled = 0xFF,
         L2 = 0x0,
@@ -55,6 +56,10 @@ public abstract class StaticUtils
     public static bool IsModeSet { get; set; } = false;
 
     public static short ReverbStrength { get; set; } = 70;
+
+    public static bool AlternateNormals { get; set; } = false;
+
+    public static bool ForceNoColors { get; set; } = false;
     
     /// <summary>
     /// Display an animated spinning line loader
@@ -139,6 +144,16 @@ public abstract class StaticUtils
         {
             return 0;
         }
+    }
+    
+    /// <summary>
+    /// Read unsigned 64-bit integer (ulong) from the offset specified (assuming little-endian)
+    /// </summary>
+    /// <param name="data">Source data</param>
+    /// <param name="offset">Offset of the location within the data provided, which contains the integer requested</param>
+    public static ulong GetUInt64(byte[] data, int offset)
+    {
+        return BitConverter.ToUInt64(data.Skip(offset).Take(8).ToArray());
     }
     
     
@@ -553,7 +568,8 @@ public abstract class StaticUtils
     /// <param name="fileName">Full path to output OBJ file (including extension)</param>
     /// <param name="vertices">Array containing raw model data (each chunk is 7*sizeof(float), where first 2 items are XY UV coordinates, next 3 items are XYZ vertex coordinates and final 3 items are XYZ normal coordinates)</param>
     /// <param name="texture">Texture object (either Tim or Tim2 is accepted here)</param>
-    public static void ExportObj(string fileName, float[] vertices, object? texture)
+    /// <param name="ignoreNormals">Optional: If set to true, ensures that no normal vectors will get exported to the final OBJ file</param>
+    public static void ExportObj(string fileName, float[] vertices, object? texture, bool ignoreNormals = false)
     {
         // generate .png file
         var hasTexture = true;
@@ -564,6 +580,9 @@ public abstract class StaticUtils
                 break;
             case Tim tm:
                 tm.SavePng(new FileStream(fileName[..^4] + ".png", FileMode.Create, FileAccess.Write));
+                break;
+            case byte[] ba:
+                File.WriteAllBytes(fileName[..^4] + ".png", ba);
                 break;
             default:
                 hasTexture = false;
@@ -603,7 +622,7 @@ public abstract class StaticUtils
 
             writer.WriteLine($"v {x.ToString(culture)} {y.ToString(culture)} {z.ToString(culture)}");
             writer.WriteLine($"vt {u.ToString(culture)} {v.ToString(culture)}");
-            writer.WriteLine($"vn {nx.ToString(culture)} {ny.ToString(culture)} {nz.ToString(culture)}");
+            if (!ignoreNormals) writer.WriteLine($"vn {nx.ToString(culture)} {ny.ToString(culture)} {nz.ToString(culture)}");
         }
 
         // Write face assuming every 3 vertices = 1 triangle

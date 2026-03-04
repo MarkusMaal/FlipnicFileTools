@@ -137,9 +137,27 @@ public class App : Application
               or press Ctrl+Alt+V to paste a file.
               
               """;
+        
         mw.ForceRefresh();
         var p = new Process();
-        
+        try
+        {
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.StartInfo.FileName = "imhex";
+            p.StartInfo.Arguments = "--version";
+            p.Start();
+            p.WaitForExit();
+            mw.OpenImHexMenuItem.IsVisible = p.ExitCode == 0;
+            mw.GetViewModel().CanOpenImhex = p.ExitCode == 0;
+        }
+        catch
+        {
+            mw.OpenImHexMenuItem.IsVisible = false;
+            mw.GetViewModel().CanOpenImhex = false;
+        }
+
+        p = new Process();
         p.StartInfo.UseShellExecute = false;
         p.StartInfo.RedirectStandardOutput = true;
         p.StartInfo.FileName = OperatingSystem.IsWindows() ? "where" : "which";

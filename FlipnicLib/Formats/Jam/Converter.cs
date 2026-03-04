@@ -75,7 +75,7 @@ public abstract class Converter
             InfoChunk =
             {
                 Bank = Path.GetFileNameWithoutExtension(new FileInfo(hdFilePath).Name) + " (SCEI/JAM Voicebank)",
-                Tools = "Flipnic File Tools " + StaticUtils.DotFloatString(StaticUtils.LibVersion),
+                Tools = "Flipnic File Tools " + StaticUtils.DotFloatString(StaticUtils.LibVersion) + (StaticUtils.IsBeta ? " BETA" : ""),
                 Designer = "Generated",
                 Date = new FileInfo(hdFilePath).LastWriteTime.ToShortDateString(),
                 Products = "PS-SPU2",

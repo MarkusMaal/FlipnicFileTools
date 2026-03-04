@@ -24,7 +24,6 @@ public abstract class HelpUtils
                 new HelpLine("magick-path", "Path to ImageMagick executable (may not be needed dep. on what you're trying to do)"),
                 new HelpLine("ffmpeg-path", "Path to FFmpeg (for audio/video conversion operations)"),
                 new HelpLine("msg-path", "Path to JA.MSG file (optional)"),
-                new HelpLine("png", "Use PNG instead of BMP (for transparency and smaller file sizes)"), 
                 new HelpLine("test", "Change how the program behaves specifically for automated testing"), 
                 new HelpLine("version", "Displays the version number for FlipnicLib"),]
             ),
@@ -91,7 +90,9 @@ public abstract class HelpUtils
                 "*.LP4",
                 [
                     new HelpLine("show-lp4*", "Display general information about the file"),
-                    new HelpLine("export-obj", "Export models from the LP4 file as Wavefront OBJ")
+                    new HelpLine("export-obj", "Export models from the LP4 file as Wavefront OBJ"),
+                    new HelpLine("export-box-obj", "Export bounding box from the LP4 file as Wavefront OBJ"),
+                    new HelpLine("alternate-normals", "Use a different method for decoding normal vectors (required for some files)")
                 ]
             ),
             new(
@@ -117,8 +118,7 @@ public abstract class HelpUtils
                 "*.TM2",
                 [
                     new HelpLine("show-tim2*", "Display information about a texture file"),
-                    new HelpLine("convert-tim2", "Converts a texture file to a bitmap (.BMP file)"),
-                    new HelpLine("grayscale", "Set palette to grayscale (black and white)"),
+                    new HelpLine("convert-tim2", "Converts a texture file to a bitmap (.PNG file)"),
                 ]
             ),
             new(

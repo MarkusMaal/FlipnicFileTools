@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Input;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using FlipnicFileToolGUI.Shaders;
 using FlipnicFileToolGUI.Textures;
 using FlipnicLib;
@@ -91,32 +94,33 @@ namespace FlipnicFileToolGUI.Controls
             {
                 _texture = lp4.Texture;
             }
-            OpenTkInit();
-            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            _vertices = lp4.GetVerticies();
-            OpenContainer = lp4;
-            GL.GenBuffer();
-            CycleUV = false;
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
+            Dispatcher.UIThread.Post(() => 
+            {
+                OpenTkInit();
+                GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
+                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+                _vertices = lp4.GetVerticies();
+                OpenContainer = lp4;
+                GL.GenBuffer();
+                CycleUV = false;
+                GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject); 
+            });
         }
 
+        public bool IsTextureValid()
+        {
+            return _texture != null;
+        }
+        
         public void SwitchModel(string? name, Image previewImg)
         {
             if (name is null) return;
             var lp4 = OpenContainer;
-            foreach (var model in lp4.Models)
+            foreach (var model in lp4.Models.Where(model => model.Name == name))
             {
-                if (model.Name == name)
-                {
-                    lp4.SetSelectedModel(model);
-                }
+                lp4.SetSelectedModel(model);
             }
-            _texture = null;
-            if (lp4.Texture != null)
-            {
-                _texture = lp4.Texture;
-            }
+            _texture = lp4.Texture;
             GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             if (lp4.SelectedModel != null)
@@ -124,7 +128,15 @@ namespace FlipnicFileToolGUI.Controls
                 _vertices = lp4.SelectedModel.RawVertices.ToArray();
             }
 
-            previewImg.Source = new BitmapTools(){Image = (Tim2?)_texture}.ToBitmap();
+            var ms = new MemoryStream((byte[])(_texture ?? new byte[]{}));
+            try
+            {
+                previewImg.Source = new Bitmap(ms);
+            }
+            catch
+            {
+                previewImg.Source = new Bitmap(StaticUtils.GenerateCheckerboardPng(256, 256));
+            }
         }
 
         public void ImportFPD(FpnFpd pathTrace, object? texture)
@@ -155,8 +167,8 @@ namespace FlipnicFileToolGUI.Controls
                 vertices.Add(-vertex.CoordX / 4096f);
                 vertices.Add(-vertex.CoordY / 4096f);
                 vertices.Add(vertex.CoordZ / 4096f);
-                vertices.Add(-vertex.NormalCoordX / 4096f);
-                vertices.Add(-vertex.NormalCoordY / 4096f);
+                vertices.Add(vertex.NormalCoordX / 4096f);
+                vertices.Add(vertex.NormalCoordY / 4096f);
                 vertices.Add(vertex.NormalCoordZ / 4096f);
             }
             _vertices = vertices.ToArray();
@@ -267,7 +279,7 @@ namespace FlipnicFileToolGUI.Controls
 
             //Configure structure of the vertices
             //					  (position parameter in vertex shader, 3 points, data is stored as floats, non-normalized, 5 floats/point, first point at offset 0 in data array)
-            GL.VertexAttribPointer(_shader.GetAttribLocation("aPosition"), 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 2 * sizeof(float));
+            GL.VertexAttribPointer(_shader.GetAttribLocation("aPosition"), 3, VertexAttribPointerType.Float, true, 8 * sizeof(float), 2 * sizeof(float));
             GL.EnableVertexAttribArray(_shader.GetAttribLocation("aPosition"));
 
 
@@ -456,7 +468,7 @@ namespace FlipnicFileToolGUI.Controls
 
             if (KeyboardState.IsKeyDown(Key.LeftShift))
             {
-                //Note this is subtracting up, because..? I think avalonia renders the scene upside down.
+                //Note this is subtracting up, because...? I think avalonia renders the scene upside down.
                 _cameraPosition -= _up * effectiveSpeed; //Up 
             }
 

@@ -19,6 +19,7 @@ public class ModelTools
         {
             case Enums.Modes.ShowLp4: ShowLp4(); break;
             case Enums.Modes.ExportObj: ExportObj(); break;
+            case Enums.Modes.ExportBbox: ExportBoxObj(); break;
             case Enums.Modes.ShowCol: Console.WriteLine(new FpnCol(FileName).ToString()); break;
             case Enums.Modes.ExportColObj: ExportColObj(FileName, cfg.SecondaryFileName, cfg.Output); break;
         }
@@ -31,6 +32,7 @@ public class ModelTools
     {
         var lp4 = new Lp4(File.ReadAllBytes(FileName), FileName);
         lp4.Read();
+        Console.Write("\r".PadRight(Console.WindowWidth) + "\r");
         Console.WriteLine(lp4.ToString());
     }
 
@@ -72,5 +74,15 @@ public class ModelTools
             id++;
         }
 
+    }
+
+    /// <summary>
+    /// Convert the bounding box from the LP4 file to Wavefront OBJ
+    /// </summary>
+    private void ExportBoxObj()
+    {
+        var lp4 = new Lp4(File.ReadAllBytes(FileName), FileName);
+        lp4.Read();
+        StaticUtils.ExportObj(Output, lp4.GetBoundingBox(), null, true);
     }
 }

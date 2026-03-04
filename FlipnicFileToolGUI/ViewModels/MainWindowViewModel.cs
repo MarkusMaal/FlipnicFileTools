@@ -47,6 +47,12 @@ public class MainWindowViewModel
     //public static readonly StyledProperty<bool> DevModeProperty = AvaloniaProperty.Register<MainWindow, bool>(nameof(DevMode), defaultValue: false);
     public ObservableCollection<MenuElementViewModel>? MenuElements { get; set; }
     
+    public bool CanOpenImhex
+    {
+        get;
+        set;
+    }
+    
     /// <summary>
     /// List of controls to be displayed on a Combobox
     /// </summary>

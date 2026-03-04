@@ -36,19 +36,9 @@ public class Config
     public string FFmpegPath { get; set; } = "ffmpeg";
     
     /// <summary>
-    /// Render textures in grayscale
-    /// </summary>
-    public bool Grayscale { get; set; }
-    
-    /// <summary>
     /// Section name of a .MLB file
     /// </summary>
     public string MlbSect { get; set; } = "";
-    
-    /// <summary>
-    /// Export textures as PNG instead of BMP
-    /// </summary>
-    public bool UsePng { get; set; }
     
     /// <summary>
     /// Path to a .MID file (when doing soundfont conversions)
@@ -104,9 +94,6 @@ public class Config
                 case "--low-memory":
                     StaticUtils.LowMem = true;
                     break;
-                case "--grayscale":
-                    Grayscale = true;
-                    break;
                 case "--pal":
                     StaticUtils.Pal = true;
                     break;
@@ -116,14 +103,14 @@ public class Config
                 case "--crop-alpha":
                     CropAlpha = true;
                     break;
-                case "--png":
-                    UsePng = true;
+                case "--alternate-normals":
+                    StaticUtils.AlternateNormals = true;
                     break;
                 case "--test":
                     Test = true;
                     break;
                 case "--version":
-                    Console.WriteLine(StaticUtils.DotFloatString(StaticUtils.LibVersion));
+                    Console.WriteLine(StaticUtils.DotFloatString(StaticUtils.LibVersion) + (StaticUtils.IsBeta ? " BETA" : ""));
                     Mode = Enums.Modes.Quit;
                     break;
                 case "--disclaimer":
@@ -228,8 +215,9 @@ public class Config
     {
         if (!StaticUtils.SimpleOutput)
         {
+            var suff = (StaticUtils.IsBeta ? " BETA" : "");
             StaticUtils.DecodeColors(
-                $"~-BFlipnic File Tools {StaticUtils.DotFloatString(StaticUtils.LibVersion)}~--\n");
+                $"~-BFlipnic File Tools {StaticUtils.DotFloatString(StaticUtils.LibVersion)}{suff}~--\n");
         }
 
         if (FileName == "" || StaticUtils.SimpleOutput) return;

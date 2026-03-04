@@ -62,6 +62,9 @@ public class IcoTools
             modelData.Add(vertex.CoordX / 4096f);
             modelData.Add(-vertex.CoordY / 4096f);
             modelData.Add(-vertex.CoordZ / 4096f);
+            modelData.Add(-vertex.NormalCoordX / 4096f);
+            modelData.Add(vertex.NormalCoordY / 4096f);
+            modelData.Add(-vertex.NormalCoordZ / 4096f);
         }
         StaticUtils.ExportObj(outFile, modelData.ToArray(), ico.Texture);
     }

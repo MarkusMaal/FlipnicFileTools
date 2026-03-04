@@ -7,12 +7,15 @@ namespace FlipnicFileToolGUI;
 
 class Program
 {
+    
+    private static string VersionString => StaticUtils.DotFloatString(StaticUtils.LibVersion) + (StaticUtils.IsBeta ? " BETA" : "");
+    
     public static readonly string AboutText =
         $"""
          Created by Markus Maal (a.k.a. Press any key to continue...)
          
          Powered by Avalonia UI using the SukiUI theme
-         FlipnicLib version: {StaticUtils.DotFloatString(StaticUtils.LibVersion)}
+         FlipnicLib version: {VersionString}
          
          Disclaimer: {StaticUtils.DisclaimerText}
          """;

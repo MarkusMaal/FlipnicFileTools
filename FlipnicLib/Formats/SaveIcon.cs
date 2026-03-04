@@ -57,9 +57,9 @@ public class Vertex(byte[] vertexData)
     public short CoordY { get; init; } = StaticUtils.GetInt16(vertexData, 2);
     public short CoordZ { get; init; } =  StaticUtils.GetInt16(vertexData, 4);
     public ushort Light { get; init; } = StaticUtils.GetUInt16(vertexData, 6);
-    public short NormalCoordX { get; init; } = StaticUtils.GetInt16(vertexData, 8);
+    public short NormalCoordX { get; init; } = (short)-StaticUtils.GetInt16(vertexData, 8);
     public short NormalCoordY { get; init; } =  StaticUtils.GetInt16(vertexData, 10);
-    public short NormalCoordZ { get; init; } =  StaticUtils.GetInt16(vertexData, 12);
+    public short NormalCoordZ { get; init; } =  (short)-StaticUtils.GetInt16(vertexData, 12);
     public ushort NormalLight { get; init; } = StaticUtils.GetUInt16(vertexData, 14);
     public short TextureX { get; init; } = StaticUtils.GetInt16(vertexData, 16);
     public short TextureY { get; init; } =  StaticUtils.GetInt16(vertexData, 18);

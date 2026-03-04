@@ -53,7 +53,7 @@ public class BitmapTools
         }
         else
         {
-            Image?.SaveBitmap(ms);
+            Image?.SavePng(ms);
         }
         ms.Position = 0;
         return ms.ToArray();
