@@ -58,7 +58,8 @@ public abstract class Enums
         ExportFpdObj,
         ShowLit,
         ExportBbox,
-        ShowVss
+        ShowVss,
+        ShowFtl
     }
     
     /// <summary>
@@ -89,6 +90,7 @@ public abstract class Enums
             ".COL" => Modes.ShowCol,
             ".LIT" => Modes.ShowLit,
             ".SCC" => Modes.ShowVss,
+            ".FTL" => Modes.ShowFtl,
             _ => Modes.ShowHelp
         };
     }
@@ -149,6 +151,7 @@ public abstract class Enums
             "--export-fpd-obj" => Modes.ExportFpdObj,
             "--show-lit" => Modes.ShowLit,
             "--show-vss" => Modes.ShowVss,
+            "--show-ftl" => Modes.ShowFtl,
             "--export-box-obj" => Modes.ExportBbox,
             _ => mode
         };

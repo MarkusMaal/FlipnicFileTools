@@ -184,6 +184,13 @@ public abstract class HelpUtils
                 ]
             ),
             new(
+                "Texture list",
+                "*.FTL",
+                [
+                    new HelpLine("show-ftl*", "Display textures list stored inside the file as a table")
+                ]
+            ),
+            new(
                 "Save file icon",
                 "*.ICO",
                 [

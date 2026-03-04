@@ -123,6 +123,10 @@ internal static class Program
                     var vss = new VssVer(File.ReadAllBytes(Cfg.FileName));
                     Console.WriteLine(vss);
                     break;
+                case Enums.Modes.ShowFtl:
+                    var ftl = new FpnTexList(File.OpenRead(Cfg.FileName));
+                    Console.WriteLine(ftl);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(args));
             }

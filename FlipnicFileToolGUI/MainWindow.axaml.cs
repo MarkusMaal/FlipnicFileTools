@@ -134,6 +134,7 @@ public sealed partial class MainWindow : SukiWindow
                 Filters.CsvFile,
                 Filters.FpnFpc,
                 Filters.FpdFile,
+                Filters.FtlFile,
                 Filters.HdFile,
                 Filters.SaveIcon,
                 Filters.IpuFile,

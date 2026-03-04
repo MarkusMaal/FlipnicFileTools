@@ -456,6 +456,10 @@ public static class FileHelpers
                     var vss = new VssVer(das);
                     LoadAsString(vss, "Source code control file", mw);
                     break;
+                case "FTL":
+                    var ftl = new FpnTexList(ds);
+                    LoadAsString(ftl, "Texture list", mw);
+                    break;
                 case "LAY":
                     var da = new byte[ds.Length];
                     ds.ReadExactly(da);
