@@ -171,6 +171,8 @@ public class FpnMlb
         new(){Color = [0xb9, 0x1a, 0x32], Index = 1, SectionLabel = "ExRankIconCol"},
         new(){Color = [0xba, 0x1a, 0x32], Index = 0, SectionLabel = "GosIconColYN"},
         new(){Color = [0xba, 0x1a, 0x32], Index = 1, SectionLabel = "GosIconColYN"},
+        new(){Color = [0xba, 0x1a, 0x32], Index = 0, SectionLabel = "BootIconColYN"},
+        new(){Color = [0xba, 0x1a, 0x32], Index = 1, SectionLabel = "BootIconColYN"},
         new(){Color = [0x91, 0xc0, 0x3f], Index = 0, SectionLabel = "MMIconCol"},
         new(){Color = [0xfb, 0x8c, 0x39], Index = 1, SectionLabel = "MMIconCol"},
         new(){Color = [0xbd, 0x06, 0x55], Index = 2, SectionLabel = "MMIconCol"},
