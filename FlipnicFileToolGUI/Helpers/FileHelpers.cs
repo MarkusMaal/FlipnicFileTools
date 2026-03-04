@@ -450,6 +450,12 @@ public static class FileHelpers
                     var lit = new FpnLit(ds);
                     LoadAsString(lit, "Light map", mw);
                     break;
+                case "SCC":
+                    var das = new byte[ds.Length];
+                    ds.ReadExactly(das);
+                    var vss = new VssVer(das);
+                    LoadAsString(vss, "Source code control file", mw);
+                    break;
                 case "LAY":
                     var da = new byte[ds.Length];
                     ds.ReadExactly(da);
@@ -559,6 +565,7 @@ public static class FileHelpers
                         mw.MidiBrowserGrid.IsVisible = false;
                     });
                     break;
+                
                 default:
                     Dispatcher.UIThread.Post(() =>
                     {
@@ -599,7 +606,7 @@ public static class FileHelpers
                 }
                 Dispatcher.UIThread.Post(() =>
                 {
-                    mw.LoadProgress.IsIndeterminate = !StaticUtils.LiveLoadStatus.Contains('%');
+                    mw.LoadProgress.IsIndeterminate = !(StaticUtils.LiveLoadStatus?.Contains('%') ?? false);
                     if (!mw.LoadProgress.IsIndeterminate)
                     {
                         mw.LoadProgress.Maximum = 100;

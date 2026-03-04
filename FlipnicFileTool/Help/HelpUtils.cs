@@ -81,8 +81,15 @@ public abstract class HelpUtils
                 "Video files",
                 "*.IPU",
                 [
-                    new HelpLine("show-ipu", "Display basic information about the IPU file"),
+                    new HelpLine("show-ipu*", "Display basic information about the IPU file"),
                     new HelpLine("convert-ipu", "Uses FFmpeg to convert .IPU file to .M2V")
+                ]
+            ),
+            new (
+                "Source code control files",
+                "*.SCC",
+                [
+                    new HelpLine("show-vss*", "Displays information stored inside the VSSVER.SCC file")
                 ]
             ),
             new(

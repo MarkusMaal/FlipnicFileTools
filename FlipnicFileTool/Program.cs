@@ -119,6 +119,10 @@ internal static class Program
                     break;
                 case Enums.Modes.Quit:
                     break;
+                case Enums.Modes.ShowVss:
+                    var vss = new VssVer(File.ReadAllBytes(Cfg.FileName));
+                    Console.WriteLine(vss);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(args));
             }

@@ -6,7 +6,7 @@ public abstract class Filters
 {
     public static FilePickerFileType AllSupported { get; } = new("All supported file formats")
     {
-        Patterns = ["*.BIN", "*.FPC", "*.FPD", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML", "*.ICO", "*.IPU", "*.LIT", "*.LAY", "*.COL", "*.ISO", "*.iso"]
+        Patterns = ["*.BIN", "*.FPC", "*.FPD", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML", "*.ICO", "*.IPU", "*.LIT", "*.LAY", "*.COL", "*.ISO", "*.iso", "VSSVER.SCC"]
     };
     
     public static FilePickerFileType BinFile { get; } = new("BIN files (.BIN)")
@@ -14,6 +14,10 @@ public abstract class Filters
         Patterns = ["*.BIN"]
     };
     
+    public static FilePickerFileType SccFile { get; } = new("Source code control files (VSSVER.SCC)")
+    {
+        Patterns = ["VSSVER.SCC"]
+    };
     public static FilePickerFileType FpdFile { get; } = new("Fixed Path Data (.FPD)")
     {
         Patterns = ["*.FPD"]
