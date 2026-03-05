@@ -18,7 +18,7 @@ Useful links:
 Prerequisites:
 
 * [FFmpeg](https://ffmpeg.org/) - required for some video related operations
-* [ImageMagick](https://imagemagick.org/) - required for creating BMP mock-ups from menu files (when using the CLI version)
+* [ImageMagick](https://imagemagick.org/) - required for creating PNG mock-ups from menu files (when using the CLI version)
 
 Jump to section:
 
@@ -41,6 +41,9 @@ Jump to section:
 * [Collision maps (*.COL)](#collision-maps-col)
 * [Environment lighting (*.LIT)](#environment-lighting-lit)
 * [Layout files (*.LAY)](#layout-files-lay)
+* [Texture lists (*.FTL)](#texture-lists-ftl)
+* [Dummy files (*.DAT)](#dummy-files-dat)
+* [Source code control files (VSSVER.SCC)](#source-code-control-files-vssver-scc)
 * [FlipnicLib](#flipniclib)
 
 ## GUI version
@@ -155,6 +158,8 @@ Convert .INT file to .WAV: `FlipnicFileTool --convert-int --input FREEZE_OVER.1.
 
 ## Texture files (*.TM2)
 
+These are texture files used by many PlayStation 2 games and Flipnic is no exception in that regard. Note that this parser doesn't support TM2 files with mipmaps or userdata sections (if you try to open such files, a not implemented exception is thrown). However, none of the textures used by Flipnic utilize these features of the TIM2 format.
+
 To view information about a texture file: `FlipnicFileTool --show-tim2 --input FLOWER_TUTUJI0.TM2`
 
 Outputs:
@@ -164,29 +169,30 @@ TIM2 texture file
 Name: FLOWER_TUTUJI0.TM2
 Width: 16
 Height: 16
-Colors: 1024
-Palette type: 8 bpp
+Colors: 256
+Palette type: IDTEX8 (8-bit indexed/Compound)
+Pictures: 1
 
 Palette:
-+-----------+-----------+-----------+
-| ID        | RGB       | Alpha     | 
-+-----------+-----------+-----------+
-| 0x00      | #000000   | 0         | 
-| 0x01      | #092813   | 180       | 
-| 0x02      | #0C2710   | 209       | 
-| 0x03      | #0F2E14   | 168       | 
-| 0x04      | #123216   | 132       | 
-| 0x05      | #133518   | 120       | 
-| 0x06      | #173C1C   | 74        | 
-| 0x07      | #183C1A   | 121       | 
-| 0x08      | #1A421F   | 29        | 
-| 0x09      | #194421   | 2         | 
++------+---------+-------+
+| ID   | RGB     | Alpha | 
++------+---------+-------+
+| 0x0  | #000000 | 0     | 
+| 0x1  | #092813 | 180   | 
+| 0x2  | #0C2710 | 209   | 
+| 0x3  | #0F2E14 | 168   | 
+| 0x4  | #123216 | 132   | 
+| 0x5  | #133518 | 120   | 
+| 0x6  | #173C1C | 74    | 
+| 0x7  | #183C1A | 121   | 
+| 0x8  | #1A421F | 29    | 
+| 0x9  | #194421 | 2     | 
 ...
 ```
 
-To convert a texture file into a BMP file: `FlipnicFileTool --convert-tim2 --input FLOWER_TUTUJI0.TM2 --output FLOWER_TUTUJI0.BMP`
+To convert a texture file into a PNG file: `FlipnicFileTool --convert-tim2 --input FLOWER_TUTUJI0.TM2 --output FLOWER_TUTUJI0.PNG`
 
-To ignore the palette and use a generic grayscale palette: `FlipnicFileTool --convert-tim2 --input FLOWER_TUTUJI0.TM2 --output FLOWER_TUTUJI0_GRAYSCALE.BMP --grayscale`
+To convert a texture file into a PNG file (legacy versions): `FlipnicFileTool --png --convert-tim2 --input FLOWER_TUTUJI0.TM2 --output FLOWER_TUTUJI0.PNG`
 
 ## Menu files (*.MLB)
 
@@ -219,9 +225,9 @@ Outputs:
 +--------------------+--------------------+--------------------+--------------------+--------------------+
 ```
 
-To create a mock-up of the menu as a .BMP file: `FlipnicFileTool --generate-mockup --input MAINMENU.MLB --output MAINMENU.BMP`
+To create a mock-up of the menu as a .PNG file: `FlipnicFileTool --generate-mockup --input MAINMENU.MLB --output MAINMENU.PNG`
 
-You can also only include a specific section from the menu file mockup: `FlipnicFileTool --generate-mockup --input MAINMENU.MLB --output MAINMENU.BMP --mlb-section MainMenu`
+You can also only include a specific section from the menu file mockup: `FlipnicFileTool --generate-mockup --input MAINMENU.MLB --output MAINMENU.PNG --mlb-section MainMenu`
 
 ## Camera sequences (*.FPC)
 
@@ -371,36 +377,7 @@ Bounding box:
 | 6.7750607 | -1.4439601 | -5.1376605 | 
 | -6.77506  | -1.4439601 | -5.1376605 | 
 | 6.7750607 | -1.4439601 | 4.9989805  | 
-| -6.77506  | -1.4439601 | -5.1376605 | 
-| 6.7750607 | -1.4439601 | 4.9989805  | 
-| -6.77506  | -1.4439601 | 4.9989805  | 
-| 6.7750607 | 0.22978    | -5.1376605 | 
-| -6.77506  | 0.22978    | -5.1376605 | 
-| 6.7750607 | 0.22978    | 4.9989805  | 
-| 6.7750607 | 0.22978    | 4.9989805  | 
-| -6.77506  | 0.22978    | 4.9989805  | 
-| -6.77506  | 0.22978    | -5.1376605 | 
-| 6.7750607 | -1.4439601 | 4.9989805  | 
-| -6.77506  | -1.4439601 | 4.9989805  | 
-| 6.7750607 | 0.22978    | 4.9989805  | 
-| -6.77506  | -1.4439601 | 4.9989805  | 
-| -6.77506  | 0.22978    | 4.9989805  | 
-| 6.7750607 | 0.22978    | 4.9989805  | 
-| 6.7750607 | -1.4439601 | -5.1376605 | 
-| -6.77506  | -1.4439601 | -5.1376605 | 
-| -6.77506  | 0.22978    | -5.1376605 | 
-| 6.7750607 | -1.4439601 | -5.1376605 | 
-| -6.77506  | 0.22978    | -5.1376605 | 
-| 6.7750607 | 0.22978    | -5.1376605 | 
-| 6.7750607 | -1.4439601 | 4.9989805  | 
-| 6.7750607 | -1.4439601 | -5.1376605 | 
-| 6.7750607 | 0.22978    | -5.1376605 | 
-| 6.7750607 | 0.22978    | 4.9989805  | 
-| 6.7750607 | 0.22978    | -5.1376605 | 
-| 6.7750607 | -1.4439601 | 4.9989805  | 
-| -6.77506  | -1.4439601 | -5.1376605 | 
-| -6.77506  | -1.4439601 | 4.9989805  | 
-| -6.77506  | 0.22978    | 4.9989805  | 
+...
 | -6.77506  | -1.4439601 | -5.1376605 | 
 | -6.77506  | 0.22978    | -5.1376605 | 
 | -6.77506  | 0.22978    | 4.9989805  | 
@@ -604,6 +581,74 @@ Outputs:
 | PIN1_BMP_SHADOW_                     | 1/1/1                                | 0/0/0                                | 480.3896/-3.5159056/522.5597         |
 ...
 ````
+
+## Texture lists (*.FTL)
+
+The FTL file contains basically the same info as the corresponding .TXT file, but in binary form. This program also allows you to decode the binary file.
+
+Example: `FlipnicFileTool --input FTEXLIST.FTL --show-ftl`
+
+Outputs:
+```
+Texture list
+Count: 269
+
++--------------+-------------------+
+| Texture      | Offset/Dimensions | 
++--------------+-------------------+
+| FA0X0000.TM2 | 32x8x23x15        | 
+| FA0X0001.TM2 | 32x6x25x19        | 
+| FA0X0002.TM2 | 32x32x0x−32       | 
+| FA0X0020.TM2 | 32x8x23x15        | 
+| FA0X0021.TM2 | 32x10x21x11       | 
+...
+```
+
+## Dummy files (*.DAT)
+
+Flipnic has a dummy file to prevent disc drive overseek related issues. You can view some basic information about it.
+
+Example: `FlipnicFileTool --input DUMMY.DAT --show-dummy`
+
+Outputs:
+```
+Dummy file
+
+Purpose: Prevent system crash when DVD laser tries to read past the game data
+Zero padded: Yes
+Total size: 2 kiB
+```
+
+# Source code control files (VSSVER.SCC)
+
+In some versions of Flipnic, there are VSSVER.SCC files, which are accidental development left-overs that were never supposed to ship with the final game. These were used to speed up source control for Microsoft Visual SourceSafe and contain some information about the source code files used during development (not much though) and the project GUID.
+
+You can partially decode these with Flipnic file tools (timestamp format is proprietary and I have no idea how to decode it, which is unfortunate).
+
+Example: `FlipnicFileTool --input VSSVER.SCC --show-vss`
+
+Outputs:
+```
+Microsoft Visual SourceSafe
+Source Code Control file
+
+Project GUID: {00000002-EE3C-0068-00FF-000000000000}
+Checksum: 0996AD63
+Project ID: 67F4h
+
+Associated files:
++---------+----------+-----------+----------+
+| File ID | Checksum | Timestamp | Revision | 
++---------+----------+-----------+----------+
+| 67F5h   | 7D3EE67B | 37E91A83  | 1        | 
+| 67F6h   | 9122A6A3 | 48FBCD1C  | 2        | 
+| 67F7h   | F0B5FA2C | 37F1F395  | 1        | 
+| 67F8h   | 8B5F2638 | 37F7903B  | 1        | 
+| 67F9h   | 66576DFE | 37F8CCE7  | 1        | 
+| 67FAh   | 4E6236FD | 37FE690D  | 1        | 
+| 67FBh   | 8F7FA59B | 488ABC86  | 2        | 
++---------+----------+-----------+----------+
+```
 
 ## FlipnicLib
 
