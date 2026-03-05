@@ -584,6 +584,9 @@ public static class FileHelpers
                     var game = new Game(ds);
                     LoadAsString(game, "Game Executable", mw);
                     break;
+                case "DAT":
+                    LoadAsString(new Dummy(ds), "Dummy file", mw);
+                    break;
                 default:
                     Dispatcher.UIThread.Post(() =>
                     {

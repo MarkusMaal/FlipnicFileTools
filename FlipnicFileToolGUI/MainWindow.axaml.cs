@@ -129,10 +129,12 @@ public sealed partial class MainWindow : SukiWindow
             :
             [
                 Filters.AllSupported,
+                Filters.BdFile,
                 Filters.BinFile,
                 Filters.SysCnf,
                 Filters.ColFile,
                 Filters.CsvFile,
+                Filters.DummyFile,
                 Filters.FpnFpc,
                 Filters.FpdFile,
                 Filters.FtlFile,

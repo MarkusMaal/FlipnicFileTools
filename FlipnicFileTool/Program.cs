@@ -131,6 +131,10 @@ internal static class Program
                     var elf = new Game(File.OpenRead(Cfg.FileName));
                     Console.WriteLine(elf);
                     break;
+                case Enums.Modes.ShowDummy:
+                    var df = new Dummy(File.OpenRead(Cfg.FileName));
+                    Console.WriteLine(df);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(args));
             }

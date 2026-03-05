@@ -6,7 +6,7 @@ public abstract class Filters
 {
     public static FilePickerFileType AllSupported { get; } = new("All supported file formats")
     {
-        Patterns = ["*.BIN", "*.FPC", "*.FPD", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML", "*.ICO", "*.IPU", "*.LIT", "*.LAY", "*.COL", "*.ISO", "*.iso", "VSSVER.SCC", "*.FTL", "SLUS_291.49", "SLES_520.65", "SCPS_150.50", "SLUS_211.57", "SYSTEM.CNF"]
+        Patterns = ["*.BIN", "*.FPC", "*.FPD", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML", "*.ICO", "*.IPU", "*.LIT", "*.LAY", "*.COL", "*.ISO", "*.iso", "VSSVER.SCC", "*.FTL", "SLUS_291.49", "SLES_520.65", "SCPS_150.50", "SLUS_211.57", "SYSTEM.CNF", "DUMMY.DAT"]
     };
     
     public static FilePickerFileType BinFile { get; } = new("BIN files (.BIN)")
@@ -18,7 +18,13 @@ public abstract class Filters
     {
         Patterns = ["VSSVER.SCC"]
     };
+
     
+    public static FilePickerFileType DummyFile { get; } = new("Dummy file (DUMMY.DAT)")
+    {
+        Patterns = ["DUMMY.DAT"]
+    };
+
     public static FilePickerFileType FtlFile { get; } = new("Texture list (*.FTL)")
     {
         Patterns = ["*.FTL"]
