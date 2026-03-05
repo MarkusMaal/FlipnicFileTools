@@ -61,6 +61,7 @@ RUN_TEST "ICO" "MENU" "--show-ico"
 # these two tests can fail if you don't have any .BIN or .ISO files in that directory
 RUN_TEST "BIN" "." "--list-files"
 RUN_TEST "ISO" "." "--show-iso"
+RUN_TEST "DAT" "." "--show-dummy"
 # all .LIT tests will currently fail, because FFT doesn't have support for this format yet
 RUN_TEST "LIT" "BOSS1 BOSS2 BOSS3 BOSS4 HIKARI1 HIKARI2 ISEKI1 ISEKI2 JUNGLE1 JUNGLE2 RETRO1 VS1 VS2 VS3 VS4" "--show-lit"
 RUN_TEST "LP4" "BOSS1 BOSS2 BOSS3 BOSS4 HIKARI1 HIKARI2 ISEKI1 ISEKI2 JUNGLE1 JUNGLE2 RETRO1 VS1 VS2 VS3 VS4" "--show-lp4"
