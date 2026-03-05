@@ -290,11 +290,15 @@ public static class FileHelpers
                 case "CSV":
                 case "TXT":
                 case "XML":
+                case "CNF":
                     var txt = Encoding.UTF8.GetString(ds.ReadBytes((int)ds.Length));
-                    LoadAsString(txt,
-                        (ext == "CSV")
-                            ? "Comma Separated Values"
-                            : ((ext == "XML") ? "eXtensible Markup Language" : "Plain Text"), mw);
+                    LoadAsString(txt, ext switch
+                    {
+                        "CNF" => "PlayStation title information",
+                        "CSV" => "Comma Separated Values",
+                        "XML" => "eXtensible Markup Language",
+                        _ => "Plain Text"
+                    }, mw);
                     break;
                 case "SVAG":
                 case "INT":
@@ -569,7 +573,17 @@ public static class FileHelpers
                         mw.MidiBrowserGrid.IsVisible = false;
                     });
                     break;
-                
+                case ".49":
+                case ".57":
+                case ".65":
+                case ".50":
+                case "49":
+                case "57":
+                case "65":
+                case "50":
+                    var game = new Game(ds);
+                    LoadAsString(game, "Game Executable", mw);
+                    break;
                 default:
                     Dispatcher.UIThread.Post(() =>
                     {

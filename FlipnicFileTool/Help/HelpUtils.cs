@@ -200,6 +200,13 @@ public abstract class HelpUtils
                 ]
             ),
             new(
+                "Game Executable",
+                "*.*",
+                [
+                    new HelpLine("show-elf*", "Display some information about the game executable"),
+                ]
+            ),
+            new(
                 "Blob files",
                 "*.BIN",
                 [

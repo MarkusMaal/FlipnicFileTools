@@ -127,6 +127,10 @@ internal static class Program
                     var ftl = new FpnTexList(File.OpenRead(Cfg.FileName));
                     Console.WriteLine(ftl);
                     break;
+                case Enums.Modes.ShowElf:
+                    var elf = new Game(File.OpenRead(Cfg.FileName));
+                    Console.WriteLine(elf);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(args));
             }

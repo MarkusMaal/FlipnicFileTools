@@ -59,7 +59,8 @@ public abstract class Enums
         ShowLit,
         ExportBbox,
         ShowVss,
-        ShowFtl
+        ShowFtl,
+        ShowElf
     }
     
     /// <summary>
@@ -152,6 +153,7 @@ public abstract class Enums
             "--show-lit" => Modes.ShowLit,
             "--show-vss" => Modes.ShowVss,
             "--show-ftl" => Modes.ShowFtl,
+            "--show-elf" => Modes.ShowElf,
             "--export-box-obj" => Modes.ExportBbox,
             _ => mode
         };

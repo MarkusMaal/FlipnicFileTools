@@ -6,7 +6,7 @@ public abstract class Filters
 {
     public static FilePickerFileType AllSupported { get; } = new("All supported file formats")
     {
-        Patterns = ["*.BIN", "*.FPC", "*.FPD", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML", "*.ICO", "*.IPU", "*.LIT", "*.LAY", "*.COL", "*.ISO", "*.iso", "VSSVER.SCC", "*.FTL"]
+        Patterns = ["*.BIN", "*.FPC", "*.FPD", "*.SST", "*.PSS", "*.MSG", "*.LP4", "*.MLB", "*.TM2", "*.MID", "*.HD", "*.BD", "*.SVAG", "*.INT", "*.VAG", "*.VSD", "*.CSV", "*.TXT", "*.XML", "*.ICO", "*.IPU", "*.LIT", "*.LAY", "*.COL", "*.ISO", "*.iso", "VSSVER.SCC", "*.FTL", "SLUS_291.49", "SLES_520.65", "SCPS_150.50", "SLUS_211.57", "SYSTEM.CNF"]
     };
     
     public static FilePickerFileType BinFile { get; } = new("BIN files (.BIN)")
@@ -104,6 +104,15 @@ public abstract class Filters
     public static FilePickerFileType IsoFile { get; } = new("Disc image (.ISO)")
     {
         Patterns = ["*.ISO", "*.iso"]
+    };
+    public static FilePickerFileType GameElf { get; } = new("Game Executable (SLUS_291.49/SLES_520.65/SCPS_150.50/SLUS_211.57)")
+    {
+        Patterns = ["SLUS_291.49", "SLES_520.65", "SCPS_150.50", "SLUS_211.57"]
+    };
+    
+    public static FilePickerFileType SysCnf { get; } = new("PSX/PS2 game information (SYSTEM.CNF)")
+    {
+        Patterns = ["SYSTEM.CNF"]
     };
 
     public static FilePickerFileType TxtFile { get; } = new("Text files (.TXT)")

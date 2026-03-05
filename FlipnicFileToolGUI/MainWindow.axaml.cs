@@ -130,6 +130,7 @@ public sealed partial class MainWindow : SukiWindow
             [
                 Filters.AllSupported,
                 Filters.BinFile,
+                Filters.SysCnf,
                 Filters.ColFile,
                 Filters.CsvFile,
                 Filters.FpnFpc,
@@ -147,6 +148,7 @@ public sealed partial class MainWindow : SukiWindow
                 Filters.FpnMsg,
                 Filters.SonyPss,
                 Filters.SccFile,
+                Filters.GameElf,
                 Filters.FpnSst,
                 Filters.SvagFile,
                 Filters.SonyTim2,
