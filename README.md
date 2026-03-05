@@ -43,7 +43,7 @@ Jump to section:
 * [Layout files (*.LAY)](#layout-files-lay)
 * [Texture lists (*.FTL)](#texture-lists-ftl)
 * [Dummy files (*.DAT)](#dummy-files-dat)
-* [Source code control files (VSSVER.SCC)](#source-code-control-files-vssver-scc)
+* [Source code control files (VSSVER.SCC)](#source-code-control-files-vssverscc)
 * [FlipnicLib](#flipniclib)
 
 ## GUI version
