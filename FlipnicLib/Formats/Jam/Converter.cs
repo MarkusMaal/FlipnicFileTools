@@ -210,8 +210,16 @@ public abstract class Converter
                         new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[0]*Math.Log2(splitChunk.Attack)) });
                     sf2.AddInstrumentGenerator(SF2Generator.SustainVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[1]+40-StaticUtils.AdsrMultipliers[1]*splitChunk.SustainL) });
-                    sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
-                        new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[2] * Math.Log2(splitChunk.Decay)) });
+                    if (splitChunk.Decay == 13.6 && splitChunk.Sustain != 0.0)
+                    {
+                        sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
+                            new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[2] * Math.Log2(splitChunk.Sustain*2)) });
+                    }
+                    else
+                    {
+                        sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
+                            new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[2] * Math.Log2(splitChunk.Decay)) });
+                    }
                     sf2.AddInstrumentGenerator(SF2Generator.ReleaseVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[3] * Math.Log2(splitChunk.Release)) });
                 }
