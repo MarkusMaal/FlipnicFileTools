@@ -84,6 +84,10 @@ namespace FlipnicFileToolGUI.Shaders
 
         ~UiOpenGlShader()
         {
+            if (OperatingSystem.IsWindows())
+            {
+                return;
+            }
             GL.DeleteProgram(_handle);
         }
 

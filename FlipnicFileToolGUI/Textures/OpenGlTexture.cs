@@ -114,6 +114,10 @@ namespace FlipnicFileToolGUI.Textures
 
         ~OpenGlTexture()
         {
+            if (OperatingSystem.IsWindows())
+            {
+                return;
+            }
             GL.DeleteTexture(_handle);
         }
 
