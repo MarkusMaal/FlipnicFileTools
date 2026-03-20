@@ -892,8 +892,24 @@ public sealed partial class MainWindow : SukiWindow
         SaveEditorMenu1_OnClick(sender, null);
     }
 
-    private void ExportGimmicksButton(object? sender, RoutedEventArgs e)
+    private async void ExportGimmicksButton(object? sender, RoutedEventArgs e)
     {
-        ShowDialog("Flipnic file tools", "Not implemented", NotificationType.Error);
+        try
+        {
+            if (!File.Exists(FileName))
+            {
+                ShowDialog("Flipnic file tools", "This operation is not supported for files loaded directly to memory. Please open the file through File > Open menu.", NotificationType.Error);   
+            }
+            var file = await FileHelpers.SaveFile(this, [Filters.FpnSst]);
+            if (file is null) return;
+            var sst = new FpnSst(File.OpenRead(FileName!));
+            var patchedData = sst.PatchGimmicks(GetViewModel().Gimmicks ?? []);
+            await File.WriteAllBytesAsync(file, patchedData);
+            ShowDialog("Flipnic file tools", "File saved successfully.", NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            ShowDialog("Flipnic file tools", "Error: " + ex.Message, NotificationType.Error);
+        }
     }
 }

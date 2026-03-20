@@ -170,7 +170,7 @@
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
                     <!-- Gimmicks tab -->
-                    <sukiUi:SukiSideMenuItem Name="StageGimmickTab" Header="Gimmicks" IsVisible="False">
+                    <sukiUi:SukiSideMenuItem Name="StageGimmickTab" Header="Edit gimmicks" IsVisible="False">
                         <sukiUi:SukiSideMenuItem.Icon>
                             <controls:CircleDot ColorA="Gray" ColorB="Black" Text="⚙"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>

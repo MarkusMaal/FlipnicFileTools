@@ -1,3 +1,4 @@
+using System.Text;
 using FlipnicLib.Types;
 
 namespace FlipnicLib.Formats;
@@ -114,6 +115,49 @@ public class FpnSst
             gimmicks.Add(key, g);
         }
         return gimmicks;
+    }
+
+    /// <summary>
+    /// Allows you to make customizations to gimmicks
+    /// </summary>
+    /// <param name="gimmicks">The modified gimmicks dictionary (key: TOC entry label/value: gimmick array)</param>
+    /// <returns>Entire SST file as a byte array, which includes the modifications</returns>
+    public byte[] PatchGimmicks(Dictionary<string, Gimmick[]> gimmicks)
+    {
+        if (_data.Clone() is not byte[] patchedData) return [];
+        foreach (var (key, gimmick) in gimmicks)
+        {
+            var tocEntry = TableOfContents[key];
+            var startOffset = tocEntry.Offset;
+            var currentOffset = startOffset;
+            foreach (var subGimmick in gimmick)
+            {
+                var labelData = Encoding.ASCII.GetBytes(subGimmick.Label);
+                for (var i = currentOffset; i < currentOffset + 0x20; i++)
+                {
+                    if (labelData.Length > 0)
+                    {
+                        patchedData[i] = labelData[0];
+                        labelData = labelData.Skip(1).ToArray();
+                        continue;
+                    }
+
+                    patchedData[i] = 0x00;
+                }
+                patchedData[currentOffset + 0x20] = (byte)subGimmick.Type;
+                patchedData[currentOffset + 0x2A] = (byte)(subGimmick.Invisible ? 0x01 : 0x00);
+                var sfxBytes = BitConverter.GetBytes(subGimmick.SoundEffect);
+                patchedData[currentOffset + 0x5C] = sfxBytes[0];
+                patchedData[currentOffset + 0x5D] = sfxBytes[1];
+                patchedData[currentOffset + 0x5E] = sfxBytes[2];
+                patchedData[currentOffset + 0x5F] = sfxBytes[3];
+                patchedData[currentOffset + 0x6C] = (byte)subGimmick.Button;
+                patchedData[currentOffset + 0x6D] = subGimmick.AnalogRange;
+                currentOffset += 0x80;
+            }
+        }
+
+        return patchedData;
     }
 
     /// <summary>
