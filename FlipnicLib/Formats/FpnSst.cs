@@ -145,14 +145,20 @@ public class FpnSst
                     patchedData[i] = 0x00;
                 }
                 patchedData[currentOffset + 0x20] = (byte)subGimmick.Type;
+                patchedData[currentOffset + 0x28] = (byte)(subGimmick.NoSpawn ? 0x01 : 0x00);
                 patchedData[currentOffset + 0x2A] = (byte)(subGimmick.Invisible ? 0x01 : 0x00);
                 var sfxBytes = BitConverter.GetBytes(subGimmick.SoundEffect);
+                var flpBytes = BitConverter.GetBytes(subGimmick.FlipperStrength);
                 patchedData[currentOffset + 0x5C] = sfxBytes[0];
                 patchedData[currentOffset + 0x5D] = sfxBytes[1];
                 patchedData[currentOffset + 0x5E] = sfxBytes[2];
                 patchedData[currentOffset + 0x5F] = sfxBytes[3];
                 patchedData[currentOffset + 0x6C] = (byte)subGimmick.Button;
                 patchedData[currentOffset + 0x6D] = subGimmick.AnalogRange;
+                patchedData[currentOffset + 0x74] = flpBytes[0];
+                patchedData[currentOffset + 0x75] = flpBytes[1];
+                patchedData[currentOffset + 0x76] = flpBytes[2];
+                patchedData[currentOffset + 0x77] = flpBytes[3];
                 currentOffset += 0x80;
             }
         }

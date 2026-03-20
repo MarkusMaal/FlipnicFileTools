@@ -192,6 +192,7 @@
                                         <DataGridTextColumn Header="Analog range" Binding="{Binding AnalogRange}" x:DataType="types:Gimmick"></DataGridTextColumn>
                                         <DataGridTextColumn Header="Button" Binding="{Binding Button}" x:DataType="types:Gimmick"></DataGridTextColumn>
                                         <DataGridCheckBoxColumn Header="Invisible" Binding="{Binding Invisible}" x:DataType="types:Gimmick"></DataGridCheckBoxColumn>
+                                        <DataGridCheckBoxColumn Header="No spawn" Binding="{Binding  NoSpawn}" x:DataType="types:Gimmick"></DataGridCheckBoxColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </Grid>
