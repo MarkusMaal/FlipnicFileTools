@@ -184,17 +184,8 @@ public sealed partial class MainWindow : SukiWindow
     {
         var val = ((ComboBox)sender!).SelectedValue?.ToString();
         if (val == null) return;
-        var gimmickList = GetViewModel().Gimmicks?[val!];
-        string[] colHeaders = ["Label", "Type", "Button", "Sound effect", "Flip. strength", "Knockback", "Bounciness"];
-        List<string[]> rows = [];
-        if (gimmickList == null) return;
-        rows.AddRange(gimmickList.Select(entry => (string[])
-        [
-            entry.Label, entry.Type.ToString(), entry.Button.ToString(), entry.SoundEffect.ToString(),
-           StaticUtils.DotFloatString(entry.FlipperStrength), StaticUtils.DotFloatString(entry.Knockback),
-           StaticUtils.DotFloatString(entry.Bounciness)
-        ]));
-        GimmickBox.Text = StaticUtils.GenerateTable(colHeaders, rows, false);
+        GetViewModel().SelectedGimmick = GetViewModel().Gimmicks?[val!]!;
+        GimmickGrid.ItemsSource = GetViewModel().SelectedGimmick;
     }
 
     private void OpenMenuFromStr(string header)
@@ -529,10 +520,6 @@ public sealed partial class MainWindow : SukiWindow
     private void UpdateSpecialTabThemes()
     {
         if (MainTabControl.SelectedItem is not SukiSideMenuItem mi) return;
-        if (mi.Header == "Gimmicks")
-        {
-            GimmickBox.IsLightTheme = IsLightTheme;
-        }
     }
 
     private void MainTabControl_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -903,5 +890,10 @@ public sealed partial class MainWindow : SukiWindow
     private void SaveEditorNativeMenuClick(object? sender, EventArgs e)
     {
         SaveEditorMenu1_OnClick(sender, null);
+    }
+
+    private void ExportGimmicksButton(object? sender, RoutedEventArgs e)
+    {
+        ShowDialog("Flipnic file tools", "Not implemented", NotificationType.Error);
     }
 }

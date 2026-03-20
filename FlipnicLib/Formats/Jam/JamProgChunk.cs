@@ -75,7 +75,15 @@ public class JamProgChunk
         for (var i = 0; i < cnt; i++)
         {
             var splitChunk = new JamSplitChunk();
-            splitChunk.Read(bs, headerSize);
+            try
+            {
+                splitChunk.Read(bs, headerSize);
+            }
+            catch
+            {
+                continue;
+            }
+
             if (splitChunk.SampleOffset >= 0xFFFF) continue;
             SplitChunks.Add(splitChunk);
         }
