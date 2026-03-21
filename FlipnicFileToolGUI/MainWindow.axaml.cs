@@ -79,6 +79,8 @@ public sealed partial class MainWindow : SukiWindow
         if (Design.IsDesignMode)
         {
             PreviewImage.Source = new Bitmap(StaticUtils.GenerateCheckerboardPng(320, 240));
+            SukiTheme.GetInstance().SwitchBaseTheme();
+            ApplyCustomTheme();
         }
     }
 
@@ -104,7 +106,7 @@ public sealed partial class MainWindow : SukiWindow
 
     private static void ApplyCustomTheme()
     {
-        SukiTheme.GetInstance().ChangeColorTheme(App.AppTheme);
+        SukiTheme.GetInstance().SwitchColorTheme();
     }
 
     private void PalMenuItem_OnClick(object? sender, RoutedEventArgs? e)

@@ -23,11 +23,14 @@ namespace FlipnicFileToolGUI;
 
 public class App : Application
 {
-    public static SukiColorTheme AppTheme = new("AppTheme", Colors.BlueViolet, Colors.DeepPink);
+    private static readonly SukiColorTheme AppTheme = new("AppTheme", Colors.BlueViolet, Colors.DeepPink);
+    private static readonly SukiColorTheme SecTheme = new("Secondary theme", Colors.MidnightBlue, Colors.Purple);
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
-        SukiTheme.GetInstance().AddColorTheme(App.AppTheme);
+        if (Design.IsDesignMode) return;
+        SukiTheme.GetInstance().AddColorTheme(AppTheme);
+        SukiTheme.GetInstance().AddColorTheme(SecTheme);
         SukiTheme.GetInstance().ChangeBaseTheme(ThemeVariant.Dark);
     }
 

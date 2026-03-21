@@ -11,8 +11,8 @@
                  Text="{Binding Text}" Classes.IsLight="{Binding IsLightTheme}" Classes.IsDark="{Binding !IsLightTheme}">
             <TextBox.Styles>
                 <Style Selector="TextBox.IsLight">
-                    <Setter Property="Background" Value="White"></Setter>
-                    <Setter Property="Foreground" Value="MidnightBlue"></Setter>
+                    <Setter Property="Background" Value="WhiteSmoke"></Setter>
+                    <Setter Property="Foreground" Value="DarkBlue"></Setter>
                 </Style>
                 <Style Selector="TextBox.IsDark">
                     <Setter Property="Background" Value="Black"></Setter>
