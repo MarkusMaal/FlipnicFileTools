@@ -912,4 +912,50 @@ public sealed partial class MainWindow : SukiWindow
             ShowDialog("Flipnic file tools", "Error: " + ex.Message, NotificationType.Error);
         }
     }
+
+    private void LocateLayoutButton_Clicked(object? sender, RoutedEventArgs e)
+    {
+        if (GimmickCombobox.SelectedItem is not string val) return;
+        if (FileName is null) return;
+        if (val.EndsWith("GRND") || val.EndsWith("WALL"))
+        {
+            ShowDialog("Flipnic file tools", "This gimmick collection does not have a corresponding layout file.",  NotificationType.Information);
+            return;
+        }
+        var suffix = val.EndsWith('0')
+            ? $"_{val.Substring(3, 2)}_{val.Substring(5, 2)}"
+            : $"_{val.Substring(3, 2)}_{val.Substring(5, 2)}_0{val.Substring(7, 1)}";
+        var doesExist = File.Exists(Path.Join(new FileInfo(FileName).DirectoryName, $"LAY{suffix}.LAY"));
+        if (doesExist)
+        {
+            _dialogManager.CreateDialog()
+                .WithTitle("Flipnic file tools")
+                .WithContent(
+                    $"Layout file: LAY{suffix}.LAY\n\nDo you want to open it?")
+                .WithActionButton("Yes", _ =>
+                {
+                    var nw = new MainWindow();
+                    nw.DataContext = new MainWindowViewModel
+                    {
+                        IsLightTheme = IsLightTheme
+                    };
+                    nw.FileName = Path.Join(new FileInfo(FileName).DirectoryName, $"LAY{suffix}.LAY");
+                    nw.Title = "Flipnic file tool - " + new FileInfo(nw.FileName).Name;
+                    FileHelpers.LoadFromData(new FileStream(nw.FileName, FileMode.Open, FileAccess.Read), nw.FileName[^3..], nw);
+                    nw.Show();
+                    new Thread(() =>
+                    {
+                        Thread.Sleep(200);
+                        Dispatcher.UIThread.Post(() => {nw.InfoTab.IsSelected = true;});
+                    }).Start();
+                }, true)
+                .WithActionButton("No", _ => { }, true)
+                .OfType(NotificationType.Information)
+                .TryShow();
+        }
+        else
+        {
+            ShowDialog("Flipnic file tools", $"Layout file: LAY{suffix}.LAY\nFile does not exist!", NotificationType.Information);
+        }
+    }
 }

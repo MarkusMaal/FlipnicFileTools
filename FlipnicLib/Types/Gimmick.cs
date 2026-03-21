@@ -3,33 +3,65 @@ namespace FlipnicLib.Types;
 public class Gimmick(byte[] data)
 {
     public enum GimmickTypes : byte {
-        Floor = 0x01,
+        SoundTrigger,
+        Floor,
+        Butterfly = 0x04,
         Wall = 0x20,
         Slingshot,
         BlueCoin = 0x23,
         BallSavingBumper = 0x25,
         Flipper = 0x30,
-        Paddle = 0x33,
+        SideFlipper,
+        JackpotMarker,
+        Paddle,
         PaddleB = 0x36,
         Block,
+        BumperC = 0x39,
+        FlipperB = 0x3D,
         Bumper = 0x42,
-        Key = 0x4D,
+        BumperE = 0x45,
+        BumperF,
+        BumperG,
+        BumperI = 0x4A,
+        BumperD = 0x4C,
+        HittableObject,
+        BumperJ = 0x4E,
+        BumperH,
+        BumperK,
         LaneDirSelector = 0x52,
-        Warp = 0x5A,
+        SpinPole = 0x55,
+        SpinPoleB,
+        SpinPoleC,
+        ElevatorSpinPole,
+        IndestructibleObject = 0x59,
+        Warp,
         BlueTarget,
+        OutholeB,
         BumperB = 0x63,
-        DeathLaser = 0x67,
         ColoredRing,
+        DeathLaser = 0x67,
         TrianglePlate = 0x81,
         MissionMarker,
+        ScriptTrigger = 0x80,
         Outhole = 0x84,
         StaticPlunger = 0x86,
-        RingPlunger = 0x87,
-        YellowCoin = 0x8C,
+        RingPlunger,
+        PowerPlunger,
+        EnemyCrabBaby,
+        CrabBaby,
+        SpiderCrab,
+        CoinTrail,
         RingPlungerB,
         ReverseStaticPlunger = 0x92,
+        BigUfo = 0xB0,
+        SmallUfo,
+        Ufo2D = 0xB3,
         Lane = 0xC8,
-        Arrow = 0xCE
+        SideLane = 0xCA,
+        SpecialLane,
+        LaneB = 0xCD,
+        Arrow,
+        MultihitTarget = 0xE9
     }
     
     public string Label { get; set; } = StaticUtils.GetString(data.Take(0x20).ToArray());
@@ -49,4 +81,16 @@ public class Gimmick(byte[] data)
     public bool Invisible { get; set; } = data[0x2A] > 0;
 
     public StaticUtils.ControllerButtons Button { get; set; } = (StaticUtils.ControllerButtons)data[0x6C];
+    
+    public string Lp4File
+    {
+        get
+        {
+            if (!Label.Contains("__"))
+            {
+                return "N/A";
+            }
+            return Label.Split("__").FirstOrDefault() + ".LP4";
+        }
+    }
 }
