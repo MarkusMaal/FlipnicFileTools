@@ -33,13 +33,15 @@ public partial class CircleDot : UserControl
     /// <summary>
     /// Text content of the icon
     /// </summary>
-    public string Text
+    public IImageBrushSource Source
     {
-        get => GetValue(TextProperty);
-        set => SetValue(TextProperty, value);
+        get => GetValue(SourceProperty);
+        set => SetValue(SourceProperty, value);
     }
+
+    public double IconWidth => this.Width * 0.75;
     
-    public static readonly StyledProperty<string> TextProperty = AvaloniaProperty.Register<CircleDot, string>(nameof(Text), defaultValue: "?");
+    public static readonly StyledProperty<IImageBrushSource> SourceProperty = AvaloniaProperty.Register<CircleDot, IImageBrushSource>(nameof(Source));
     
     public static readonly StyledProperty<Color> ColorAProperty =
         AvaloniaProperty.Register<CircleDot, Color>(nameof(ColorA), defaultValue: Colors.MediumBlue);

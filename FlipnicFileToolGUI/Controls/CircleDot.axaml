@@ -6,8 +6,7 @@
              mc:Ignorable="d" d:DesignWidth="256" d:DesignHeight="256"
              DataContext="{Binding RelativeSource={RelativeSource Self}}"
              x:Class="FlipnicFileToolGUI.Controls.CircleDot">
-    <Viewbox>
-        <Grid Width="24" Height="24">
+        <Grid>
             <Ellipse Opacity="0.75">
                 <Ellipse.Fill>
                     <LinearGradientBrush>
@@ -18,7 +17,8 @@
                     </LinearGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
-            <TextBlock FontSize="12" Text="{Binding Text}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
+            
+            <Image Margin="3" Source="{Binding Source}" HorizontalAlignment="Center" VerticalAlignment="Center" Width="16" RenderOptions.BitmapInterpolationMode="HighQuality" Stretch="UniformToFill">
+            </Image>
         </Grid>
-    </Viewbox>
 </UserControl>
