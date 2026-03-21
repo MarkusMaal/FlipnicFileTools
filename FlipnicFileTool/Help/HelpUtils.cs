@@ -90,6 +90,7 @@ public abstract class HelpUtils
                     new HelpLine("show-hd*", "List programs in the .HD file"),
                     new HelpLine("convert-sf2", "Allows you to convert soundbank to .SF2 (specify .HD file as input)"),
                     new HelpLine("no-envelopes", "Doesn't export envelopes (attack, decay, sustain, release)"),
+                    new HelpLine("synthesize-wav", "Creates a .WAV file in addition to the .SF2 file (use with --convert-sf2 option)"),
                     new HelpLine("reverb-strength [value]", $"Adjust reverb strength as a percentage (default: {StaticUtils.DotFloatString((float)Math.Round(StaticUtils.ReverbStrength / 10.0, 1))}%)"),
                     new HelpLine("midi-file [path]", "Manually specify a .MID file to use for conversion (default is input file path, but with .MID extension)"),
                     new HelpLine("bd-file [path]", "Manually specify a .BD file to use for conversion (default is input file path, but with .BD extension)"),

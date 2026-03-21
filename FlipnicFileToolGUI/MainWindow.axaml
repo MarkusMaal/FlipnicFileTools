@@ -327,6 +327,13 @@
                                                     </TextBlock>
                                                 </ToolTip.Tip>
                                             </CheckBox>
+                                            <CheckBox Name="WavToggle" Margin="0,2, 0,-8" IsChecked="True" Content="Synthesize WAV file">
+                                                <ToolTip.Tip>
+                                                    <TextBlock>
+                                                        Creates a WAV file in addition to the .SF2
+                                                    </TextBlock>
+                                                </ToolTip.Tip>
+                                            </CheckBox>
                                         </StackPanel>
                                         <Expander Margin="0,15, 0, 0" Name="AdsrPanel">
                                             <Expander.Header>

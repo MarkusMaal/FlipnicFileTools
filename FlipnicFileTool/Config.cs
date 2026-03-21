@@ -75,6 +75,11 @@ public class Config
     /// Enable testing mode
     /// </summary>
     public bool Test { get; set; } = false;
+    
+    /// <summary>
+    /// Do we create a .WAV file in addition to the .SF2 file?
+    /// </summary>
+    public bool SynthesizeWav { get; set; } = false;
 
     /// <summary>
     /// Set configuration based on the args specified by the user
@@ -108,6 +113,9 @@ public class Config
                     break;
                 case "--test":
                     Test = true;
+                    break;
+                case "--synthesize-wav":
+                    SynthesizeWav = true;
                     break;
                 case "--version":
                     Console.WriteLine(StaticUtils.DotFloatString(StaticUtils.LibVersion) + (StaticUtils.IsBeta ? " BETA" : ""));

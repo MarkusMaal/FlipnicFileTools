@@ -2,6 +2,8 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using FlipnicLib.Formats.Midi;
 using Kermalis.SoundFont2;
+using MeltySynth;
+using NAudio.Wave;
 using Syroot.BinaryData;
 using SonyVag = FlipnicLib.Formats.Vag.SonyVag;
 
@@ -36,7 +38,7 @@ public abstract class Converter
     /// Converts a .hd/.bd (audio bank)'s instruments to a sound font 2 file.
     /// </summary>
     /// <param name="path"></param>
-    public static void InstrumentToSoundFont2(string midiFile, string hdFilePath, string bdFilePath, string outputFilePath)
+    public static void InstrumentToSoundFont2(string midiFile, string hdFilePath, string bdFilePath, string outputFilePath, bool synthesizeWav = false)
     {
         // We need the MIDI to find out which instrument should be percussion banks
         // Why? Because channel 10 (index 9) is treated differently SF2 wise
@@ -249,6 +251,26 @@ public abstract class Converter
         }
 
         sf2.Save(outputFilePath);
+
+        if (!synthesizeWav) return;
+        
+        // WAV synthesis
+        var sampleRate = 44100;
+        var synthesizer = new Synthesizer(outputFilePath, sampleRate);
+
+        var midi = new MidiFile(midiFile);
+        var sequencer = new MidiFileSequencer(synthesizer);
+        sequencer.Play(midi, true);
+        
+        const int numChannels = 2;
+        var sampleLength = (int)(sampleRate * midi.Length.TotalSeconds);
+        var samples = new float[sampleLength * numChannels];
+
+        sequencer.RenderInterleaved(samples);
+
+        var waveFormat = new WaveFormat(sampleRate, 16, 2);
+        using var writer = new WaveFileWriter(Path.ChangeExtension(outputFilePath, ".WAV"), waveFormat);
+        writer.WriteSamples(samples, 0, samples.Length);
     }
 
     private record SampleInfo(byte[] SampleData, ushort SampleID);
