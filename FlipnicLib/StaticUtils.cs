@@ -43,7 +43,7 @@ public abstract class StaticUtils
     public static bool SimpleOutput { get; set; }
     public static bool Pal { get; set; }
     
-    public static string LiveLoadStatus { get; set; }
+    public static string? LiveLoadStatus { get; set; }
 
     public static int WindowWidth { get; set; }
 

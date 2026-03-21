@@ -119,6 +119,22 @@ internal static class Program
                     break;
                 case Enums.Modes.Quit:
                     break;
+                case Enums.Modes.ShowVss:
+                    var vss = new VssVer(File.ReadAllBytes(Cfg.FileName));
+                    Console.WriteLine(vss);
+                    break;
+                case Enums.Modes.ShowFtl:
+                    var ftl = new FpnTexList(File.OpenRead(Cfg.FileName));
+                    Console.WriteLine(ftl);
+                    break;
+                case Enums.Modes.ShowElf:
+                    var elf = new Game(File.OpenRead(Cfg.FileName));
+                    Console.WriteLine(elf);
+                    break;
+                case Enums.Modes.ShowDummy:
+                    var df = new Dummy(File.OpenRead(Cfg.FileName));
+                    Console.WriteLine(df);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(args));
             }

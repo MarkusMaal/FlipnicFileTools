@@ -37,23 +37,23 @@ public sealed partial class MainWindow : SukiWindow
     public static int Progress { get; set; }
     public static int ProgressMax { get; set; }
 
-    
+
     public const string FTypeFormat = "Type: {0}";
 
     public ObservableCollection<string> Controls => GetViewModel().Controls;
-    
+
     public bool IsLightTheme => !Design.IsDesignMode && GetViewModel().IsLightTheme;
 
     internal static bool ErrorDisplayed = false;
-    
+
     private readonly ISukiDialogManager _dialogManager = new SukiDialogManager();
 
     public byte[]? PcmData { get; set; }
-    
+
     public string? FileName { get; set; }
-    
+
     public BinFile? Fs { get; set; }
-    
+
     public IsoUdf? IsoFile { get; set; }
 
     public MainWindow()
@@ -65,9 +65,9 @@ public sealed partial class MainWindow : SukiWindow
             GetViewModel().IsLightTheme = variant == ThemeVariant.Light;
             ForceRefresh();
             UpdateSpecialTabThemes();
-        }; 
+        };
         DialogHost.Manager = _dialogManager;
-        
+
         DragDrop.SetAllowDrop(this, true);
         AddHandler(DragDrop.DragLeaveEvent, (_, e) =>
         {
@@ -86,7 +86,7 @@ public sealed partial class MainWindow : SukiWindow
     {
         if (DataContext is MainWindowViewModel vm)
         {
-            return vm; 
+            return vm;
         }
 
         return Design.IsDesignMode ? new MainWindowViewModel() : throw new NullReferenceException("View model is not initialized");
@@ -101,7 +101,7 @@ public sealed partial class MainWindow : SukiWindow
             e.DragEffects = DragDropEffects.None;
         }
     }
-    
+
     private static void ApplyCustomTheme()
     {
         SukiTheme.GetInstance().ChangeColorTheme(App.AppTheme);
@@ -112,7 +112,7 @@ public sealed partial class MainWindow : SukiWindow
         SukiTheme.GetInstance().SwitchBaseTheme();
         ApplyCustomTheme();
     }
-    
+
     private void OpenMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
         if (sender is MenuItem menu)
@@ -129,11 +129,15 @@ public sealed partial class MainWindow : SukiWindow
             :
             [
                 Filters.AllSupported,
+                Filters.BdFile,
                 Filters.BinFile,
+                Filters.SysCnf,
                 Filters.ColFile,
                 Filters.CsvFile,
+                Filters.DummyFile,
                 Filters.FpnFpc,
                 Filters.FpdFile,
+                Filters.FtlFile,
                 Filters.HdFile,
                 Filters.SaveIcon,
                 Filters.IpuFile,
@@ -145,6 +149,8 @@ public sealed partial class MainWindow : SukiWindow
                 Filters.FpnMlb,
                 Filters.FpnMsg,
                 Filters.SonyPss,
+                Filters.SccFile,
+                Filters.GameElf,
                 Filters.FpnSst,
                 Filters.SvagFile,
                 Filters.SonyTim2,
@@ -176,19 +182,10 @@ public sealed partial class MainWindow : SukiWindow
 
     private void GimmickCombobox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-       var val = ((ComboBox)sender!).SelectedValue?.ToString();
-       if (val == null) return;
-       var gimmickList = GetViewModel().Gimmicks?[val!];
-       string[] colHeaders = ["Label", "Type", "Button", "Sound effect", "Flip. strength", "Knockback", "Bounciness"];
-       List<string[]> rows = [];
-       if (gimmickList == null) return;
-       rows.AddRange(gimmickList.Select(entry => (string[])
-       [
-           entry.Label, entry.Type.ToString(), entry.Button.ToString(), entry.SoundEffect.ToString(),
-           StaticUtils.DotFloatString(entry.FlipperStrength), StaticUtils.DotFloatString(entry.Knockback),
-           StaticUtils.DotFloatString(entry.Bounciness)
-       ]));
-       GimmickBox.Text = StaticUtils.GenerateTable(colHeaders, rows, false);
+        var val = ((ComboBox)sender!).SelectedValue?.ToString();
+        if (val == null) return;
+        GetViewModel().SelectedGimmick = GetViewModel().Gimmicks?[val!]!;
+        GimmickGrid.ItemsSource = GetViewModel().SelectedGimmick;
     }
 
     private void OpenMenuFromStr(string header)
@@ -211,7 +208,7 @@ public sealed partial class MainWindow : SukiWindow
             OpenMenuFromStr(menu.Header ?? "");
         }
     }
-    
+
     private void ExitMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
         if (Design.IsDesignMode) return;
@@ -247,7 +244,7 @@ public sealed partial class MainWindow : SukiWindow
 
         GlControl.Focus();
     }
-    
+
     private void NewWindowMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
         if (Design.IsDesignMode) return;
@@ -523,12 +520,8 @@ public sealed partial class MainWindow : SukiWindow
     private void UpdateSpecialTabThemes()
     {
         if (MainTabControl.SelectedItem is not SukiSideMenuItem mi) return;
-        if (mi.Header == "Gimmicks")
-        {
-            GimmickBox.IsLightTheme = IsLightTheme;
-        }
     }
-    
+
     private void MainTabControl_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         UpdateSpecialTabThemes();
@@ -550,7 +543,7 @@ public sealed partial class MainWindow : SukiWindow
                 bckType = FileTypeLabel.Content?.ToString();
                 FileTypeLabel.Content = "Please wait...";
                 bck = ModelTab.IsSelected;
-            });   
+            });
             Dispatcher.UIThread.Post(() => {
                 ModelTab.IsSelected = bck;
                 FileTypeLabel.Content = bckType;
@@ -613,7 +606,7 @@ public sealed partial class MainWindow : SukiWindow
                 {
                     nSize++;
                 }
-            } 
+            }
             else
             {
                 rootDirName = vf.Path[1..].Split('\\')[0] + "\\";
@@ -648,19 +641,19 @@ public sealed partial class MainWindow : SukiWindow
                             }
 
                             s2.Close();
-                            
+
                             // Resize subfolder entry and overwrite the contents
                             var subF = new Subfolder(ms);
                             var ns = new MemoryStream();
                             var ns1 = subF.ResizeFile(vf.Path.Split('\\')[^1], (int)nSize, ns);
                             var ns2 = subF.WriteFileUnsafe(vf.Path.Split('\\')[^1], File.ReadAllBytes(replacement), ns1);
-                
+
                             // Ensure that the length can be addressed by 2048 bytes
                             for (var i = 0; i < ns2.Length % 0x800; i++)
                             {
                                 ns2.WriteByte(0);
                             }
-                
+
                             if (ns2.Length % 0x800 != 0) throw new FormatException("Stream length is not divisible by 2048");
                             ns2.Position = 0;
                             // Resize the subfolder container
@@ -759,7 +752,7 @@ public sealed partial class MainWindow : SukiWindow
     }
 
     private void DocsMenu1_OnClick(object? sender, RoutedEventArgs e)
-    {    
+    {
         OpenUrl("https://github.com/MarkusMaal/FlipnicFileTools/blob/master/GUIREADME.md");
     }
 
@@ -869,7 +862,7 @@ public sealed partial class MainWindow : SukiWindow
         using (var result = await client.GetAsync(url))
             return result.IsSuccessStatusCode ? await result.Content.ReadAsByteArrayAsync():null;
     }
-    
+
     static async Task DownloadFile(string url, string pathToSave)
     {
         var content = await GetUrlContent(url);
@@ -897,5 +890,72 @@ public sealed partial class MainWindow : SukiWindow
     private void SaveEditorNativeMenuClick(object? sender, EventArgs e)
     {
         SaveEditorMenu1_OnClick(sender, null);
+    }
+
+    private async void ExportGimmicksButton(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (!File.Exists(FileName))
+            {
+                ShowDialog("Flipnic file tools", "This operation is not supported for files loaded directly to memory. Please open the file through File > Open menu.", NotificationType.Error);   
+            }
+            var file = await FileHelpers.SaveFile(this, [Filters.FpnSst]);
+            if (file is null) return;
+            var sst = new FpnSst(File.OpenRead(FileName!));
+            var patchedData = sst.PatchGimmicks(GetViewModel().Gimmicks ?? []);
+            await File.WriteAllBytesAsync(file, patchedData);
+            ShowDialog("Flipnic file tools", "File saved successfully.", NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            ShowDialog("Flipnic file tools", "Error: " + ex.Message, NotificationType.Error);
+        }
+    }
+
+    private void LocateLayoutButton_Clicked(object? sender, RoutedEventArgs e)
+    {
+        if (GimmickCombobox.SelectedItem is not string val) return;
+        if (FileName is null) return;
+        if (val.EndsWith("GRND") || val.EndsWith("WALL"))
+        {
+            ShowDialog("Flipnic file tools", "This gimmick collection does not have a corresponding layout file.",  NotificationType.Information);
+            return;
+        }
+        var suffix = val.EndsWith('0')
+            ? $"_{val.Substring(3, 2)}_{val.Substring(5, 2)}"
+            : $"_{val.Substring(3, 2)}_{val.Substring(5, 2)}_0{val.Substring(7, 1)}";
+        var doesExist = File.Exists(Path.Join(new FileInfo(FileName).DirectoryName, $"LAY{suffix}.LAY"));
+        if (doesExist)
+        {
+            _dialogManager.CreateDialog()
+                .WithTitle("Flipnic file tools")
+                .WithContent(
+                    $"Layout file: LAY{suffix}.LAY\n\nDo you want to open it?")
+                .WithActionButton("Yes", _ =>
+                {
+                    var nw = new MainWindow();
+                    nw.DataContext = new MainWindowViewModel
+                    {
+                        IsLightTheme = IsLightTheme
+                    };
+                    nw.FileName = Path.Join(new FileInfo(FileName).DirectoryName, $"LAY{suffix}.LAY");
+                    nw.Title = "Flipnic file tool - " + new FileInfo(nw.FileName).Name;
+                    FileHelpers.LoadFromData(new FileStream(nw.FileName, FileMode.Open, FileAccess.Read), nw.FileName[^3..], nw);
+                    nw.Show();
+                    new Thread(() =>
+                    {
+                        Thread.Sleep(200);
+                        Dispatcher.UIThread.Post(() => {nw.InfoTab.IsSelected = true;});
+                    }).Start();
+                }, true)
+                .WithActionButton("No", _ => { }, true)
+                .OfType(NotificationType.Information)
+                .TryShow();
+        }
+        else
+        {
+            ShowDialog("Flipnic file tools", $"Layout file: LAY{suffix}.LAY\nFile does not exist!", NotificationType.Information);
+        }
     }
 }

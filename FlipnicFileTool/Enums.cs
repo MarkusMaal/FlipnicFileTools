@@ -57,7 +57,11 @@ public abstract class Enums
         ExportColObj,
         ExportFpdObj,
         ShowLit,
-        ExportBbox
+        ExportBbox,
+        ShowVss,
+        ShowFtl,
+        ShowElf,
+        ShowDummy
     }
     
     /// <summary>
@@ -87,6 +91,9 @@ public abstract class Enums
             ".ISO" => Modes.ShowIso,
             ".COL" => Modes.ShowCol,
             ".LIT" => Modes.ShowLit,
+            ".SCC" => Modes.ShowVss,
+            ".FTL" => Modes.ShowFtl,
+            ".DAT" => Modes.ShowDummy,
             _ => Modes.ShowHelp
         };
     }
@@ -146,6 +153,10 @@ public abstract class Enums
             "--export-col-obj" => Modes.ExportColObj,
             "--export-fpd-obj" => Modes.ExportFpdObj,
             "--show-lit" => Modes.ShowLit,
+            "--show-vss" => Modes.ShowVss,
+            "--show-ftl" => Modes.ShowFtl,
+            "--show-elf" => Modes.ShowElf,
+            "--show-dummy" => Modes.ShowDummy,
             "--export-box-obj" => Modes.ExportBbox,
             _ => mode
         };

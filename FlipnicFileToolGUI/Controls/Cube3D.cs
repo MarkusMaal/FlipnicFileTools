@@ -126,6 +126,15 @@ namespace FlipnicFileToolGUI.Controls
             if (lp4.SelectedModel != null)
             {
                 _vertices = lp4.SelectedModel.RawVertices.ToArray();
+                for (var i = 0; i < _vertices.Length; i+=8)
+                {
+                    _vertices[i + 2] *= lp4.SelectedModel.Scale[0];
+                    _vertices[i + 3] *= lp4.SelectedModel.Scale[1];
+                    _vertices[i + 4] *= lp4.SelectedModel.Scale[2];
+                    _vertices[i + 2] += lp4.SelectedModel.Offset[0];
+                    _vertices[i + 3] += lp4.SelectedModel.Offset[1];
+                    _vertices[i + 4] += lp4.SelectedModel.Offset[2];
+                }
             }
 
             var ms = new MemoryStream((byte[])(_texture ?? new byte[]{}));
@@ -262,7 +271,7 @@ namespace FlipnicFileToolGUI.Controls
             //Create vertex and buffer objects
             _vertexArrayObject = GL.GenVertexArray();
             _vertexBufferObject = GL.GenBuffer();
-            
+
 
             //Set bg colour
             GL.ClearColor(0.25f, 0.2f, 0.4f, 0.5f);
@@ -307,6 +316,9 @@ namespace FlipnicFileToolGUI.Controls
         //OpenTkRender is called once a frame. The aspect ratio and keyboard state are configured prior to this being called.
         protected override void OpenTkRender()
         {
+            // Make sure that the viewport fills the entire area of the control when using >100% UI scaling
+            GL.Viewport(0, 0, GetPixelSize().Width, GetPixelSize().Height);
+
             GL.Enable(EnableCap.DepthTest);
 
             //Clear the previous frame
@@ -635,6 +647,13 @@ namespace FlipnicFileToolGUI.Controls
             var y = _vertices[3];
             var z = _vertices[4];
             _cameraPosition = new Vector3(x, y, z);
+        }
+
+        // a workaround mentioned by Avalonia developers
+        public PixelSize GetPixelSize()
+        {
+            var scaling = TopLevel.GetTopLevel(this).RenderScaling;
+            return new PixelSize(Math.Max(1, (int)(Bounds.Width * scaling)), Math.Max(1, (int)(Bounds.Height * scaling)));
         }
     }
 }

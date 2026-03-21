@@ -13,6 +13,11 @@ public class MainWindowViewModel
     /// SST > Gimmicks
     /// </summary>
     public Dictionary<string, Gimmick[]>? Gimmicks { get; set; }
+
+    /// <summary>
+    /// SST > Gimmicks (current selection)
+    /// </summary>
+    public Gimmick[] SelectedGimmick { get; set; } = [];
     
     /// <summary>
     /// BIN > /embedded file/

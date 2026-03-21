@@ -6,37 +6,37 @@ public class FpnLay
 
     public FpnLay(byte[] data)
     {
-        var offset = 0x40;
-        while (offset <= data.Length - 0xB0)
+        var offset = 0x30;
+        while (offset < data.Length)
         {
-            int additionalDataLength;
-            try
-            {
-                additionalDataLength = BitConverter.ToInt32(data, offset + 0x58);
-            }
-            catch
-            {
-                break;
-            }
-
+            var count = StaticUtils.GetInt32(data, offset);
+            var unknown = StaticUtils.GetInt32(data, offset + 4);
+            var label = StaticUtils.GetStringAt(data, offset + 0x10);
+            var test = StaticUtils.GetInt32(data, offset + 0x50);
+            var additionalDataLength = StaticUtils.GetInt32(data, offset + 0x58);
+            var sizeX = StaticUtils.GetFloat(data, offset + 0x60);
+            var skewY = StaticUtils.GetFloat(data, offset + 0x64);
+            var skewZ = StaticUtils.GetFloat(data, offset + 0x68);
+            var sizeY = StaticUtils.GetFloat(data, offset + 0x74);
+            var skewX = StaticUtils.GetFloat(data, offset + 0x80);
+            var sizeZ = StaticUtils.GetFloat(data, offset + 0x88);
+            var posX =  StaticUtils.GetFloat(data, offset + 0x90);
+            var posY =  StaticUtils.GetFloat(data, offset + 0x94);
+            var posZ =  StaticUtils.GetFloat(data, offset + 0x98);
             layouts.Add(new Layout
             {
-                Label = StaticUtils.GetString([.. data.Skip(offset).Take(0x10)]),
-                SizeX = StaticUtils.GetFloat(data, offset + 0x50),
-                SizeY = StaticUtils.GetFloat(data, offset + 0x64),
-                SizeZ = StaticUtils.GetFloat(data, offset + 0x78),
-                SkewX = StaticUtils.GetFloat(data, offset + 0x70),
-                SkewY = StaticUtils.GetFloat(data, offset + 0x54),
-                SkewZ = StaticUtils.GetFloat(data, offset + 0x58),
-                PositionX = StaticUtils.GetFloat(data, offset + 0x80),
-                PositionY = StaticUtils.GetFloat(data, offset + 0x84),
-                PositionZ = StaticUtils.GetFloat(data, offset + 0x88),
+                Label = label,
+                PositionX = posX,
+                PositionY = posY,
+                PositionZ = posZ,
+                SizeX = sizeX,
+                SizeY = sizeY,
+                SizeZ = sizeZ,
+                SkewX = skewX,
+                SkewY = skewY,
+                SkewZ = skewZ,
             });
-            if (additionalDataLength < 0x7FFF)
-            {
-                offset += additionalDataLength * 0x10;
-            }
-            offset += 0xB0;
+            offset += 0xB0 + (additionalDataLength < 32768 ? 0x10 * additionalDataLength : 0);
         }
     }
 

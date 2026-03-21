@@ -170,14 +170,35 @@
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
                     <!-- Gimmicks tab -->
-                    <sukiUi:SukiSideMenuItem Name="StageGimmickTab" Header="Gimmicks" IsVisible="False">
+                    <sukiUi:SukiSideMenuItem Name="StageGimmickTab" Header="Edit gimmicks" IsVisible="False">
                         <sukiUi:SukiSideMenuItem.Icon>
                             <controls:CircleDot ColorA="Gray" ColorB="Black" Text="⚙"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
                             <Grid RowDefinitions="Auto, *">
-                                <ComboBox Grid.Row="0" Name="GimmickCombobox" SelectionChanged="GimmickCombobox_OnSelectionChanged"></ComboBox>                                        
-                                <controls:CLIBox Grid.Row="1" x:DataType="controls:CLIBox" Name="GimmickBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" />
+                                <Grid Grid.Row="0" Grid.ColumnDefinitions="*,Auto">
+                                    <ComboBox Grid.Row="0" Name="GimmickCombobox" SelectionChanged="GimmickCombobox_OnSelectionChanged"></ComboBox>
+                                    <StackPanel Orientation="Horizontal" Grid.Column="1">
+                                        <Button Content="Locate layout file" Margin="5" Click="LocateLayoutButton_Clicked"></Button>
+                                        <Button Content="Export changes" Margin="5" Click="ExportGimmicksButton"></Button>
+                                    </StackPanel>
+                                </Grid>
+                                <DataGrid Grid.Row="1" Name="GimmickGrid" ItemsSource="{Binding SelectedGimmick}"
+                                          CanUserResizeColumns="True">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Label" Binding="{Binding Label}" x:DataType="types:Gimmick"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Type" Binding="{Binding  Type}" x:DataType="types:Gimmick"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Model" Binding="{Binding  Lp4File}" x:DataType="types:Gimmick" IsReadOnly="True"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Sound effect" Binding="{Binding SoundEffect}" x:DataType="types:Gimmick"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Bounciness" Binding="{Binding Bounciness}" x:DataType="types:Gimmick"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Flipper strength" Binding="{Binding FlipperStrength}" x:DataType="types:Gimmick"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Knockback" Binding="{Binding Knockback}" x:DataType="types:Gimmick"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Analog range" Binding="{Binding AnalogRange}" x:DataType="types:Gimmick"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Button" Binding="{Binding Button}" x:DataType="types:Gimmick"></DataGridTextColumn>
+                                        <DataGridCheckBoxColumn Header="Invisible" Binding="{Binding Invisible}" x:DataType="types:Gimmick"></DataGridCheckBoxColumn>
+                                        <DataGridCheckBoxColumn Header="No spawn" Binding="{Binding  NoSpawn}" x:DataType="types:Gimmick"></DataGridCheckBoxColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
                             </Grid>
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
@@ -303,6 +324,13 @@
                                                         Tries to create the soundfont with proper envelopes (attack, decay, sustain, release). Uncheck this if you don't want that.
                                                         <LineBreak/>
                                                         NOTE: Sustain Rate will not be converted, because SF2 doesn't support it.
+                                                    </TextBlock>
+                                                </ToolTip.Tip>
+                                            </CheckBox>
+                                            <CheckBox Name="WavToggle" Margin="0,2, 0,-8" IsChecked="True" Content="Synthesize WAV file">
+                                                <ToolTip.Tip>
+                                                    <TextBlock>
+                                                        Creates a WAV file in addition to the .SF2
                                                     </TextBlock>
                                                 </ToolTip.Tip>
                                             </CheckBox>

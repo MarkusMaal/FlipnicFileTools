@@ -119,6 +119,7 @@ public static class FileHelpers
         mw.DockPanel1.IsVisible = false;
         mw.Loader.IsVisible = true;
         mw.AdsrPanel.IsVisible = false;
+        mw.WavToggle.IsVisible = false;
 
         List<VirtualFile> fsEntries;
 
@@ -277,6 +278,7 @@ public static class FileHelpers
                         mw.ConvertMovButton.IsVisible = false;
                         mw.DemuxButton.IsVisible = false;
                         mw.AdsrPanel.IsVisible = true;
+                        mw.WavToggle.IsVisible = true;
 
                         var fileDirectory = new FileInfo(mw.FileName).Directory?.FullName ?? "";
                         var extension = Path.GetExtension(mw.FileName);
@@ -290,11 +292,15 @@ public static class FileHelpers
                 case "CSV":
                 case "TXT":
                 case "XML":
+                case "CNF":
                     var txt = Encoding.UTF8.GetString(ds.ReadBytes((int)ds.Length));
-                    LoadAsString(txt,
-                        (ext == "CSV")
-                            ? "Comma Separated Values"
-                            : ((ext == "XML") ? "eXtensible Markup Language" : "Plain Text"), mw);
+                    LoadAsString(txt, ext switch
+                    {
+                        "CNF" => "PlayStation title information",
+                        "CSV" => "Comma Separated Values",
+                        "XML" => "eXtensible Markup Language",
+                        _ => "Plain Text"
+                    }, mw);
                     break;
                 case "SVAG":
                 case "INT":
@@ -450,6 +456,16 @@ public static class FileHelpers
                     var lit = new FpnLit(ds);
                     LoadAsString(lit, "Light map", mw);
                     break;
+                case "SCC":
+                    var das = new byte[ds.Length];
+                    ds.ReadExactly(das);
+                    var vss = new VssVer(das);
+                    LoadAsString(vss, "Source code control file", mw);
+                    break;
+                case "FTL":
+                    var ftl = new FpnTexList(ds);
+                    LoadAsString(ftl, "Texture list", mw);
+                    break;
                 case "LAY":
                     var da = new byte[ds.Length];
                     ds.ReadExactly(da);
@@ -559,6 +575,20 @@ public static class FileHelpers
                         mw.MidiBrowserGrid.IsVisible = false;
                     });
                     break;
+                case ".49":
+                case ".57":
+                case ".65":
+                case ".50":
+                case "49":
+                case "57":
+                case "65":
+                case "50":
+                    var game = new Game(ds);
+                    LoadAsString(game, "Game Executable", mw);
+                    break;
+                case "DAT":
+                    LoadAsString(new Dummy(ds), "Dummy file", mw);
+                    break;
                 default:
                     Dispatcher.UIThread.Post(() =>
                     {
@@ -599,7 +629,7 @@ public static class FileHelpers
                 }
                 Dispatcher.UIThread.Post(() =>
                 {
-                    mw.LoadProgress.IsIndeterminate = !StaticUtils.LiveLoadStatus.Contains('%');
+                    mw.LoadProgress.IsIndeterminate = !(StaticUtils.LiveLoadStatus?.Contains('%') ?? false);
                     if (!mw.LoadProgress.IsIndeterminate)
                     {
                         mw.LoadProgress.Maximum = 100;
