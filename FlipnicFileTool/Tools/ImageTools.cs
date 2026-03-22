@@ -54,7 +54,7 @@ public class ImageTools
     private void GenerateMockup()
     {
         var root = new FileInfo(FileName).Directory?.FullName ?? ".";
-        using var baseImage = new MagickImage(StaticUtils.GenerateCheckerboardPng(640, 480,new Pixel(0,0,0, 0, false),new Pixel(0,0,0, 0 , false)));
+        using var baseImage = new MagickImage(StaticUtils.GenerateCheckerboardPng(640, StaticUtils.Pal ? 512 : 480,new Pixel(0,0,0, 0, false),new Pixel(0,0,0, 0 , false)));
         var mlb = new FpnMlb(File.ReadAllBytes(FileName));
         for (var depth = -32768; depth < 32768; depth++)
         {
