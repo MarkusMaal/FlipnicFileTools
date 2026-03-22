@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using FlipnicLib;
 using FlipnicLib.Formats;
+using ImageMagick;
+using Pixel = BigGustave.Pixel;
 
 namespace FlipnicFileTool.Tools;
 
@@ -11,15 +13,12 @@ public class ImageTools
     private string Output { get; set; }
     
     private string MlbSect { get; set; }
-    
-    private string MagickPath { get; set; }
 
     public ImageTools(Config cfg)
     {
         FileName = cfg.FileName;
         Output = cfg.Output;
         MlbSect = cfg.MlbSect;
-        MagickPath = cfg.MagickPath;
         
         switch (cfg.Mode)
         {
@@ -54,50 +53,82 @@ public class ImageTools
     /// </summary>
     private void GenerateMockup()
     {
-        StaticUtils.GenerateEmptyPng(Output + "_", 640, StaticUtils.Pal ? 512 : 480);
         var root = new FileInfo(FileName).Directory?.FullName ?? ".";
-        var magickCommand = $"\"{Output}_\" ";
-        foreach (var sect in new FpnMlb(File.ReadAllBytes(FileName)).Sections
-                     .Where(me => (MlbSect == "") || (me.Key == MlbSect)).SelectMany(me => me.Value))
+        using var baseImage = new MagickImage(StaticUtils.GenerateCheckerboardPng(640, 480,new Pixel(0,0,0, 0, false),new Pixel(0,0,0, 0 , false)));
+        var mlb = new FpnMlb(File.ReadAllBytes(FileName));
+        for (var depth = -32768; depth < 32768; depth++)
         {
-            try
+            foreach (var item in mlb.Sections
+                         .Where(me => MlbSect == "" || me.Key == MlbSect)
+                         .SelectMany(me => me.Value.Select(v => new { me.Key, Value = v })))
             {
+                var sect = item.Value;
+                if (sect.Dipth != depth) continue;
                 var textureFile = sect.Texture.Split('\\')[^1].ToUpper();
-                new Tim2(File.ReadAllBytes(Path.Combine(root, textureFile)),
-                    Path.Combine(root, textureFile)).SavePng(
-                    new FileStream(Path.Combine(root, textureFile.Replace(".TM2", ".TEMP.PNG")),
-                        FileMode.Create));
+                try
+                {
+                    if (File.Exists(Path.Combine(root, textureFile)))
+                    {
+                        var tim2 = new Tim2(File.ReadAllBytes(Path.Combine(root, textureFile)),
+                            Path.Combine(root, textureFile));
+                        foreach (var check in mlb.MenuColors)
+                        {
+                            if ((item.Key == check.SectionLabel) && (check.Index == sect.Index))
+                            {
+                                tim2.ReplaceColor(check.Color);
+                            }
+                        }
 
-                magickCommand +=
-                    $" ( \"{Path.Combine(root, textureFile.Replace(".TM2", ".TEMP.PNG"))}\" ) -geometry +{sect.PosX}+{sect.PosY} -composite ";
-            }
-            catch
-            {
-                // ignored
+                        tim2.SavePng(
+                            new FileStream(Path.Combine(root, textureFile.Replace(".TM2", ".TEMP.PNG")),
+                                FileMode.Create));
+                    }
+                    else
+                    {
+                        var fs = new FileStream(Path.Combine(root, textureFile.Replace(".TM2", ".TEMP.PNG")),
+                            FileMode.Create);
+                        var cb = StaticUtils.GenerateCheckerboardPng(sect.Width, sect.Height);
+                        cb.Position = 0;
+                        var buffer = new byte[1024];
+                        while (cb.Position < cb.Length - 1024)
+                        {
+                            cb.ReadExactly(buffer, 0, 1024);
+                            fs.Write(buffer, 0, buffer.Length);
+                        }
+
+                        buffer = new byte[cb.Length - cb.Position];
+                        cb.ReadExactly(buffer, 0, buffer.Length);
+                        fs.Write(buffer, 0, buffer.Length);
+                        fs.Close();
+                    }
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    StaticUtils.DecodeColors("~-CError~--: Read-only file system");
+                    Console.WriteLine();
+                    return;
+                }
+                using var overlay =
+                    new MagickImage(Path.Combine(root, textureFile.Replace(".TM2", ".TEMP.PNG")));
+                overlay.Resize(new MagickGeometry($"{sect.Width}x{sect.Height}!"));
+
+                baseImage.Composite(overlay, sect.PosX, sect.PosY, CompositeOperator.Over);
             }
         }
 
-        magickCommand += $" \"{Output}\"";
-        Console.WriteLine($"Executing shell command: magick {magickCommand}");
-        var p = new Process
+        // Save result
+        Console.WriteLine("Saving final PNG file");
+        baseImage.Write(Output);
+        
+        //File.Delete(Output + "_");
+        foreach (var f in new FileInfo(FileName).Directory!.GetFiles())
         {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = MagickPath,
-                Arguments = magickCommand.Replace("+−", "+"),
-                UseShellExecute = true,
-                CreateNoWindow = true,
-            }
-        };
-        p.Start();
-        p.WaitForExit();
-        File.Delete(Output + "_");
-        foreach (var f in new FileInfo(Output).Directory!.GetFiles())
-        {
-            if (f.Name.EndsWith(".TEMP"))
-            {
-                f.Delete();
-            }
+            if (!f.Name.EndsWith(".TEMP.PNG")) continue;
+            f.Delete();
+            Console.WriteLine("Deleted: " + f.FullName);
         }
+        StaticUtils.DecodeColors($"~-ASuccess~--: File saved as {Output}");
+        Console.WriteLine();
+        
     }
 }

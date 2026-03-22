@@ -26,11 +26,6 @@ public class Config
     public Enums.Modes Mode { get; set; } = Enums.Modes.NoAction;
     
     /// <summary>
-    /// Path to ImageMagick executable
-    /// </summary>
-    public string MagickPath { get; set; } = "magick";
-    
-    /// <summary>
     /// Path to FFmpeg executable
     /// </summary>
     public string FFmpegPath { get; set; } = "ffmpeg";
@@ -141,9 +136,6 @@ public class Config
                     break;
                 case "--output":
                     Output = arg;
-                    break;
-                case "--magick-path":
-                    MagickPath = arg;
                     break;
                 case "--ffmpeg-path":
                     FFmpegPath = arg;

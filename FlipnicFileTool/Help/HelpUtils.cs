@@ -21,7 +21,6 @@ public abstract class HelpUtils
                 new HelpLine("disclaimer", "Display disclaimer"),
                 new HelpLine("simple", "Use output that is easy to parse for computer programs"),
                 new HelpLine("low-memory", "Reduces performance to save on memory usage"),
-                new HelpLine("magick-path", "Path to ImageMagick executable (may not be needed dep. on what you're trying to do)"),
                 new HelpLine("ffmpeg-path", "Path to FFmpeg (for audio/video conversion operations)"),
                 new HelpLine("msg-path", "Path to JA.MSG file (optional)"),
                 new HelpLine("test", "Change how the program behaves specifically for automated testing"), 
