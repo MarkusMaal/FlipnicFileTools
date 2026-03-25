@@ -373,12 +373,6 @@
                                                 </Slider>
                                                 <Label Name="ReleaseMultiplierLabel">Release strength: 12%</Label>
                                             </StackPanel>
-                                            <StackPanel>
-                                                <Slider Minimum="0" Maximum="1000" Width="200" Value="32" VerticalAlignment="Center" Name="AttenuationSlider" ValueChanged="ReverbSlider_OnValueChanged">
-                                                
-                                                </Slider>
-                                                <Label Name="AttenuationMultiplierLabel">Attenuation strength: 3.2%</Label>
-                                            </StackPanel>
                                         </WrapPanel>
                                             </Expander.Content>
                                         </Expander>

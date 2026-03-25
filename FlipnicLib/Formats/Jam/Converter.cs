@@ -204,7 +204,12 @@ public abstract class Converter
                 long vol = prog.BaseVolume * splitChunk.Volume;
                 // We divide the above value by 127^2 to get the percent vol it represents. 
                 var percentvol = vol / (double) (127 * 127);
-                sf2.AddInstrumentGenerator(SF2Generator.InitialAttenuation, new SF2GeneratorAmount() { Amount = (short)((1.0-percentvol) * StaticUtils.AdsrMultipliers[4])});
+                // assumes linear volume
+                sf2.AddInstrumentGenerator(SF2Generator.InitialAttenuation,
+                    vol <= 0
+                        ? new SF2GeneratorAmount { Amount = 1440 }
+                        : new SF2GeneratorAmount { Amount = (short)(-200.0 * Math.Log10(percentvol)) });
+
                 // sustain rate itself is not included in the final SF2, since there is no direct way to have support for it
                 if (StaticUtils.ExportEnvelopes)
                 {

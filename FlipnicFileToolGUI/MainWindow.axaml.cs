@@ -705,9 +705,6 @@ public sealed partial class MainWindow : SukiWindow
             case "ReleaseSlider":
                 ReleaseMultiplierLabel.Content = $"Release strength: {Math.Round(e.NewValue/10.0, 1)}%";
                 break;
-            case "AttenuationSlider":
-                AttenuationMultiplierLabel.Content = $"Attenuation strength: {Math.Round(e.NewValue/10.0, 1)}%";
-                break;
         }
     }
 

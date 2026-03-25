@@ -170,7 +170,7 @@ public static class Converters
         StaticUtils.AdsrMultipliers =
         [
             (int)mw.AttackSlider.Value * 10, (int)mw.DecaySlider.Value * 10, (int)mw.SustainSlider.Value * 10,
-            (int)mw.ReleaseSlider.Value * 10, (int)mw.AttenuationSlider.Value * 10
+            (int)mw.ReleaseSlider.Value * 10
         ];
         var outFile = mw.FileBox.Text;
         var midiFile = mw.MidiBox.Text ?? "/no.where";
