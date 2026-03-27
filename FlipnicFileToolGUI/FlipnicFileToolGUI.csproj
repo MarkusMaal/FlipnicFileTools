@@ -17,7 +17,7 @@
         <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.12" />
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
         <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.3.12" />
-        <PackageReference Include="NetCoreAudio" Version="2.0.0" />
+        <PackageReference Include="NetCoreAudio" Version="2.0.1" />
         <PackageReference Include="OpenTK" Version="4.9.4" />
         <PackageReference Include="OpenTK.Graphics" Version="4.9.4" />
         <PackageReference Include="OpenTKAvalonia" Version="1.0.0" />
