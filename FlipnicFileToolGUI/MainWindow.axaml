@@ -6,7 +6,8 @@
         xmlns:ns="clr-namespace:FlipnicFileToolGUI"
         mc:Ignorable="d"
         d:DesignWidth="800" d:DesignHeight="800"
-        Width="712" Height="512"
+        Width="740" Height="512"
+        MinHeight="512" MinWidth="740"
         Icon="Assets\F.PNG" Name="SukiWin"
         xmlns:sukiUi="clr-namespace:SukiUI.Controls;assembly=SukiUI"
         xmlns:types="clr-namespace:FlipnicLib.Types;assembly=FlipnicLib"
@@ -70,9 +71,7 @@
             <MenuItem Name="DataStructsMenu1" Header="Flipnic data structures" Click="DataStructsMenu1_OnClick"></MenuItem>
             <MenuItem Name="SaveEditorMenu1" Header="Save file editing" Click="SaveEditorMenu1_OnClick"></MenuItem>
             <Separator/>
-            <MenuItem Name="AboutMenu1" Header="About" Click="AboutClick">
-            
-            </MenuItem>
+            <MenuItem Name="AboutMenu1" Header="About" Click="AboutClick"></MenuItem>
         </MenuItem>
     </sukiUi:SukiWindow.MenuItems>
     <Grid>
@@ -100,6 +99,7 @@
                                   <Label Margin="5" Name="MoreInfoLabel">No info</Label>
                                   <Label Margin="5" Name="FPSLabel">No info</Label>
                               </StackPanel>
+                              <Button Grid.Row="0" IsVisible="True" Name="RestartWglButton" VerticalAlignment="Center" HorizontalAlignment="Center" Click="RestartWglButton_Click">Open with 3D graphics support</Button>
                               <controls:CubeRenderingTkOpenGlControl Rotate="False" Grid.Row="0"  Focusable="True" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="GlControl" Loaded="GlControl_OnLoaded"></controls:CubeRenderingTkOpenGlControl>
                               <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0" Name="ModelBottomSection">
                                   <Button Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>

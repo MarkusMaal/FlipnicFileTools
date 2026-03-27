@@ -20,6 +20,8 @@ class Program
          
          Disclaimer: {StaticUtils.DisclaimerText}
          """;
+
+    public static bool GpuAccel = !OperatingSystem.IsWindows();
     
     // Initialization code. Don't use any Avalonia, third-party APIs or any
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
@@ -29,7 +31,11 @@ class Program
     {
         try
         {
-            BuildAvaloniaApp(args.Contains("--gpu"))
+            if (OperatingSystem.IsWindows())
+            {
+                GpuAccel = args.Contains("--gpu");
+            }
+            BuildAvaloniaApp()
                 .StartWithClassicDesktopLifetime(args);
         }
         catch (Exception e) when (!Debugger.IsAttached)
@@ -50,7 +56,7 @@ class Program
 
         if (OperatingSystem.IsLinux()) // restart not supported in Linux, just throw the damn exception
         {
-            throw ex ?? new NullReferenceException();
+            throw ex ?? new NullReferenceException("The exception is undefined");
         }
         Process.Start(ex is not null
             ? new ProcessStartInfo(exePath)
@@ -65,10 +71,10 @@ class Program
 
 
     // Avalonia configuration, don't remove; also used by visual designer.
-    private static AppBuilder BuildAvaloniaApp(bool enableWin32Gpu)
+    private static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UsePlatformDetect().With(new MacOSPlatformOptions { DisableDefaultApplicationMenuItems = true })
             .WithInterFont()
-            .With(enableWin32Gpu ? new Win32PlatformOptions { RenderingMode = [Win32RenderingMode.Wgl] } : null) // remove this one if you don't care about OpenGL support
+            .With(GpuAccel ? new Win32PlatformOptions { RenderingMode = [Win32RenderingMode.Wgl] } : null)
             .LogToTrace();
 }

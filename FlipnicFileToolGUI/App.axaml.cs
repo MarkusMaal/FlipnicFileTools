@@ -110,6 +110,18 @@ public class App : Application
     public static void Init(MainWindow mw)
     {
         mw.GetViewModel().MenuElements = new ObservableCollection<MenuElementViewModel>(mw.GetViewModel().Menu);
+        mw.RestartWglButton.IsVisible = !Program.GpuAccel;
+        mw.GlControl.IsVisible = Program.GpuAccel;
+        mw.ModelInfoSection.IsVisible = Program.GpuAccel;
+        mw.TpModelButton.IsVisible = Program.GpuAccel;
+        mw.RotateModelCheck.IsVisible = Program.GpuAccel;
+        if (OperatingSystem.IsWindows() && Program.GpuAccel)
+        {
+            mw.FileMenu1.IsEnabled = false;
+            mw.OptionMenu1.IsEnabled = false;
+            mw.InfoMenu1.IsEnabled = false;
+            mw.IsMenuVisible = false;
+        }
         if (Design.IsDesignMode)
         {
             mw.FileTypeLabel.Content = "Design mode";

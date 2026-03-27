@@ -400,7 +400,7 @@ public static class FileHelpers
                             mw.ModelTab.IsSelected = true;
                             mw.InfoTab.IsSelected = false;
                         });
-                        Thread.Sleep(1000);
+                        if (Program.GpuAccel) Thread.Sleep(1000);
                         StaticUtils.LiveLoadStatus = "Parsing LP4";
                         mw.GlControl.ImportLP4(lp4);
                     }
