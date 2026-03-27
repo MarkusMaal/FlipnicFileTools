@@ -202,6 +202,16 @@ public abstract class Converter
                     (splitChunk.Attack, splitChunk.Decay) = (splitChunk.Decay, splitChunk.Attack);
                 }
                 long vol = prog.BaseVolume * splitChunk.Volume;
+                if (splitChunk is { Sustain: > 0, Decay: > 18.5 })
+                {
+                    splitChunk.SustainL = 0;
+                    splitChunk.Decay = splitChunk.Sustain * 3;
+                } else if (splitChunk is { Sustain: > 0, Decay: < 18.5 })
+                {
+                    var SL = splitChunk.SustainL / -100.0;
+                    splitChunk.SustainL = 0;
+                    splitChunk.Decay = ((splitChunk.Decay * SL) + splitChunk.Decay * (1.0 - SL)) / 2;
+                }
                 // We divide the above value by 127^2 to get the percent vol it represents. 
                 var percentvol = vol / (double) (127 * 127);
                 // assumes linear volume
@@ -217,16 +227,8 @@ public abstract class Converter
                         new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[0]*Math.Log2(splitChunk.Attack)) });
                     sf2.AddInstrumentGenerator(SF2Generator.SustainVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[1]+40-StaticUtils.AdsrMultipliers[1]*splitChunk.SustainL) });
-                    if (splitChunk.Decay == 13.6 && splitChunk.Sustain != 0.0)
-                    {
-                        sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
-                            new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[2] * Math.Log2(splitChunk.Sustain*2)) });
-                    }
-                    else
-                    {
-                        sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
-                            new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[2] * Math.Log2(splitChunk.Decay)) });
-                    }
+                    sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
+                        new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[2] * Math.Log2(splitChunk.Decay)) });
                     sf2.AddInstrumentGenerator(SF2Generator.ReleaseVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[3] * Math.Log2(splitChunk.Release)) });
                 }
