@@ -38,7 +38,7 @@ public abstract class Converter
     /// Converts a .hd/.bd (audio bank)'s instruments to a sound font 2 file.
     /// </summary>
     /// <param name="path"></param>
-    public static void InstrumentToSoundFont2(string midiFile, string hdFilePath, string bdFilePath, string outputFilePath, bool synthesizeWav = false)
+    public static void InstrumentToSoundFont2(string midiFile, string hdFilePath, string bdFilePath, string outputFilePath, bool synthesizeWav = false, bool fakeSustainR = true)
     {
         // We need the MIDI to find out which instrument should be percussion banks
         // Why? Because channel 10 (index 9) is treated differently SF2 wise
@@ -202,15 +202,19 @@ public abstract class Converter
                     (splitChunk.Attack, splitChunk.Decay) = (splitChunk.Decay, splitChunk.Attack);
                 }
                 long vol = prog.BaseVolume * splitChunk.Volume;
-                if (splitChunk is { Sustain: > 0, Decay: > 18.5 })
+                if (fakeSustainR)
                 {
-                    splitChunk.SustainL = 0;
-                    splitChunk.Decay = splitChunk.Sustain * 3;
-                } else if (splitChunk is { Sustain: > 0, Decay: < 18.5 })
-                {
-                    var SL = splitChunk.SustainL / -100.0;
-                    splitChunk.SustainL = 0;
-                    splitChunk.Decay = ((splitChunk.Decay * SL) + splitChunk.Decay * (1.0 - SL)) / 2;
+                    if (splitChunk is { Sustain: > 0, Decay: > 18.5 })
+                    {
+                        splitChunk.SustainL = 0;
+                        splitChunk.Decay = splitChunk.Sustain * 3;
+                    }
+                    else if (splitChunk is { Sustain: > 0, Decay: < 18.5 })
+                    {
+                        var SL = splitChunk.SustainL / -100.0;
+                        splitChunk.SustainL = 0;
+                        splitChunk.Decay = ((splitChunk.Decay * SL) + splitChunk.Decay * (1.0 - SL)) / 2;
+                    }
                 }
                 // We divide the above value by 127^2 to get the percent vol it represents. 
                 var percentvol = vol / (double) (127 * 127);

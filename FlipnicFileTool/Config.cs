@@ -77,6 +77,14 @@ public class Config
     public bool SynthesizeWav { get; set; } = false;
 
     /// <summary>
+    /// Attempts to "fake" sustain rate by messing with the output decay rate and sustain level values.<br/>
+    /// This takes advantage of the fact that the main use-case of the sustain rate is to extend the<br/>
+    /// decay. However, since SF2 doesn't support sustain rate natively, in some edge cases, it can<br/>
+    /// lead to notes fading out too early.
+    /// </summary>
+    public bool SimulateSustainRate { get; set; } = false;
+
+    /// <summary>
     /// Set configuration based on the args specified by the user
     /// </summary>
     /// <param name="args">List of args received from the command line</param>
@@ -108,6 +116,9 @@ public class Config
                     break;
                 case "--test":
                     Test = true;
+                    break;
+                case "--fake-sustain-rate":
+                    SimulateSustainRate = true;
                     break;
                 case "--synthesize-wav":
                     SynthesizeWav = true;

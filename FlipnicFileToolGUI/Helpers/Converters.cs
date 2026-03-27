@@ -176,6 +176,7 @@ public static class Converters
         var midiFile = mw.MidiBox.Text ?? "/no.where";
         var bdFile = mw.BdBox.Text ?? "/no.where";
         var createWav = mw.WavToggle.IsChecked ?? false;
+        var fakeSustainR = mw.FakeSustainRateToggle.IsChecked ?? true;
         new Thread(() =>
         {
             Exception? error = null;
@@ -185,7 +186,7 @@ public static class Converters
                 var extension = Path.GetExtension(mw.FileName);
                 var fileName = new FileInfo(mw.FileName).Name.Replace(extension, "");
                 Converter.InstrumentToSoundFont2(midiFile ?? "",
-                    mw.FileName, bdFile ?? "", Path.Combine(outFile ?? "", fileName) + ".SF2", createWav);
+                    mw.FileName, bdFile ?? "", Path.Combine(outFile ?? "", fileName) + ".SF2", createWav, fakeSustainR);
             }
             catch (Exception ex) when (!Debugger.IsAttached)
             {

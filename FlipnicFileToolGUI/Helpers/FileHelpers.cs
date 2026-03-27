@@ -120,6 +120,7 @@ public static class FileHelpers
         mw.Loader.IsVisible = true;
         mw.AdsrPanel.IsVisible = false;
         mw.WavToggle.IsVisible = false;
+        mw.FakeSustainRateToggle.IsVisible = false;
 
         List<VirtualFile> fsEntries;
 
@@ -279,6 +280,7 @@ public static class FileHelpers
                         mw.DemuxButton.IsVisible = false;
                         mw.AdsrPanel.IsVisible = true;
                         mw.WavToggle.IsVisible = true;
+                        mw.FakeSustainRateToggle.IsVisible = true;
 
                         var fileDirectory = new FileInfo(mw.FileName).Directory?.FullName ?? "";
                         var extension = Path.GetExtension(mw.FileName);

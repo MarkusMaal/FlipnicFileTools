@@ -2,6 +2,7 @@
 using FlipnicLib;
 using System;
 using System.Diagnostics;
+using System.Linq;
 
 namespace FlipnicFileToolGUI;
 
@@ -28,7 +29,7 @@ class Program
     {
         try
         {
-            BuildAvaloniaApp()
+            BuildAvaloniaApp(args.Contains("--gpu"))
                 .StartWithClassicDesktopLifetime(args);
         }
         catch (Exception e) when (!Debugger.IsAttached)
@@ -64,10 +65,10 @@ class Program
 
 
     // Avalonia configuration, don't remove; also used by visual designer.
-    private static AppBuilder BuildAvaloniaApp()
+    private static AppBuilder BuildAvaloniaApp(bool enableWin32Gpu)
         => AppBuilder.Configure<App>()
             .UsePlatformDetect().With(new MacOSPlatformOptions { DisableDefaultApplicationMenuItems = true })
             .WithInterFont()
-            .With(new Win32PlatformOptions { RenderingMode = [Win32RenderingMode.Wgl] }) // remove this one if you don't care about OpenGL support
+            .With(enableWin32Gpu ? new Win32PlatformOptions { RenderingMode = [Win32RenderingMode.Wgl] } : null) // remove this one if you don't care about OpenGL support
             .LogToTrace();
 }

@@ -334,6 +334,16 @@
                                                     </TextBlock>
                                                 </ToolTip.Tip>
                                             </CheckBox>
+                                            <CheckBox Name="FakeSustainRateToggle" Margin="0,2, 0,-8" IsChecked="True" Content="Simulate sustain rate">
+                                                <ToolTip.Tip>
+                                                    <TextBlock>
+                                                        Attempts to "fake" sustain rate by messing with the output decay rate and sustain level values.<LineBreak/>
+                                                        This takes advantage of the fact that the main use-case of the sustain rate is to extend the<LineBreak/>
+                                                        decay. However, since SF2 doesn't support sustain rate natively, in some edge cases, it can<LineBreak/>
+                                                        lead to notes fading out too early, so uncheck this option if you don't want that to happen.
+                                                    </TextBlock>
+                                                </ToolTip.Tip>
+                                            </CheckBox>
                                         </StackPanel>
                                         <Expander Margin="0,15, 0, 0" Name="AdsrPanel">
                                             <Expander.Header>
