@@ -638,4 +638,18 @@ public abstract class StaticUtils
         writer.Close();
         Console.WriteLine($"Saved as: {fileName}");
     }
+    
+    /// <summary>
+    /// Allows you to overwrite a certain part of a large array with a smaller array at a specific index
+    /// </summary>
+    /// <param name="outputArray">The large array, where the small array should be written to</param>
+    /// <param name="offset">The address where to write the small array</param>
+    /// <param name="writeableBytes">The small array</param>
+    public static void WriteByteArray(byte[] outputArray, int offset, byte[] writeableBytes)
+    {
+        for (var i = offset; i < offset + writeableBytes.Length; i++)
+        {
+            outputArray[i] = writeableBytes[i - offset];
+        }
+    }
 }

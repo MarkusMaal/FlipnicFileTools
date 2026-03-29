@@ -472,7 +472,12 @@ public static class FileHelpers
                     var da = new byte[ds.Length];
                     ds.ReadExactly(da);
                     var lay = new FpnLay(da);
-                    LoadAsString(lay, "Stage layout file", mw);
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        mw.LayTab.IsVisible = true;
+                        mw.StageLayoutsControl.LayoutSource = new ObservableCollection<FpnLay.Layout>(lay.Layouts);
+                        mw.FileTypeLabel.Content = "Stage layout file";
+                    });
                     break;
                 case "MSG":
                     var msg = new FpnMsg(ds);

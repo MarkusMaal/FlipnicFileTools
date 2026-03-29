@@ -945,12 +945,9 @@ public sealed partial class MainWindow : SukiWindow
                     nw.FileName = Path.Join(new FileInfo(FileName).DirectoryName, $"LAY{suffix}.LAY");
                     nw.Title = "Flipnic file tool - " + new FileInfo(nw.FileName).Name;
                     FileHelpers.LoadFromData(new FileStream(nw.FileName, FileMode.Open, FileAccess.Read), nw.FileName[^3..], nw);
+                    nw.IsMenuVisible = false;
+                    nw.WindowStartupLocation = WindowStartupLocation.CenterOwner;
                     nw.Show();
-                    new Thread(() =>
-                    {
-                        Thread.Sleep(200);
-                        Dispatcher.UIThread.Post(() => { nw.InfoTab.IsSelected = true; });
-                    }).Start();
                 }, true)
                 .WithActionButton("No", _ => { }, true)
                 .OfType(NotificationType.Information)

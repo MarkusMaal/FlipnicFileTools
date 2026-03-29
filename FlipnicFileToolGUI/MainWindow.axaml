@@ -277,6 +277,15 @@
                             <controls:CollisionMap Name="ColMap"></controls:CollisionMap>
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
+                    <!-- Layouts tab -->
+                    <sukiUi:SukiSideMenuItem Name="LayTab" Header="Layouts" IsVisible="False">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="Blue" ColorB="YellowGreen" Source="Assets\TabIcons\layout.png"></controls:CircleDot>
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                            <controls:StageLayouts Name="StageLayoutsControl"></controls:StageLayouts>
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
                     <!-- Convert tab -->
                     <sukiUi:SukiSideMenuItem Name="ConvertTab" Header="Convert" IsVisible="False">
                         <sukiUi:SukiSideMenuItem.Icon>
