@@ -1,8 +1,9 @@
+using FlipnicLib.Formats;
 using FlipnicLib.Types;
 
 namespace FlipnicLib;
 
-public class Subfolder
+public class Subfolder : FormatBase
 {
     private List<VirtualFile> FsEntries { get; } = [];
     private readonly Stream _ds;
@@ -25,13 +26,13 @@ public class Subfolder
             var nextEntryData = new byte[64];
             _ds.ReadExactly(entryData, 0, 64);
             _ds.ReadExactly(nextEntryData, 0, 64);
-            var fileName = StaticUtils.GetString(entryData);
-            var offset = StaticUtils.GetInt32(entryData, 60);
+            var fileName = GetString(entryData);
+            var offset = GetInt32(entryData, 60);
             if (fileName == "*End Of Mem Data")
             {
                 break;
             }
-            var size = StaticUtils.GetInt32(nextEntryData, 60) - offset;
+            var size = GetInt32(nextEntryData, 60) - offset;
             FsEntries.Add(new VirtualFile(fileName, offset, size, _ds.Position - 128, false));
             _ds.Seek(-64, SeekOrigin.Current);
         }

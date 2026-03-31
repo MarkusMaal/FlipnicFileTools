@@ -3,7 +3,7 @@ using FlipnicLib.Types;
 
 namespace FlipnicLib.Formats;
 
-public class FpnSst
+public class FpnSst : FormatBase
 {
     private readonly byte[] _data;
     public readonly Dictionary<string, TocEntry> TableOfContents =  new();
@@ -13,8 +13,8 @@ public class FpnSst
     {
         _data = new byte[stream.Length];
         stream.ReadExactly(_data, 0, (int)stream.Length);
-        _count = StaticUtils.GetInt32(_data, 0x08);
-        GenerateToc(StaticUtils.GetInt32(_data, 0x0C));
+        _count = GetInt32(_data, 0x08);
+        GenerateToc(GetInt32(_data, 0x0C));
     }
 
     /// <summary>
@@ -28,7 +28,7 @@ public class FpnSst
         foreach (var entry in TableOfContents.Where(entry => entry.Key.EndsWith('N') || entry.Key.EndsWith("NAME")))
         {
             var subEntries = GetSubentries(entry.Value.Offset, entry.Value.EntrySize, entry.Value.Count);
-            rows.AddRange(subEntries.Select((t, i) => (string[]) [entry.Key, "0x" + i.ToString("X").PadLeft(2, '0'), StaticUtils.GetString(t)]));
+            rows.AddRange(subEntries.Select((t, i) => (string[]) [entry.Key, "0x" + i.ToString("X").PadLeft(2, '0'), GetString(t)]));
         }
         return StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput);
     }
@@ -53,7 +53,7 @@ public class FpnSst
             }
             try
             {
-                return StaticUtils.GetString(subEntries[id]) + (stop ? ":NEG" : "");
+                return GetString(subEntries[id]) + (stop ? ":NEG" : "");
             }
             catch (ArgumentOutOfRangeException)
             {
@@ -91,7 +91,7 @@ public class FpnSst
 
         string[] colHeaders = ["Label", "Type", "Button", "Sound effect", "Flip. strength", "Knockback", "Bounciness"];
         List<string[]> rows = [];
-        rows.AddRange(gimmicks.Select(entry => (string[]) [entry.Label, entry.Type.ToString(), entry.Button.ToString(), entry.SoundEffect.ToString(), StaticUtils.DotFloatString(entry.FlipperStrength), StaticUtils.DotFloatString(entry.Knockback), StaticUtils.DotFloatString(entry.Bounciness)]));
+        rows.AddRange(gimmicks.Select(entry => (string[]) [entry.Label, entry.Type.ToString(), entry.Button.ToString(), entry.SoundEffect.ToString(), DotFloatString(entry.FlipperStrength), DotFloatString(entry.Knockback), DotFloatString(entry.Bounciness)]));
         Console.Write(StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput));
     }
 
@@ -241,7 +241,7 @@ public class FpnSst
     {
         for (var i = 0x10; i < end; i+=0x10)
         {
-            var name = StaticUtils.GetStringAt(_data, i);
+            var name = GetStringAt(_data, i);
             while (TableOfContents.ContainsKey(name))
             {
                 name += "_";
@@ -258,9 +258,9 @@ public class FpnSst
             }
             TableOfContents.Add(name, new TocEntry
             {
-                Count = StaticUtils.GetInt16(_data, i+8),
-                EntrySize = StaticUtils.GetInt16(_data, i+10),
-                Offset = StaticUtils.GetInt32(_data, i+0xC),
+                Count = GetInt16(_data, i+8),
+                EntrySize = GetInt16(_data, i+10),
+                Offset = GetInt32(_data, i+0xC),
             });
         }
     }

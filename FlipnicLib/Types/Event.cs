@@ -2,32 +2,32 @@
 
 namespace FlipnicLib.Types;
 
-public class Event(byte[] data)
+public class Event(byte[] data) : FormatBase
 {
     
     /// <summary>
     /// May call a function
     /// </summary>
-    private string Label { get; set; } = StaticUtils.GetString(data.Skip(4).Take(0x1C).ToArray());
+    private string Label { get; set; } = GetString(data.Skip(4).Take(0x1C).ToArray());
 
     /// <summary>
     /// Defines event type
     /// </summary>
-    private int EventMagic { get; set; } = StaticUtils.GetInt32(data, 0);
+    private int EventMagic { get; set; } = GetInt32(data, 0);
 
     /// <summary>
     /// Arguments for specific function if Label is not empty
     /// </summary>
-    private int[] FuncArgs { get; set; } = [StaticUtils.GetInt32(data, 0x20), StaticUtils.GetInt32(data, 0x24),
-        StaticUtils.GetInt32(data, 0x28), StaticUtils.GetInt32(data, 0x2C)];
+    private int[] FuncArgs { get; set; } = [GetInt32(data, 0x20), GetInt32(data, 0x24),
+        GetInt32(data, 0x28), GetInt32(data, 0x2C)];
 
     /// <summary>
     /// Arguments for the event (if event magic is not 0)
     /// </summary>
     private int[] EventArgs { get; set; } =
     [
-        StaticUtils.GetInt32(data, 0x30), StaticUtils.GetInt32(data, 0x34),
-        StaticUtils.GetInt32(data, 0x38), StaticUtils.GetInt32(data, 0x3C)
+        GetInt32(data, 0x30), GetInt32(data, 0x34),
+        GetInt32(data, 0x38), GetInt32(data, 0x3C)
     ];
 
     // generate a comment for the user describing what the function should do

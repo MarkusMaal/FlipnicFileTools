@@ -1,6 +1,6 @@
 namespace FlipnicLib.Formats;
 
-public class FpnFpd
+public class FpnFpd : FormatBase
 {
     
     private string Label {get; set;}
@@ -16,7 +16,7 @@ public class FpnFpd
         fileStream.Seek(0x10, SeekOrigin.Begin);
         var buffer = new byte[0x20];
         fileStream.ReadExactly(buffer, 0, 0x20);
-        Label = StaticUtils.GetString(buffer);
+        Label = GetString(buffer);
         fileStream.Seek(0x30, SeekOrigin.Begin);
         buffer = new byte[0x4];
         fileStream.ReadExactly(buffer, 0, 0x4);
@@ -29,10 +29,10 @@ public class FpnFpd
         {
             Entries[i] = new Entry
             {
-                X = StaticUtils.GetInt16(buffer, i * 8),
-                Y = StaticUtils.GetInt16(buffer, i * 8 + 2),
-                Z = StaticUtils.GetInt16(buffer, i * 8 + 4),
-                W = StaticUtils.GetInt16(buffer, i * 8 + 6),
+                X = GetInt16(buffer, i * 8),
+                Y = GetInt16(buffer, i * 8 + 2),
+                Z = GetInt16(buffer, i * 8 + 4),
+                W = GetInt16(buffer, i * 8 + 6),
             };
         }
     }

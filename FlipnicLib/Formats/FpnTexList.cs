@@ -1,6 +1,6 @@
 namespace FlipnicLib.Formats;
 
-public class FpnTexList
+public class FpnTexList : FormatBase
 {
     private readonly TexEntry[] _entries;
     
@@ -18,7 +18,7 @@ public class FpnTexList
             stream.ReadExactly(numbers, 0, numbers.Length);
             _entries[i] = new TexEntry
             {
-                FileName = StaticUtils.GetString(entryFile),
+                FileName = GetString(entryFile),
                 PositionX = BitConverter.ToInt32(numbers, 0),
                 PositionY = BitConverter.ToInt32(numbers, 4),
                 Width = BitConverter.ToInt32(numbers, 8),

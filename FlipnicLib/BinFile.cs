@@ -1,9 +1,10 @@
 using System.Text;
+using FlipnicLib.Formats;
 using FlipnicLib.Types;
 
 namespace FlipnicLib;
 
-public class BinFile
+public class BinFile : FormatBase
 {
     public BinFile() {}
     public List<VirtualFile> FsEntries { get; set; } = [];
@@ -18,7 +19,7 @@ public class BinFile
         var rows = GetFsEntriesNew(src);
         foreach (var t in rows)
         {
-            t[2] = StaticUtils.GetFilesizeString(long.Parse(t[2]));
+            t[2] = GetFilesizeString(long.Parse(t[2]));
         }
         src.Close();
         Console.Write(StaticUtils.GenerateTable(colHeader, rows, StaticUtils.SimpleOutput));
@@ -195,7 +196,7 @@ public class BinFile
                 var size = end - src.Position;
                 var outFile = Path.Combine(destination, fileNam[1..]);
                 Console.Write(
-                    $"\r     Extracting {fileNam} ({StaticUtils.GetFilesizeString(size)})".PadRight(StaticUtils.WindowWidth));
+                    $"\r     Extracting {fileNam} ({GetFilesizeString(size)})".PadRight(StaticUtils.WindowWidth));
                 if (fileNam.EndsWith('/')) continue;
                 if (size < 0) continue;
                 src.Position = Convert.ToInt64(fs_entry[1], 16);

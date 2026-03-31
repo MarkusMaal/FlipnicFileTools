@@ -1,6 +1,6 @@
 namespace FlipnicLib.Formats;
 
-public class Game
+public class Game : FormatBase
 {
     private readonly string? _resourceRoot;
     private readonly string? _streamRoot;
@@ -19,18 +19,18 @@ public class Game
         {
             var testBytes = new byte[8];
             stream.ReadExactly(testBytes, 0, 8);
-            var testStr = StaticUtils.GetString(testBytes);
+            var testStr = GetString(testBytes);
             switch (testStr)
             {
                 case "cdrom0:":
                 {
                     stream.ReadExactly(testBytes, 0, 8);
-                    _resourceRoot = StaticUtils.GetString(testBytes);
+                    _resourceRoot = GetString(testBytes);
                     stream.Position += 8;
                     stream.ReadExactly(testBytes, 0, 8);
-                    _streamRoot = StaticUtils.GetString(testBytes);
+                    _streamRoot = GetString(testBytes);
                     stream.ReadExactly(testBytes, 0, 8);
-                    _tutorialRoot = StaticUtils.GetString(testBytes);
+                    _tutorialRoot = GetString(testBytes);
                     if (_tutorialRoot == "EVTIDX") _tutorialRoot = "N/A";
                     stream.Position += 8;
                     continue;
@@ -39,7 +39,7 @@ public class Game
                     stream.Position += 0x20;
                     testBytes = new byte[0x18];
                     stream.ReadExactly(testBytes, 0, 0x18);
-                    _fontRoot = StaticUtils.GetString(testBytes);
+                    _fontRoot = GetString(testBytes);
                     continue;
                 case "*End Of ":
                     stream.Position -= 0x118;
@@ -50,13 +50,13 @@ public class Game
                         if (testStr != "") libs.Add(testStr);
                         testBytes = new byte[0x10];
                         stream.ReadExactly(testBytes, 0, 0x10);
-                        testStr = StaticUtils.GetString(testBytes);
+                        testStr = GetString(testBytes);
                     }
                     _moduleRoot = testStr;
                     _modules = libs.ToArray();
                     stream.Position += 0x10;
                     stream.ReadExactly(testBytes, 0, 0x10);
-                    _rom =  StaticUtils.GetString(testBytes);
+                    _rom =  GetString(testBytes);
                     stream.Position += 0xB0;
                     continue;
             }
@@ -66,7 +66,7 @@ public class Game
                 stream.Position += 21L;
                 testBytes = new byte[0x30];
                 stream.ReadExactly(testBytes, 0, 0x30);
-                _compiler =  StaticUtils.GetString(testBytes);
+                _compiler =  GetString(testBytes);
                 break;
             }
             stream.Position += 0x8;

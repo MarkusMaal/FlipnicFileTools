@@ -1,18 +1,18 @@
 namespace FlipnicLib.Formats;
 
-public class FpnMlb
+public class FpnMlb : FormatBase
 {
     public Dictionary<string, MenuElement[]> Sections { get; set; } = [];
     
     public FpnMlb(byte[] data)
     {
-        var SectionCount = StaticUtils.GetInt32(data, 0);
+        var SectionCount = GetInt32(data, 0);
         var offset = 0x10;
         var idx = 0;
         while (idx < SectionCount)
         {
-            var SectionLabel = StaticUtils.GetString(data.Skip(offset).Take(0x20).ToArray());
-            var ElementCount = StaticUtils.GetInt32(data, offset+0x24);
+            var SectionLabel = GetString(data.Skip(offset).Take(0x20).ToArray());
+            var ElementCount = GetInt32(data, offset+0x24);
             List<MenuElement> elements = [];
             for (var i = 0; i < ElementCount; i++)
             {
@@ -41,19 +41,19 @@ public class FpnMlb
     
     public struct MenuElement(byte[] data, string sectionLabel)
     {
-        public string Texture { get; set; } = StaticUtils.GetString(data.Take(0x30).ToArray());
+        public string Texture { get; set; } = GetString(data.Take(0x30).ToArray());
 
         public bool BgItem { get; set; } = data[0x51] > 0;
 
-        public int PosX { get; set; } = StaticUtils.GetInt32(data, 0x40);
-        public int PosY { get; set; } =  StaticUtils.GetInt32(data, 0x44);
+        public int PosX { get; set; } = GetInt32(data, 0x40);
+        public int PosY { get; set; } =  GetInt32(data, 0x44);
 
-        public int Width { get; set; } = StaticUtils.GetInt32(data, 0x48);
-        public int Height { get; set; } =  StaticUtils.GetInt32(data, 0x4C);
+        public int Width { get; set; } = GetInt32(data, 0x48);
+        public int Height { get; set; } =  GetInt32(data, 0x4C);
 
-        public int Dipth { get; set; } = StaticUtils.GetInt32(data, 0x54);
-        public int Blend { get; set; } = StaticUtils.GetInt32(data, 0x58);
-        public int Index { get; set; } = StaticUtils.GetInt32(data, 0x5C);
+        public int Dipth { get; set; } = GetInt32(data, 0x54);
+        public int Blend { get; set; } = GetInt32(data, 0x58);
+        public int Index { get; set; } = GetInt32(data, 0x5C);
         
         public override string ToString()
         {

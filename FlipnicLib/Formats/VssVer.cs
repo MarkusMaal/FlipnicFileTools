@@ -1,6 +1,6 @@
 namespace FlipnicLib.Formats;
 
-public class VssVer
+public class VssVer : FormatBase
 {
     private readonly List<VssSect> _sections;
     public VssVer(byte[] data)
@@ -18,7 +18,7 @@ public class VssVer
         var offsets = new List<int>();
         for (var i = 0; i < data.Length; i += 0x10)
         {
-            if (StaticUtils.GetUInt32(data, i) == 0x11234)
+            if (GetUInt32(data, i) == 0x11234)
             {
                 offsets.Add(i);
             }
@@ -42,10 +42,10 @@ public class VssVer
         private readonly List<string[]> _files;
         public VssSect(byte[] data)
         {
-            _guid = "{" + StaticUtils.GetUInt32(data, 4).ToString("X").PadLeft(8, '0');
+            _guid = "{" + GetUInt32(data, 4).ToString("X").PadLeft(8, '0');
             for (var i = 8; i < 0xE; i += 2)
             {
-                _guid += "-" + StaticUtils.GetUInt16(data, i).ToString("X").PadLeft(4, '0');
+                _guid += "-" + GetUInt16(data, i).ToString("X").PadLeft(4, '0');
             }
 
             _guid += "-";
@@ -55,16 +55,16 @@ public class VssVer
             }
 
             _guid += "}";
-            _checksum = StaticUtils.GetUInt32(data, 0x14).ToString("X").PadLeft(8, '0');
-            _projectId = StaticUtils.GetUInt32(data, 0x18).ToString("X").PadLeft(4, '0');
+            _checksum = GetUInt32(data, 0x14).ToString("X").PadLeft(8, '0');
+            _projectId = GetUInt32(data, 0x18).ToString("X").PadLeft(4, '0');
             _files = [];
             var offset = 0x20;
-            while (offset < data.Length && StaticUtils.GetUInt32(data, offset) != 0x11234)
+            while (offset < data.Length && GetUInt32(data, offset) != 0x11234)
             {
-                var fileId = StaticUtils.GetUInt32(data, offset);
-                var checksum = StaticUtils.GetUInt32(data, offset + 4);
-                var timestamp = StaticUtils.GetUInt32(data, offset + 8);
-                var revision = StaticUtils.GetUInt32(data, offset + 12);
+                var fileId = GetUInt32(data, offset);
+                var checksum = GetUInt32(data, offset + 4);
+                var timestamp = GetUInt32(data, offset + 8);
+                var revision = GetUInt32(data, offset + 12);
                 if (fileId + checksum + timestamp + revision == 0) break;
                 _files.Add([fileId.ToString("X") + "h", checksum.ToString("X"), timestamp.ToString("X"), revision.ToString()]);
                 offset += 0x10;

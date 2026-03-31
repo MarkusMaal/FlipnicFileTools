@@ -1,6 +1,8 @@
+using FlipnicLib.Formats;
+
 namespace FlipnicLib;
 
-public abstract class Ipu
+public abstract class Ipu : FormatBase
 {
     
     /// <summary>
@@ -21,8 +23,8 @@ public abstract class Ipu
         }
         reader.Close();
         // try to guess video format
-        var width = StaticUtils.GetInt16(header, 0x8);
-        var height = StaticUtils.GetInt16(header, 0xA);
+        var width = GetInt16(header, 0x8);
+        var height = GetInt16(header, 0xA);
         var lowRes = width <= 256;
         var isPal = (!lowRes && height == 512) || StaticUtils.Pal;
 
@@ -50,10 +52,10 @@ public abstract class Ipu
         var readBytes = reader.Read(header, 0x0, 0x10);
         if (readBytes < 10) return "Not IPU file";
         
-        var magic = StaticUtils.GetString(header.Take(0x4).ToArray());
-        var width = StaticUtils.GetInt16(header, 0x8);
-        var height = StaticUtils.GetInt16(header, 0xA);
-        var frames = StaticUtils.GetInt32(header, 0xC);
+        var magic = GetString(header.Take(0x4).ToArray());
+        var width = GetInt16(header, 0x8);
+        var height = GetInt16(header, 0xA);
+        var frames = GetInt32(header, 0xC);
         return $"""
                 IPU video stream
                 

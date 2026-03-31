@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace FlipnicLib.Formats;
 
-public class FpnCol
+public class FpnCol : FormatBase
 {
 
     private bool HasDefaultValue = false;
@@ -23,16 +23,16 @@ public class FpnCol
         HasDefaultValue = stream.ReadByte() > 0;
         var counts = new byte[8];
         stream.ReadExactly(counts, 0, counts.Length);
-        GroundCount = StaticUtils.GetInt32(counts, 0);
-        WallCount = StaticUtils.GetInt32(counts, 4);
+        GroundCount = GetInt32(counts, 0);
+        WallCount = GetInt32(counts, 4);
         var vec4 = new byte[16];
         if (HasDefaultValue)
         {
             stream.ReadExactly(vec4, 0, 16);
             DefaultValues =
             [
-                StaticUtils.GetFloat(vec4, 0), StaticUtils.GetFloat(vec4, 4), StaticUtils.GetFloat(vec4, 8),
-                StaticUtils.GetFloat(vec4, 12)
+                GetFloat(vec4, 0), GetFloat(vec4, 4), GetFloat(vec4, 8),
+                GetFloat(vec4, 12)
             ];
         }
 
@@ -54,24 +54,24 @@ public class FpnCol
         var vec4 = new byte[16];
         var f = new byte[4];
         stream.ReadExactly(sectionHeader, 0, 0x30);
-        var label = StaticUtils.GetString(sectionHeader.Skip(0x10).Take(0x8).ToArray());
-        var headCount =  StaticUtils.GetInt32(sectionHeader, 0x28);
+        var label = GetString(sectionHeader.Skip(0x10).Take(0x8).ToArray());
+        var headCount =  GetInt32(sectionHeader, 0x28);
         List<float[]> collFirst = [];
         List<float[]> collMain = [];
         for (var i = 0; i < headCount * 2; i++)
         {
             stream.ReadExactly(vec4, 0, vec4.Length);
-            collFirst.Add([StaticUtils.GetFloat(vec4, 0), StaticUtils.GetFloat(vec4, 4),
-                StaticUtils.GetFloat(vec4, 8), StaticUtils.GetFloat(vec4, 12)]);
+            collFirst.Add([GetFloat(vec4, 0), GetFloat(vec4, 4),
+                GetFloat(vec4, 8), GetFloat(vec4, 12)]);
         }
         stream.ReadExactly(f, 0, f.Length);
-        var mainCount = StaticUtils.GetInt32(f, 0x00);
+        var mainCount = GetInt32(f, 0x00);
         stream.Seek(0xC, SeekOrigin.Current);
         for (var i = 0; i < mainCount * 2; i++)
         {
             stream.ReadExactly(vec4, 0, vec4.Length);
-            collMain.Add([StaticUtils.GetFloat(vec4, 0), StaticUtils.GetFloat(vec4, 4),
-                StaticUtils.GetFloat(vec4, 8), StaticUtils.GetFloat(vec4, 12)]);
+            collMain.Add([GetFloat(vec4, 0), GetFloat(vec4, 4),
+                GetFloat(vec4, 8), GetFloat(vec4, 12)]);
         }
         return new ObjectDefinition
         {

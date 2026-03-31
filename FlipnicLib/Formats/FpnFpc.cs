@@ -3,7 +3,7 @@ using FlipnicLib.Types;
 
 namespace FlipnicLib.Formats;
 
-public class FpnFpc
+public class FpnFpc : FormatBase
 {
     readonly List<float> SequenceXo = [];
     readonly List<float> SequenceYo = [];
@@ -23,13 +23,13 @@ public class FpnFpc
     readonly float TargetY;
     readonly float TargetZ;
 
-    public string FOVf => StaticUtils.DotFloatString(FOV);
-    public string OriginXf => StaticUtils.DotFloatString(OriginX);
-    public string OriginYf => StaticUtils.DotFloatString(OriginY);
-    public string OriginZf => StaticUtils.DotFloatString(OriginZ);
-    public string TargetXf => StaticUtils.DotFloatString(TargetX);
-    public string TargetYf => StaticUtils.DotFloatString(TargetY);
-    public string TargetZf => StaticUtils.DotFloatString(TargetZ);
+    public string FOVf => DotFloatString(FOV);
+    public string OriginXf => DotFloatString(OriginX);
+    public string OriginYf => DotFloatString(OriginY);
+    public string OriginZf => DotFloatString(OriginZ);
+    public string TargetXf => DotFloatString(TargetX);
+    public string TargetYf => DotFloatString(TargetY);
+    public string TargetZf => DotFloatString(TargetZ);
 
     //private int TotalFrames;
 
@@ -82,13 +82,13 @@ public class FpnFpc
                 var fov = SequenceFov.Count > i ? SequenceFov[i] : FOV;
                 frames.Add(new CameraFrame
                 {
-                    Fov = StaticUtils.DotFloatString(fov) + "°",
-                    OriginX = StaticUtils.DotFloatString(ox),
-                    OriginY = StaticUtils.DotFloatString(oy),
-                    OriginZ = StaticUtils.DotFloatString(oz),
-                    TargetX = StaticUtils.DotFloatString(tx),
-                    TargetY = StaticUtils.DotFloatString(ty),
-                    TargetZ = StaticUtils.DotFloatString(tz),
+                    Fov = DotFloatString(fov) + "°",
+                    OriginX = DotFloatString(ox),
+                    OriginY = DotFloatString(oy),
+                    OriginZ = DotFloatString(oz),
+                    TargetX = DotFloatString(tx),
+                    TargetY = DotFloatString(ty),
+                    TargetZ = DotFloatString(tz),
                 });
             }
             return frames.ToArray();
@@ -112,27 +112,27 @@ public class FpnFpc
     {
         Data = new byte[stream.Length];
         stream.ReadExactly(Data, 0, Data.Length);
-        NumSequences = StaticUtils.GetInt32(Data, 0x4);
-        NumFrames = StaticUtils.GetInt32(Data, 0xC);
-        OriginX = StaticUtils.GetFloat(Data, 0x10);
-        OriginY = StaticUtils.GetFloat(Data, 0x14);
-        OriginZ = StaticUtils.GetFloat(Data, 0x18);
-        TargetX = StaticUtils.GetFloat(Data, 0x20);
-        TargetY = StaticUtils.GetFloat(Data, 0x24);
-        TargetZ = StaticUtils.GetFloat(Data, 0x28);
-        FOV = StaticUtils.GetFloat(Data, 0x1C);
+        NumSequences = GetInt32(Data, 0x4);
+        NumFrames = GetInt32(Data, 0xC);
+        OriginX = GetFloat(Data, 0x10);
+        OriginY = GetFloat(Data, 0x14);
+        OriginZ = GetFloat(Data, 0x18);
+        TargetX = GetFloat(Data, 0x20);
+        TargetY = GetFloat(Data, 0x24);
+        TargetZ = GetFloat(Data, 0x28);
+        FOV = GetFloat(Data, 0x1C);
         if ((NumSequences == 0) || (NumFrames == 0)) return;
         var offset = 0x30;
         while (offset <= Data.Length)
         {
             if (offset > Data.Length - 1) break;
-            var valueType = (ValueIDs)StaticUtils.GetInt32(Data, offset);
-            var valueCount = StaticUtils.GetInt32(Data, offset + 4);
-            var nextOffset = 0x10 + offset + StaticUtils.GetInt32(Data, offset + 8) * 4;
+            var valueType = (ValueIDs)GetInt32(Data, offset);
+            var valueCount = GetInt32(Data, offset + 4);
+            var nextOffset = 0x10 + offset + GetInt32(Data, offset + 8) * 4;
             offset += 0x10;
             for (var i = 0; i < valueCount; i += 1)
             {
-                var f = StaticUtils.GetFloat(Data, offset + i * 4);
+                var f = GetFloat(Data, offset + i * 4);
                 switch (valueType)
                 {
                     case ValueIDs.OriginX:
@@ -173,9 +173,9 @@ public class FpnFpc
     {
         var o = "";
         o += $"Frames: {NumFrames}, Sequences: {NumSequences}\n";
-        o += $"Field of view: {StaticUtils.DotFloatString(FOV)}\n";
-        o += $"Origin:  ({StaticUtils.DotFloatString(OriginX)}; {StaticUtils.DotFloatString(OriginY)}; {StaticUtils.DotFloatString(OriginZ)})\n";
-        o += $"Target:  ({StaticUtils.DotFloatString(TargetX)}; {StaticUtils.DotFloatString(TargetY)}; {StaticUtils.DotFloatString(TargetZ)})\n";
+        o += $"Field of view: {DotFloatString(FOV)}\n";
+        o += $"Origin:  ({DotFloatString(OriginX)}; {DotFloatString(OriginY)}; {DotFloatString(OriginZ)})\n";
+        o += $"Target:  ({DotFloatString(TargetX)}; {DotFloatString(TargetY)}; {DotFloatString(TargetZ)})\n";
         o += "\n";
         if (NumFrames != 0)
         {
@@ -191,9 +191,9 @@ public class FpnFpc
                 var tz = SequenceZt.Count > i ? SequenceZt[i] : TargetZ;
                 var fov = SequenceFov.Count > i ? SequenceFov[i] : FOV;
                 rows.Add([
-                    (i + 1).ToString(), StaticUtils.DotFloatString(ox), StaticUtils.DotFloatString(oy),
-                    StaticUtils.DotFloatString(oz), StaticUtils.DotFloatString(tx), StaticUtils.DotFloatString(ty),
-                    StaticUtils.DotFloatString(tz), StaticUtils.DotFloatString(fov)
+                    (i + 1).ToString(), DotFloatString(ox), DotFloatString(oy),
+                    DotFloatString(oz), DotFloatString(tx), DotFloatString(ty),
+                    DotFloatString(tz), DotFloatString(fov)
                 ]);
             }
             o += StaticUtils.GenerateTable(colHeaders, rows, asCsv);
@@ -224,29 +224,29 @@ public class FpnFpc
             var tz = SequenceZt.Count > i ? SequenceZt[i] : TargetZ;
             var fov = SequenceFov.Count > i ? SequenceFov[i] : FOV;
             Frames.Add(new XElement("Frame", new XElement("Origin", 
-                    new XAttribute("X", StaticUtils.DotFloatString(ox)),
-                    new XAttribute("Y", StaticUtils.DotFloatString(oy)),
-                    new XAttribute("Z", StaticUtils.DotFloatString(oz))),
+                    new XAttribute("X", DotFloatString(ox)),
+                    new XAttribute("Y", DotFloatString(oy)),
+                    new XAttribute("Z", DotFloatString(oz))),
                 new XElement("Target", 
-                    new XAttribute("X", StaticUtils.DotFloatString(tx)),
-                    new XAttribute("Y", StaticUtils.DotFloatString(ty)),
-                    new XAttribute("Z", StaticUtils.DotFloatString(tz))),
-                new XElement("FieldOfView", StaticUtils.DotFloatString(fov))));
+                    new XAttribute("X", DotFloatString(tx)),
+                    new XAttribute("Y", DotFloatString(ty)),
+                    new XAttribute("Z", DotFloatString(tz))),
+                new XElement("FieldOfView", DotFloatString(fov))));
         }
         var doc = new XDocument(
             new XDeclaration("1.0", "UTF-8", null),
             new XElement("FpcSequence",
             new XElement("Properties",
                 new XElement("Origin",
-                    new XAttribute("X", StaticUtils.DotFloatString(OriginX)),
-                    new XAttribute("Y", StaticUtils.DotFloatString(OriginY)),
-                    new XAttribute("Z", StaticUtils.DotFloatString(OriginZ))),
+                    new XAttribute("X", DotFloatString(OriginX)),
+                    new XAttribute("Y", DotFloatString(OriginY)),
+                    new XAttribute("Z", DotFloatString(OriginZ))),
                 
                 new XElement("Target",
-                    new XAttribute("X", StaticUtils.DotFloatString(TargetX)),
-                    new XAttribute("Y", StaticUtils.DotFloatString(TargetY)),
-                    new XAttribute("Z", StaticUtils.DotFloatString(TargetZ))),
-                new XElement("FieldOfView", StaticUtils.DotFloatString(FOV)),
+                    new XAttribute("X", DotFloatString(TargetX)),
+                    new XAttribute("Y", DotFloatString(TargetY)),
+                    new XAttribute("Z", DotFloatString(TargetZ))),
+                new XElement("FieldOfView", DotFloatString(FOV)),
                 new XElement("Frames", NumFrames),
                 new XElement("Sequences", NumSequences)
             ), Frames));

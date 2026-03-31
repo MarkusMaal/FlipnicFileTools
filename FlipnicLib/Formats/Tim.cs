@@ -2,7 +2,7 @@ using BigGustave;
 
 namespace FlipnicLib.Formats;
 // specific to PlayStation 2 save icons
-public class Tim
+public class Tim : FormatBase
 {
     private byte[] bitmap;
     private byte[] pallette;
@@ -117,7 +117,7 @@ public class Tim
         builder.Save(output);
         if (output is not FileStream fs)
         {
-            StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded image data to memory ({StaticUtils.GetFilesizeString(output.Length)})\n");
+            StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded image data to memory ({GetFilesizeString(output.Length)})\n");
             return;
         }
         Console.WriteLine($"\rSaved as: {fs.Name}");
@@ -133,8 +133,8 @@ public class Tim
                 Height: {Height}
                 
                 Type: {typeS}
-                Compressed size: {StaticUtils.GetFilesizeString(CompressedSize)}
-                Decompressed size: {StaticUtils.GetFilesizeString(DecompressedSize)}
+                Compressed size: {GetFilesizeString(CompressedSize)}
+                Decompressed size: {GetFilesizeString(DecompressedSize)}
                 """;
     }
 

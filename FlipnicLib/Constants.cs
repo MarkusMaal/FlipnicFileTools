@@ -1,6 +1,6 @@
 namespace FlipnicLib;
 
-public class Constants
+public abstract class Constants
 {
     // Constants from SPU2OverviewManual.pdf
     public static readonly double[] LinearReleaseMs = [0.04,0.09,0.18,0.36,0.73,1.5,2.9,5.8,12,23,46,93,190,370,740,1500,3000,5900,12000,24000,48000,95000,190000,380000,760000,1520000,3040000,double.NaN,double.NaN,double.PositiveInfinity];
