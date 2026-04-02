@@ -969,4 +969,30 @@ public sealed partial class MainWindow : SukiWindow
             Arguments = $"\"{FileName}\" --gpu"
         });
     }
+
+    private void UpdateLabel(object? sender)
+    {
+        var newStr = "Always use brute-force for LP4 decoding: " + (StaticUtils.ForceBruteForce ? "Yes" : "No");
+        switch (sender)
+        {
+            case MenuItem mi:
+                mi.Header = newStr;
+                break;
+            case NativeMenuItem nmi:
+                nmi.Header = newStr;
+                break;
+        }
+    }
+    
+    private void AlwaysUseBruteForceMenuItem_Click(object? sender, RoutedEventArgs e)
+    {
+        StaticUtils.ForceBruteForce = !StaticUtils.ForceBruteForce;
+        UpdateLabel(sender);
+    }
+
+    private void AlwaysUseBruteForceNativeMenuItem_Click(object? sender, EventArgs e)
+    {
+        StaticUtils.ForceBruteForce = !StaticUtils.ForceBruteForce;
+        UpdateLabel(sender);
+    }
 }

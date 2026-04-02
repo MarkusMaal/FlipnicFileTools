@@ -143,7 +143,8 @@ public abstract class HelpUtils
                     new HelpLine("show-lp4*", "Display general information about the file"),
                     new HelpLine("export-obj", "Export models from the LP4 file as Wavefront OBJ"),
                     new HelpLine("export-box-obj", "Export bounding box from the LP4 file as Wavefront OBJ"),
-                    new HelpLine("alternate-normals", "Use a different method for decoding normal vectors (required for some files)")
+                    new HelpLine("alternate-normals", "Use a different method for decoding normal vectors (required for some files)"),
+                    new HelpLine("force-brute-force", "Always use brute-force method for decoding LP4 files even when regular parser finishes successfully")
                 ]
             ),
             new(

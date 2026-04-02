@@ -121,6 +121,10 @@ namespace FlipnicFileToolGUI.Controls
                 lp4.SetSelectedModel(model);
             }
             _texture = lp4.Texture;
+            if (lp4.SelectedModel.HasEmbeddedTexture)
+            {
+                _texture = lp4.SelectedModel.GenerateDummyTexture();
+            }
             GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             if (lp4.SelectedModel != null)

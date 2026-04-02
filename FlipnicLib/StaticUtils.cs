@@ -43,6 +43,8 @@ public abstract class StaticUtils
 
     public static bool ForceNoColors { get; set; } = false;
     
+    public static bool ForceBruteForce { get; set; } = false;
+    
     /// <summary>
     /// Display an animated spinning line loader
     /// </summary>

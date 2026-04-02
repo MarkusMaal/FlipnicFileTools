@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using BigGustave;
 
 namespace FlipnicLib.Formats;
 
@@ -124,6 +125,11 @@ public class Lp4(byte[] data, string fileName) : FormatBase
     {
         try
         {
+            if (StaticUtils.ForceBruteForce)
+            {
+                BruteForceMethod();
+                return;
+            }
             var hasBoundingBox = data[17] == 0x01;
             var additionalDataLength = GetInt32(data, 8); 
             var i = 0x20;
@@ -559,8 +565,12 @@ public class Lp4(byte[] data, string fileName) : FormatBase
 
         public List<float[]> Lightmap { get; set; } = [];
         public List<float> RawVertices { get; set; } = [];
+        
+        public List<byte[]> Colors { get; set; } = [];
 
         public Dictionary<string, Joint> AnimationJoints { get; set; } = [];
+
+        public bool HasEmbeddedTexture = true;
 
         /// <summary>
         /// Generate a table row of this model
@@ -585,6 +595,22 @@ public class Lp4(byte[] data, string fileName) : FormatBase
             }
         }
 
+        public byte[] GenerateDummyTexture()
+        {
+            if ((Colors.Count == 0) && (Lightmap.Count > 0))
+            {
+                Colors.Add([(byte)(255 * Lightmap[0][0]), (byte)(255 * Lightmap[0][1]), (byte)(255 * Lightmap[0][2]), (byte)(255 * Lightmap[0][3])]);
+            }
+            var png = PngBuilder.Create(Colors.Count, 1, true);
+            foreach (var (i, col) in Colors.Index())
+            {
+                png.SetPixel(new Pixel(col[0], col[1], col[2], (byte)(col[3] * 2 - 1), false), i, 0);
+            }
+            var ms = new MemoryStream();
+            png.Save(ms);
+            return ms.ToArray();
+        }
+
         /// <summary>
         /// Once we figure out where the vertex data is, call this method to append vertices from the data and offset provided
         /// </summary>
@@ -595,9 +621,10 @@ public class Lp4(byte[] data, string fileName) : FormatBase
             if ((offset >= data.Length) || (offset < 0)) return;
             var len = BitConverter.ToInt32(data, offset); // vertex count
             var nlen = BitConverter.ToInt32(data, offset + 4); // normal count
-            var plen = BitConverter.ToInt32(data, offset + 8); // parameter count
+            var clen = BitConverter.ToInt32(data, offset + 8); // color count
             var uvlen = BitConverter.ToInt32(data, offset + 12); // UV count
-            var texOffset = offset + (len * 0x10) + (nlen * 0x8) + (plen * 4) + 0x10;
+            var texOffset = offset + (len * 0x10) + (nlen * 0x8) + (clen * 4) + 0x10;
+            var colOffset = offset + (len * 0x10) + (nlen * 0x8) + 0x10;
             if (Debugger.IsAttached)
             {
                 Console.WriteLine($"Debug: UV offset: 0x{texOffset:X}");
@@ -637,7 +664,7 @@ public class Lp4(byte[] data, string fileName) : FormatBase
                 }
 
                 var mul = partIdx % 2 == 0 ? 1 : -1;
-
+                if (colOffset < texOffset) { Colors.Add([data[colOffset], data[colOffset+1], data[colOffset+2], data[colOffset+3]]); }
                 RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset).Take(8).ToArray()));
                 RawVertices.Add(x1);
                 RawVertices.Add(y1);
@@ -647,6 +674,7 @@ public class Lp4(byte[] data, string fileName) : FormatBase
                     GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0), mul));
                 if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V1 {j:X}/{j + 4:X}/{j + 8:X}");
 
+                if (colOffset < texOffset) { Colors.Add([data[colOffset], data[colOffset+1], data[colOffset+2], data[colOffset+3]]); }
                 RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset + 8).Take(8).ToArray()));
                 RawVertices.Add(x2);
                 RawVertices.Add(y2);
@@ -656,6 +684,7 @@ public class Lp4(byte[] data, string fileName) : FormatBase
                     GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0), mul));
                 if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V2 {j + 0x10:X}/{j + 0x14:X}/{j + 0x18:X}");
 
+                if (colOffset < texOffset) { Colors.Add([data[colOffset], data[colOffset+1], data[colOffset+2], data[colOffset+3]]); }
                 RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset + 16).Take(8).ToArray()));
                 RawVertices.Add(x3);
                 RawVertices.Add(y3);
@@ -708,6 +737,16 @@ public class Lp4(byte[] data, string fileName) : FormatBase
 
                 uvOffset += 8;
                 normalIdx += 1;
+                colOffset += 4;
+            }
+
+            if (!HasEmbeddedTexture) return;
+            if (Colors.Count == 0) return;
+            var cIdx = 0;
+            for (var i = 0; i < RawVertices.Count; i += 8)
+            {
+                RawVertices[i] = cIdx / (float)Colors.Count;
+                cIdx++;
             }
         }
 
@@ -716,13 +755,17 @@ public class Lp4(byte[] data, string fileName) : FormatBase
         /// </summary>
         /// <param name="data">8 byte chunk containing the UV coordinate</param>
         /// <returns>X and Y coordinates</returns>
-        public static float[] DecodeCoords(byte[] data)
+        public float[] DecodeCoords(byte[] data)
         {
             // at +0x6h is the UV flags value, it describes how vertices should be parsed
             // explanation in Model.AppendVertices
             var div = BitConverter.ToInt16(data.Skip(4).Take(2).ToArray(), 0);
             var fx = BitConverter.ToInt16(data.Take(2).ToArray(), 0);
             var fy = BitConverter.ToInt16(data.Skip(2).Take(2).ToArray(), 0);
+            if (fx != 0 || fy != 0)
+            {
+                HasEmbeddedTexture = false;
+            }
             return [(float)fx/div, -(float)fy/div]; // invert, because otherwise it's upside-down
         }
 

@@ -70,6 +70,10 @@ public class ModelTools
         {
             lp4.SetSelectedModel(model);
             var ext = Path.GetExtension(Output);
+            if (model.HasEmbeddedTexture)
+            {
+                lp4.Texture = model.GenerateDummyTexture();
+            }
             StaticUtils.ExportObj(Output[..^ext.Length] + $".{model.Name}" + ext, lp4.GetVerticies(), lp4.Texture);
             id++;
         }
