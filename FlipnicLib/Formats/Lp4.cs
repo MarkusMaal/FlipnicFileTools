@@ -76,7 +76,7 @@ public class Lp4(byte[] data, string fileName) : FormatBase
               Models:
               
               """;
-        cols = ["Name", "Address", "Scale", "Offset", "Texture", "Polygons"];
+        cols = ["Name", "Address", "Scale", "Offset", "Texture", "Polygons", "Lightmaps", "Compressed"];
         rows.AddRange(Models.Select(model => model.GetRow()));
         o += StaticUtils.GenerateTable(cols, rows, StaticUtils.SimpleOutput);
         if (_animationJoints <= 0) return o;
@@ -169,9 +169,7 @@ public class Lp4(byte[] data, string fileName) : FormatBase
                     }
                     if (lightMapLength > 65536)
                     {
-                        StaticUtils.DecodeColors("~-CError~--: Lightmap length was too large, continuing would cause hangs! Parser was halted!\n");
-                        BruteForceMethod();
-                        return;
+                        lightMapLength = 0;
                     }
                     model.Scale =
                     [
@@ -568,6 +566,8 @@ public class Lp4(byte[] data, string fileName) : FormatBase
         
         public List<byte[]> Colors { get; set; } = [];
 
+        private bool IsOptimized { get; set; } = false;
+
         public Dictionary<string, Joint> AnimationJoints { get; set; } = [];
 
         public bool HasEmbeddedTexture = true;
@@ -585,13 +585,15 @@ public class Lp4(byte[] data, string fileName) : FormatBase
                     Name, Address.ToString("X"),
                     $"{DotFloatString(Scale[0])}x{DotFloatString(Scale[1])}x{DotFloatString(Scale[2])}",
                     $"{DotFloatString(Offset[0])}x{DotFloatString(Offset[1])}x{DotFloatString(Offset[2])}",
-                    Ascii.IsValid(Texture) ? Texture : "N/A",
-                    RawVertices.Count.ToString()
+                    (Ascii.IsValid(Texture) && Texture.Length > 0) ? Texture : HasEmbeddedTexture ? "Embedded material" : "N/A",
+                    RawVertices.Count.ToString(),
+                    Lightmap.Count.ToString(),
+                    IsOptimized ? "Yes" : "No"
                 ];
             }
             catch
             {
-                return ["Error", "Error", "Error", "Error", "Error", "Error"];
+                return ["Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error"];
             }
         }
 
@@ -640,6 +642,7 @@ public class Lp4(byte[] data, string fileName) : FormatBase
             var partIdx = StaticUtils.AlternateNormals ? 0 : 1;
             for (var j = offset + 0x10; j < offset + (Math.Max(len, uvlen)) * 0x10 - 0x10; j += 0x10)
             {
+                if ((j - offset - 0x10) % 0x30 != 0) IsOptimized = true; // if the model is not compressed, it'll jump forward by 0x30 every time
                 var x1 = BitConverter.ToSingle(data.Skip(j).Take(4).ToArray(), 0);
                 var y1 = BitConverter.ToSingle(data.Skip(j + 0x4).Take(4).ToArray(), 0);
                 var z1 = BitConverter.ToSingle(data.Skip(j + 0x8).Take(4).ToArray(), 0);
