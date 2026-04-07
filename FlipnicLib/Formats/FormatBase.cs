@@ -191,4 +191,15 @@ public class FormatBase
         return StaticUtils.GetFilesizeString(s);
     }
 
+    /// <summary>
+    /// Convert milliseconds into a time duration
+    /// </summary>
+    /// <param name="ms">Milliseconds to convert</param>
+    /// <returns>String value in the format $"{hours:00}:{minutes:00}:{seconds:00}.{milliseconds:000}"</returns>
+    protected static string GetMsAsDuration(long ms)
+    {
+        var ts = TimeSpan.FromMilliseconds(ms);
+        return $"{ts.Hours:00}:{ts.Minutes:00}:{ts.Seconds:00}.{ts.Milliseconds:000}";
+    }
+
 }
