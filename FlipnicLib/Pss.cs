@@ -1,6 +1,8 @@
+using FlipnicLib.Formats;
+
 namespace FlipnicLib;
 
-public class Pss(string fileName)
+public class Pss(string fileName) : FormatBase
 {
     private string FileName { get; set; } = fileName;
     private static readonly char Slash = OperatingSystem.IsWindows() ? '\\' : '/';
@@ -27,6 +29,10 @@ public class Pss(string fileName)
         var videoChunks = 0;
         var streamRows = new List<string[]>();
         var relativeOffset = -0x99A0;
+        List<string[]> frames = new List<string[]>();
+        var frameStarted = false;
+        var totalSamples = 0L;
+        var totalFrames = 0;
         using (var src = inFile)
         {
             var buffer = new byte[16];
@@ -45,6 +51,9 @@ public class Pss(string fileName)
                     var streamSize = BitConverter.ToInt32(sizebytes, 0);
                     var gotoPointer = BitConverter.ToInt32(nextpointer, 0);
                     var exists = false;
+                    var samples = (streamSize / 0x10 * 0xE + ((streamSize % 0x10) - 2));
+                    totalSamples += samples;
+                    frames.Add(["Audio " + streamID, samples.ToString()]);
                     foreach (var stream in streams.Keys)
                     {
                         if (stream == "Audio " + streamID)
@@ -84,6 +93,20 @@ public class Pss(string fileName)
                     byte[] nextpointer = { buffer[12], buffer[13], buffer[14], buffer[15] };
                     var streamSize = BitConverter.ToInt32(sizebytes, 0);
                     var gotoPointer = BitConverter.ToInt32(nextpointer, 0);
+                    byte[] shiftRegister = [0, 0, 0, 0];
+                    var vFrames = 0;
+                    for (var i = 0; i < streamSize; i++)
+                    {
+                        for (var j = 0; j < 3; j++)
+                            shiftRegister[j] = shiftRegister[j + 1];
+                        shiftRegister[3] = (byte)src.ReadByte();
+                        if ((shiftRegister[0] + shiftRegister[1] == 0) && (shiftRegister[2] == 1) && (shiftRegister[3] == 0xB0))
+                        {
+                            vFrames++;
+                        }
+                    }
+                    totalFrames += vFrames;
+                    frames.Add(["Video", vFrames.ToString()]);
                     streamRows.Add([$"0x{relativeOffset:X}",$"0x{seek:X}", "Video", StaticUtils.GetFilesizeString(gotoPointer), StaticUtils.GetFilesizeString(streamSize), gotoPointer.ToString("X"), streamSize.ToString("X")]);
                     var exists = false;
                     foreach (var stream in streams.Keys)
@@ -153,6 +176,25 @@ public class Pss(string fileName)
         else
         {
             Console.Write("\r");
+
+            // try to figure out video standard based on how close video duration is 
+            // to audio duration based on expected duration calculated with total
+            // frame count
+            var durationMs = (long)(totalSamples / (streams.Count - 1) / 44100.0 * 1000.0); // based on audio sample count
+            var deltaPalMs = Math.Abs((long)(totalFrames / 50.0 * 1000.0) - durationMs); // based on frame count (assuming progressive PAL)
+            var deltaNtscMs = Math.Abs((long)(totalFrames / 59.94 * 1000.0) - durationMs); // based on frame count (assuming progressive NTSC)
+            var deltaIlPalMs = Math.Abs((long)(totalFrames / 25.0 * 1000.0) - durationMs); // based on frame count (assuming interlaced PAL)
+            var deltaIlNtscMs = Math.Abs((long)(totalFrames / 29.97 * 1000.0) - durationMs); // based on frame count (assuming interlaced NTSC)
+            var vFormat = "Unknown";
+            long[] deltas = [deltaPalMs, deltaIlPalMs, deltaNtscMs, deltaIlNtscMs];
+            if (deltas.Min() == deltaPalMs) vFormat = "PAL (progressive scan)";
+            else if (deltas.Min() == deltaIlPalMs) vFormat = "PAL (interlaced)";
+            else if (deltas.Min() == deltaNtscMs) vFormat = "NTSC (progressive scan)";
+            else if (deltas.Min() == deltaIlNtscMs) vFormat = "NTSC (interlaced)";
+            if (vFormat.Contains("PAL") && (!StaticUtils.Pal))
+            {
+                StaticUtils.Pal = true;
+            }
             var o = "";
             var sizeRatio = streams["Audio 1"] / (float)streams["Video"] * 100f;
             var chunkRatio = audioChunks/(float)videoChunks*100f;
@@ -160,6 +202,16 @@ public class Pss(string fileName)
             string[] colHeaders = ["Stream", "Size", "Size (hex)"];
             List<string[]> rows = [];
             rows.AddRange(streams.Select(kvp => (string[]) [kvp.Key, StaticUtils.GetFilesizeString(kvp.Value), kvp.Value.ToString("X")]));
+            o += StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput);
+            var timeStr = GetMsAsDuration(durationMs).ToString();
+            o += $"\nAudio duration: {timeStr}";
+            o += $"\nVideo duration: {GetMsAsDuration(durationMs - deltas.Min())}";
+            o += $"\nVideo standard: {vFormat}";
+            o += $"\nTotal frames: {totalFrames}\n";
+            o += "\nInterleaving data\n";
+            colHeaders = ["Stream", "Frames/Samples"];
+            rows.Clear();
+            rows.AddRange(frames);
             o += StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput);
             /*
             o += "\nChunk data\n";
