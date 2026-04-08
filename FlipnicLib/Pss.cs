@@ -53,7 +53,7 @@ public class Pss(string fileName) : FormatBase
                     var exists = false;
                     var samples = (streamSize / 0x10 * 0xE + ((streamSize % 0x10) - 2));
                     totalSamples += samples;
-                    frames.Add(["Audio " + streamID, samples.ToString()]);
+                    frames.Add(["Audio " + streamID, samples.ToString(), ""]);
                     foreach (var stream in streams.Keys)
                     {
                         if (stream == "Audio " + streamID)
@@ -106,7 +106,7 @@ public class Pss(string fileName) : FormatBase
                         }
                     }
                     totalFrames += vFrames;
-                    frames.Add(["Video", vFrames.ToString()]);
+                    frames.Add(["Video", vFrames.ToString(), ""]);
                     streamRows.Add([$"0x{relativeOffset:X}",$"0x{seek:X}", "Video", StaticUtils.GetFilesizeString(gotoPointer), StaticUtils.GetFilesizeString(streamSize), gotoPointer.ToString("X"), streamSize.ToString("X")]);
                     var exists = false;
                     foreach (var stream in streams.Keys)
@@ -208,8 +208,36 @@ public class Pss(string fileName) : FormatBase
             o += $"\nVideo duration: {GetMsAsDuration(durationMs - deltas.Min())}";
             o += $"\nVideo standard: {vFormat}";
             o += $"\nTotal frames: {totalFrames}\n";
+            foreach (var (idx, fr) in frames.Index())
+            {
+                if (fr[0].Contains("Audio"))
+                {
+                    frames[idx][2] = DotFloatString((float)Math.Round(long.Parse(fr[1]) / 44100.0 * 1000.0, 2)).ToString() + "ms";
+                }
+                else
+                {
+                    var divider = 59.94;
+                    switch (vFormat)
+                    {
+                        case "PAL (progressive scan)":
+                            divider = 50.0;
+                            break;
+                        case "PAL (interlaced)":
+                            divider = 25.0;
+                            break;
+                        case "NTSC (progressive scan)":
+                            divider = 59.94;
+                            break;
+                        case "NTSC (interlaced)":
+                            divider = 29.97;
+                            break;
+
+                    }
+                    frames[idx][2] = DotFloatString((float)Math.Round(long.Parse(fr[1]) / divider * 1000.0, 2)).ToString() + "ms";
+                }
+            }
             o += "\nInterleaving data\n";
-            colHeaders = ["Stream", "Frames/Samples"];
+            colHeaders = ["Stream", "Fr./Sampl.", "Time"];
             rows.Clear();
             rows.AddRange(frames);
             o += StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput);
