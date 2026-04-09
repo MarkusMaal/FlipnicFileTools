@@ -13,6 +13,9 @@ public class VideoTools
     private static bool CropRgb { get; set; } = false;
     
     private static int ScaleFactor { get; set; } = 1;
+    
+    private static string IntFile { get; set; } = "";
+    
 
 
     public VideoTools(Config cfg)
@@ -23,6 +26,7 @@ public class VideoTools
         CropAlpha = cfg.CropAlpha;
         CropRgb = cfg.CropRgb;
         ScaleFactor = cfg.ScaleFactor;
+        IntFile = cfg.IntFile ?? "";
 
         switch (cfg.Mode)
         {
@@ -38,6 +42,10 @@ public class VideoTools
                 break;
             case Enums.Modes.ShowIpu:
                 Console.WriteLine(Ipu.GetInfoAsString(File.OpenRead(FileName)));
+                break;
+            case Enums.Modes.GeneratePss:
+                Console.WriteLine("Using audio stream: " + cfg.IntFile);
+                Pss.MergeStreams(new FileStream(FileName, FileMode.Open, FileAccess.Read), new FileStream(IntFile,  FileMode.Open, FileAccess.Read), new FileStream(Output, FileMode.Create, FileAccess.Write));
                 break;
             case Enums.Modes.ConvertPssMpeg:
                 ConvertPssMpeg();

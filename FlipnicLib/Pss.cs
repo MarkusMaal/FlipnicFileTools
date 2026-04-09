@@ -93,7 +93,7 @@ public class Pss(string fileName) : FormatBase
                     byte[] nextpointer = { buffer[12], buffer[13], buffer[14], buffer[15] };
                     var streamSize = BitConverter.ToInt32(sizebytes, 0);
                     var gotoPointer = BitConverter.ToInt32(nextpointer, 0);
-                    byte[] shiftRegister = [0, 0, 0, 0];
+                    var shiftRegister = "\0\0\0\0"u8.ToArray();
                     var vFrames = 0;
                     for (var i = 0; i < streamSize; i++)
                     {
@@ -254,7 +254,94 @@ public class Pss(string fileName) : FormatBase
             return o;
         }
     }
-    
+
+    private static int GetPointer(int streamLength)
+    {
+        if (streamLength % 0x10 == 0)
+        {
+            return streamLength;
+        }
+
+        return (streamLength / 0x10) * 0x10 + 0x10;
+    }
+
+    private static void WriteAudioStream(int streamLength, int streamID, Stream intFile, Stream output, bool ipuHack = false)
+    {
+        if (!ipuHack)
+        {
+            output.Write("INT\0"u8);
+            output.Write(BitConverter.GetBytes(streamID));
+        }
+        else
+        {
+            output.Write("IPU\0"u8);
+            output.Write("\0\0\0\0"u8);
+        }
+
+        output.Write(BitConverter.GetBytes(streamLength));
+        output.Write(BitConverter.GetBytes(GetPointer(streamLength)));
+
+        var start = output.Position;
+        var data = new byte[streamLength];
+        intFile.ReadExactly(data, 0, streamLength);
+        output.Write(data, 0, streamLength);
+        output.Position = start + GetPointer(streamLength);
+    }
+
+    private static void WriteFrames(int frameCount, Stream ipuFile, Stream output)
+    {
+        var detectedFrames = 0;
+        var shiftRegister = "\0\0\0\0"u8.ToArray();
+        while (detectedFrames < frameCount)
+        {
+            output.Write("IPU\0"u8);
+            output.Write("\0\0\0\0"u8);
+            output.Write(BitConverter.GetBytes(0x8000));
+            output.Write(BitConverter.GetBytes(0x8000));
+            var data = new byte[0x8000];
+            ipuFile.ReadExactly(data, 0, 0x8000);
+            foreach (var t in data)
+            {
+                for (var j = 0; j < 3; j++)
+                    shiftRegister[j] = shiftRegister[j + 1];
+                shiftRegister[3] = t;
+                if ((shiftRegister[0] + shiftRegister[1] == 0) && (shiftRegister[2] == 1) && (shiftRegister[3] == 0xB0))
+                {
+                    detectedFrames++;
+                }
+            }
+            output.Write(data);
+        }
+    }
+
+    public static void MergeStreams(FileStream ipuFile, FileStream intFile, FileStream output)
+    {
+        // beginning
+        WriteAudioStream(0x9999, 1, intFile, output);
+        WriteFrames(3, ipuFile, output);
+        var r = new Random();
+        var audioTime = 34405/44100.0;
+        var idx = 0;
+        while ((ipuFile.Position < ipuFile.Length - 0x8000) && (intFile.Position < intFile.Length - 0x2000))
+        {
+            WriteAudioStream(0x2000, 1, intFile, output);
+            var writeFrames = (int)(audioTime / 0.25);
+            WriteFrames(writeFrames, ipuFile, output);
+            if (audioTime > 1.0)
+            {
+                audioTime -= 1.0;
+            }
+            idx++;
+        }
+
+        WriteAudioStream((int)(intFile.Length - intFile.Position), 1, intFile, output);
+        WriteAudioStream((int)(ipuFile.Length - ipuFile.Position), 0, ipuFile, output, true);
+        output.Write("END\0"u8);
+        output.Write([255, 255, 255, 255]);
+        output.Write([255, 255, 255, 255]);
+        output.Write([255, 255, 255, 255]); // unknown value, writing 0xFFFFFFFF as a placeholder (will cause a soft-lock when reaching the end of the video)
+        output.Close();
+    }
     
     private void CutFile(string sourceFilePath, string destinationFilePath, long startPosition, long endPosition) // internal
     {

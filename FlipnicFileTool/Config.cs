@@ -83,6 +83,11 @@ public class Config
     /// lead to notes fading out too early.
     /// </summary>
     public bool SimulateSustainRate { get; set; } = false;
+    
+    /// <summary>
+    /// Audio stream to use for .PSS merge
+    /// </summary>
+    public string IntFile { get; set; }
 
     /// <summary>
     /// Set configuration based on the args specified by the user
@@ -176,6 +181,9 @@ public class Config
                 case "--replace-file":
                 case "--replace-iso":
                     VFile = arg;
+                    break;
+                case "--generate-pss":
+                    IntFile = arg;
                     break;
                 default:
                     break;

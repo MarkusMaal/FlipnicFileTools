@@ -61,7 +61,8 @@ public abstract class Enums
         ShowVss,
         ShowFtl,
         ShowElf,
-        ShowDummy
+        ShowDummy,
+        GeneratePss
     }
     
     /// <summary>
@@ -158,6 +159,7 @@ public abstract class Enums
             "--show-elf" => Modes.ShowElf,
             "--show-dummy" => Modes.ShowDummy,
             "--export-box-obj" => Modes.ExportBbox,
+            "--generate-pss" => Modes.GeneratePss,
             _ => mode
         };
         

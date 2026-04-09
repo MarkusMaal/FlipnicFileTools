@@ -92,6 +92,7 @@ internal static class Program
                 case Enums.Modes.ExtractPssStreams:
                 case Enums.Modes.ShowIpu:
                 case Enums.Modes.ConvertPssMpeg:
+                case Enums.Modes.GeneratePss:
                     _ = new VideoTools(Cfg);
                     break;
                 case Enums.Modes.ShowLay:
