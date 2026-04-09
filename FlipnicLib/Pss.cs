@@ -314,6 +314,7 @@ public class Pss(string fileName) : FormatBase
         }
     }
 
+    // NOTE: Currently only interlaced PAL video is supported
     public static void MergeStreams(FileStream ipuFile, FileStream intFile, FileStream output)
     {
         // beginning
@@ -325,7 +326,8 @@ public class Pss(string fileName) : FormatBase
         while ((ipuFile.Position < ipuFile.Length - 0x8000) && (intFile.Position < intFile.Length - 0x2000))
         {
             WriteAudioStream(0x2000, 1, intFile, output);
-            var writeFrames = (int)(audioTime / 0.25);
+            var jitter = idx % 0xC == 0 ? 1 : 0; // This additional frame every Cth write seems to fix lock-ups. The value was brute-forced, so it may still lock up with very long videos.
+            var writeFrames = (int)(audioTime / 0.25) + jitter;
             WriteFrames(writeFrames, ipuFile, output);
             if (audioTime > 1.0)
             {
