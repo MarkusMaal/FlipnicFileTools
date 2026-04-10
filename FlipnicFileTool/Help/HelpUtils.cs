@@ -184,7 +184,8 @@ public abstract class HelpUtils
                     new HelpLine("crop-alpha", "Crops out the alpha mask from low-res FMVs"),
                     new HelpLine("crop-rgb", "Crops out the RGB part of low-res FMVs"),
                     new HelpLine("scale-factor [n]", "Scales up the final video *n (NOTE: you can't apply crop and scale factor at the same time)"),
-                    new HelpLine("generate-pss [int]", "Allows you to generate an interleaved .PSS file (NOTE: experimental)")
+                    new HelpLine("generate-pss [int]", "Allows you to generate an interleaved .PSS file (int = INT file, input = IPU file, output = PSS file)"),
+                    new HelpLine("progressive", "Uses settings required for progressive scan FMVs (useful only with --generate-pss)")
                 ]
             ),
             new (

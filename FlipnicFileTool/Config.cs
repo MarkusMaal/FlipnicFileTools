@@ -83,6 +83,11 @@ public class Config
     /// lead to notes fading out too early.
     /// </summary>
     public bool SimulateSustainRate { get; set; } = false;
+
+    /// <summary>
+    /// If enabled, uses progressive scan settings for generating PSS files
+    /// </summary>
+    public bool Progressive { get; set; } = false;
     
     /// <summary>
     /// Audio stream to use for .PSS merge
@@ -127,6 +132,9 @@ public class Config
                     break;
                 case "--fake-sustain-rate":
                     SimulateSustainRate = true;
+                    break;
+                case "--progressive":
+                    Progressive = true;
                     break;
                 case "--synthesize-wav":
                     SynthesizeWav = true;
