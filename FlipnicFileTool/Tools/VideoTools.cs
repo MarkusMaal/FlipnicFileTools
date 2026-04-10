@@ -45,7 +45,8 @@ public class VideoTools
                 break;
             case Enums.Modes.GeneratePss:
                 Console.WriteLine("Using audio stream: " + cfg.IntFile);
-                Pss.MergeStreams(new FileStream(FileName, FileMode.Open, FileAccess.Read), new FileStream(IntFile,  FileMode.Open, FileAccess.Read), new FileStream(Output, FileMode.Create, FileAccess.Write), cfg.Progressive);
+                Console.WriteLine("Video standard: " + (StaticUtils.Pal ? "PAL" : "NTSC") + " (" + (cfg.Progressive ? "Progressive" : "Interlaced") + ")");
+                Pss.MergeStreams(new FileStream(FileName, FileMode.Open, FileAccess.Read), new FileStream(IntFile,  FileMode.Open, FileAccess.Read), new FileStream(Output, FileMode.Create, FileAccess.Write), cfg.Progressive, StaticUtils.Pal);
                 break;
             case Enums.Modes.ConvertPssMpeg:
                 ConvertPssMpeg();

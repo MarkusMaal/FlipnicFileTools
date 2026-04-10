@@ -314,19 +314,40 @@ public class Pss(string fileName) : FormatBase
         }
     }
 
-    // NOTE: Currently only PAL version is supported
-    public static void MergeStreams(FileStream ipuFile, FileStream intFile, FileStream output, bool progressive = false)
+    // NOTE: Currently only PAL version works correctly, NTSC will freeze at a specific point
+    public static void MergeStreams(FileStream ipuFile, FileStream intFile, FileStream output, bool progressive = false, bool isPal = true)
     {
         // beginning
+        if (!isPal)
+        {
+            Console.WriteLine();
+            StaticUtils.DecodeColors(
+                "~-EWarning~--: NTSC support is experimental and will likely freeze at some point during playback");
+            if (progressive)
+            {
+                Console.WriteLine();
+                StaticUtils.DecodeColors(
+                    "~-EWarning~--: Progressive NTSC is untested");
+            }
+        }
         WriteAudioStream(0x9999, 1, intFile, output);
-        WriteFrames(progressive ? 6 : 3, ipuFile, output);
+        WriteFrames(progressive ? (isPal ? 6 : 8) : (isPal ? 3 : 4), ipuFile, output);
         var r = new Random();
-        var audioTime = 34405/44100.0;
+        var audioTime = 34405/44100.0 * (isPal ? 1 : 1.165832499);
         var idx = 0;
         while ((ipuFile.Position < ipuFile.Length - 0x8000) && (intFile.Position < intFile.Length - 0x2000))
         {
             WriteAudioStream(0x2000, 1, intFile, output);
-            var jitter = idx % 0xC == 0 ? 1 : 0; // This additional frame every Cth write seems to fix lock-ups. The value was brute-forced, so it may still lock up with very long videos.
+            var jitter = idx % (isPal ? 0xC : 0x2) == 0 ? 1 : 0; // This additional frame every Cth write seems to fix lock-ups. The value was brute-forced, so it may still lock up with very long videos.
+            
+            // this is just awful, I don't want to deal with NTSC video ever again
+            if (!isPal)
+            {
+                if (idx % 0x8 == 0) jitter += (idx % 0x40 == 0) ? 8 : 1;
+                //if (idx % 0x80 == 0) jitter -= 1; // 8 = freeze when a sword appears, 4 = freeze when a tree appears, 2 = freeze a bit earlier than not including it at all, 1 = no difference, same as not including it
+                //if (idx % 0x20 == 0) jitter -= 8; // 4/2 = freeze when f. scarlet creepily smiles at you, 8 = freeze during the "oh my gosh, she's dropped it!" part
+                //if (idx % 0x20 == 0) jitter += 1; // 4 = 8 skips and a freeze near end, 3 = 5 skips, freezes earlier than 4, 2 = 1 skip, freezes way earlier, 1 = no skips, freezes before boat transition
+            }
             var writeFrames = (int)(audioTime / (progressive ? 0.125 : 0.25)) + jitter;
             WriteFrames(writeFrames, ipuFile, output);
             if (audioTime > 1.0)
@@ -343,6 +364,9 @@ public class Pss(string fileName) : FormatBase
         output.Write([255, 255, 255, 255]);
         output.Write([255, 255, 255, 255]); // unknown value, writing 0xFFFFFFFF as a placeholder (will cause a soft-lock when reaching the end of the video)
         output.Close();
+        Console.WriteLine();
+        StaticUtils.DecodeColors( $"~-ASuccess~--: File saved as {output.Name}");
+        Console.WriteLine();
     }
     
     private void CutFile(string sourceFilePath, string destinationFilePath, long startPosition, long endPosition) // internal
