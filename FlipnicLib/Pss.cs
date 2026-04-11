@@ -343,7 +343,18 @@ public class Pss(string fileName) : FormatBase
             // this is just awful, I don't want to deal with NTSC video ever again
             if (!isPal)
             {
-                if (idx % 0x8 == 0) jitter += (idx % 0x40 == 0) ? 8 : 1;
+                //                                                       0x80         32 = 3 skips, plays to the end
+                //                                                       0x80         24 = 3 skips, freezes at a certain point
+                //                                                       0x90         32 = no change
+                //                                                       0x90         40 = no change
+                //                                                       0x90         48 = yoyoyoyoyoyoyoyoyo (freezes)
+                //                                                       0x100        48 = regression, don't use
+                //                                                       0x100        40 = regression, don't use
+                //                                                       0x100        35 = 2 small skips, freezes at the pen throw scene
+                //                                                       0x100        32 = 1 small skip, freezes at the pen throw scene
+                //                                                       0x100        30 = 1 major skip, freezes at the pen throw scene
+                //                                                       0x100        24 = no change
+                if (idx % 0x8 == 0) jitter += (idx % 0x40 == 0) ? (idx % 0x100 == 0) ? 32 : 8 : 1; // this is the best attempt so far
                 //if (idx % 0x80 == 0) jitter -= 1; // 8 = freeze when a sword appears, 4 = freeze when a tree appears, 2 = freeze a bit earlier than not including it at all, 1 = no difference, same as not including it
                 //if (idx % 0x20 == 0) jitter -= 8; // 4/2 = freeze when f. scarlet creepily smiles at you, 8 = freeze during the "oh my gosh, she's dropped it!" part
                 //if (idx % 0x20 == 0) jitter += 1; // 4 = 8 skips and a freeze near end, 3 = 5 skips, freezes earlier than 4, 2 = 1 skip, freezes way earlier, 1 = no skips, freezes before boat transition
