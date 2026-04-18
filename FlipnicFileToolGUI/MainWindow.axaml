@@ -86,7 +86,7 @@
                             <controls:CircleDot ColorA="DeepSkyBlue" ColorB="DarkBlue" Source="Assets\TabIcons\info.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
-                            <controls:CLIBox Name="InfoBox" x:DataType="controls:CLIBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" />
+                            <controls:CLIBox Name="InfoBox" x:DataType="controls:CLIBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" WrapText="True" />
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
                     <!-- Models tab -->

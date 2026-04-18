@@ -110,10 +110,11 @@ public abstract class HelpUtils
                 "*.IPU",
                 [
                     new HelpLine("show-ipu*", "Display basic information about the IPU file"),
-                    new HelpLine("convert-ipu", "Uses FFmpeg to convert .IPU file to .M2V")
+                    new HelpLine("convert-ipu", "Uses FFmpeg to convert .IPU file to .M2V"),
+                    new HelpLine("ipu-duct-tape", "Attempts to fix a mangled .IPU file (use --pal and/or --progressive when applicable)")
                 ]
             ),
-            new(
+            new( 
                 "PlayStation 2 ISO file",
                 "*.ISO",
                 [
@@ -211,6 +212,7 @@ public abstract class HelpUtils
                     new HelpLine("show-cameras", "Display camera metadata stored inside the SST file"),
                     new HelpLine("show-gimmick [name]", "Display a gimmick (name from TOC)"),
                     new HelpLine("get-pseudo-code", "Transform stage event into something that's somewhat human-readable"),
+                    new HelpLine("change-count [name],[count]", "Allows you to resize a specific section of the .SST file")
                 ]
             ),
             new(

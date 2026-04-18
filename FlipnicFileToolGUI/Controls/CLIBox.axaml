@@ -5,10 +5,26 @@
              xmlns:flipnicFileToolGui="clr-namespace:FlipnicFileToolGUI"
              mc:Ignorable="d" d:DesignWidth="320" d:DesignHeight="240"
              x:Class="FlipnicFileToolGUI.Controls.CLIBox"  DataContext="{Binding RelativeSource={RelativeSource Self}}">
-    <ScrollViewer HorizontalScrollBarVisibility="Auto" Name="CliBox">
+    <Grid>
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" Name="CliBox" IsVisible="{Binding !WrapText}">
+            <TextBox FontFamily="Cascadia Mono,Consolas,SF Mono,Menlo,DejaVu Sans Mono,Ubuntu Mono,Noto Mono,Courier New,Monospace"
+                     VerticalAlignment="Stretch" Padding="10" TextWrapping="NoWrap" VerticalContentAlignment="Top" IsReadOnly="True"
+                     Text="{Binding Text}" Classes.IsLight="{Binding IsLightTheme}" Classes.IsDark="{Binding !IsLightTheme}">
+                <TextBox.Styles>
+                    <Style Selector="TextBox.IsLight">
+                        <Setter Property="Background" Value="WhiteSmoke"></Setter>
+                        <Setter Property="Foreground" Value="DarkBlue"></Setter>
+                    </Style>
+                    <Style Selector="TextBox.IsDark">
+                        <Setter Property="Background" Value="Black"></Setter>
+                        <Setter Property="Foreground" Value="SpringGreen"></Setter>
+                    </Style>
+                </TextBox.Styles>
+            </TextBox>
+        </ScrollViewer>
         <TextBox FontFamily="Cascadia Mono,Consolas,SF Mono,Menlo,DejaVu Sans Mono,Ubuntu Mono,Noto Mono,Courier New,Monospace"
-                 VerticalAlignment="Stretch" Padding="10" TextWrapping="NoWrap" VerticalContentAlignment="Top" IsReadOnly="True"
-                 Text="{Binding Text}" Classes.IsLight="{Binding IsLightTheme}" Classes.IsDark="{Binding !IsLightTheme}">
+                    VerticalAlignment="Stretch" Padding="10" TextWrapping="Wrap" VerticalContentAlignment="Top" IsReadOnly="True"
+                    Text="{Binding Text}" Classes.IsLight="{Binding IsLightTheme}" Classes.IsDark="{Binding !IsLightTheme}" IsVisible="{Binding WrapText}">
             <TextBox.Styles>
                 <Style Selector="TextBox.IsLight">
                     <Setter Property="Background" Value="WhiteSmoke"></Setter>
@@ -20,5 +36,5 @@
                 </Style>
             </TextBox.Styles>
         </TextBox>
-    </ScrollViewer>
+    </Grid>
 </UserControl>

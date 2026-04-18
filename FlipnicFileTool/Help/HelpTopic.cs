@@ -26,7 +26,7 @@ public class HelpTopic(string title, string ext, HelpLine[] lines)
                         """;
         }
 
-        encoded = Lines.Aggregate(encoded, (current, l) => current + ("~-F" + l.Flag.PadRight(27, ' ') + "~-7" + l.Description + "\n"));
+        encoded = Lines.Aggregate(encoded, (current, l) => current + ("~-F" + l.Flag.PadRight(36, ' ') + "~-7" + l.Description + "\n"));
         StaticUtils.DecodeColors(encoded);
     }
 }

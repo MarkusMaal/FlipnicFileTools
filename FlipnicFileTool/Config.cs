@@ -95,6 +95,11 @@ public class Config
     public string IntFile { get; set; }
 
     /// <summary>
+    /// Count value
+    /// </summary>
+    public int Count { get; set; }
+
+    /// <summary>
     /// Set configuration based on the args specified by the user
     /// </summary>
     /// <param name="args">List of args received from the command line</param>
@@ -192,6 +197,11 @@ public class Config
                     break;
                 case "--generate-pss":
                     IntFile = arg;
+                    break;
+                case "--change-count":
+                    string[] values = arg.Split(",");
+                    VFile = values[0];
+                    Count = int.Parse(values[1]);
                     break;
                 default:
                     break;

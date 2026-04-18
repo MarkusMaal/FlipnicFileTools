@@ -96,6 +96,7 @@ public static class FileHelpers
     {
         Dispatcher.UIThread.Post(() =>
         {
+            mw.InfoBox.WrapText = false;
             mw.InfoBox.Text = sender?.ToString() ?? "";
             mw.InfoTab.IsVisible = true;
             mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, type);

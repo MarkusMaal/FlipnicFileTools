@@ -62,7 +62,9 @@ public abstract class Enums
         ShowFtl,
         ShowElf,
         ShowDummy,
-        GeneratePss
+        GeneratePss,
+        IpuFix,
+        SstResize
     }
     
     /// <summary>
@@ -160,6 +162,8 @@ public abstract class Enums
             "--show-dummy" => Modes.ShowDummy,
             "--export-box-obj" => Modes.ExportBbox,
             "--generate-pss" => Modes.GeneratePss,
+            "--ipu-duct-tape" => Modes.IpuFix,
+            "--change-count" => Modes.SstResize,
             _ => mode
         };
         
