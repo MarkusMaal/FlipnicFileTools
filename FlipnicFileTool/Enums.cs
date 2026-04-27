@@ -64,7 +64,10 @@ public abstract class Enums
         ShowDummy,
         GeneratePss,
         IpuFix,
-        SstResize
+        SstResize,
+        ExtractPak,
+        ListPak,
+        ReplacePak
     }
     
     /// <summary>
@@ -97,6 +100,7 @@ public abstract class Enums
             ".SCC" => Modes.ShowVss,
             ".FTL" => Modes.ShowFtl,
             ".DAT" => Modes.ShowDummy,
+            ".PAK" => Modes.ListPak,
             _ => Modes.ShowHelp
         };
     }
@@ -164,6 +168,9 @@ public abstract class Enums
             "--generate-pss" => Modes.GeneratePss,
             "--ipu-duct-tape" => Modes.IpuFix,
             "--change-count" => Modes.SstResize,
+            "--extract-pak" => Modes.ExtractPak,
+            "--list-pak" => Modes.ListPak,
+            "--replace-pak" => Modes.ReplacePak,
             _ => mode
         };
         

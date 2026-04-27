@@ -40,6 +40,7 @@ public abstract class HelpUtils
                 [
                     new HelpLine("list-files*", "List all files inside this container file"),
                     new HelpLine("extract-files", "Extract files inside the container to a folder (output = folder)"),
+                    new HelpLine("extract-pak", "Extract subfolders inside the container as PAK files (output = folder)"),
                     new HelpLine("replace-file [vfile]", "Allows you to replace a single file inside a .BIN container (input = replacement file, output = BIN file, vfile = BIN file record name)"),
                 ]
             ),
@@ -171,6 +172,14 @@ public abstract class HelpUtils
                 [
                     new HelpLine("show-messages*", "Display all strings stored in the file"),
                     new HelpLine("generate-msg", "Generates a message file from a text file containing strings separated by new lines (input = txt file, output = msg file)"),
+                ]
+            ),
+            new(
+                "Subfolders",
+                "*.PAK",
+                [
+                    new HelpLine("list-pak*", "List all files inside the subdirectory"),
+                    new HelpLine("replace-pak [vfile]", "Replace a file inside the subdirectory (output = pak, input = replacement, vfile = name inside PAK)"),
                 ]
             ),
             new(

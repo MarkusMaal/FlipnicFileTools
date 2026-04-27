@@ -61,6 +61,9 @@ internal static class Program
                 case Enums.Modes.ListBin:
                 case Enums.Modes.ExtractBin:
                 case Enums.Modes.ReplaceBin:
+                case Enums.Modes.ExtractPak:
+                case Enums.Modes.ListPak:
+                case Enums.Modes.ReplacePak:
                     _ = new BinTools(Cfg);
                     break;
                 case Enums.Modes.ShowHd:

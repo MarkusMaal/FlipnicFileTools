@@ -18,6 +18,15 @@ public class BinTools
             case Enums.Modes.ReplaceBin:
                 ReplaceFile(cfg.FileName, cfg.Output, cfg.VFile);
                 break;
+            case Enums.Modes.ExtractPak:
+                new BinFile().ExtractPak(File.OpenRead(cfg.FileName), cfg.Output);
+                break;
+            case Enums.Modes.ListPak:
+                new BinFile().ListPak(File.OpenRead(cfg.FileName));
+                break;
+            case Enums.Modes.ReplacePak:
+                new BinFile().ListPak(File.Open(cfg.Output, FileMode.Open, FileAccess.ReadWrite), true, cfg.VFile, File.OpenRead(cfg.FileName));
+                break;
         }
     }
 

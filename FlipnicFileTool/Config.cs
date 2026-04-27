@@ -193,6 +193,7 @@ public class Config
                     break;
                 case "--replace-file":
                 case "--replace-iso":
+                case "--replace-pak":
                     VFile = arg;
                     break;
                 case "--generate-pss":

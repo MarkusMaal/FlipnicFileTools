@@ -3,6 +3,7 @@ using FlipnicLib.Types;
 
 namespace FlipnicLib;
 
+// DEPRECATED: Use BinFile instead
 public class Subfolder : FormatBase
 {
     private List<VirtualFile> FsEntries { get; } = [];
