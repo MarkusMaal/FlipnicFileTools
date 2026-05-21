@@ -28,11 +28,11 @@ public class ExtractUtils
         }
 
         var ms = new MemoryStream();
-        var loopStart = mw.GetViewModel().Samples[mw.SamplesGrid.SelectedIndex].LoopStart;
-        var loopEnd = mw.GetViewModel().Samples[mw.SamplesGrid.SelectedIndex].LoopEnd;
+        //var loopStart = mw.GetViewModel().Samples[mw.SamplesGrid.SelectedIndex].LoopStart;
+        //var loopEnd = mw.GetViewModel().Samples[mw.SamplesGrid.SelectedIndex].LoopEnd;
         if (button.Content is "Extract sample" or "Play")
         {
-            ms.Write(mw.GetViewModel().Samples[mw.SamplesGrid.SelectedIndex].Data.ToArray());
+            ms.Write(mw.GetViewModel().Samples![mw.SamplesGrid.SelectedIndex].Data.ToArray());
         }
         ms.Position = 0;
         var decodedData = SonyVag.Decode(ms.ToArray());
@@ -67,7 +67,7 @@ public class ExtractUtils
         mw.PlaybackStateLabel.Content = "Buffering";
         new Thread(() =>
         {
-            StaticUtils.ConvertAudio(outPath, mw.FileName, mw.FileName.EndsWith("VAG"));
+            StaticUtils.ConvertAudio(outPath, mw.FileName!, mw.FileName!.EndsWith("VAG"));
             Dispatcher.UIThread.Post(() => JustPlay(mw));
         }).Start();
     }
@@ -148,7 +148,7 @@ public class ExtractUtils
             }
             else
             {
-                foreach (var vf in mw.Fs.FsEntries)
+                foreach (var vf in mw.Fs!.FsEntries)
                 {
                     if (vf.Path[1..].Contains('\\') && !Directory.Exists(outputDir + vf.Path.Split('\\')[1]))
                     {
@@ -186,7 +186,7 @@ public class ExtractUtils
     internal static void SaveFile(VirtualFile vf, string file, MainWindow mw)
     {
         if (file.Contains('*')) return;
-        var fs = new FileStream(mw.FileName, FileMode.Open, FileAccess.Read);
+        var fs = new FileStream(mw.FileName!, FileMode.Open, FileAccess.Read);
         var os = new FileStream(file, FileMode.Create, FileAccess.Write);
         fs.Seek(vf.Offset, SeekOrigin.Begin);
         for (var i = 0; i < vf.Length / 2048; i += 1)
@@ -245,7 +245,7 @@ public class ExtractUtils
         }).Start();
         new Thread(() =>
         {
-            SaveFile(vf!, Uri.UnescapeDataString(file), mw);
+            SaveFile(vf, Uri.UnescapeDataString(file), mw);
             Dispatcher.UIThread.Post(() =>
             {
                 mw.DockPanel1.IsVisible = true;

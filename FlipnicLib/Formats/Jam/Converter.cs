@@ -37,7 +37,6 @@ public abstract class Converter
     /// <summary>
     /// Converts a .hd/.bd (audio bank)'s instruments to a sound font 2 file.
     /// </summary>
-    /// <param name="path"></param>
     public static void InstrumentToSoundFont2(string midiFile, string hdFilePath, string bdFilePath, string outputFilePath, bool synthesizeWav = false, bool fakeSustainR = true)
     {
         // We need the MIDI to find out which instrument should be percussion banks
@@ -61,14 +60,11 @@ public abstract class Converter
         var instrument = new JamHeader();
         instrument.Read(new BinaryStream(ms));
         var channelToPrograms = new List<(byte Channel, byte Program)>();
-        byte _i = 1;
-        var preset = 0;
         foreach (var msg in ssqt.Track.Messages)
         {
             if (msg.Event is not SqProgramEvent progChangeEvent) continue;
             var channel = (byte)((msg.Status & 0x0F));
-            channelToPrograms.Add((channel, (byte)(progChangeEvent.Program)));
-            _i++;
+            channelToPrograms.Add((channel, (progChangeEvent.Program)));
         }
         
         // Add metadata to the sf2
@@ -95,8 +91,7 @@ public abstract class Converter
         var doLoops = new Dictionary<uint, bool>();
 
         var sampleIdx = 0;
-        var idx = 0;
-        
+
         Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
         
         for (var j = 0; j < channelToPrograms.Count; j++)
@@ -106,13 +101,11 @@ public abstract class Converter
             if (prog == null) continue;
 
             uint wavLoopStart = 0;
-            uint wavLoopEnd = 0;
-            var wavLength = 0;
             foreach (var splitChunk in prog.SplitChunks.Where(splitChunk => !vagSamples.ContainsKey(splitChunk.SampleOffset)))
             {
                 ms.Seek( headerSize + splitChunk.SampleOffset * 8,  SeekOrigin.Begin);
 
-                var vag = splitChunk.GetData(new BinaryStream(ms), out uint loopStart, out uint loopEnd);
+                var vag = splitChunk.GetData(new BinaryStream(ms), out var loopStart, out _);
                 
                 vagSamples.Add(splitChunk.SampleOffset, new SampleInfo(vag, (ushort)vagSamples.Count));
 
@@ -133,8 +126,6 @@ public abstract class Converter
                 {
                     var a = (pcm16.Length / ((double)vag.Length / 0x10));
                     wavLoopStart = (uint)(a * loopStart);
-                    wavLoopEnd = (uint)(a * loopEnd);
-                    wavLength = pcm16.Length;
                 }
                 doLoops.Add(splitChunk.SampleOffset, looping);
                 
@@ -147,7 +138,7 @@ public abstract class Converter
         // https://www.synthfont.com/SFSPEC21.PDF
 
         // Essentially bags declare new incoming data for context (preset or instrument),
-        // "generator" might sound complicated but it's a needlessly complicated name for a single parameter for either presets or instruments.
+        // "generator" might sound complicated, but it's a needlessly complicated name for a single parameter for either presets or instruments.
 
         sampleIdx = 0;
         for (var j = 0; j < channelToPrograms.Count; j++)
@@ -159,18 +150,15 @@ public abstract class Converter
             string name = $"JAM Program {channelToPrograms[j].Program}";
             StaticUtils.LiveLoadStatus = $"Converting JAM Program {channelToPrograms[j].Program}";
 
-            if (channelToPrograms[j].Channel == 9) // Percussion channel
-                sf2.AddPreset(name, channelToPrograms[j].Program, 128);
-            else
-                sf2.AddPreset(name, channelToPrograms[j].Program, 0);
-            
+            sf2.AddPreset(name, channelToPrograms[j].Program,
+                channelToPrograms[j].Channel == 9 ? (ushort)128 : (ushort)0); // Percussion channel
+
             sf2.AddPresetBag();
 
             // Preset has a specified range with 0xFF (otherwise instruments provide it)
             //if (prog.CountOrFlag == 0xFF)
             //    sf2.AddPresetGenerator(SF2Generator.KeyRange, new SF2GeneratorAmount { LowByte = prog.FullRangeMin, HighByte = prog.FullRangeMax });
             sf2.AddPresetGenerator(SF2Generator.Instrument, new SF2GeneratorAmount { Amount = (short)sf2.AddInstrument(name) });
-            long offset = 0;
             for (var k = 0; k < prog.SplitChunks.Count; k++)
             {
                 var splitChunk = prog.SplitChunks[k];
@@ -211,9 +199,9 @@ public abstract class Converter
                     }
                     else if (splitChunk is { Sustain: > 0, Decay: < 18.5 })
                     {
-                        var SL = splitChunk.SustainL / -100.0;
+                        var sl = splitChunk.SustainL / -100.0;
                         splitChunk.SustainL = 0;
-                        splitChunk.Decay = ((splitChunk.Decay * SL) + splitChunk.Decay * (1.0 - SL)) / 2;
+                        splitChunk.Decay = ((splitChunk.Decay * sl) + splitChunk.Decay * (1.0 - sl)) / 2;
                     }
                 }
                 // We divide the above value by 127^2 to get the percent vol it represents. 
@@ -251,12 +239,15 @@ public abstract class Converter
                     //sf2.AddInstrumentGenerator(SF2Generator.ChorusEffectsSend, new SF2GeneratorAmount { Amount = StaticUtils.ReverbStrength });
                 }
 
-                if (prog.CountOrFlag == 0xFF)
-                    sf2.AddInstrumentGenerator(SF2Generator.KeyRange, new SF2GeneratorAmount { LowByte = (byte)(prog.StartNoteRange + k), HighByte = (byte)(prog.StartNoteRange + k) });
-                else
-                    sf2.AddInstrumentGenerator(SF2Generator.KeyRange, new SF2GeneratorAmount { LowByte = (byte)prog.SplitChunks[k].NoteMin, HighByte = (byte)prog.SplitChunks[k].NoteMax });
-                sf2.AddInstrumentGenerator(SF2Generator.SampleID, new SF2GeneratorAmount { UAmount = vagSamples[splitChunk.SampleOffset].SampleID });
-                offset += vagSamples[splitChunk.SampleOffset].SampleData.Length;
+                sf2.AddInstrumentGenerator(SF2Generator.KeyRange,
+                    prog.CountOrFlag == 0xFF
+                        ? new SF2GeneratorAmount
+                            { LowByte = (byte)(prog.StartNoteRange + k), HighByte = (byte)(prog.StartNoteRange + k) }
+                        : new SF2GeneratorAmount
+                        {
+                            LowByte = (byte)prog.SplitChunks[k].NoteMin, HighByte = (byte)prog.SplitChunks[k].NoteMax
+                        });
+                sf2.AddInstrumentGenerator(SF2Generator.SampleID, new SF2GeneratorAmount { UAmount = vagSamples[splitChunk.SampleOffset].SampleId });
                 sampleIdx += 1;
             }
         }
@@ -284,7 +275,7 @@ public abstract class Converter
         writer.WriteSamples(samples, 0, samples.Length);
     }
 
-    private record SampleInfo(byte[] SampleData, ushort SampleID);
+    private record SampleInfo(byte[] SampleData, ushort SampleId);
 
     private static double Normalize(double val, double valmin, double valmax, double min, double max)
     {

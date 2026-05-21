@@ -42,9 +42,6 @@ public class BinTools
         var vfOffset = -1L;
         var vfSize = -1L;
         var largeBuffer = true;
-        var rootDirOffset = 0L;
-        var rootDirSize = 0L;
-        var rootDirName = "";
         foreach (var vf in binFiles)
         {
             if (vf.Path != vFile && vf.Path[1..] != vFile) continue;

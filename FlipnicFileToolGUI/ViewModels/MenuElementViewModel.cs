@@ -9,7 +9,7 @@ public class MenuElementViewModel
     /// <summary>
     /// Name of the layer/section
     /// </summary>
-    public string Layer { get; set; }
+    public string? Layer { get; set; }
     
     /// <summary>
     /// Menu element object (describing the layout)
@@ -24,7 +24,7 @@ public class MenuElementViewModel
     /// <summary>
     /// The image to display for this menu element
     /// </summary>
-    public Bitmap ImageSource { get; set; }
+    public Bitmap? ImageSource { get; set; }
 
     /// <summary>
     /// Toggles the visibility of a menu element

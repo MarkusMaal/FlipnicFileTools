@@ -69,12 +69,12 @@ public class Config
     /// <summary>
     /// Enable testing mode
     /// </summary>
-    public bool Test { get; set; } = false;
+    public bool Test { get; set; }
     
     /// <summary>
     /// Do we create a .WAV file in addition to the .SF2 file?
     /// </summary>
-    public bool SynthesizeWav { get; set; } = false;
+    public bool SynthesizeWav { get; set; }
 
     /// <summary>
     /// Attempts to "fake" sustain rate by messing with the output decay rate and sustain level values.<br/>
@@ -82,17 +82,17 @@ public class Config
     /// decay. However, since SF2 doesn't support sustain rate natively, in some edge cases, it can<br/>
     /// lead to notes fading out too early.
     /// </summary>
-    public bool SimulateSustainRate { get; set; } = false;
+    public bool SimulateSustainRate { get; set; }
 
     /// <summary>
     /// If enabled, uses progressive scan settings for generating PSS files
     /// </summary>
-    public bool Progressive { get; set; } = false;
+    public bool Progressive { get; set; }
     
     /// <summary>
     /// Audio stream to use for .PSS merge
     /// </summary>
-    public string IntFile { get; set; }
+    public string? IntFile { get; set; }
 
     /// <summary>
     /// Count value
@@ -200,11 +200,9 @@ public class Config
                     IntFile = arg;
                     break;
                 case "--change-count":
-                    string[] values = arg.Split(",");
+                    var values = arg.Split(",");
                     VFile = values[0];
                     Count = int.Parse(values[1]);
-                    break;
-                default:
                     break;
             }
 

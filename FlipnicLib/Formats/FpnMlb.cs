@@ -6,20 +6,20 @@ public class FpnMlb : FormatBase
     
     public FpnMlb(byte[] data)
     {
-        var SectionCount = GetInt32(data, 0);
+        var sectionCount = GetInt32(data, 0);
         var offset = 0x10;
         var idx = 0;
-        while (idx < SectionCount)
+        while (idx < sectionCount)
         {
-            var SectionLabel = GetString(data.Skip(offset).Take(0x20).ToArray());
-            var ElementCount = GetInt32(data, offset+0x24);
+            var sectionLabel = GetString(data.Skip(offset).Take(0x20).ToArray());
+            var elementCount = GetInt32(data, offset+0x24);
             List<MenuElement> elements = [];
-            for (var i = 0; i < ElementCount; i++)
+            for (var i = 0; i < elementCount; i++)
             {
-                elements.Add(new MenuElement(data.Skip(offset+0x30+(i*0x60)).Take(0x60).ToArray(), SectionLabel));
+                elements.Add(new MenuElement(data.Skip(offset+0x30+(i*0x60)).Take(0x60).ToArray(), sectionLabel));
             }
-            Sections.Add(SectionLabel, elements.ToArray());
-            offset += 0x30 + ElementCount * 0x60;
+            Sections.Add(sectionLabel, elements.ToArray());
+            offset += 0x30 + elementCount * 0x60;
             idx++;
         }
     }

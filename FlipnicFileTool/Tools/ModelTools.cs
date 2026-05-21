@@ -65,7 +65,6 @@ public class ModelTools
     {
         var lp4 = new Lp4(File.ReadAllBytes(FileName), FileName);
         lp4.Read();
-        var id = 1;
         foreach (var model in lp4.Models)
         {
             lp4.SetSelectedModel(model);
@@ -75,7 +74,6 @@ public class ModelTools
                 lp4.Texture = model.GenerateDummyTexture();
             }
             StaticUtils.ExportObj(Output[..^ext.Length] + $".{model.Name}" + ext, lp4.GetVerticies(), lp4.Texture);
-            id++;
         }
 
     }

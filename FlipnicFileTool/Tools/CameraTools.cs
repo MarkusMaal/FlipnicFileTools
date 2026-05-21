@@ -13,7 +13,7 @@ public class CameraTools
                 Console.Write(new FpnFpc(cfg.FileName).ToString(StaticUtils.SimpleOutput));
                 break;
             case Enums.Modes.ConvertXml:
-                new FpnFpc(cfg.FileName).GenerateXML().Save(cfg.Output);
+                new FpnFpc(cfg.FileName).GenerateXml().Save(cfg.Output);
                 break;
         }
     }

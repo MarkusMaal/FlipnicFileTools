@@ -56,7 +56,7 @@ public abstract class RepackUtils
     public static void ResizeFile(string path, int newSize, Stream binStream, VirtualFile[] fsEntries)
     {
         const int size = 2048;
-        var buffer = new byte[size];
+        byte[] buffer;
         
         StaticUtils.LiveLoadStatus = "Finding minimum offset for file resize operation";
         var originalSize = -1;

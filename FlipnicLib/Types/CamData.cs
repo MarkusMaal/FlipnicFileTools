@@ -7,12 +7,12 @@ public class CamData : FormatBase
     public int CameraId { get; }
     public string CameraName { get; }
     public bool AnchorToTarget { get; }
-    public bool LockXAxis  { get; }
-    public bool LockYAxis  { get; }
-    public bool LockZAxis  { get; }
-    public float StiffnessX { get; }
-    public float StiffnessY { get; }
-    public float StiffnessZ { get; }
+    private bool LockXAxis  { get; }
+    private bool LockYAxis  { get; }
+    private bool LockZAxis  { get; }
+    private float StiffnessX { get; }
+    private float StiffnessY { get; }
+    private float StiffnessZ { get; }
 
     public CamData(byte[] data, FpnSst stage)
     {

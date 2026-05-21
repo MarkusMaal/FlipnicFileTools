@@ -13,18 +13,18 @@ public class Lp4(byte[] data, string fileName) : FormatBase
         Particle,
         HudElement,
         TextAnimation = 0x16
-    };
+    }
     
     public FileType Type { get; set; } = (FileType)GetInt32(data, 4);
     public int ModelCount { get; set; } = GetInt32(data, 0); // not sure if that's what it is anymore
     public bool HasEmbeddedResources { get; set; } = data[0x11] == 0x01;
-    public bool Is2dAnimation { get; set; } = data[0x13] == 0x01;
-    private List<float[]> verticies = [];
+    public bool Is2DAnimation { get; set; } = data[0x13] == 0x01;
+    private List<float[]> _verticies = [];
 
     private readonly List<float[]> _boundingBox = [];
     
 
-    private int _animationJoints
+    private int AnimationJoints
     {
         get
         {
@@ -41,7 +41,7 @@ public class Lp4(byte[] data, string fileName) : FormatBase
     private string FileName { get; set; } = fileName;
     private List<int> ModelOffsets { get; set; } = [];
 
-    public byte[] Texture { get; set; }
+    public byte[]? Texture { get; set; }
 
     public List<Model> Models { get; set; } = [];
     
@@ -50,14 +50,14 @@ public class Lp4(byte[] data, string fileName) : FormatBase
     public override string ToString()
     {
         var er = HasEmbeddedResources ? "Yes" : "No";
-        var i2 = Is2dAnimation ? "Yes" : "No";
+        var i2 = Is2DAnimation ? "Yes" : "No";
         var o = $"""
                 Type: {Type.ToString()}
                 Model count: {ModelOffsets.Count}
                 Has bounding box: {er}
                 Is 2D animation: {i2}
                 Timelines: {GetInt32(data.Skip(8).Take(4).ToArray(), 0)}
-                Animation joints: {_animationJoints}
+                Animation joints: {AnimationJoints}
                 
                 """;
         string[] cols = ["X", "Y", "Z"];
@@ -71,20 +71,20 @@ public class Lp4(byte[] data, string fileName) : FormatBase
               """;
         rows.Clear();
         //if (Type != FileType.StaticModel) return o;
-        o += $"""
+        o += """
 
-              Models:
-              
-              """;
+             Models:
+
+             """;
         cols = ["Name", "Address", "Scale", "Offset", "Texture", "Polygons", "Lightmaps", "Compressed"];
         rows.AddRange(Models.Select(model => model.GetRow()));
         o += StaticUtils.GenerateTable(cols, rows, StaticUtils.SimpleOutput);
-        if (_animationJoints <= 0) return o;
-        o += $"""
+        if (AnimationJoints <= 0) return o;
+        o += """
 
-              Joints:
+             Joints:
 
-              """;
+             """;
         cols = ["Name", "Vertices", "Position", "Size"];
         rows.Clear();
         if (Models.Count <= 0) return o;
@@ -188,7 +188,7 @@ public class Lp4(byte[] data, string fileName) : FormatBase
                     }
                     for (var j = 0; j < (hasLightMapData ? lightMapLength : 0); j++)
                     {
-                        StaticUtils.LiveLoadStatus = $"Parsing lightmaps";
+                        StaticUtils.LiveLoadStatus = "Parsing lightmaps";
                         model.Lightmap.Add([
                             GetFloat(data, i), GetFloat(data, i + 0x4),
                             GetFloat(data, i + 0x8), GetFloat(data, i + 0xC)
@@ -218,7 +218,7 @@ public class Lp4(byte[] data, string fileName) : FormatBase
                         {
                             name += " (1)";
                         }
-                        model.AnimationJoints.Add(name, new Joint()
+                        model.AnimationJoints.Add(name, new Joint
                         {
                             Name = name,
                             Skew = skew.ToArray(),
@@ -256,7 +256,7 @@ public class Lp4(byte[] data, string fileName) : FormatBase
                     }
                     else
                     {
-                        var j = new Joint()
+                        var j = new Joint
                         {
                             Name = name
                         };
@@ -468,7 +468,6 @@ public class Lp4(byte[] data, string fileName) : FormatBase
         catch (Exception ex) when (!Debugger.IsAttached)
         {
             StaticUtils.DecodeColors($"~-CError~--: LP4.Read method exception — {ex.Message}\n");
-            return;
         }
     }
 
@@ -524,14 +523,12 @@ public class Lp4(byte[] data, string fileName) : FormatBase
     
     public class Joint
     {
-        public string Name { get; set; }
-        public int[] Indicies { get; set; }
-        public float[] UnknownFloats { get; set; }
+        public string? Name { get; set; }
+        public int[]? Indicies { get; set; }
+        public float[]? UnknownFloats { get; set; }
     
-        public float?[] Skew { get; set; }
-        public float?[] Position { get; set; }
-    
-        public Joint() {}
+        public float?[]? Skew { get; set; }
+        public float?[]? Position { get; set; }
 
         public void DecodeIndicies(byte[] data)
         {
@@ -553,11 +550,11 @@ public class Lp4(byte[] data, string fileName) : FormatBase
 
     public class Model
     {
-        public string Name { get; set; }
-        public string Texture { get; set; }
+        public string? Name { get; set; }
+        public string? Texture { get; set; }
         
-        public float[] Scale { get; set; }
-        public float[] Offset { get; set; }
+        public float[]? Scale { get; set; }
+        public float[]? Offset { get; set; }
         public int Address { get; set; }
         public byte[]? TextureCache { get; set; }
 
@@ -566,7 +563,7 @@ public class Lp4(byte[] data, string fileName) : FormatBase
         
         public List<byte[]> Colors { get; set; } = [];
 
-        private bool IsOptimized { get; set; } = false;
+        private bool IsOptimized { get; set; }
 
         public Dictionary<string, Joint> AnimationJoints { get; set; } = [];
 
@@ -582,10 +579,10 @@ public class Lp4(byte[] data, string fileName) : FormatBase
             {
                 return
                 [
-                    Name, Address.ToString("X"),
-                    $"{DotFloatString(Scale[0])}x{DotFloatString(Scale[1])}x{DotFloatString(Scale[2])}",
-                    $"{DotFloatString(Offset[0])}x{DotFloatString(Offset[1])}x{DotFloatString(Offset[2])}",
-                    (Ascii.IsValid(Texture) && Texture.Length > 0) ? Texture : HasEmbeddedTexture ? "Embedded material" : "N/A",
+                    Name ?? "null", Address.ToString("X"),
+                    $"{DotFloatString(Scale![0])}x{DotFloatString(Scale[1])}x{DotFloatString(Scale[2])}",
+                    $"{DotFloatString(Offset![0])}x{DotFloatString(Offset[1])}x{DotFloatString(Offset[2])}",
+                    (Ascii.IsValid(Texture) && Texture!.Length > 0) ? Texture : HasEmbeddedTexture ? "Embedded material" : "N/A",
                     RawVertices.Count.ToString(),
                     Lightmap.Count.ToString(),
                     IsOptimized ? "Yes" : "No"
@@ -634,11 +631,10 @@ public class Lp4(byte[] data, string fileName) : FormatBase
 
             var uvOffset = texOffset;
             var comp = -1;
-            var mask = 0x01;
-            var matchId = 0;
+            const int mask = 0x01;
+            const int matchId = 0;
             var modelBounds = offset + len * 0x10;
             var normalIdx = 0;
-            bool sw = false;
             var partIdx = StaticUtils.AlternateNormals ? 0 : 1;
             for (var j = offset + 0x10; j < offset + (Math.Max(len, uvlen)) * 0x10 - 0x10; j += 0x10)
             {
@@ -776,6 +772,8 @@ public class Lp4(byte[] data, string fileName) : FormatBase
         /// Extract normal coordinates from the 8 bytes provided 
         /// </summary>
         /// <param name="data">8 byte chunk containing the normal coordinate</param>
+        /// <param name="div">Value divider</param>
+        /// <param name="mul">Value multiplier</param>
         /// <returns>X, Y and Z coordinates</returns>
         public static float[] DecodeNormals(byte[] data, short div, int mul)
         {

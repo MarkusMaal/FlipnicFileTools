@@ -9,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
-using Avalonia.Input.Platform;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
@@ -114,7 +113,7 @@ public static class FileHelpers
         mw.FileTypeLabel.Content = "Please wait...";
         foreach (var t in mw.MainTabControl.Items)
         {
-            ((SukiSideMenuItem)t!)!.IsVisible = false;
+            ((SukiSideMenuItem)t!).IsVisible = false;
         }
 
         mw.DockPanel1.IsVisible = false;
@@ -134,7 +133,7 @@ public static class FileHelpers
                     var data = new byte[ds.Length];
                     ds.ReadExactly(data);
                     ds.Position = 0;
-                    var img = new Tim2(data, mw.FileName);
+                    var img = new Tim2(data, mw.FileName!);
                     var bt = new BitmapTools { Image = img };
                     var finalBmp = bt.ToBitmap();
                     LoadAsString(img, "PlayStation 2 texture file", mw);
@@ -230,7 +229,7 @@ public static class FileHelpers
                         {
                             Data = s.RawSamples[i],
                             Id = i,
-                            Offset = (int)offset + 0x10,
+                            Offset = offset + 0x10,
                             LoopStart = s.LoopStarts[i],
                             LoopEnd = s.LoopEnds[i],
                         });
@@ -283,9 +282,9 @@ public static class FileHelpers
                         mw.WavToggle.IsVisible = true;
                         mw.FakeSustainRateToggle.IsVisible = true;
 
-                        var fileDirectory = new FileInfo(mw.FileName).Directory?.FullName ?? "";
+                        var fileDirectory = new FileInfo(mw.FileName!).Directory?.FullName ?? "";
                         var extension = Path.GetExtension(mw.FileName);
-                        var fileName = new FileInfo(mw.FileName).Name.Replace(extension, "");
+                        var fileName = new FileInfo(mw.FileName!).Name.Replace(extension!, "");
                         var bdPath = Path.Combine(fileDirectory, fileName) + ".BD";
                         var midPath = Path.Combine(fileDirectory, fileName) + ".MID";
                         if (File.Exists(bdPath)) mw.BdBox.Text = bdPath;
@@ -310,13 +309,13 @@ public static class FileHelpers
                 case "VAG":
                     var va = new byte[ds.Length];
                     ds.ReadExactly(va);
-                    mw.PcmData = SonyVag.Decode(va);
+                    SonyVag.Decode(va);
                     Dispatcher.UIThread.Post(() =>
                     {
                         mw.SoundPlayerTab.IsVisible = true;
                         mw.AudioFilename.Content = "Filename: " + Path.GetFileName(mw.FileName);
                         mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat,
-                            "Compressed Sony ADPCM Audio " + (mw.FileName.EndsWith("INT") ? "(Stereo)" : "(Mono)"));
+                            "Compressed Sony ADPCM Audio " + (mw.FileName!.EndsWith("INT") ? "(Stereo)" : "(Mono)"));
                     });
                     break;
                 case "MLB":
@@ -342,7 +341,7 @@ public static class FileHelpers
                                 Tim2? tim2 = null;
                                 if (File.Exists(p))
                                 {
-                                    tim2 = new Tim2(File.ReadAllBytes(p), mw.FileName);
+                                    tim2 = new Tim2(File.ReadAllBytes(p), mw.FileName!);
                                     foreach (var check in mlb.MenuColors)
                                     {
                                         if ((key == check.SectionLabel) && (check.Index == ima.Index))
@@ -377,7 +376,8 @@ public static class FileHelpers
                         var orderedMenus = new List<MenuElementViewModel>();
                         while (true)
                         {
-                            var layer = mw.GetViewModel().Menu.Where(iter => iter.MenuElement.Dipth == idx);
+                            var idx1 = idx;
+                            var layer = mw.GetViewModel().Menu.Where(iter => iter.MenuElement.Dipth == idx1);
                             if (idx == 32768) break;
                             orderedMenus.AddRange(layer);
                             idx++;
@@ -392,7 +392,7 @@ public static class FileHelpers
                 case "LP4":
                     var lp4Da = new byte[ds.Length];
                     ds.ReadExactly(lp4Da);
-                    var lp4 = new Lp4(lp4Da, mw.FileName);
+                    var lp4 = new Lp4(lp4Da, mw.FileName!);
                     if (lp4.HasEmbeddedResources)
                     {
                         StaticUtils.LiveLoadStatus = "Initializing OpenGL";
@@ -552,7 +552,7 @@ public static class FileHelpers
                     break;
                 case "ISO":
                     ds.Close(); // fix access violation
-                    mw.IsoFile = new IsoUdf(mw.FileName);
+                    mw.IsoFile = new IsoUdf(mw.FileName!);
                     fsEntries = mw.IsoFile.GetFiles().ToList();
                     Dispatcher.UIThread.Post(() =>
                     {
@@ -565,7 +565,7 @@ public static class FileHelpers
                     });
                     break;
                 case "PSS":
-                    var pssInfo = new Pss(mw.FileName).ListPss(ds);
+                    var pssInfo = new Pss(mw.FileName!).ListPss(ds);
                     Dispatcher.UIThread.Post(() =>
                     {
                         mw.InfoBox.Text = pssInfo;
@@ -644,7 +644,7 @@ public static class FileHelpers
                         try
                         {
                             mw.LoadProgress.Value =
-                                int.Parse(StaticUtils.LiveLoadStatus.Split(" (")[1].Split('%')[0].Split('.')[0]);
+                                int.Parse(StaticUtils.LiveLoadStatus!.Split(" (")[1].Split('%')[0].Split('.')[0]);
                         }
                         catch
                         {
@@ -656,53 +656,6 @@ public static class FileHelpers
                 Thread.Sleep(100);
             }
         }).Start();
-    }
-
-    /// <summary>
-    /// Attempts to open a file from the clipboard
-    /// </summary>
-    /// <param name="mw">Main window instance</param>
-    /// <param name="clipboard">Clipboard contents</param>
-    public static async void PasteFile(MainWindow mw, IClipboard clipboard)
-    {
-        var types = await clipboard.GetFormatsAsync();
-        foreach (var type in types)
-        {
-            if (type != "text/uri-list") continue; 
-            var data = await clipboard.GetDataAsync(type);
-            if (data is not byte[] bytes) continue;
-            var names = Encoding.UTF8.GetString(bytes).Replace("\r\n", "\n").Split('\n');
-            var path = Uri.UnescapeDataString(new Uri(names[0]).AbsolutePath);
-            mw.FileName = path;
-            var ext = new FileInfo(path).Extension;
-            if (ext != "")
-            {
-                ext = ext[1..];
-            }
-            LoadFromData(new FileStream(path, FileMode.Open, FileAccess.Read), ext, mw);
-            mw.Title = "Flipnic file tool - " + new FileInfo(path).Name;
-            if (names.Length == 1) break;
-            foreach (var name in names[1..])
-            {
-                if (name == "")  continue;
-                path = Uri.UnescapeDataString(new Uri(name).AbsolutePath);
-                var nw = new MainWindow() {DataContext = new MainWindowViewModel
-                {
-                    IsLightTheme = mw.IsLightTheme
-                }};
-                nw.Title = "Flipnic file tool - " + new FileInfo(path).Name;
-                nw.FileName = path;
-                ext = new FileInfo(path).Extension;
-                if (ext != "")
-                {
-                    ext = ext[1..];
-                }
-                LoadFromData(new FileStream(path, FileMode.Open, FileAccess.Read), ext, nw);
-                nw.Show();
-            }
-
-            break;
-        }
     }
     
     /// <summary>

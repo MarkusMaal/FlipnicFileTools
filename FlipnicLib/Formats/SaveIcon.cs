@@ -6,7 +6,7 @@ public class SaveIcon(byte [] data) : FormatBase
     public int AnimationShapes { get; init; } = GetInt32(data, 4);
     public int TextureType { get; init; } = GetInt32(data, 8);
     public int VertexCount { get; init; } = GetInt32(data, 16);
-    public Tim? Texture { get; set; } = null;
+    public Tim? Texture { get; set; }
     
     public List<Vertex> Vertices = [];
 
@@ -36,14 +36,13 @@ public class SaveIcon(byte [] data) : FormatBase
 
     public override string ToString()
     {
-        var isCompressed = TextureType == 0x0F ? "Yes" : "No";
         var o = $"""
                  PlayStation 2 save icon
-                 
+
                  Magic: {IconFileId:X}
                  Shapes: {AnimationShapes}
                  Polygons: {VertexCount / 3}
-                 
+
                  Texture:
                  {Texture}
                  """;

@@ -5,27 +5,27 @@ public class SampleColl
     /// <summary>
     /// Identifier (ascending)
     /// </summary>
-    public int Id { get; set; }
+    public int Id { get; init; }
     
     /// <summary>
     /// Sample data
     /// </summary>
-    public byte[] Data { get; set; }
+    public byte[]? Data { get; init; }
     
     /// <summary>
     /// Physical offset of the sample relative to the beginning of the .BD file
     /// </summary>
-    public int Offset { get; set; }
+    public int Offset { get; init; }
     
     /// <summary>
     /// Physical offset for the start of the loop (may not be accurate)
     /// </summary>
-    public uint LoopStart { get; set; }
+    public uint LoopStart { get; init; }
     
     /// <summary>
     /// Physical offset for the end of the loop (may not be accurate)
     /// </summary>
-    public uint LoopEnd { get; set; }
+    public uint LoopEnd { get; init; }
 
     /// <summary>
     /// Formatted physical offset of the sample

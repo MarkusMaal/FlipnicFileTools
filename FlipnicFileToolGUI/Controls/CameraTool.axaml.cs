@@ -35,7 +35,7 @@ public partial class CameraTool : UserControl
         if (file == null) return;
         if (button.Content.ToString()!.Contains("XML"))
         {
-            CameraObject.GenerateXML().Save(File.OpenWrite(Uri.UnescapeDataString(file)));
+            CameraObject.GenerateXml().Save(File.OpenWrite(Uri.UnescapeDataString(file)));
         }
         else
         {

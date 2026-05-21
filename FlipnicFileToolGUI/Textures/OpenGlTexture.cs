@@ -12,21 +12,10 @@ namespace FlipnicFileToolGUI.Textures
 {
     public sealed class OpenGlTexture : IDisposable
     {
-        private readonly int _handle;
+        private readonly int _handle = GL.GenTexture();
         private bool _disposedValue;
-        private static Random r = new();
 
-        public OpenGlTexture()
-        {
-            _handle = GL.GenTexture();
-        }
-
-        private void LoadFromImgData(Image<Rgba32> image)
-        {
-            
-        }
-
-        public void LoadFromFile(object? texture)
+        public static void LoadFromFile(object? texture)
         {
             Image<Rgba32>? image = null;
             try
@@ -44,8 +33,7 @@ namespace FlipnicFileToolGUI.Textures
                 StaticUtils.DecodeColors("~-C\rError~--: Unable to load texture!\n");
             }
 
-            byte[] rndCol = [(byte)r.Next(0, 255), (byte)r.Next(0, 255), (byte)r.Next(0, 255)];
-            List<byte> pixels = [];
+            List<byte> pixels;
             if (image != null)
             {
 
@@ -102,7 +90,7 @@ namespace FlipnicFileToolGUI.Textures
                 }
             }
 
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, (image != null) ? image.Width : 63, (image != null) ? image.Height : 63, 0, PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, image?.Width ?? 63, image?.Height ?? 63, 0, PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
         }
 

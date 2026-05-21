@@ -21,15 +21,15 @@ public static class Converters
         mw.DockPanel1.IsVisible = false;
         mw.Loader.IsVisible = true;
         StaticUtils.Pal = mw.PalToggle.IsChecked ?? false;
-        var outPut = (mw.FileBox.Text ?? "") + new FileInfo(mw.FileName).Name + ".MP4";
+        var outPut = (mw.FileBox.Text ?? "") + new FileInfo(mw.FileName!).Name + ".MP4";
         var ffMpegPath = mw.FFmpegBox.Text ?? "";
         var originalFileName = mw.FileName;
         new Thread(() =>
         {
             StaticUtils.LiveLoadStatus = "Stage 1/4: Demuxing";
-            new Pss(mw.FileName).ListPss(File.OpenRead(mw.FileName), true, new FileInfo(outPut).Directory!.FullName);
+            new Pss(mw.FileName!).ListPss(File.OpenRead(mw.FileName!), true, new FileInfo(outPut).Directory!.FullName);
             StaticUtils.LiveLoadStatus = "Stage 2/4: Converting extracted IPU to M2V";
-            var nf = Path.Combine(new FileInfo(outPut).Directory!.FullName, new FileInfo(mw.FileName).Name);
+            var nf = Path.Combine(new FileInfo(outPut).Directory!.FullName, new FileInfo(mw.FileName!).Name);
             Ipu.IpuConvert(nf + ".IPU", nf + ".TEMP.M2V", ffMpegPath);
             var exist = true;
             var streams = 0;
@@ -103,7 +103,7 @@ public static class Converters
         var outPut = mw.FileBox.Text ?? "";
         new Thread(() =>
         {
-            new Pss(mw.FileName).ListPss(File.OpenRead(mw.FileName), true, outPut);
+            new Pss(mw.FileName!).ListPss(File.OpenRead(mw.FileName!), true, outPut);
             StaticUtils.LiveLoadStatus = "";
             Dispatcher.UIThread.Post(() =>
             {
@@ -132,13 +132,13 @@ public static class Converters
         mw.DockPanel1.IsVisible = false;
         mw.Loader.IsVisible = true;
         StaticUtils.Pal = mw.PalToggle.IsChecked ?? false;
-        var outPut = (mw.FileBox.Text ?? "") + new FileInfo(mw.FileName).Name + ".M2V";
+        var outPut = (mw.FileBox.Text ?? "") + new FileInfo(mw.FileName!).Name + ".M2V";
         var ffMpegPath = mw.FFmpegBox.Text ?? "";
         var originalFileName = mw.FileName;
         new Thread(() =>
         {
             StaticUtils.LiveLoadStatus = "Converting IPU to M2V";
-            Ipu.IpuConvert(originalFileName, outPut, ffMpegPath);
+            Ipu.IpuConvert(originalFileName!, outPut, ffMpegPath);
             Dispatcher.UIThread.Post(() =>
             {
                 mw.DockPanel1.IsVisible = true;
@@ -184,9 +184,9 @@ public static class Converters
             {
                 StaticUtils.LiveLoadStatus = "Converting JAM to SF2";
                 var extension = Path.GetExtension(mw.FileName);
-                var fileName = new FileInfo(mw.FileName).Name.Replace(extension, "");
-                Converter.InstrumentToSoundFont2(midiFile ?? "",
-                    mw.FileName, bdFile ?? "", Path.Combine(outFile ?? "", fileName) + ".SF2", createWav, fakeSustainR);
+                var fileName = new FileInfo(mw.FileName!).Name.Replace(extension!, "");
+                Converter.InstrumentToSoundFont2(midiFile,
+                    mw.FileName!, bdFile, Path.Combine(outFile ?? "", fileName) + ".SF2", createWav, fakeSustainR);
             }
             catch (Exception ex) when (!Debugger.IsAttached)
             {

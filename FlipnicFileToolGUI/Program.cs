@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace FlipnicFileToolGUI;
 
-class Program
+internal abstract class Program
 {
     
     private static string VersionString => StaticUtils.DotFloatString(StaticUtils.LibVersion) + (StaticUtils.IsBeta ? " BETA" : "");

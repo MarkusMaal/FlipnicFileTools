@@ -23,7 +23,7 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <Label Content="FOV: "></Label>
-                <Label Content="{Binding FOVf, TargetNullValue=0}"></Label>
+                <Label Content="{Binding FoVf, TargetNullValue=0}"></Label>
                 <Label Content="Frames: "></Label>
                 <Label Content="{Binding NumFramesStr, TargetNullValue='0'}"></Label>
             </StackPanel>

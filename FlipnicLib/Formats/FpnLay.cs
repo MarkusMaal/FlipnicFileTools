@@ -2,7 +2,7 @@
 
 public class FpnLay : FormatBase
 {
-    public List<Layout> Layouts { get; set; } = [];
+    public List<Layout> Layouts { get; init; } = [];
 
     private readonly byte[] _data;
 
@@ -12,10 +12,10 @@ public class FpnLay : FormatBase
         var offset = 0x30;
         while (offset < _data.Length)
         {
-            var count = GetInt32(_data, offset);
-            var unknown = GetInt32(_data, offset + 4);
+            //var count = GetInt32(_data, offset);
+            //var unknown = GetInt32(_data, offset + 4);
             var label = GetStringAt(_data, offset + 0x10);
-            var test = GetInt32(_data, offset + 0x50);
+            //var test = GetInt32(_data, offset + 0x50);
             var additionalDataLength = GetInt32(_data, offset + 0x58);
             var sizeX = GetFloat(_data, offset + 0x60);
             var skewY = GetFloat(_data, offset + 0x64);

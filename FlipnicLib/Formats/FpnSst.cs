@@ -99,9 +99,9 @@ public class FpnSst : FormatBase
     /// Get gimmick data
     /// </summary>
     /// <returns>Dictionary where each key references a TOC entry (starts with GMK)</returns>
-    public Dictionary<string, Gimmick[]>? GetGimmicks()
+    public Dictionary<string, Gimmick[]> GetGimmicks()
     {
-        Dictionary<string, Gimmick[]>? gimmicks = [];
+        Dictionary<string, Gimmick[]> gimmicks = [];
         foreach (var (key, tocEntry) in TableOfContents)
         {
             if (!key.StartsWith("GMK")) continue;

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Avalonia;
 using Avalonia.Controls;
 using FlipnicLib.Formats;
 using FlipnicLib.Types;
@@ -44,20 +43,6 @@ public class MainWindowViewModel
     /// </summary>
     public bool IsLightTheme { get; set; } = Design.IsDesignMode;
 
-    /// <summary>
-    /// App > Enable developer features?
-    /// </summary>
-    //public bool DevMode { get; set; };
-
-    //public static readonly StyledProperty<bool> DevModeProperty = AvaloniaProperty.Register<MainWindow, bool>(nameof(DevMode), defaultValue: false);
-    public ObservableCollection<MenuElementViewModel>? MenuElements { get; set; }
-    
-    public bool CanOpenImhex
-    {
-        get;
-        set;
-    }
-    
     /// <summary>
     /// List of controls to be displayed on a Combobox
     /// </summary>

@@ -12,15 +12,15 @@ public abstract class StaticUtils
     public static string DisclaimerText =>
         "This software is provided to you free of charge AS IS without a warranty. If you paid for this software, you should ask for a refund. The copyrights of original Flipnic game assets belong to Japan Studio of Sony Interactive Entertainment (a.k.a. SCEI) and these assets are not distributed with this software. This tool is designed for personal non-commercial use only.";
     
-    private static char[] Loaders = ['/', '-', '\\', '|'];
-    public static int LoadIdx = 0;
+    private static readonly char[] Loaders = ['/', '-', '\\', '|'];
+    public static int LoadIdx;
 
     public static int[] AdsrMultipliers = [1200, 1200, 1400, 1200, 320];
 
-    public static float LibVersion = 2.3f;
-    public static bool IsBeta = true;
+    public static readonly float LibVersion = 2.3f;
+    public static readonly bool IsBeta = true;
     
-    public static bool LowMem { get; set; } = false;
+    public static bool LowMem { get; set; }
     
     public static bool SimpleOutput { get; set; }
     public static bool Pal { get; set; }
@@ -35,15 +35,15 @@ public abstract class StaticUtils
 
     public static bool AltSf2Method { get; set; } = false;
 
-    public static bool IsModeSet { get; set; } = false;
+    public static bool IsModeSet { get; set; }
 
     public static short ReverbStrength { get; set; } = 70;
 
-    public static bool AlternateNormals { get; set; } = false;
+    public static bool AlternateNormals { get; set; }
 
     public static bool ForceNoColors { get; set; } = false;
     
-    public static bool ForceBruteForce { get; set; } = false;
+    public static bool ForceBruteForce { get; set; }
     
     /// <summary>
     /// Display an animated spinning line loader
@@ -100,7 +100,6 @@ public abstract class StaticUtils
             colSizes.Add(max);
         }
 
-        var cI = -1;
         foreach (var cS in colSizes)
         {
             for (var j = 0; j < cS + 2; j++)
@@ -110,7 +109,7 @@ public abstract class StaticUtils
             sep += "+";
         }
         o += $"{sep}\n| ";
-        cI = 0;
+        var cI = 0;
         foreach (var column in columns)
         {
             o = o + column.PadRight(colSizes[cI]) + " | ";
@@ -196,6 +195,8 @@ public abstract class StaticUtils
     /// </summary>
     /// <param name="width">Width of the image</param>
     /// <param name="height">Height of the image</param>
+    /// <param name="black">First color used by the checkerboard (default: black)</param>
+    /// <param name="magenta">Second color used by the checkerboard (default: magenta)</param>
     public static Stream GenerateCheckerboardPng(int width, int height, Pixel? black = null, Pixel? magenta = null)
     {
         var output = new MemoryStream();
@@ -378,11 +379,11 @@ public abstract class StaticUtils
     /// <param name="encoded">The encoded text</param>
     public static void DecodeColors(string encoded)
     {
-        foreach (var _sect in encoded.Split('~'))
+        foreach (var sect2 in encoded.Split('~'))
         {
-            if (_sect.Length == 0) continue;
-            var sect = _sect.Replace("::::", "~")[2..];
-            var colorCode = _sect[..2].ToUpper();
+            if (sect2.Length == 0) continue;
+            var sect = sect2.Replace("::::", "~")[2..];
+            var colorCode = sect2[..2].ToUpper();
             HexStrToColor(colorCode);
             Console.Write(sect);
         }

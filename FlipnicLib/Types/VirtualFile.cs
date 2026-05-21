@@ -10,6 +10,6 @@ public class VirtualFile(string path, long offset, long length, long tocOffset, 
 
     public bool LargeBuffer { get; } = largeBuffer;
     
-    public string OffsetX => offset != -1 ? offset.ToString("X") : "N/A";
-    public string LengthX => StaticUtils.GetFilesizeString(length);
+    public string OffsetX => Offset != -1 ? Offset.ToString("X") : "N/A";
+    public string LengthX => StaticUtils.GetFilesizeString(Length);
 }

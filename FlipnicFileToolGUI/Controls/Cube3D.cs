@@ -269,7 +269,7 @@ namespace FlipnicFileToolGUI.Controls
             //Load textures
             _brickTexture = new();
             _brickTexture.Use();
-            _brickTexture.LoadFromFile(_texture);
+            OpenGlTexture.LoadFromFile(_texture);
 
             //Set textures in shaders
             _shader.Use();
@@ -506,7 +506,7 @@ namespace FlipnicFileToolGUI.Controls
             //Load textures
             _brickTexture = new();
             _brickTexture.Use();
-            _brickTexture.LoadFromFile(_texture);
+            OpenGlTexture.LoadFromFile(_texture);
             _shader.Use();
             _shader.SetInt("texture0", 2);
             ReloadModel = false;

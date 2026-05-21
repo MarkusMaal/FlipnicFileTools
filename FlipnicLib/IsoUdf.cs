@@ -55,7 +55,6 @@ public class IsoUdf
     /// <param name="replacementFile">The file you want to integrate into the ISO file</param>
     /// <param name="isoFile">The ISO file you want to modify</param>
     /// <param name="vfsName">VFS entry inside the ISO file - this is the file you want to replace</param>
-    /// <param name="rebuild">If true, let's re-build the ISO file entirely instead of just overwriting data (potentially destructive)</param>
     /// <returns>Was the replacement successful?</returns>
     public bool ReplaceFile(string replacementFile, string isoFile, string vfsName)
     {
@@ -75,6 +74,7 @@ public class IsoUdf
             }
 
             using BinaryWriter bw = new(editor.GetFileStream(f.File));
+            
             {
                 using var fs = File.OpenRead(replacementFile);
                 while (fs.Position < fs.Length)

@@ -109,7 +109,6 @@ public class App : Application
 
     public static void Init(MainWindow mw)
     {
-        mw.GetViewModel().MenuElements = new ObservableCollection<MenuElementViewModel>(mw.GetViewModel().Menu);
         mw.RestartWglButton.IsVisible = !Program.GpuAccel;
         mw.GlControl.IsVisible = Program.GpuAccel;
         mw.ModelInfoSection.IsVisible = Program.GpuAccel;
@@ -164,12 +163,10 @@ public class App : Application
             p.Start();
             p.WaitForExit();
             mw.OpenImHexMenuItem.IsVisible = p.ExitCode == 0;
-            mw.GetViewModel().CanOpenImhex = p.ExitCode == 0;
         }
         catch
         {
             mw.OpenImHexMenuItem.IsVisible = false;
-            mw.GetViewModel().CanOpenImhex = false;
         }
 
         p = new Process();

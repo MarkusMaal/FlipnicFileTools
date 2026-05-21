@@ -43,10 +43,9 @@ public sealed partial class MainWindow : SukiWindow
     public bool IsLightTheme => !Design.IsDesignMode && GetViewModel().IsLightTheme;
 
     internal static bool ErrorDisplayed = false;
+    private static readonly HttpClient Client = new();
 
     private readonly ISukiDialogManager _dialogManager = new SukiDialogManager();
-
-    public byte[]? PcmData { get; set; }
 
     public string? FileName { get; set; }
 
@@ -96,7 +95,7 @@ public sealed partial class MainWindow : SukiWindow
     {
         e.DragEffects &= (DragDropEffects.Copy | DragDropEffects.Link);
 
-        if (!e.Data.Contains(DataFormats.Files))
+        if (!e.DataTransfer.Contains(DataFormat.File))
         {
             e.DragEffects = DragDropEffects.None;
         }
@@ -171,9 +170,10 @@ public sealed partial class MainWindow : SukiWindow
 
     private void WindowDropped(object? sender, DragEventArgs e)
     {
-        if (!e.Data.Contains(DataFormats.Files)) return;
-        if (e.Data.GetFiles()?.First() == null) return;
-        var fullPath = Uri.UnescapeDataString(e.Data.GetFiles()!.First().Path.AbsolutePath);
+        if (!e.DataTransfer.Contains(DataFormat.File)) return;
+        var pathAbsolutePath = e.DataTransfer.GetItems(DataFormat.File).First().TryGetFile()?.Path.AbsolutePath;
+        if (pathAbsolutePath == null) return;
+        var fullPath = Uri.UnescapeDataString(pathAbsolutePath);
         FileName = fullPath;
         FileHelpers.LoadFromData(new FileStream(fullPath, FileMode.Open, FileAccess.Read), fullPath[^3..], this);
         Title = "Flipnic file tool - " + new FileInfo(fullPath).Name;
@@ -184,7 +184,7 @@ public sealed partial class MainWindow : SukiWindow
     {
         var val = ((ComboBox)sender!).SelectedValue?.ToString();
         if (val == null) return;
-        GetViewModel().SelectedGimmick = GetViewModel().Gimmicks?[val!]!;
+        GetViewModel().SelectedGimmick = GetViewModel().Gimmicks?[val]!;
         GimmickGrid.ItemsSource = GetViewModel().SelectedGimmick;
     }
 
@@ -260,8 +260,8 @@ public sealed partial class MainWindow : SukiWindow
     private void DataGrid_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         OpenButton.IsEnabled = ((DataGrid)sender!).SelectedIndex != -1;
-        ExtractButton.IsEnabled = ((DataGrid)sender!).SelectedIndex != -1;
-        ReplaceButton.IsEnabled = ((DataGrid)sender!).SelectedItems.Count == 1;
+        ExtractButton.IsEnabled = ((DataGrid)sender).SelectedIndex != -1;
+        ReplaceButton.IsEnabled = ((DataGrid)sender).SelectedItems.Count == 1;
     }
 
     private void OpenButton_OnClick(object? sender, RoutedEventArgs e)
@@ -271,7 +271,7 @@ public sealed partial class MainWindow : SukiWindow
         var mw = new MainWindow()
         {
             Title = myTitle + vf!.Path,
-            FileName = vf!.Path,
+            FileName = vf.Path,
             DataContext = new MainWindowViewModel
             {
                 IsLightTheme = IsLightTheme
@@ -282,9 +282,9 @@ public sealed partial class MainWindow : SukiWindow
         new Thread(() =>
         {
             StaticUtils.LiveLoadStatus = "Reading data...";
-            var fs = new FileStream(FileName, FileMode.Open, FileAccess.Read);
+            var fs = new FileStream(FileName!, FileMode.Open, FileAccess.Read);
             var ms = new MemoryStream();
-            var buffer = new byte[vf!.Length];
+            var buffer = new byte[vf.Length];
             fs.Seek(vf.Offset, SeekOrigin.Begin);
             fs.ReadExactly(buffer);
             fs.Close();
@@ -406,7 +406,7 @@ public sealed partial class MainWindow : SukiWindow
         var file = await FileHelpers.SaveFile(this, [Filters.WavFile]);
         if (file is null) return;
         var outPath = Uri.UnescapeDataString(file);
-        StaticUtils.ConvertAudio(outPath, FileName, FileName.EndsWith("VAG"));
+        StaticUtils.ConvertAudio(outPath, FileName!, FileName!.EndsWith("VAG"));
         ShowDialog("Flipnic file tools", "File saved successfully!", NotificationType.Success);
     }
 
@@ -431,7 +431,7 @@ public sealed partial class MainWindow : SukiWindow
                     visible = MainTabControl.IsVisible;
                 });
             }
-        });
+        }).Start();
     }
 
     private async void ExtractSampleButton_OnClick(object? sender, RoutedEventArgs e)
@@ -442,19 +442,8 @@ public sealed partial class MainWindow : SukiWindow
 
     private void SampleGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        ExtractLoopButton.IsEnabled = GetViewModel().Samples[SamplesGrid.SelectedIndex].LoopStart != GetViewModel().Samples[SamplesGrid.SelectedIndex].LoopEnd;
+        ExtractLoopButton.IsEnabled = GetViewModel().Samples![SamplesGrid.SelectedIndex].LoopStart != GetViewModel().Samples![SamplesGrid.SelectedIndex].LoopEnd;
     }
-
-    private void CrashTestMenuItem_Click(object? sender, EventArgs e)
-    {
-        throw new Exception("End-user manually initiated the crash");
-    }
-
-    private void CrashMenuItem_Click(object? sender, RoutedEventArgs e)
-    {
-        throw new Exception("End-user manually initiated the crash");
-    }
-
 
     private async void BrowseButtonBdMidi_OnClick(object? sender, RoutedEventArgs e)
     {
@@ -519,9 +508,9 @@ public sealed partial class MainWindow : SukiWindow
         RankGrid.ItemsSource = GetViewModel().SaveData.Rank;
     }
 
-    private void UpdateSpecialTabThemes()
+    private static void UpdateSpecialTabThemes()
     {
-        if (MainTabControl.SelectedItem is not SukiSideMenuItem mi) return;
+        //if (MainTabControl.SelectedItem is not SukiSideMenuItem mi) return;
     }
 
     private void MainTabControl_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -754,7 +743,7 @@ public sealed partial class MainWindow : SukiWindow
         Title = "Flipnic file tool - " + new FileInfo(FileName).Name;
     }
 
-    private void DocsMenu1_OnClick(object? sender, RoutedEventArgs e)
+    private void DocsMenu1_OnClick(object? sender, RoutedEventArgs? e)
     {
         OpenUrl("https://github.com/MarkusMaal/FlipnicFileTools/blob/master/GUIREADME.md");
     }
@@ -788,17 +777,17 @@ public sealed partial class MainWindow : SukiWindow
         }
     }
 
-    private void DataStructsMenu1_OnClick(object? sender, RoutedEventArgs e)
+    private void DataStructsMenu1_OnClick(object? sender, RoutedEventArgs? e)
     {
         OpenUrl("https://github.com/MarkusMaal/FlipnicPatterns");
     }
 
-    private void SaveEditorMenu1_OnClick(object? sender, RoutedEventArgs e)
+    private void SaveEditorMenu1_OnClick(object? sender, RoutedEventArgs? e)
     {
         OpenUrl("https://github.com/MarkusMaal/FlipnicSaveEditor");
     }
 
-    private void OpenImHexMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    private void OpenImHexMenuItem_OnClick(object? sender, RoutedEventArgs? e)
     {
         if (!File.Exists(FileName)) return;
         new Thread(async void () =>
@@ -861,8 +850,7 @@ public sealed partial class MainWindow : SukiWindow
     }
     static async Task<byte[]?> GetUrlContent(string url)
     {
-        using (var client = new HttpClient())
-        using (var result = await client.GetAsync(url))
+        using (var result = await Client.GetAsync(url))
             return result.IsSuccessStatusCode ? await result.Content.ReadAsByteArrayAsync() : null;
     }
 
@@ -963,6 +951,7 @@ public sealed partial class MainWindow : SukiWindow
     {
         if (Design.IsDesignMode) return;
         var exePath = Environment.ProcessPath;
+        if (exePath == null) return;
         Process.Start(new ProcessStartInfo(exePath)
         {
             UseShellExecute = true,
