@@ -238,7 +238,7 @@ public class Event(byte[] data) : FormatBase
 
         o += (EventEnums.EventType)EventMagic switch
         {
-            EventEnums.EventType.Breq => "",
+            EventEnums.EventType.Breq => $" with (Area == {sst.GetStringById("KUIDX", FuncArgs[1])} && GimmickIdx == {FuncArgs[2]})",
             EventEnums.EventType.NoOperation => "nop",
             EventEnums.EventType.Do => "loopstart",
             EventEnums.EventType.Then => "\nnext",
