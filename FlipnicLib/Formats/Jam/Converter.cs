@@ -38,7 +38,7 @@ public abstract class Converter
     /// Converts a .hd/.bd (audio bank)'s instruments to a sound font 2 file.
     /// </summary>
     /// <param name="path"></param>
-    public static void InstrumentToSoundFont2(string midiFile, string hdFilePath, string bdFilePath, string outputFilePath, bool synthesizeWav = false)
+    public static void InstrumentToSoundFont2(string midiFile, string hdFilePath, string bdFilePath, string outputFilePath, bool synthesizeWav = false, bool fakeSustainR = true)
     {
         // We need the MIDI to find out which instrument should be percussion banks
         // Why? Because channel 10 (index 9) is treated differently SF2 wise
@@ -202,9 +202,28 @@ public abstract class Converter
                     (splitChunk.Attack, splitChunk.Decay) = (splitChunk.Decay, splitChunk.Attack);
                 }
                 long vol = prog.BaseVolume * splitChunk.Volume;
+                if (fakeSustainR)
+                {
+                    if (splitChunk is { Sustain: > 0, Decay: > 18.5 })
+                    {
+                        splitChunk.SustainL = 0;
+                        splitChunk.Decay = splitChunk.Sustain * 3;
+                    }
+                    else if (splitChunk is { Sustain: > 0, Decay: < 18.5 })
+                    {
+                        var SL = splitChunk.SustainL / -100.0;
+                        splitChunk.SustainL = 0;
+                        splitChunk.Decay = ((splitChunk.Decay * SL) + splitChunk.Decay * (1.0 - SL)) / 2;
+                    }
+                }
                 // We divide the above value by 127^2 to get the percent vol it represents. 
                 var percentvol = vol / (double) (127 * 127);
-                sf2.AddInstrumentGenerator(SF2Generator.InitialAttenuation, new SF2GeneratorAmount() { Amount = (short)((1.0-percentvol) * StaticUtils.AdsrMultipliers[4])});
+                // assumes linear volume
+                sf2.AddInstrumentGenerator(SF2Generator.InitialAttenuation,
+                    vol <= 0
+                        ? new SF2GeneratorAmount { Amount = 1440 }
+                        : new SF2GeneratorAmount { Amount = (short)(-200.0 * Math.Log10(percentvol)) });
+
                 // sustain rate itself is not included in the final SF2, since there is no direct way to have support for it
                 if (StaticUtils.ExportEnvelopes)
                 {
@@ -212,16 +231,8 @@ public abstract class Converter
                         new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[0]*Math.Log2(splitChunk.Attack)) });
                     sf2.AddInstrumentGenerator(SF2Generator.SustainVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[1]+40-StaticUtils.AdsrMultipliers[1]*splitChunk.SustainL) });
-                    if (splitChunk.Decay == 13.6 && splitChunk.Sustain != 0.0)
-                    {
-                        sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
-                            new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[2] * Math.Log2(splitChunk.Sustain*2)) });
-                    }
-                    else
-                    {
-                        sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
-                            new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[2] * Math.Log2(splitChunk.Decay)) });
-                    }
+                    sf2.AddInstrumentGenerator(SF2Generator.DecayVolEnv,
+                        new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[2] * Math.Log2(splitChunk.Decay)) });
                     sf2.AddInstrumentGenerator(SF2Generator.ReleaseVolEnv,
                         new SF2GeneratorAmount { Amount = (short)(StaticUtils.AdsrMultipliers[3] * Math.Log2(splitChunk.Release)) });
                 }

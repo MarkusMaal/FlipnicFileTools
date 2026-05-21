@@ -6,7 +6,8 @@
         xmlns:ns="clr-namespace:FlipnicFileToolGUI"
         mc:Ignorable="d"
         d:DesignWidth="800" d:DesignHeight="800"
-        Width="712" Height="512"
+        Width="740" Height="512"
+        MinHeight="512" MinWidth="740"
         Icon="Assets\F.PNG" Name="SukiWin"
         xmlns:sukiUi="clr-namespace:SukiUI.Controls;assembly=SukiUI"
         xmlns:types="clr-namespace:FlipnicLib.Types;assembly=FlipnicLib"
@@ -38,6 +39,7 @@
                     <NativeMenuItem Header="Use alternate method for decoding normal vectors" Click="AltNormalMethod_NativeClick" />
                     <NativeMenuItemSeparator/>
                     <NativeMenuItem Header="Import JA.MSG" Click="OpenNativeMenuItem_OnClick"></NativeMenuItem>
+                    <NativeMenuItem Header="Always use brute-force for LP4 decoding: No" Click="AlwaysUseBruteForceNativeMenuItem_Click" />
                 </NativeMenu>
             </NativeMenuItem>
             <NativeMenuItem Header="Info">
@@ -62,6 +64,7 @@
         <MenuItem Header="Options" Name="OptionMenu1">
             <MenuItem Header="Toggle dark theme" Click="PalMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Normal vectors decoding: Method A" Click="AltNormalMethod_Click"></MenuItem>
+            <MenuItem Header="Always use brute-force for LP4 decoding: No" Click="AlwaysUseBruteForceMenuItem_Click"></MenuItem>
             <Separator/>
           <MenuItem Header="Import JA.MSG" Click="OpenMenuItem_OnClick"></MenuItem>
         </MenuItem>
@@ -70,9 +73,7 @@
             <MenuItem Name="DataStructsMenu1" Header="Flipnic data structures" Click="DataStructsMenu1_OnClick"></MenuItem>
             <MenuItem Name="SaveEditorMenu1" Header="Save file editing" Click="SaveEditorMenu1_OnClick"></MenuItem>
             <Separator/>
-            <MenuItem Name="AboutMenu1" Header="About" Click="AboutClick">
-            
-            </MenuItem>
+            <MenuItem Name="AboutMenu1" Header="About" Click="AboutClick"></MenuItem>
         </MenuItem>
     </sukiUi:SukiWindow.MenuItems>
     <Grid>
@@ -82,16 +83,16 @@
                     <!-- Info tab -->
                     <sukiUi:SukiSideMenuItem Name="InfoTab" Header="Info">
                         <sukiUi:SukiSideMenuItem.Icon>
-                            <controls:CircleDot ColorA="DeepSkyBlue" ColorB="DarkBlue" Text="i"></controls:CircleDot>
+                            <controls:CircleDot ColorA="DeepSkyBlue" ColorB="DarkBlue" Source="Assets\TabIcons\info.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
-                            <controls:CLIBox Name="InfoBox" x:DataType="controls:CLIBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" />
+                            <controls:CLIBox Name="InfoBox" x:DataType="controls:CLIBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" WrapText="True" />
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
                     <!-- Models tab -->
                     <sukiUi:SukiSideMenuItem Name="ModelTab" Header="Models" IsVisible="False">
                         <sukiUi:SukiSideMenuItem.Icon>
-                            <controls:CircleDot ColorA="Orange" ColorB="Brown" Text="⬡"></controls:CircleDot>
+                            <controls:CircleDot ColorA="Orange" ColorB="Brown" Source="Assets\TabIcons\models.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
                           <Grid Background="DarkBlue" Name="ModelGrid">
@@ -100,6 +101,7 @@
                                   <Label Margin="5" Name="MoreInfoLabel">No info</Label>
                                   <Label Margin="5" Name="FPSLabel">No info</Label>
                               </StackPanel>
+                              <Button Grid.Row="0" IsVisible="True" Name="RestartWglButton" VerticalAlignment="Center" HorizontalAlignment="Center" Click="RestartWglButton_Click">Open with 3D graphics support</Button>
                               <controls:CubeRenderingTkOpenGlControl Rotate="False" Grid.Row="0"  Focusable="True" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="GlControl" Loaded="GlControl_OnLoaded"></controls:CubeRenderingTkOpenGlControl>
                               <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0" Name="ModelBottomSection">
                                   <Button Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>
@@ -115,7 +117,7 @@
                     <!-- Messages tab -->
                     <sukiUi:SukiSideMenuItem Name="MessageEditorTab" Header="Messages" IsVisible="False">
                         <sukiUi:SukiSideMenuItem.Icon>
-                            <controls:CircleDot ColorA="#AADAD3" ColorB="#675DF7" Text="🖊️"></controls:CircleDot>
+                            <controls:CircleDot ColorA="#AADAD3" ColorB="#675DF7" Source="Assets\TabIcons\messages.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
                             <controls:MessageEditor Name="MsgEditor"></controls:MessageEditor>
@@ -124,7 +126,7 @@
                     <!-- Camera sequences tab -->
                     <sukiUi:SukiSideMenuItem Name="CameraToolTab" Header="Camera sequences" IsVisible="False">
                         <sukiUi:SukiSideMenuItem.Icon>
-                            <controls:CircleDot ColorA="#45F6DF" ColorB="#6C3A33" Text="📷"></controls:CircleDot>
+                            <controls:CircleDot ColorA="#45F6DF" ColorB="#6C3A33" Source="Assets\TabIcons\cameras.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
                             <controls:CameraTool Name="CameraTool"></controls:CameraTool>
@@ -133,7 +135,7 @@
                     <!-- Texture tab -->
                     <sukiUi:SukiSideMenuItem Name="ImagePreviewTab" Header="Texture" IsVisible="False">
                         <sukiUi:SukiSideMenuItem.Icon>
-                            <controls:CircleDot ColorA="Violet" ColorB="MidnightBlue" Text="🖼"></controls:CircleDot>
+                            <controls:CircleDot ColorA="Violet" ColorB="MidnightBlue" Source="Assets\TabIcons\texture.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
                             <Grid RowDefinitions="*,Auto">
@@ -145,7 +147,7 @@
                     <!-- Sound player tab -->
                     <sukiUi:SukiSideMenuItem Name="SoundPlayerTab" Header="Sound player" IsVisible="False">
                         <sukiUi:SukiSideMenuItem.Icon>
-                            <controls:CircleDot ColorA="Cyan" ColorB="DarkCyan" Text="▶"></controls:CircleDot>
+                            <controls:CircleDot ColorA="Cyan" ColorB="DarkCyan" Source="Assets\TabIcons\soundplay.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
                             <sukiUi:GlassCard VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="20, 0">
@@ -163,7 +165,7 @@
                     <!-- Event script tab -->
                     <sukiUi:SukiSideMenuItem Name="PseudoCodeTab" Header="Event script" IsVisible="False">
                         <sukiUi:SukiSideMenuItem.Icon>
-                            <controls:CircleDot ColorA="Red" ColorB="#210" Text="⌘"></controls:CircleDot>
+                            <controls:CircleDot ColorA="Red" ColorB="#210" Source="Assets\TabIcons\script.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
                             <controls:CLIBox Name="EventBox" x:DataType="controls:CLIBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" />
@@ -172,7 +174,7 @@
                     <!-- Gimmicks tab -->
                     <sukiUi:SukiSideMenuItem Name="StageGimmickTab" Header="Edit gimmicks" IsVisible="False">
                         <sukiUi:SukiSideMenuItem.Icon>
-                            <controls:CircleDot ColorA="Gray" ColorB="Black" Text="⚙"></controls:CircleDot>
+                            <controls:CircleDot ColorA="Gray" ColorB="Black" Source="Assets\TabIcons\gimmicks.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
                             <Grid RowDefinitions="Auto, *">
@@ -205,7 +207,7 @@
                     <!-- Menu mockup tab -->
                     <sukiUi:SukiSideMenuItem Name="MenuMockupTab" Header="Menu mockup" IsVisible="False">
                         <sukiUi:SukiSideMenuItem.Icon>
-                            <controls:CircleDot ColorA="DeepPink" ColorB="DarkViolet" Text="M"></controls:CircleDot>
+                            <controls:CircleDot ColorA="DeepPink" ColorB="DarkViolet" Source="Assets\TabIcons\mockup.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
                             <controls:MenuMockup Name="MenuMockup" Width="640" Height="480"></controls:MenuMockup>
@@ -214,7 +216,7 @@
                     <!-- Samples tab -->
                     <sukiUi:SukiSideMenuItem Name="BdSampleTab" Header="Samples" IsVisible="False">
                         <sukiUi:SukiSideMenuItem.Icon>
-                            <controls:CircleDot ColorA="Salmon" ColorB="SaddleBrown" Text="S" />
+                            <controls:CircleDot ColorA="Salmon" ColorB="SaddleBrown" Source="Assets\TabIcons\samples.png" />
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
                             <Grid RowDefinitions="*,Auto">
@@ -242,7 +244,7 @@
                     <!-- Files tab -->
                     <sukiUi:SukiSideMenuItem Name="FileListTab" Header="Files" IsVisible="False">
                         <sukiUi:SukiSideMenuItem.Icon>
-                            <controls:CircleDot ColorA="Lime" ColorB="DarkSlateGray" Text="📁"></controls:CircleDot>
+                            <controls:CircleDot ColorA="Lime" ColorB="DarkSlateGray" Source="Assets\TabIcons\files.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
                             <Grid RowDefinitions="*,Auto">
@@ -271,16 +273,25 @@
                     <!-- Hitboxes tab -->
                     <sukiUi:SukiSideMenuItem Name="ColTab" Header="Hitboxes" IsVisible="False">
                         <sukiUi:SukiSideMenuItem.Icon>
-                            <controls:CircleDot ColorA="Yellow" ColorB="DarkGreen" Text="⬡"></controls:CircleDot>
+                            <controls:CircleDot ColorA="Yellow" ColorB="DarkGreen" Source="Assets\TabIcons\hitboxes.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
-                            <controls:CollisionMap Name="ColMap" ColObject=""></controls:CollisionMap>
+                            <controls:CollisionMap Name="ColMap"></controls:CollisionMap>
+                        </sukiUi:SukiSideMenuItem.PageContent>
+                    </sukiUi:SukiSideMenuItem>
+                    <!-- Layouts tab -->
+                    <sukiUi:SukiSideMenuItem Name="LayTab" Header="Layouts" IsVisible="False">
+                        <sukiUi:SukiSideMenuItem.Icon>
+                            <controls:CircleDot ColorA="Blue" ColorB="YellowGreen" Source="Assets\TabIcons\layout.png"></controls:CircleDot>
+                        </sukiUi:SukiSideMenuItem.Icon>
+                        <sukiUi:SukiSideMenuItem.PageContent>
+                            <controls:StageLayouts Name="StageLayoutsControl"></controls:StageLayouts>
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
                     <!-- Convert tab -->
                     <sukiUi:SukiSideMenuItem Name="ConvertTab" Header="Convert" IsVisible="False">
                         <sukiUi:SukiSideMenuItem.Icon>
-                            <controls:CircleDot ColorA="Yellow" ColorB="OrangeRed" Text="⋗"></controls:CircleDot>
+                            <controls:CircleDot ColorA="Yellow" ColorB="OrangeRed" Source="Assets\TabIcons\convert.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
                             <sukiUi:GlassCard VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="30,0">
@@ -334,6 +345,16 @@
                                                     </TextBlock>
                                                 </ToolTip.Tip>
                                             </CheckBox>
+                                            <CheckBox Name="FakeSustainRateToggle" Margin="0,2, 0,-8" IsChecked="True" Content="Simulate sustain rate">
+                                                <ToolTip.Tip>
+                                                    <TextBlock>
+                                                        Attempts to "fake" sustain rate by messing with the output decay rate and sustain level values.<LineBreak/>
+                                                        This takes advantage of the fact that the main use-case of the sustain rate is to extend the<LineBreak/>
+                                                        decay. However, since SF2 doesn't support sustain rate natively, in some edge cases, it can<LineBreak/>
+                                                        lead to notes fading out too early, so uncheck this option if you don't want that to happen.
+                                                    </TextBlock>
+                                                </ToolTip.Tip>
+                                            </CheckBox>
                                         </StackPanel>
                                         <Expander Margin="0,15, 0, 0" Name="AdsrPanel">
                                             <Expander.Header>
@@ -373,12 +394,6 @@
                                                 </Slider>
                                                 <Label Name="ReleaseMultiplierLabel">Release strength: 12%</Label>
                                             </StackPanel>
-                                            <StackPanel>
-                                                <Slider Minimum="0" Maximum="1000" Width="200" Value="32" VerticalAlignment="Center" Name="AttenuationSlider" ValueChanged="ReverbSlider_OnValueChanged">
-                                                
-                                                </Slider>
-                                                <Label Name="AttenuationMultiplierLabel">Attenuation strength: 3.2%</Label>
-                                            </StackPanel>
                                         </WrapPanel>
                                             </Expander.Content>
                                         </Expander>
@@ -396,7 +411,7 @@
                     <!-- Save file tab -->
                     <sukiUi:SukiSideMenuItem Header="Save file" IsVisible="False" Name="SaveEditor">
                         <sukiUi:SukiSideMenuItem.Icon>
-                            <controls:CircleDot ColorA="DodgerBlue" ColorB="DarkBlue" Text="💾"></controls:CircleDot>
+                            <controls:CircleDot ColorA="DodgerBlue" ColorB="DarkBlue" Source="Assets\TabIcons\save.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
                             <Grid RowDefinitions="30,30,*" Margin="10" DataContext="{Binding SaveData}">
@@ -445,7 +460,4 @@
             <ProgressBar Name="LoadProgress" Grid.Row="1" IsIndeterminate="True" Width="300"></ProgressBar>
         </Grid>
     </Grid>
-    <sukiUi:SukiWindow.Styles>
-        <Style Selector=""></Style>
-    </sukiUi:SukiWindow.Styles>
 </sukiUi:SukiWindow>

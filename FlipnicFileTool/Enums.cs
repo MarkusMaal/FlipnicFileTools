@@ -61,7 +61,13 @@ public abstract class Enums
         ShowVss,
         ShowFtl,
         ShowElf,
-        ShowDummy
+        ShowDummy,
+        GeneratePss,
+        IpuFix,
+        SstResize,
+        ExtractPak,
+        ListPak,
+        ReplacePak
     }
     
     /// <summary>
@@ -94,6 +100,7 @@ public abstract class Enums
             ".SCC" => Modes.ShowVss,
             ".FTL" => Modes.ShowFtl,
             ".DAT" => Modes.ShowDummy,
+            ".PAK" => Modes.ListPak,
             _ => Modes.ShowHelp
         };
     }
@@ -158,6 +165,12 @@ public abstract class Enums
             "--show-elf" => Modes.ShowElf,
             "--show-dummy" => Modes.ShowDummy,
             "--export-box-obj" => Modes.ExportBbox,
+            "--generate-pss" => Modes.GeneratePss,
+            "--ipu-duct-tape" => Modes.IpuFix,
+            "--change-count" => Modes.SstResize,
+            "--extract-pak" => Modes.ExtractPak,
+            "--list-pak" => Modes.ListPak,
+            "--replace-pak" => Modes.ReplacePak,
             _ => mode
         };
         

@@ -170,12 +170,13 @@ public static class Converters
         StaticUtils.AdsrMultipliers =
         [
             (int)mw.AttackSlider.Value * 10, (int)mw.DecaySlider.Value * 10, (int)mw.SustainSlider.Value * 10,
-            (int)mw.ReleaseSlider.Value * 10, (int)mw.AttenuationSlider.Value * 10
+            (int)mw.ReleaseSlider.Value * 10
         ];
         var outFile = mw.FileBox.Text;
         var midiFile = mw.MidiBox.Text ?? "/no.where";
         var bdFile = mw.BdBox.Text ?? "/no.where";
         var createWav = mw.WavToggle.IsChecked ?? false;
+        var fakeSustainR = mw.FakeSustainRateToggle.IsChecked ?? true;
         new Thread(() =>
         {
             Exception? error = null;
@@ -185,7 +186,7 @@ public static class Converters
                 var extension = Path.GetExtension(mw.FileName);
                 var fileName = new FileInfo(mw.FileName).Name.Replace(extension, "");
                 Converter.InstrumentToSoundFont2(midiFile ?? "",
-                    mw.FileName, bdFile ?? "", Path.Combine(outFile ?? "", fileName) + ".SF2", createWav);
+                    mw.FileName, bdFile ?? "", Path.Combine(outFile ?? "", fileName) + ".SF2", createWav, fakeSustainR);
             }
             catch (Exception ex) when (!Debugger.IsAttached)
             {

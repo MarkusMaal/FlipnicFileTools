@@ -1,9 +1,10 @@
 using System.Text;
+using FlipnicLib.Formats;
 using FlipnicLib.Types;
 
 namespace FlipnicLib;
 
-public class BinFile
+public class BinFile : FormatBase
 {
     public BinFile() {}
     public List<VirtualFile> FsEntries { get; set; } = [];
@@ -18,7 +19,7 @@ public class BinFile
         var rows = GetFsEntriesNew(src);
         foreach (var t in rows)
         {
-            t[2] = StaticUtils.GetFilesizeString(long.Parse(t[2]));
+            t[2] = GetFilesizeString(long.Parse(t[2]));
         }
         src.Close();
         return StaticUtils.GenerateTable(colHeader, rows, StaticUtils.SimpleOutput);
@@ -154,6 +155,216 @@ public class BinFile
         realRows.AddRange(rows.Select((t, i) => (string[]) [t[0], t[1], Sizes[i].ToString(), t[2], t[3]]));
         return realRows;
     }
+
+    /// <summary>
+    /// Extracts all subfolders as PAK files from the .BIN file (useful for modding purposes)
+    /// </summary>
+    /// <param name="source">BIN file stream</param>
+    /// <param name="destination">Full path to the folder to extract the PAK files to</param>
+    public void ExtractPak(Stream source, string destination)
+    {
+        Console.Write("\r     Interpreting TOC data...");
+        var fsEntries = GetFsEntriesNew(source);
+        
+        source.Position = 0;
+        var count = 0;
+        using (var src = source)
+        {
+            Console.Write("\r     Loading file to memory...".PadRight(StaticUtils.WindowWidth));
+            for (var i = 0; i < fsEntries.Count; i++)
+            {
+                var fsEntry = fsEntries[i];
+                src.Position = Convert.ToInt64(fsEntry[1], 16);
+                var fileNam = fsEntry[0].Replace("\\", "/");
+                if (!fileNam.EndsWith('/')) continue; // not a subdirectory, ignore those entries
+                count++;
+                fileNam = fileNam[..^1] + ".PAK"; // e.g. BOSS1\ -> BOSS1.PAK
+                var end = src.Length;
+                if (i < fsEntries.Count - 2)
+                {
+                    end = Convert.ToInt64(fsEntries[i + 1][1], 16);
+                }
+
+                var size = end - src.Position;
+                var outFile = Path.Combine(destination, fileNam[1..]);
+                using (var os = new FileStream(outFile, FileMode.Create, FileAccess.Write))
+                {
+                    var buffer = new byte[2048];
+                    for (var j = src.Position; j < end; j += 2048)
+                    {
+                        src.ReadExactly(buffer, 0, 2048);
+                        os.Write(buffer, 0, 2048);
+                    }
+                }
+
+                Console.Write(
+                    $"\r     Extracting {fileNam} ({GetFilesizeString(size)})".PadRight(StaticUtils.WindowWidth));
+                if (size < 0) continue;
+                src.Position = Convert.ToInt64(fsEntry[1], 16);
+            }
+
+            src.Close();
+        }
+
+        if (count == 0)
+        {
+            Console.WriteLine("\r   This .BIN file does not contain any subdirectories!");
+            return;
+        }
+        Console.WriteLine("\r   " + (count == 1 ? "A file has" : "Files have") + $" been extracted to: {destination}".PadRight(StaticUtils.WindowWidth));
+    }
+
+    /// <summary>
+    /// For PAK container manipulation
+    /// </summary>
+    /// <param name="source">Source stream. Either a file or memory stream. Former is recommended.</param>
+    /// <param name="replace">If true, replace a file inside the container instead of showing a list of files.</param>
+    /// <param name="replacementName">Name of the file inside the container we want to replace.</param>
+    /// <param name="replacement">Replacement file stream.</param>
+    public void ListPak(Stream source, bool replace = false, string? replacementName = null, Stream? replacement = null)
+    {
+        // listing files
+        var buffer = new byte[0x40];
+        var colHeaders = new[] { "Name", "Offset", "Size" };
+        var rows = new List<string[]>();
+        var offsets = new List<long>();
+        var sizes = new List<long>();
+        var walks = 0;
+        while (walks < 32768)
+        {
+            walks++;
+            try
+            {
+                source.ReadExactly(buffer, 0, 0x40);
+            }
+            catch (EndOfStreamException)
+            {
+                StaticUtils.DecodeColors( "~-CError~--: End of stream reached while traversing table of contents!");
+                Console.WriteLine();
+                return;
+            }
+
+            var name = GetString(buffer);
+            var offset = GetUInt32(buffer, 0x3C);
+            if (rows.Count > 0)
+            {
+                // calculate the file size for previous entry based on current entry's offset
+                // this works, because there is an extra "*End Of Mem Data", which has the
+                // total size of the container as its offset
+                var prevSize = offset - offsets[^1];
+                sizes.Add(prevSize);
+                rows[^1][2] = StaticUtils.GetFilesizeString(prevSize);
+            }
+            offsets.Add(offset);
+            if (name == "*End Of Mem Data") break; // don't add end pointer to the list of files
+            rows.Add([name, "0x" + offset.ToString("X"), ""]);
+        }
+
+        if (walks == 32768)
+        {
+            StaticUtils.DecodeColors( "~-CError~--: Cannot find the end pointer, the PAK file may be corrupt or incompatible!");
+            Console.WriteLine();
+            return;
+        }
+
+        if (!replace || replacementName == null || replacement == null)
+        {
+            Console.Write(StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput));
+            Console.WriteLine("End offset: 0x" + offsets[^1].ToString("X"));
+            return;
+        }
+
+        if (!source.CanWrite)
+        {
+            StaticUtils.DecodeColors( "~-CError~--: Cannot write to this file");
+            Console.WriteLine();
+            return;
+        }
+        
+        // repacking
+
+        var idx = -1;
+        foreach (var (i, row) in rows.Index()) // find the file in TOC
+        {
+            if (row[0] != replacementName) continue;
+            idx = i;
+            break;
+        }
+
+        if (idx == -1)
+        {
+            StaticUtils.DecodeColors( $"~-CError~--: The specified virtual file ({replacementName}) does not exist!");
+            Console.WriteLine();
+            return;
+        }
+
+        var sizeDelta = replacement!.Length - sizes[idx];
+        var replacementOffset = offsets[idx];
+        var replacementSize = replacement.Length;
+
+        if (sizeDelta != 0) // when the size is equal, just write the data, no need to worry about any of this
+        {
+            Console.WriteLine("Updating TOC offsets");
+            // + 2 is due to the following reasons:
+            //      1) The modified entry itself (we don't want to change that)
+            //      2) 0x40 * 0 - 0x4 would be a negative value, so the index actually starts with 1
+            // we are also changing "*End Of Mem Data" pointer
+            for (var i = idx + 2; i <= rows.Count + 1; i++)
+            {
+                source.Position = 0x40 * i - 0x4;
+                var buff = BitConverter.GetBytes((uint)(offsets[i-1] + sizeDelta));
+                source.Write(buff, 0, 4);
+            }
+            if (sizeDelta > 0) // expand container (when replacement file is bigger than the original)
+            {
+                for (var i = offsets[^1]; i > replacementOffset + sizeDelta; i--)
+                {
+                    source.Position = i;
+                    var originalByte = source.ReadByte();
+                    source.Position = i + sizeDelta;
+                    source.WriteByte((byte)originalByte);
+                    if (i % 2048 != 0) continue;
+                    Console.Write("Moving data to make room (" + (int)Math.Max(0,
+                                      Math.Round((110 - (i / (double)(replacementOffset + sizeDelta) * 100.0)) * 10)) + // this calculation is just some spaghetti code, but it works, so I don't touch it lol
+                                  "% complete)\r");
+                }
+            }
+            else // shrink container (when replacement file is smaller than the original)
+            {
+                for (var i = replacementOffset; i < offsets[^1] + sizeDelta; i++)
+                {
+                    source.Position = i - sizeDelta;
+                    var originalByte = source.ReadByte();
+                    source.Position = i;
+                    source.WriteByte((byte)originalByte);
+                    if (i % 2048 != 0) continue;
+                    Console.Write("Shrinking file (" + (int)Math.Max(0,
+                                      Math.Round(((i / (double)(replacementOffset + sizeDelta) * 100.0)) * 10) - 1002.0) + // same story as the last percentage calculation
+                                  "% complete)\r");
+                }
+            }
+            Console.WriteLine();
+        }
+
+        Console.WriteLine("Writing new data");
+        // a simple byte-by-byte copy (works just fine for tiny containers)
+        for (var i = replacementOffset; i < replacementOffset + replacementSize; i++)
+        {
+            source.Position = i;
+            source.WriteByte((byte)replacement.ReadByte());
+        }
+        
+        // when extracting a file from a BIN container, it's likely going to have some padding at the end (up to 2047 bytes)
+        // we want to remove that, especially when we are increasing the file size
+        // uses "*End Of Mem Data" pointer from earlier
+        Console.WriteLine("Trimming end padding");
+        source.SetLength(offsets[^1] + sizeDelta);
+        
+        // can't show the filename when we are writing to a memory stream
+        if (source is not FileStream fStr) return;
+        StaticUtils.DecodeColors("~-ASuccess~--: Changes have been written to " + fStr.Name);
+        Console.WriteLine();
+    }
     
     /// <summary>
     /// Extracts all files inside the .BIN container
@@ -195,7 +406,7 @@ public class BinFile
                 var size = end - src.Position;
                 var outFile = Path.Combine(destination, fileNam[1..]);
                 Console.Write(
-                    $"\r     Extracting {fileNam} ({StaticUtils.GetFilesizeString(size)})".PadRight(StaticUtils.WindowWidth));
+                    $"\r     Extracting {fileNam} ({GetFilesizeString(size)})".PadRight(StaticUtils.WindowWidth));
                 if (fileNam.EndsWith('/')) continue;
                 if (size < 0) continue;
                 src.Position = Convert.ToInt64(fs_entry[1], 16);

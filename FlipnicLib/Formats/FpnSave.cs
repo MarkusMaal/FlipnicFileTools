@@ -4,7 +4,7 @@ using FlipnicLib.Types;
 
 namespace FlipnicLib.Formats;
 
-public class FpnSave
+public class FpnSave : FormatBase
 {
 
     // declarations
@@ -145,13 +145,13 @@ public class FpnSave
             return [];
         }
         var offset = 0x60+(idx * 0x38);
-        var scoreVal = StaticUtils.GetInt64(_dataList.ToArray(), offset);
+        var scoreVal = GetInt64(_dataList.ToArray(), offset);
         var modeIdx = (idx - (idx % 5)) / 5;
         var rank = idx % 5;
         rank++;
-        var initials = StaticUtils.GetStringAt(_dataList.ToArray(), offset+0x10);
-        var combos = StaticUtils.GetInt32(_dataList.ToArray(), offset + 0xC);
-        var difficultyId = StaticUtils.GetInt32(_dataList.ToArray(), offset + 0x8);
+        var initials = GetStringAt(_dataList.ToArray(), offset+0x10);
+        var combos = GetInt32(_dataList.ToArray(), offset + 0xC);
+        var difficultyId = GetInt32(_dataList.ToArray(), offset + 0x8);
         var difficulty = difficultyId switch {
             0 => "Easy",
             1 => "Normal",

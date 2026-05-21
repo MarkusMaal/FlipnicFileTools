@@ -96,6 +96,7 @@ public static class FileHelpers
     {
         Dispatcher.UIThread.Post(() =>
         {
+            mw.InfoBox.WrapText = false;
             mw.InfoBox.Text = sender?.ToString() ?? "";
             mw.InfoTab.IsVisible = true;
             mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, type);
@@ -120,6 +121,7 @@ public static class FileHelpers
         mw.Loader.IsVisible = true;
         mw.AdsrPanel.IsVisible = false;
         mw.WavToggle.IsVisible = false;
+        mw.FakeSustainRateToggle.IsVisible = false;
 
         List<VirtualFile> fsEntries;
 
@@ -279,6 +281,7 @@ public static class FileHelpers
                         mw.DemuxButton.IsVisible = false;
                         mw.AdsrPanel.IsVisible = true;
                         mw.WavToggle.IsVisible = true;
+                        mw.FakeSustainRateToggle.IsVisible = true;
 
                         var fileDirectory = new FileInfo(mw.FileName).Directory?.FullName ?? "";
                         var extension = Path.GetExtension(mw.FileName);
@@ -398,7 +401,7 @@ public static class FileHelpers
                             mw.ModelTab.IsSelected = true;
                             mw.InfoTab.IsSelected = false;
                         });
-                        Thread.Sleep(1000);
+                        if (Program.GpuAccel) Thread.Sleep(1000);
                         StaticUtils.LiveLoadStatus = "Parsing LP4";
                         mw.GlControl.ImportLP4(lp4);
                     }
@@ -470,7 +473,12 @@ public static class FileHelpers
                     var da = new byte[ds.Length];
                     ds.ReadExactly(da);
                     var lay = new FpnLay(da);
-                    LoadAsString(lay, "Stage layout file", mw);
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        mw.LayTab.IsVisible = true;
+                        mw.StageLayoutsControl.LayoutSource = new ObservableCollection<FpnLay.Layout>(lay.Layouts);
+                        mw.FileTypeLabel.Content = "Stage layout file";
+                    });
                     break;
                 case "MSG":
                     var msg = new FpnMsg(ds);

@@ -21,7 +21,6 @@ public abstract class HelpUtils
                 new HelpLine("disclaimer", "Display disclaimer"),
                 new HelpLine("simple", "Use output that is easy to parse for computer programs"),
                 new HelpLine("low-memory", "Reduces performance to save on memory usage"),
-                new HelpLine("magick-path", "Path to ImageMagick executable (may not be needed dep. on what you're trying to do)"),
                 new HelpLine("ffmpeg-path", "Path to FFmpeg (for audio/video conversion operations)"),
                 new HelpLine("msg-path", "Path to JA.MSG file (optional)"),
                 new HelpLine("test", "Change how the program behaves specifically for automated testing"), 
@@ -41,6 +40,7 @@ public abstract class HelpUtils
                 [
                     new HelpLine("list-files*", "List all files inside this container file"),
                     new HelpLine("extract-files", "Extract files inside the container to a folder (output = folder)"),
+                    new HelpLine("extract-pak", "Extract subfolders inside the container as PAK files (output = folder)"),
                     new HelpLine("replace-file [vfile]", "Allows you to replace a single file inside a .BIN container (input = replacement file, output = BIN file, vfile = BIN file record name)"),
                 ]
             ),
@@ -91,6 +91,7 @@ public abstract class HelpUtils
                     new HelpLine("convert-sf2", "Allows you to convert soundbank to .SF2 (specify .HD file as input)"),
                     new HelpLine("no-envelopes", "Doesn't export envelopes (attack, decay, sustain, release)"),
                     new HelpLine("synthesize-wav", "Creates a .WAV file in addition to the .SF2 file (use with --convert-sf2 option)"),
+                    new HelpLine("fake-sustain-rate", "Simulate sustain rate by tweaking output decay rate/sustain level (use with --convert-sf2 option)"),
                     new HelpLine("reverb-strength [value]", $"Adjust reverb strength as a percentage (default: {StaticUtils.DotFloatString((float)Math.Round(StaticUtils.ReverbStrength / 10.0, 1))}%)"),
                     new HelpLine("midi-file [path]", "Manually specify a .MID file to use for conversion (default is input file path, but with .MID extension)"),
                     new HelpLine("bd-file [path]", "Manually specify a .BD file to use for conversion (default is input file path, but with .BD extension)"),
@@ -110,10 +111,11 @@ public abstract class HelpUtils
                 "*.IPU",
                 [
                     new HelpLine("show-ipu*", "Display basic information about the IPU file"),
-                    new HelpLine("convert-ipu", "Uses FFmpeg to convert .IPU file to .M2V")
+                    new HelpLine("convert-ipu", "Uses FFmpeg to convert .IPU file to .M2V"),
+                    new HelpLine("ipu-duct-tape", "Attempts to fix a mangled .IPU file (use --pal and/or --progressive when applicable)")
                 ]
             ),
-            new(
+            new( 
                 "PlayStation 2 ISO file",
                 "*.ISO",
                 [
@@ -143,7 +145,8 @@ public abstract class HelpUtils
                     new HelpLine("show-lp4*", "Display general information about the file"),
                     new HelpLine("export-obj", "Export models from the LP4 file as Wavefront OBJ"),
                     new HelpLine("export-box-obj", "Export bounding box from the LP4 file as Wavefront OBJ"),
-                    new HelpLine("alternate-normals", "Use a different method for decoding normal vectors (required for some files)")
+                    new HelpLine("alternate-normals", "Use a different method for decoding normal vectors (required for some files)"),
+                    new HelpLine("force-brute-force", "Always use brute-force method for decoding LP4 files even when regular parser finishes successfully")
                 ]
             ),
             new(
@@ -172,6 +175,14 @@ public abstract class HelpUtils
                 ]
             ),
             new(
+                "Subfolders",
+                "*.PAK",
+                [
+                    new HelpLine("list-pak*", "List all files inside the subdirectory"),
+                    new HelpLine("replace-pak [vfile]", "Replace a file inside the subdirectory (output = pak, input = replacement, vfile = name inside PAK)"),
+                ]
+            ),
+            new(
                 "Interleaved audio/video stream",
                 "*.PSS",
                 [
@@ -182,7 +193,9 @@ public abstract class HelpUtils
                     new HelpLine("pal", "Force 25/50 frames per second when converting video files"),
                     new HelpLine("crop-alpha", "Crops out the alpha mask from low-res FMVs"),
                     new HelpLine("crop-rgb", "Crops out the RGB part of low-res FMVs"),
-                    new HelpLine("scale-factor [n]", "Scales up the final video *n (NOTE: you can't apply crop and scale factor at the same time)")
+                    new HelpLine("scale-factor [n]", "Scales up the final video *n (NOTE: you can't apply crop and scale factor at the same time)"),
+                    new HelpLine("generate-pss [int]", "Allows you to generate an interleaved .PSS file, append --pal flag if you want to generate PAL streams (int = INT file, input = IPU file, output = PSS file)"),
+                    new HelpLine("progressive", "Uses settings required for progressive scan FMVs (useful only with --generate-pss)")
                 ]
             ),
             new (
@@ -208,6 +221,7 @@ public abstract class HelpUtils
                     new HelpLine("show-cameras", "Display camera metadata stored inside the SST file"),
                     new HelpLine("show-gimmick [name]", "Display a gimmick (name from TOC)"),
                     new HelpLine("get-pseudo-code", "Transform stage event into something that's somewhat human-readable"),
+                    new HelpLine("change-count [name],[count]", "Allows you to resize a specific section of the .SST file")
                 ]
             ),
             new(

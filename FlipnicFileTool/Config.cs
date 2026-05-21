@@ -26,11 +26,6 @@ public class Config
     public Enums.Modes Mode { get; set; } = Enums.Modes.NoAction;
     
     /// <summary>
-    /// Path to ImageMagick executable
-    /// </summary>
-    public string MagickPath { get; set; } = "magick";
-    
-    /// <summary>
     /// Path to FFmpeg executable
     /// </summary>
     public string FFmpegPath { get; set; } = "ffmpeg";
@@ -82,6 +77,29 @@ public class Config
     public bool SynthesizeWav { get; set; } = false;
 
     /// <summary>
+    /// Attempts to "fake" sustain rate by messing with the output decay rate and sustain level values.<br/>
+    /// This takes advantage of the fact that the main use-case of the sustain rate is to extend the<br/>
+    /// decay. However, since SF2 doesn't support sustain rate natively, in some edge cases, it can<br/>
+    /// lead to notes fading out too early.
+    /// </summary>
+    public bool SimulateSustainRate { get; set; } = false;
+
+    /// <summary>
+    /// If enabled, uses progressive scan settings for generating PSS files
+    /// </summary>
+    public bool Progressive { get; set; } = false;
+    
+    /// <summary>
+    /// Audio stream to use for .PSS merge
+    /// </summary>
+    public string IntFile { get; set; }
+
+    /// <summary>
+    /// Count value
+    /// </summary>
+    public int Count { get; set; }
+
+    /// <summary>
     /// Set configuration based on the args specified by the user
     /// </summary>
     /// <param name="args">List of args received from the command line</param>
@@ -111,8 +129,17 @@ public class Config
                 case "--alternate-normals":
                     StaticUtils.AlternateNormals = true;
                     break;
+                case "--force-brute-force":
+                    StaticUtils.ForceBruteForce = true;
+                    break;
                 case "--test":
                     Test = true;
+                    break;
+                case "--fake-sustain-rate":
+                    SimulateSustainRate = true;
+                    break;
+                case "--progressive":
+                    Progressive = true;
                     break;
                 case "--synthesize-wav":
                     SynthesizeWav = true;
@@ -142,9 +169,6 @@ public class Config
                 case "--output":
                     Output = arg;
                     break;
-                case "--magick-path":
-                    MagickPath = arg;
-                    break;
                 case "--ffmpeg-path":
                     FFmpegPath = arg;
                     break;
@@ -169,7 +193,16 @@ public class Config
                     break;
                 case "--replace-file":
                 case "--replace-iso":
+                case "--replace-pak":
                     VFile = arg;
+                    break;
+                case "--generate-pss":
+                    IntFile = arg;
+                    break;
+                case "--change-count":
+                    string[] values = arg.Split(",");
+                    VFile = values[0];
+                    Count = int.Parse(values[1]);
                     break;
                 default:
                     break;

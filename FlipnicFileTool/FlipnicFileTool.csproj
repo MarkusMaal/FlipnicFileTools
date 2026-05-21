@@ -13,5 +13,9 @@
     <ItemGroup>
         <ProjectReference Include="..\FlipnicLib\FlipnicLib.csproj" />
     </ItemGroup>
+    
+    <ItemGroup>
+      <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.12.0" />
+    </ItemGroup>
 
 </Project>

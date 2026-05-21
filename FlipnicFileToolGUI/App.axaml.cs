@@ -23,11 +23,14 @@ namespace FlipnicFileToolGUI;
 
 public class App : Application
 {
-    public static SukiColorTheme AppTheme = new("AppTheme", Colors.BlueViolet, Colors.DeepPink);
+    private static readonly SukiColorTheme AppTheme = new("AppTheme", Colors.BlueViolet, Colors.DeepPink);
+    private static readonly SukiColorTheme SecTheme = new("Secondary theme", Colors.MidnightBlue, Colors.Purple);
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
-        SukiTheme.GetInstance().AddColorTheme(App.AppTheme);
+        if (Design.IsDesignMode) return;
+        SukiTheme.GetInstance().AddColorTheme(AppTheme);
+        SukiTheme.GetInstance().AddColorTheme(SecTheme);
         SukiTheme.GetInstance().ChangeBaseTheme(ThemeVariant.Dark);
     }
 
@@ -107,6 +110,18 @@ public class App : Application
     public static void Init(MainWindow mw)
     {
         mw.GetViewModel().MenuElements = new ObservableCollection<MenuElementViewModel>(mw.GetViewModel().Menu);
+        mw.RestartWglButton.IsVisible = !Program.GpuAccel;
+        mw.GlControl.IsVisible = Program.GpuAccel;
+        mw.ModelInfoSection.IsVisible = Program.GpuAccel;
+        mw.TpModelButton.IsVisible = Program.GpuAccel;
+        mw.RotateModelCheck.IsVisible = Program.GpuAccel;
+        if (OperatingSystem.IsWindows() && Program.GpuAccel)
+        {
+            mw.FileMenu1.IsEnabled = false;
+            mw.OptionMenu1.IsEnabled = false;
+            mw.InfoMenu1.IsEnabled = false;
+            mw.IsMenuVisible = false;
+        }
         if (Design.IsDesignMode)
         {
             mw.FileTypeLabel.Content = "Design mode";

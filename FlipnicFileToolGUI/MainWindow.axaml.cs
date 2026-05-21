@@ -17,9 +17,7 @@ using SukiUI;
 using SukiUI.Controls;
 using SukiUI.Dialogs;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -79,6 +77,8 @@ public sealed partial class MainWindow : SukiWindow
         if (Design.IsDesignMode)
         {
             PreviewImage.Source = new Bitmap(StaticUtils.GenerateCheckerboardPng(320, 240));
+            SukiTheme.GetInstance().SwitchBaseTheme();
+            ApplyCustomTheme();
         }
     }
 
@@ -104,7 +104,7 @@ public sealed partial class MainWindow : SukiWindow
 
     private static void ApplyCustomTheme()
     {
-        SukiTheme.GetInstance().ChangeColorTheme(App.AppTheme);
+        SukiTheme.GetInstance().SwitchColorTheme();
     }
 
     private void PalMenuItem_OnClick(object? sender, RoutedEventArgs? e)
@@ -288,7 +288,7 @@ public sealed partial class MainWindow : SukiWindow
             fs.Seek(vf.Offset, SeekOrigin.Begin);
             fs.ReadExactly(buffer);
             fs.Close();
-            ms.Write(buffer, 0,(int)vf.Length);
+            ms.Write(buffer, 0, (int)vf.Length);
             ms.Position = 0;
             Dispatcher.UIThread.Post(() =>
             {
@@ -348,8 +348,8 @@ public sealed partial class MainWindow : SukiWindow
         _dialogManager.CreateDialog()
             .WithTitle("Warning")
             .WithContent("This operation is lossy meaning the video quality may be reduced. For lossless conversion, please demux the file first and convert the streams separately.\n\nAre you sure you want to continue?")
-            .WithActionButton("Yes", _ => { Converters.ConvertMovAac(this);}, true)
-            .WithActionButton("No", _ => {}, true)
+            .WithActionButton("Yes", _ => { Converters.ConvertMovAac(this); }, true)
+            .WithActionButton("No", _ => { }, true)
             .OfType(NotificationType.Warning)
             .TryShow();
     }
@@ -378,7 +378,7 @@ public sealed partial class MainWindow : SukiWindow
         _dialogManager.CreateDialog()
             .WithTitle(title)
             .WithContent(content)
-            .WithActionButton("OK", _ => {}, true)
+            .WithActionButton("OK", _ => { }, true)
             .OfType(type)
             .TryShow();
     }
@@ -419,7 +419,8 @@ public sealed partial class MainWindow : SukiWindow
     {
         if (Design.IsDesignMode) return;
         Converters.ConvertSf2(this);
-        new Thread(() => {
+        new Thread(() =>
+        {
             var visible = false;
             while (!visible)
             {
@@ -462,7 +463,7 @@ public sealed partial class MainWindow : SukiWindow
         var loadFiles = await StorageProvider.OpenFilePickerAsync(
             new FilePickerOpenOptions
             {
-                Title = "Select " + (bdB ? "BD": "MIDI") + " file",
+                Title = "Select " + (bdB ? "BD" : "MIDI") + " file",
                 FileTypeFilter = [bdB ? Filters.BdFile : Filters.MidiFile]
             });
         if (loadFiles.Count == 0) return;
@@ -471,7 +472,8 @@ public sealed partial class MainWindow : SukiWindow
         if (bdB)
         {
             BdBox.Text = fileName;
-        } else
+        }
+        else
         {
             MidiBox.Text = fileName;
         }
@@ -544,7 +546,8 @@ public sealed partial class MainWindow : SukiWindow
                 FileTypeLabel.Content = "Please wait...";
                 bck = ModelTab.IsSelected;
             });
-            Dispatcher.UIThread.Post(() => {
+            Dispatcher.UIThread.Post(() =>
+            {
                 ModelTab.IsSelected = bck;
                 FileTypeLabel.Content = bckType;
                 LoadStatus.Text = "Loading";
@@ -617,7 +620,8 @@ public sealed partial class MainWindow : SukiWindow
             _dialogManager.CreateDialog()
                 .WithTitle("CAUTION")
                 .WithContent("It appears the replacement file is bigger than the original file. We will need to update other file records and increase the size of the .BIN file. This should only be done if you know exactly what you're doing. Are you sure you want to continue?")
-                .WithActionButton("Yes", _ => {
+                .WithActionButton("Yes", _ =>
+                {
                     Loader.IsVisible = true;
                     MainTabControl.IsVisible = false;
                     LoadStatus.Text = "Rebuilding .BIN file";
@@ -662,14 +666,16 @@ public sealed partial class MainWindow : SukiWindow
                             ns2.Close();
                         }
 
-                        Dispatcher.UIThread.Post(() => {
+                        Dispatcher.UIThread.Post(() =>
+                        {
                             ShowDialog("Flipnic file tools", "File replaced successfully.", NotificationType.Success);
                             Loader.IsVisible = false;
                             MainTabControl.IsVisible = true;
                         });
                     }).Start();
                 }, true)
-                .WithActionButton("No", _ => {
+                .WithActionButton("No", _ =>
+                {
                     new Thread(() =>
                     {
                         Thread.Sleep(200);
@@ -689,22 +695,19 @@ public sealed partial class MainWindow : SukiWindow
         switch (((Slider?)e.Source)!.Name)
         {
             case "ReverbSlider":
-                ReverbStrengthLabel.Content = $"Reverb strength: {Math.Round(e.NewValue/10.0, 1)}%";
+                ReverbStrengthLabel.Content = $"Reverb strength: {Math.Round(e.NewValue / 10.0, 1)}%";
                 break;
             case "AttackSlider":
-                AttackMultiplierLabel.Content = $"Attack strength: {Math.Round(e.NewValue/10.0, 1)}%";
+                AttackMultiplierLabel.Content = $"Attack strength: {Math.Round(e.NewValue / 10.0, 1)}%";
                 break;
             case "SustainSlider":
-                SustainMultiplierLabel.Content = $"Sustain strength: {Math.Round(e.NewValue/10.0, 1)}%";
+                SustainMultiplierLabel.Content = $"Sustain strength: {Math.Round(e.NewValue / 10.0, 1)}%";
                 break;
             case "DecaySlider":
-                DecayMultiplierLabel.Content = $"Decay strength: {Math.Round(e.NewValue/10.0, 1)}%";
+                DecayMultiplierLabel.Content = $"Decay strength: {Math.Round(e.NewValue / 10.0, 1)}%";
                 break;
             case "ReleaseSlider":
-                ReleaseMultiplierLabel.Content = $"Release strength: {Math.Round(e.NewValue/10.0, 1)}%";
-                break;
-            case "AttenuationSlider":
-                AttenuationMultiplierLabel.Content = $"Attenuation strength: {Math.Round(e.NewValue/10.0, 1)}%";
+                ReleaseMultiplierLabel.Content = $"Release strength: {Math.Round(e.NewValue / 10.0, 1)}%";
                 break;
         }
     }
@@ -833,7 +836,7 @@ public sealed partial class MainWindow : SukiWindow
                     _ => ""
                 };
                 if (patternUrl == "") return;
-                var tmpFile =  Path.GetTempFileName();
+                var tmpFile = Path.GetTempFileName();
                 await DownloadFile(
                     $"https://raw.githubusercontent.com/MarkusMaal/FlipnicPatterns/refs/heads/main/patterns/{patternUrl}",
                     tmpFile);
@@ -860,7 +863,7 @@ public sealed partial class MainWindow : SukiWindow
     {
         using (var client = new HttpClient())
         using (var result = await client.GetAsync(url))
-            return result.IsSuccessStatusCode ? await result.Content.ReadAsByteArrayAsync():null;
+            return result.IsSuccessStatusCode ? await result.Content.ReadAsByteArrayAsync() : null;
     }
 
     static async Task DownloadFile(string url, string pathToSave)
@@ -898,7 +901,7 @@ public sealed partial class MainWindow : SukiWindow
         {
             if (!File.Exists(FileName))
             {
-                ShowDialog("Flipnic file tools", "This operation is not supported for files loaded directly to memory. Please open the file through File > Open menu.", NotificationType.Error);   
+                ShowDialog("Flipnic file tools", "This operation is not supported for files loaded directly to memory. Please open the file through File > Open menu.", NotificationType.Error);
             }
             var file = await FileHelpers.SaveFile(this, [Filters.FpnSst]);
             if (file is null) return;
@@ -919,7 +922,7 @@ public sealed partial class MainWindow : SukiWindow
         if (FileName is null) return;
         if (val.EndsWith("GRND") || val.EndsWith("WALL"))
         {
-            ShowDialog("Flipnic file tools", "This gimmick collection does not have a corresponding layout file.",  NotificationType.Information);
+            ShowDialog("Flipnic file tools", "This gimmick collection does not have a corresponding layout file.", NotificationType.Information);
             return;
         }
         var suffix = val.EndsWith('0')
@@ -942,12 +945,9 @@ public sealed partial class MainWindow : SukiWindow
                     nw.FileName = Path.Join(new FileInfo(FileName).DirectoryName, $"LAY{suffix}.LAY");
                     nw.Title = "Flipnic file tool - " + new FileInfo(nw.FileName).Name;
                     FileHelpers.LoadFromData(new FileStream(nw.FileName, FileMode.Open, FileAccess.Read), nw.FileName[^3..], nw);
+                    nw.IsMenuVisible = false;
+                    nw.WindowStartupLocation = WindowStartupLocation.CenterOwner;
                     nw.Show();
-                    new Thread(() =>
-                    {
-                        Thread.Sleep(200);
-                        Dispatcher.UIThread.Post(() => {nw.InfoTab.IsSelected = true;});
-                    }).Start();
                 }, true)
                 .WithActionButton("No", _ => { }, true)
                 .OfType(NotificationType.Information)
@@ -957,5 +957,42 @@ public sealed partial class MainWindow : SukiWindow
         {
             ShowDialog("Flipnic file tools", $"Layout file: LAY{suffix}.LAY\nFile does not exist!", NotificationType.Information);
         }
+    }
+
+    private void RestartWglButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (Design.IsDesignMode) return;
+        var exePath = Environment.ProcessPath;
+        Process.Start(new ProcessStartInfo(exePath)
+        {
+            UseShellExecute = true,
+            Arguments = $"\"{FileName}\" --gpu"
+        });
+    }
+
+    private void UpdateLabel(object? sender)
+    {
+        var newStr = "Always use brute-force for LP4 decoding: " + (StaticUtils.ForceBruteForce ? "Yes" : "No");
+        switch (sender)
+        {
+            case MenuItem mi:
+                mi.Header = newStr;
+                break;
+            case NativeMenuItem nmi:
+                nmi.Header = newStr;
+                break;
+        }
+    }
+    
+    private void AlwaysUseBruteForceMenuItem_Click(object? sender, RoutedEventArgs e)
+    {
+        StaticUtils.ForceBruteForce = !StaticUtils.ForceBruteForce;
+        UpdateLabel(sender);
+    }
+
+    private void AlwaysUseBruteForceNativeMenuItem_Click(object? sender, EventArgs e)
+    {
+        StaticUtils.ForceBruteForce = !StaticUtils.ForceBruteForce;
+        UpdateLabel(sender);
     }
 }

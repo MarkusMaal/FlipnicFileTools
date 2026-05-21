@@ -2,7 +2,7 @@ using FlipnicLib.Formats;
 
 namespace FlipnicLib.Types;
 
-public class CamData
+public class CamData : FormatBase
 {
     public int CameraId { get; }
     public string CameraName { get; }
@@ -16,15 +16,15 @@ public class CamData
 
     public CamData(byte[] data, FpnSst stage)
     {
-        CameraId = StaticUtils.GetInt32(data, 0); // seems to refer to KUIDX
-        CameraName = stage.GetStringById("CAMN", StaticUtils.GetInt32(data, 0x1C));
+        CameraId = GetInt32(data, 0); // seems to refer to KUIDX
+        CameraName = stage.GetStringById("CAMN", GetInt32(data, 0x1C));
         // how "smooth" the camera moves towards the target
         //
         // the higher the value, the smoother the movement looks
         // lower values are more "stiff"
-        StiffnessX = StaticUtils.GetFloat(data, 0x24);
-        StiffnessY = StaticUtils.GetFloat(data, 0x28);
-        StiffnessZ = StaticUtils.GetFloat(data, 0x2C);
+        StiffnessX = GetFloat(data, 0x24);
+        StiffnessY = GetFloat(data, 0x28);
+        StiffnessZ = GetFloat(data, 0x2C);
         
         // Examples:
         // +------------+--------------------------------------------------------------------+
@@ -53,8 +53,8 @@ public class CamData
 
     public string GetStiffnessXyz()
     {
-        return StaticUtils.DotFloatString(StiffnessX) + "/" + 
-               StaticUtils.DotFloatString(StiffnessY) + "/" +
-               StaticUtils.DotFloatString(StiffnessZ) ;
+        return DotFloatString(StiffnessX) + "/" + 
+               DotFloatString(StiffnessY) + "/" +
+               DotFloatString(StiffnessZ) ;
     }
 }

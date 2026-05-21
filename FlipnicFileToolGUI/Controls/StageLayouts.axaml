@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             x:Class="FlipnicFileToolGUI.Controls.StageLayouts">
+    <Grid RowDefinitions="*,50">
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button VerticalAlignment="Center" Name="ExportChangesButton" Click="ExportChangesButton_OnClick">Export changes</Button>
+        </StackPanel>
+        <DataGrid Grid.Row="0" GridLinesVisibility="All" ItemsSource="{Binding LayoutSource}"
+                  BorderThickness="1" BorderBrush="Gray" Name="StageLayoutGrid"
+                  CanUserResizeColumns="True"
+                  CanUserReorderColumns="True"
+                  CanUserSortColumns="True" SelectionMode="Single"
+                  IsReadOnly="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Label" Binding="{Binding Label}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Size X" Binding="{Binding SizeX}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Size Y" Binding="{Binding SizeY}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Size Z" Binding="{Binding SizeZ}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Skew X" Binding="{Binding SkewX}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Skew Y" Binding="{Binding SkewY}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Skew Z" Binding="{Binding SkewZ}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Position X" Binding="{Binding PositionX}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Position Y" Binding="{Binding PositionY}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Position Z" Binding="{Binding PositionZ}"></DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

@@ -18,7 +18,7 @@ Useful links:
 Prerequisites:
 
 * [FFmpeg](https://ffmpeg.org/) - required for some video related operations
-* [ImageMagick](https://imagemagick.org/) - required for creating PNG mock-ups from menu files (when using the CLI version)
+* [ImageMagick](https://imagemagick.org/) - required for creating PNG mock-ups from menu files (when using the CLI version, no longer needed for latest builds)
 
 Jump to section:
 

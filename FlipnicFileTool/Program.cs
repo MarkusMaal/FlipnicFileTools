@@ -48,6 +48,7 @@ internal static class Program
                 case Enums.Modes.ShowPseudoCode:
                 case Enums.Modes.ShowGimmick:
                 case Enums.Modes.ShowCameras:
+                case Enums.Modes.SstResize:
                     _ = new SstTools(Cfg);
                     break;
                 case Enums.Modes.ShowFpc:
@@ -60,6 +61,9 @@ internal static class Program
                 case Enums.Modes.ListBin:
                 case Enums.Modes.ExtractBin:
                 case Enums.Modes.ReplaceBin:
+                case Enums.Modes.ExtractPak:
+                case Enums.Modes.ListPak:
+                case Enums.Modes.ReplacePak:
                     _ = new BinTools(Cfg);
                     break;
                 case Enums.Modes.ShowHd:
@@ -92,6 +96,8 @@ internal static class Program
                 case Enums.Modes.ExtractPssStreams:
                 case Enums.Modes.ShowIpu:
                 case Enums.Modes.ConvertPssMpeg:
+                case Enums.Modes.GeneratePss:
+                case Enums.Modes.IpuFix:
                     _ = new VideoTools(Cfg);
                     break;
                 case Enums.Modes.ShowLay:

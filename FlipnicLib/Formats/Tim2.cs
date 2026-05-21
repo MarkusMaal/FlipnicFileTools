@@ -33,7 +33,7 @@ namespace FlipnicLib.Formats;
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
  */
-public class Tim2
+public class Tim2 : FormatBase
 {
     public string? Filename { get; set; }
 
@@ -62,10 +62,10 @@ public class Tim2
     // File Header (16 bytes, fixed size, always at file start)
     private struct FileHeader(byte[] data)
     {
-        public char[] FileId { get; } = StaticUtils.GetString(data.Take(4).ToArray()).ToCharArray();   // Must be 'T','I','M','2' to identify TIM2 file
+        public char[] FileId { get; } = GetString(data.Take(4).ToArray()).ToCharArray();   // Must be 'T','I','M','2' to identify TIM2 file
         public byte FormatRevision { get; } = data[4];  // Format version; official spec uses 0x04
         public byte FormatId { get; } = data[5]; // Alignment: 0x00 = 16B, 0x01 = 128B
-        public ushort Pictures { get; } = StaticUtils.GetUInt16(data, 6);  // Number of picture data blocks in file
+        public ushort Pictures { get; } = GetUInt16(data, 6);  // Number of picture data blocks in file
         public byte[] Reserved { get; } = data.Skip(8).Take(8).ToArray();  // Must be all 0x00 (padding for 16-byte header)
 
         public bool IsValid => FileId.SequenceEqual("TIM2");
@@ -75,21 +75,21 @@ public class Tim2
     // Picture Header (48 bytes, aligned to 16 or 128 bytes)
     private struct PictureHeader(byte[] data)
     {
-        public uint TotalSize { get; } = StaticUtils.GetUInt32(data, 0);  // Total bytes for this picture (headers + image + CLUT)
-        public uint ClutSize { get; } = StaticUtils.GetUInt32(data, 4); // Size of CLUT data (may be 0 if no CLUT)
-        public uint ImageSize { get; } = StaticUtils.GetUInt32(data, 8); // Size of image data (sum of MIPMAP levels)
-        public ushort HeaderSize { get; } = StaticUtils.GetUInt16(data, 12);  // Size of headers (picture + optional MIPMAP + user space)
-        public ushort ClutColors { get; } = StaticUtils.GetUInt16(data, 14);  // Actual number of colors in CLUT
+        public uint TotalSize { get; } = GetUInt32(data, 0);  // Total bytes for this picture (headers + image + CLUT)
+        public uint ClutSize { get; } = GetUInt32(data, 4); // Size of CLUT data (may be 0 if no CLUT)
+        public uint ImageSize { get; } = GetUInt32(data, 8); // Size of image data (sum of MIPMAP levels)
+        public ushort HeaderSize { get; } = GetUInt16(data, 12);  // Size of headers (picture + optional MIPMAP + user space)
+        public ushort ClutColors { get; } = GetUInt16(data, 14);  // Actual number of colors in CLUT
         public byte PictFormat { get; } = data[0x10];  // Must be 0 for TIM2 v0x04
         public byte MipMapTextures { get; } = data[0x11];  // Number of MIPMAP textures (0x01 = LV0 only)
         public byte ClutType { get; } =  data[0x12];  // Bit7=CSM2, Bit6=compound flag, Bits0-5=pixel fmt
         public byte ImageType { get; } =  data[0x13];   // Pixel format of image data (see PixelFormat)
-        public ushort ImageWidth { get; } =  StaticUtils.GetUInt16(data, 0x14);  // Width in pixels (restrictions per format/levels)
-        public ushort ImageHeight { get; } =  StaticUtils.GetUInt16(data, 0x16);  // Height in pixels (no power-of-two requirement)
-        public ulong GsTex0 { get; } = StaticUtils.GetUInt64(data, 0x18);  // Raw GS TEX0 register value
-        public ulong GsTex1 { get; } = StaticUtils.GetUInt64(data, 0x20);  // Raw GS TEX1 register value
-        public uint GsTexaFbaPabe { get; } = StaticUtils.GetUInt32(data, 0x28);  // Packed TEXA, FBA, PABE register bits
-        public uint GsTexClut { get; } = StaticUtils.GetUInt32(data, 0x2C);  // TEXCLUT register (only valid if CSM2 mode)
+        public ushort ImageWidth { get; } =  GetUInt16(data, 0x14);  // Width in pixels (restrictions per format/levels)
+        public ushort ImageHeight { get; } =  GetUInt16(data, 0x16);  // Height in pixels (no power-of-two requirement)
+        public ulong GsTex0 { get; } = GetUInt64(data, 0x18);  // Raw GS TEX0 register value
+        public ulong GsTex1 { get; } = GetUInt64(data, 0x20);  // Raw GS TEX1 register value
+        public uint GsTexaFbaPabe { get; } = GetUInt32(data, 0x28);  // Packed TEXA, FBA, PABE register bits
+        public uint GsTexClut { get; } = GetUInt32(data, 0x2C);  // TEXCLUT register (only valid if CSM2 mode)
 
         public bool IsClutCSM2 => (ClutType & (1 << 6)) == 0;
         public bool IsClutCompound => (ClutType & (1 << 5)) == 0;
@@ -105,12 +105,12 @@ public class Tim2
     {
         public MipMapHeader(byte[] data)
         {
-            GsMipTbp1 = StaticUtils.GetUInt64(data, 0);
-            GsMipTbp2 = StaticUtils.GetUInt64(data, 8);
+            GsMipTbp1 = GetUInt64(data, 0);
+            GsMipTbp2 = GetUInt64(data, 8);
             Sizes = new uint[(data.Length - 0x10) / 4];
             for (var i = 0x10; i < data.Length; i += 0x4)
             {
-                Sizes[(i - 0x10) / 4] = StaticUtils.GetUInt32(data, i);
+                Sizes[(i - 0x10) / 4] = GetUInt32(data, i);
             } 
         }
 
@@ -123,23 +123,23 @@ public class Tim2
     private struct ExtendedHeader(byte[] data)
     {
         public byte[] ExHeaderId { get; } = data.Take(4).ToArray();       // 'e','X','t','\0' identifier
-        public uint UserSpaceSize = StaticUtils.GetUInt32(data, 4); // Valid total size of user space (incl. this header)
-        public uint UserDataSize = StaticUtils.GetUInt32(data, 8);  // Bytes of user data before comment string
-        public uint Reserved = StaticUtils.GetUInt32(data, 12);     // Must be 0x00000000
+        public uint UserSpaceSize = GetUInt32(data, 4); // Valid total size of user space (incl. this header)
+        public uint UserDataSize = GetUInt32(data, 8);  // Bytes of user data before comment string
+        public uint Reserved = GetUInt32(data, 12);     // Must be 0x00000000
         public bool IsValid => ExHeaderId.SequenceEqual("eXt\0"u8.ToArray());
     }
     
     // GS Register field extraction helpers (TEX0/TEX1 parsing)
     private struct GsTex0Fields(byte[] data)
     {
-        public ushort Tbp0 { get; set; } = StaticUtils.GetUInt16(data, 0);   // Texture base pointer
+        public ushort Tbp0 { get; set; } = GetUInt16(data, 0);   // Texture base pointer
         public byte Tbw { get; set; } = data[2];    // Texture buffer width
         public byte Psm { get; set; } = data[3];    // Pixel storage mode
         public byte Tw { get; set; } = data[4];     // Texture width log2
         public byte Th { get; set; } = data[5];     // Texture height log2
         public byte Tcc { get; set; } = data[6];    // Texture color component
         public byte Tfx { get; set; } = data[7];    // Texture function
-        public ushort Cbp { get; set; } = StaticUtils.GetUInt16(data, 8);    // CLUT buffer base
+        public ushort Cbp { get; set; } = GetUInt16(data, 8);    // CLUT buffer base
         public byte Cpsm { get; set; } = data[10];   // CLUT pixel storage mode
         public byte Csm { get; set; } = data[11];    // CLUT storage mode (0=CSM1, 1=CSM2)
         public byte Csa { get; set; } = data[12];    // CLUT entry offset
@@ -172,8 +172,8 @@ public class Tim2
         public byte  Mmag { get; set; } = data[2];   // Filter when texture expanded
         public byte  Mmin { get; set; } = data[3];   // Filter when texture reduced
         public byte  Mtba { get; set; } = data[4];   // MIPMAP base address spec
-        public ushort L { get; set; } = StaticUtils.GetUInt16(data, 5);      // LOD parameter L
-        public ushort K { get; set; } = StaticUtils.GetUInt16(data, 7);      // LOD parameter K
+        public ushort L { get; set; } = GetUInt16(data, 5);      // LOD parameter L
+        public ushort K { get; set; } = GetUInt16(data, 7);      // LOD parameter K
 
         public static GsTex1Fields Parse(ulong tex1) {
             GsTex1Fields f = new()
@@ -411,7 +411,7 @@ public class Tim2
                     {
                         case PixelFormat.Tim2Rgb16:
                             byteIdx = index * 2;
-                            var val = StaticUtils.GetUInt16(data, byteIdx);
+                            var val = GetUInt16(data, byteIdx);
                             Color16 c16 = new(val);
                             color = c16.ToColor32();
                             break;
@@ -742,7 +742,7 @@ public class Tim2
         builder.Save(output);
         if (output is not FileStream fs)
         {
-            StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded image data to memory ({StaticUtils.GetFilesizeString(output.Length)})\n");
+            StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded image data to memory ({GetFilesizeString(output.Length)})\n");
             return;
         }
         Console.WriteLine($"\rSaved as: {fs.Name}");
@@ -781,10 +781,7 @@ public class Tim2
                 """;
     }
     
-    public override string ToString()
-    {
-        return ToString(false);
-    }
+    public override string ToString() => ToString(false);
 
     public void ReplaceColor(byte[] rgb)
     {

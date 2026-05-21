@@ -1,6 +1,6 @@
 namespace FlipnicLib.Formats;
 
-public class FpnLit()
+public class FpnLit() : FormatBase
 {
     private List<ColorIntensity> LightMaps { get; } = [];
     
@@ -13,9 +13,9 @@ public class FpnLit()
             dataStream.ReadExactly(data, 0, data.Length);
             LightMaps.Add(new ColorIntensity
             {
-                Red = StaticUtils.GetFloat(data, 0),
-                Green = StaticUtils.GetFloat(data, 4),
-                Blue = StaticUtils.GetFloat(data, 8),
+                Red = GetFloat(data, 0),
+                Green = GetFloat(data, 4),
+                Blue = GetFloat(data, 8),
             });
         }
 

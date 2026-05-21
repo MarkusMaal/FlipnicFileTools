@@ -121,6 +121,10 @@ namespace FlipnicFileToolGUI.Controls
                 lp4.SetSelectedModel(model);
             }
             _texture = lp4.Texture;
+            if (lp4.SelectedModel.HasEmbeddedTexture)
+            {
+                _texture = lp4.SelectedModel.GenerateDummyTexture();
+            }
             GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             if (lp4.SelectedModel != null)
@@ -136,6 +140,7 @@ namespace FlipnicFileToolGUI.Controls
                     _vertices[i + 4] += lp4.SelectedModel.Offset[2];
                 }
             }
+            StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded 3D model data to memory ({StaticUtils.GetFilesizeString(_vertices.Length)})\n");
 
             var ms = new MemoryStream((byte[])(_texture ?? new byte[]{}));
             try
@@ -157,6 +162,7 @@ namespace FlipnicFileToolGUI.Controls
             List<float> vertices = new();
             vertices.AddRange(pathTrace.DrawPath());
             _vertices = vertices.ToArray();
+            StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded 3D model data to memory ({StaticUtils.GetFilesizeString(_vertices.Length)})\n");
             CycleUV = true;
             GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
@@ -181,6 +187,7 @@ namespace FlipnicFileToolGUI.Controls
                 vertices.Add(vertex.NormalCoordZ / 4096f);
             }
             _vertices = vertices.ToArray();
+            StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded 3D model data to memory ({StaticUtils.GetFilesizeString(_vertices.Length)})\n");
             CycleUV = false;
             GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
