@@ -13,6 +13,10 @@ Final files will be located within the `out/` directory.
 
 Once you have met the prerequisites, you can run `make` to build both the CLI and GUI versions. Really, it's just a wrapper for `dotnet publish` in this case. 
 
+### Testing with make
+
+You can run `make test` to perform automated testing. This is useful if you are modifying the code and are trying to figure out if your changes affect something else in the program. All the tests should pass under normal conditions. 
+
 ### Packaging (GUI only)
 
 - If you want to make a .app file for macOS, you need to run `make publish-macos`.
@@ -21,6 +25,10 @@ Once you have met the prerequisites, you can run `make` to build both the CLI an
 ## Building without make
 
 If you don't have make, you can build the app in PowerShell by running the `build_native.ps1` script.
+
+### Testing without make
+
+If you don't have make, you can run `dotnet test --verbosity normal FlipnicLib.Tests/FlipnicLib.Tests.csproj` to run the automated test suite. This is useful if you are modifying the code and are trying to figure out if your changes affect something else in the program. All the tests should pass under normal conditions. 
 
 ### Packaging (GUI only)
 
