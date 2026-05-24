@@ -104,6 +104,7 @@ public class BinFile : FormatBase
                 offsets.Add(byteoffset);
             } else if (insub)
             {
+                tOff -= 0x40; // there is no "*Top Of" file for subdirs, so subtract 0x40 to get actual TOC offset 
                 var i = buffer.Length - 5;
                 while (buffer[i] == 0)
                     --i;
