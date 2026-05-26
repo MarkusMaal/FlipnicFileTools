@@ -107,9 +107,9 @@ public class Tim2Test
         // make sure palette matches and is ordered correctly
         foreach (var (index, expectedColor) in _expectedColors.Index())
         {
-            var line = colorPalette[index];
+            var actualColor = colorPalette[index].Split(',')[1];
             var colorStr = "#" + expectedColor.ToString("X").PadLeft(6, '0');
-            Assert.Contains(colorStr, line);
+            Assert.AreEqual(colorStr, actualColor);
         }
     }
 }
