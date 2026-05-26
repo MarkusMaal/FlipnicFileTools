@@ -31,7 +31,7 @@ public class BinFileTest
             {"SUBTEST.TXT", 0x100}, // Flipnic file tools testing suite
             {"SUBTEST2.TXT", 0x120}, // Hi
             {"ABCDEF.DAT", 0x122}, // Padding
-            {"*End Of Mem Data", 0x7E000}, // Padding
+            {"*End Of Mem Data", 0x7E000},
         };
 
         foreach (var f in fsEntries)
@@ -45,17 +45,8 @@ public class BinFileTest
         }
 
         MockStream.Position = 2048;
-        for (var i = 0; i < 2048; i++)
-        {
-            MockStream.WriteByte(0xA7);
-        }
-        MockStream.Position = 4096;
-        for (var i = 0; i < 4096; i++)
-        {
-            MockStream.WriteByte(0x80);
-        }
-
-        MockStream.Position = 8192;
+        for (var i = 0; i < 2048; i++) { MockStream.WriteByte(0xA7); }
+        for (var i = 0; i < 4096; i++) { MockStream.WriteByte(0x80); }
         foreach (var f in subDirEntries)
         {
             MockStream.Write(Encoding.ASCII.GetBytes(f.Key));
@@ -68,11 +59,7 @@ public class BinFileTest
 
         MockStream.Position = 8192 + 0x100;
         MockStream.Write("Flipnic file tools testing suite"u8);
-
-        MockStream.Position = 8192 + 0x120;
         MockStream.Write("Hi"u8);
-        
-        MockStream.Position = 8192 + 0x122;
         for (var i = 0; i < 0x7DEDE; i++)
         {
             MockStream.WriteByte(0xFF);
