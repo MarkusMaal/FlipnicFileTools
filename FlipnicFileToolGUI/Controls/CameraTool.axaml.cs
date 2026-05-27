@@ -30,12 +30,16 @@ public partial class CameraTool : UserControl
     {
         if (sender is not Button button) return;
         var file = await FileHelpers.SaveFile(this,
-            [button.Content!.ToString()!.Contains("XML") ? Filters.XmlFile : Filters.TxtFile]);
+            [button.Content!.ToString()!.Contains("XML") ? Filters.XmlFile : (button.Content!.ToString()!.Contains("FPC") ? Filters.FpnFpc : Filters.TxtFile)]);
         
         if (file == null) return;
         if (button.Content.ToString()!.Contains("XML"))
         {
             CameraObject.GenerateXml().Save(File.OpenWrite(Uri.UnescapeDataString(file)));
+        }
+        else if (button.Content.ToString()!.Contains("FPC"))
+        {
+            await File.WriteAllBytesAsync(Uri.UnescapeDataString(file), CameraObject.GetBytes());
         }
         else
         {

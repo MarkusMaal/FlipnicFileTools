@@ -29,6 +29,7 @@
             </StackPanel>
         </StackPanel>
         <StackPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Spacing="10">
+            <Button Content="Export FPC" Click="Button_OnClick"/>
             <Button Content="Export TXT" Click="Button_OnClick"/>
             <Button Content="Export XML" Click="Button_OnClick"/>
         </StackPanel>

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Xml.Linq;
 using FlipnicLib.Types;
 
@@ -70,23 +71,15 @@ public class FpnFpc : FormatBase
             List<CameraFrame> frames = [];
             for (var i = 0; i < _numFrames; i++)
             {
-                var ox = _sequenceXo.Count > i ? _sequenceXo[i] : _originX;
-                var oy = _sequenceYo.Count > i ? _sequenceYo[i] : _originY;
-                var oz = _sequenceZo.Count > i ? _sequenceZo[i] : _originZ;
-                var tx = _sequenceXt.Count > i ? _sequenceXt[i] : _targetX;
-                var ty = _sequenceYt.Count > i ? _sequenceYt[i] : _targetY;
-                var tz = _sequenceZt.Count > i ? _sequenceZt[i] : _targetZ;
-                var fov = _sequenceFov.Count > i ? _sequenceFov[i] : _fov;
-                frames.Add(new CameraFrame
-                {
-                    Fov = DotFloatString(fov) + "°",
-                    OriginX = DotFloatString(ox),
-                    OriginY = DotFloatString(oy),
-                    OriginZ = DotFloatString(oz),
-                    TargetX = DotFloatString(tx),
-                    TargetY = DotFloatString(ty),
-                    TargetZ = DotFloatString(tz),
-                });
+                var cameraFrame = new CameraFrame();
+                if (_sequenceXo.Count > i) cameraFrame.OriginX = DotFloatString(_sequenceXo[i]);
+                if (_sequenceYo.Count > i) cameraFrame.OriginY = DotFloatString(_sequenceYo[i]);
+                if (_sequenceZo.Count > i) cameraFrame.OriginZ = DotFloatString(_sequenceZo[i]);
+                if (_sequenceXt.Count > i) cameraFrame.TargetX = DotFloatString(_sequenceXt[i]);
+                if (_sequenceYt.Count > i) cameraFrame.TargetY = DotFloatString(_sequenceYt[i]);
+                if (_sequenceZt.Count > i) cameraFrame.TargetZ = DotFloatString(_sequenceZt[i]);
+                if (_sequenceFov.Count > i) cameraFrame.Fov = DotFloatString(_sequenceFov[i]) + "°";
+                frames.Add(cameraFrame);
             }
             return frames.ToArray();
         }
@@ -161,6 +154,45 @@ public class FpnFpc : FormatBase
         }
     }
 
+    public FpnFpc(XDocument input)
+    {
+        var properties = input.Root!.Element("Properties");
+        var animation = input.Root!.Element("Animation");
+        var propertiesOrigin = properties!.Element("Origin");
+        var propertiesTarget = properties!.Element("Target");
+        var propertiesFov = properties!.Element("FieldOfView");
+        var propertiesFrames = properties!.Element("Frames");
+        var propertiesSequences = properties!.Element("Sequences");
+        _originX = float.Parse(propertiesOrigin!.Attribute("X")!.Value);
+        _originY = float.Parse(propertiesOrigin!.Attribute("Y")!.Value);
+        _originZ = float.Parse(propertiesOrigin!.Attribute("Z")!.Value);
+        _targetX = float.Parse(propertiesTarget!.Attribute("X")!.Value);
+        _targetY = float.Parse(propertiesTarget!.Attribute("Y")!.Value);
+        _targetZ = float.Parse(propertiesTarget!.Attribute("Z")!.Value);
+        _fov = float.Parse(propertiesFov!.Value);
+        _numSequences = int.Parse(propertiesSequences!.Value);
+        _numFrames = int.Parse(propertiesFrames!.Value);
+        for (var i = 0; i < _numFrames; i++)
+        {
+            var frame = animation!.Elements().ToArray()[i];
+            var frameOx = frame.Element("Origin")!.Attribute("X");
+            var frameOy = frame.Element("Origin")!.Attribute("Y");
+            var frameOz = frame.Element("Origin")!.Attribute("Z");
+            var frameTx = frame.Element("Target")!.Attribute("X");
+            var frameTy = frame.Element("Target")!.Attribute("Y");
+            var frameTz = frame.Element("Target")!.Attribute("Z");
+            var frameFov = frame.Element("FieldOfView");
+            var culture = CultureInfo.CreateSpecificCulture("en-US");
+            if (frameOx != null) _sequenceXo.Add(float.Parse(frameOx.Value, culture));
+            if (frameOy != null) _sequenceYo.Add(float.Parse(frameOy.Value, culture));
+            if (frameOz != null) _sequenceZo.Add(float.Parse(frameOz.Value, culture));
+            if (frameTx != null) _sequenceXt.Add(float.Parse(frameTx.Value, culture));
+            if (frameTy != null) _sequenceYt.Add(float.Parse(frameTy.Value, culture));
+            if (frameTz != null) _sequenceZt.Add(float.Parse(frameTz.Value, culture));
+            if (frameFov != null) _sequenceFov.Add(float.Parse(frameFov.Value, culture));
+        }
+    }
+
     public override string ToString()
     {
         return ToString(false);
@@ -204,6 +236,53 @@ public class FpnFpc : FormatBase
     }
 
     /// <summary>
+    /// Get the bytes from this object to generate a .FPC file 
+    /// </summary>
+    /// <returns></returns>
+    public byte[] GetBytes()
+    {
+        var ms = new MemoryStream();
+        ms.Write("\0\0\0\0"u8);
+        ms.Write(BitConverter.GetBytes(_numSequences));
+        ms.WriteByte(0x10);
+        ms.WriteByte(0x0);
+        ms.WriteByte(0x0);
+        ms.WriteByte(0x0);
+        ms.Write(BitConverter.GetBytes(_numFrames));
+        ms.Write(BitConverter.GetBytes(_originX));
+        ms.Write(BitConverter.GetBytes(_originY));
+        ms.Write(BitConverter.GetBytes(_originZ));
+        ms.Write(BitConverter.GetBytes(_fov));
+        ms.Write(BitConverter.GetBytes(_targetX));
+        ms.Write(BitConverter.GetBytes(_targetY));
+        ms.Write(BitConverter.GetBytes(_targetZ));
+        ms.Write("\0\0\0\0"u8);
+        if (_sequenceXo.Count > 0) WriteFpcSection(0, _sequenceXo.ToArray(), ms);
+        if (_sequenceYo.Count > 0) WriteFpcSection(1, _sequenceYo.ToArray(), ms);
+        if (_sequenceZo.Count > 0) WriteFpcSection(2, _sequenceZo.ToArray(), ms);
+        if (_sequenceXt.Count > 0) WriteFpcSection(3, _sequenceXt.ToArray(), ms);
+        if (_sequenceYt.Count > 0) WriteFpcSection(4, _sequenceYt.ToArray(), ms);
+        if (_sequenceZt.Count > 0) WriteFpcSection(5, _sequenceZt.ToArray(), ms);
+        if (_sequenceFov.Count > 0) WriteFpcSection(7, _sequenceFov.ToArray(), ms);
+        return ms.ToArray();
+    }
+
+    private void WriteFpcSection(int id, float[] sequence, Stream ms)
+    {
+        ms.Write(BitConverter.GetBytes(id));
+        ms.Write(BitConverter.GetBytes(sequence.Length));
+        ms.Write(BitConverter.GetBytes(_numFrames));
+        ms.Write(BitConverter.GetBytes(0x1000));
+            
+        var endPos = ms.Position + 4 *  _numFrames;
+        foreach (var sv in sequence)
+        {
+            ms.Write(BitConverter.GetBytes(sv));
+        }
+        ms.Seek(endPos, SeekOrigin.Begin);
+    }
+
+    /// <summary>
     /// Converts FPC to human-readable XML
     /// </summary>
     public XDocument GenerateXml()
@@ -213,22 +292,20 @@ public class FpnFpc : FormatBase
         
         for (var i = 0; i < _numFrames; i++)
         {
-            var ox = _sequenceXo.Count > i ? _sequenceXo[i] : _originX;
-            var oy = _sequenceYo.Count > i ? _sequenceYo[i] : _originY;
-            var oz = _sequenceZo.Count > i ? _sequenceZo[i] : _originZ;
-            var tx = _sequenceXt.Count > i ? _sequenceXt[i] : _targetX;
-            var ty = _sequenceYt.Count > i ? _sequenceYt[i] : _targetY;
-            var tz = _sequenceZt.Count > i ? _sequenceZt[i] : _targetZ;
-            var fov = _sequenceFov.Count > i ? _sequenceFov[i] : _fov;
-            frames.Add(new XElement("Frame", new XElement("Origin", 
-                    new XAttribute("X", DotFloatString(ox)),
-                    new XAttribute("Y", DotFloatString(oy)),
-                    new XAttribute("Z", DotFloatString(oz))),
-                new XElement("Target", 
-                    new XAttribute("X", DotFloatString(tx)),
-                    new XAttribute("Y", DotFloatString(ty)),
-                    new XAttribute("Z", DotFloatString(tz))),
-                new XElement("FieldOfView", DotFloatString(fov))));
+            var origin = new XElement("Origin");
+            
+            if (_sequenceXo.Count > i) origin.Add(new XAttribute("X", DotFloatString(_sequenceXo[i])));
+            if (_sequenceYo.Count > i) origin.Add(new XAttribute("Y", DotFloatString(_sequenceYo[i])));
+            if (_sequenceZo.Count > i) origin.Add(new XAttribute("Z", DotFloatString(_sequenceZo[i])));
+            
+            var target = new XElement("Target");
+            if (_sequenceXt.Count > i) target.Add(new XAttribute("X", DotFloatString(_sequenceXt[i])));
+            if (_sequenceYt.Count > i) target.Add(new XAttribute("Y", DotFloatString(_sequenceYt[i])));
+            if (_sequenceZt.Count > i) target.Add(new XAttribute("Z", DotFloatString(_sequenceZt[i])));
+            
+            var frame = new XElement("Frame", origin, target);
+            if (_sequenceFov.Count > i) frame.Add(new XElement("FieldOfView", DotFloatString(_sequenceFov[i])));
+            frames.Add(frame);
         }
         var doc = new XDocument(
             new XDeclaration("1.0", "UTF-8", null),

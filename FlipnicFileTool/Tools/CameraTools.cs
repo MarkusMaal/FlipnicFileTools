@@ -1,3 +1,4 @@
+using System.Xml.Linq;
 using FlipnicLib;
 using FlipnicLib.Formats;
 
@@ -14,7 +15,19 @@ public class CameraTools
                 break;
             case Enums.Modes.ConvertXml:
                 new FpnFpc(cfg.FileName).GenerateXml().Save(cfg.Output);
+                SuccessMsg(cfg.Output);
+                break;
+            case Enums.Modes.ConvertFpc:
+                var fpc = new FpnFpc(XDocument.Load(File.OpenRead(cfg.FileName)));
+                File.WriteAllBytes(cfg.Output, fpc.GetBytes());
+                SuccessMsg(cfg.Output);
                 break;
         }
+    }
+
+    private static void SuccessMsg(string output)
+    {
+        StaticUtils.DecodeColors("~-ASuccess~--: File saved as " + output);
+        Console.WriteLine();
     }
 }

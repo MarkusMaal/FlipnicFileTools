@@ -67,7 +67,8 @@ public abstract class Enums
         SstResize,
         ExtractPak,
         ListPak,
-        ReplacePak
+        ReplacePak,
+        ConvertFpc
     }
     
     /// <summary>
@@ -120,6 +121,7 @@ public abstract class Enums
             "--show-fpc" => Modes.ShowFpc,
             "--show-sst-resources" => Modes.ListResources,
             "--convert-fpc-to-xml" => Modes.ConvertXml,
+            "--convert-xml-to-fpc" => Modes.ConvertFpc,
             "--show-sst-toc" => Modes.ShowSstToc,
             "--show-messages" => Modes.ShowMessages,
             "--list-pss-streams" => Modes.ListPssStreams,

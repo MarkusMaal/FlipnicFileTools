@@ -52,6 +52,8 @@ internal static class Program
                     _ = new SstTools(Cfg);
                     break;
                 case Enums.Modes.ShowFpc:
+                case Enums.Modes.ConvertXml:
+                case Enums.Modes.ConvertFpc:
                     _ = new CameraTools(Cfg);
                     break;
                 case Enums.Modes.ShowMessages:
