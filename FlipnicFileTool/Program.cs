@@ -54,6 +54,7 @@ internal static class Program
                 case Enums.Modes.ShowFpc:
                 case Enums.Modes.ConvertXml:
                 case Enums.Modes.ConvertFpc:
+                case Enums.Modes.GenerateAnimation:
                     _ = new CameraTools(Cfg);
                     break;
                 case Enums.Modes.ShowMessages:

@@ -6,9 +6,14 @@ namespace FlipnicFileTool;
 public class Config
 {
     /// <summary>
-    /// Input filename
+    /// Input filename array
     /// </summary>
-    public string FileName { get; set; } = "";
+    public List<string> FileNameArr { get; set; } = [];
+
+    /// <summary>
+    /// Input filename (for backwards compatibility)
+    /// </summary>
+    public string FileName => FileNameArr[0];
     
     /// <summary>
     /// Output filename
@@ -164,10 +169,13 @@ public class Config
                     MlbSect = arg;
                     break;
                 case "--input":
-                    FileName = arg;
+                    FileNameArr.Add(arg);
                     break;
                 case "--output":
                     Output = arg;
+                    break;
+                case "--generate-animation":
+                    Count = int.Parse(arg);
                     break;
                 case "--ffmpeg-path":
                     FFmpegPath = arg;
@@ -214,7 +222,7 @@ public class Config
         Mode = Enums.GuessAction(args[0]);
         if (Mode != Enums.Modes.ShowHelp)
         {
-            FileName = args[0];
+            FileNameArr.Add(args[0]);
         }
     }
 

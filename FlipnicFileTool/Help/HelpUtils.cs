@@ -15,7 +15,7 @@ public abstract class HelpUtils
             (
             "",
             "", [
-                new HelpLine("input", "File to open"),
+                new HelpLine("input", "File to open (for multiple inputs, specify args like this: --input FILE_A --input FILE_B)"),
                 new HelpLine("output", "File to write to"),
                 new HelpLine("help", "Display help"),
                 new HelpLine("disclaimer", "Display disclaimer"),
@@ -66,7 +66,8 @@ public abstract class HelpUtils
                 [
                     new HelpLine("show-fpc*", "Display data from .FPC file as human-readable text"),
                     new HelpLine("convert-fpc-to-xml", "Convert .FPC file to .XML"),
-                    new HelpLine("convert-xml-to-fpc", "Creates a .FPC file based on a .XML file compatible with this program")
+                    new HelpLine("convert-xml-to-fpc", "Creates a .FPC file based on a .XML file compatible with this program"),
+                    new HelpLine("generate-animation [frame count]", "Create a camera animation by linearly interpolating between two .FPC files, 2 inputs, output and frame count")
                 ]
             ),
             new(

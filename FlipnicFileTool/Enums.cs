@@ -68,7 +68,8 @@ public abstract class Enums
         ExtractPak,
         ListPak,
         ReplacePak,
-        ConvertFpc
+        ConvertFpc,
+        GenerateAnimation
     }
     
     /// <summary>
@@ -173,6 +174,7 @@ public abstract class Enums
             "--extract-pak" => Modes.ExtractPak,
             "--list-pak" => Modes.ListPak,
             "--replace-pak" => Modes.ReplacePak,
+            "--generate-animation" => Modes.GenerateAnimation,
             _ => mode
         };
         

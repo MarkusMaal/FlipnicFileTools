@@ -34,8 +34,8 @@ public class FpnFpc : FormatBase
 
     //private int TotalFrames;
 
-    private readonly int _numFrames;
-    private readonly int _numSequences;
+    private int _numFrames;
+    private int _numSequences;
     public string NumFramesStr => _numFrames.ToString();
 
     private enum ValueIDs
@@ -271,13 +271,26 @@ public class FpnFpc : FormatBase
     {
         ms.Write(BitConverter.GetBytes(id));
         ms.Write(BitConverter.GetBytes(sequence.Length));
-        ms.Write(BitConverter.GetBytes(_numFrames));
+        var sectionLength = sequence.Length;
+        while (sectionLength % 4 != 0)
+        {
+            sectionLength++;
+        }
+        ms.Write(BitConverter.GetBytes(sectionLength));
         ms.Write(BitConverter.GetBytes(0x1000));
             
-        var endPos = ms.Position + 4 *  _numFrames;
+        var endPos = ms.Position + 4 *  (sectionLength);
         foreach (var sv in sequence)
         {
             ms.Write(BitConverter.GetBytes(sv));
+        }
+
+        while (ms.Position % 0x10 != 0)
+        {
+            ms.WriteByte(0);
+            ms.WriteByte(16);
+            ms.WriteByte(0);
+            ms.WriteByte(0);
         }
         ms.Seek(endPos, SeekOrigin.Begin);
     }
@@ -325,5 +338,65 @@ public class FpnFpc : FormatBase
                 new XElement("Sequences", _numSequences)
             ), frames));
         return doc;
+    }
+
+    /// <summary>
+    /// Create a linearly interpolated animation sequence based on the information provided
+    /// </summary>
+    /// <param name="startOrigin">Initial origin values (XYZ)</param>
+    /// <param name="startTarget">Initial target values (XYZ)</param>
+    /// <param name="startFov">Initial field of view (degrees)</param>
+    /// <param name="steps">Steps for each value (Xo,Yo,Zo,Xt,Yt,Zt,FOV)</param>
+    /// <param name="numFrames">Number of frames to include in the animation</param>
+    public void GenerateSequence(float[] startOrigin, float[] startTarget, float startFov, float[] steps, int numFrames)
+    {
+        _numFrames = numFrames;
+        _numSequences = steps.Count(s => s != 0);
+        _sequenceXo.Clear();
+        _sequenceYo.Clear();
+        _sequenceZo.Clear();
+        _sequenceFov.Clear();
+        _sequenceXt.Clear();
+        _sequenceYt.Clear();
+        _sequenceZt.Clear();
+        if (steps[0] != 0) _sequenceXo.Add(startOrigin[0]);
+        if (steps[1] != 0) _sequenceYo.Add(startOrigin[1]);
+        if (steps[2] != 0) _sequenceZo.Add(startOrigin[2]);
+        if (steps[3] != 0) _sequenceXt.Add(startTarget[0]);
+        if (steps[4] != 0) _sequenceYt.Add(startTarget[1]);
+        if (steps[5] != 0) _sequenceZt.Add(startTarget[2]);
+        if (steps[6] != 0) _sequenceFov.Add(startFov);
+        for (var i = 0; i < numFrames - 2; i++)
+        {
+            if (steps[0] != 0) _sequenceXo.Add(_sequenceXo[^1] + steps[0]);
+            if (steps[1] != 0) _sequenceYo.Add(_sequenceYo[^1] + steps[1]);
+            if (steps[2] != 0) _sequenceZo.Add(_sequenceZo[^1] + steps[2]);
+            if (steps[3] != 0) _sequenceXt.Add(_sequenceXt[^1] + steps[3]);
+            if (steps[4] != 0) _sequenceYt.Add(_sequenceYt[^1] + steps[4]);
+            if (steps[5] != 0) _sequenceZt.Add(_sequenceZt[^1] + steps[5]);
+            if (steps[6] != 0) _sequenceFov.Add(_sequenceFov[^1] + steps[6]);
+        }
+        if (steps[0] != 0) _sequenceXo.Add(_originX);
+        if (steps[1] != 0) _sequenceYo.Add(_originY);
+        if (steps[2] != 0) _sequenceZo.Add(_originZ);
+        if (steps[3] != 0) _sequenceXt.Add(_targetX);
+        if (steps[4] != 0) _sequenceYt.Add(_targetY);
+        if (steps[5] != 0) _sequenceZt.Add(_targetZ);
+        if (steps[6] != 0) _sequenceFov.Add(_fov);
+    }
+
+    public float[] GetOrigin()
+    {
+        return [_originX, _originY, _originZ];
+    }
+
+    public float[] GetTarget()
+    {
+        return [_targetX, _targetY, _targetZ];
+    }
+
+    public float GetFov()
+    {
+        return _fov;
     }
 }
