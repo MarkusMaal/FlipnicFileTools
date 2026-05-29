@@ -29,4 +29,13 @@ public class HelpTopic(string title, string ext, HelpLine[] lines)
         encoded = Lines.Aggregate(encoded, (current, l) => current + ("~-F" + l.Flag.PadRight(36, ' ') + "~-7" + l.Description + "\n"));
         StaticUtils.DecodeColors(encoded);
     }
+
+    /// <summary>
+    /// Adds a new line to current help topic
+    /// </summary>
+    /// <param name="line">Help line to add</param>
+    public void AddLine(HelpLine line)
+    {
+        Lines = Lines.Concat([line]).ToArray();
+    }
 }

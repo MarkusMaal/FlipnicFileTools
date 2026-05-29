@@ -9,23 +9,27 @@ public abstract class HelpUtils
     /// </summary>
     public static void GenerateHelp()
     {
+        HelpTopic generalLines = new ("", "", 
+        [
+            new HelpLine("input",
+                "File to open (for multiple inputs, specify args like this: --input FILE_A --input FILE_B)"),
+            new HelpLine("output", "File to write to"),
+            new HelpLine("help", "Display help"),
+            new HelpLine("disclaimer", "Display disclaimer"),
+            new HelpLine("simple", "Use output that is easy to parse for computer programs"),
+            new HelpLine("low-memory", "Reduces performance to save on memory usage"),
+            new HelpLine("ffmpeg-path", "Path to FFmpeg (for audio/video conversion operations)"),
+            new HelpLine("msg-path", "Path to JA.MSG file (optional)"),
+            new HelpLine("version", "Displays the version number for FlipnicLib"),
+        ]);
+        if (StaticUtils.IsBeta)
+        {
+            generalLines.AddLine(new HelpLine("test", "Change how the program behaves specifically for automated testing"));
+            generalLines.AddLine(new HelpLine("playground", "Runs code from the PlaygroundTools class with the configuration specified (development tool)"));
+        }
         HelpTopic[] help =
         [
-            new
-            (
-            "",
-            "", [
-                new HelpLine("input", "File to open (for multiple inputs, specify args like this: --input FILE_A --input FILE_B)"),
-                new HelpLine("output", "File to write to"),
-                new HelpLine("help", "Display help"),
-                new HelpLine("disclaimer", "Display disclaimer"),
-                new HelpLine("simple", "Use output that is easy to parse for computer programs"),
-                new HelpLine("low-memory", "Reduces performance to save on memory usage"),
-                new HelpLine("ffmpeg-path", "Path to FFmpeg (for audio/video conversion operations)"),
-                new HelpLine("msg-path", "Path to JA.MSG file (optional)"),
-                new HelpLine("test", "Change how the program behaves specifically for automated testing"), 
-                new HelpLine("version", "Displays the version number for FlipnicLib"),]
-            ),
+            generalLines,
             new(
                 "VAB body files",
                 "*.BD",

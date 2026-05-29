@@ -69,7 +69,8 @@ public abstract class Enums
         ListPak,
         ReplacePak,
         ConvertFpc,
-        GenerateAnimation
+        GenerateAnimation,
+        Playground
     }
     
     /// <summary>
@@ -175,6 +176,7 @@ public abstract class Enums
             "--list-pak" => Modes.ListPak,
             "--replace-pak" => Modes.ReplacePak,
             "--generate-animation" => Modes.GenerateAnimation,
+            "--playground" => Modes.Playground,
             _ => mode
         };
         

@@ -13,7 +13,7 @@ public class Config
     /// <summary>
     /// Input filename (for backwards compatibility)
     /// </summary>
-    public string FileName => FileNameArr[0];
+    public string FileName => FileNameArr.Count > 0 ? FileNameArr[0] : "";
     
     /// <summary>
     /// Output filename
@@ -232,8 +232,9 @@ public class Config
     /// <returns>Exit code, if -1 then there were no errors found and execution can continue</returns>
     public int DetectAndDisplayErrors()
     {
+        Enums.Modes[] exceptions = [Enums.Modes.ShowHelp, Enums.Modes.Playground];
         
-        if (FileName == "" && Mode != Enums.Modes.ShowHelp)
+        if (FileName == "" && exceptions.All(p => p != Mode))
         {
             StaticUtils.DecodeColors(
                 "~-CError~--: Must specify input filename in this case! To see command line usage, append the ~-F--help~-- flag.");
@@ -241,14 +242,20 @@ public class Config
             return 1;
         }
 
-        if (!File.Exists(FileName) && Mode != Enums.Modes.ShowHelp)
+        if (!File.Exists(FileName) && exceptions.All(p => p != Mode))
         {
             StaticUtils.DecodeColors("~-CError~--: Input file does not exist!");
             Console.WriteLine();
             return 2;
         }
+        
+        if (FileNameArr.Any(f => f == "" || !File.Exists(f)))
+        {
+            StaticUtils.DecodeColors("~-4Error~--: One or more specified input files do not exist!");
+            return 400;
+        }
 
-        if (Mode == Enums.Modes.ShowHelp || !new FileInfo(FileName).IsReadOnly || Output == "") return -1;
+        if (exceptions.Any(p => p == Mode) || !new FileInfo(FileName).IsReadOnly || Output == "") return -1;
         StaticUtils.DecodeColors("~-CError~--: Read-only file system");
         Console.WriteLine();
         return 3;

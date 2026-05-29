@@ -22,7 +22,6 @@ internal static class Program
             Cfg.ShowSignature();
             var code = Cfg.DetectAndDisplayErrors();
             if (code != -1) return code;
-
             switch (Cfg.Mode)
             {
                 case Enums.Modes.NotImplemented:
@@ -141,8 +140,11 @@ internal static class Program
                     Console.WriteLine(elf);
                     break;
                 case Enums.Modes.ShowDummy:
-                    var df = new Dummy(File.OpenRead(Cfg.FileName));
+                    var df = new Dummy(File.OpenRead(Cfg.FileName!));
                     Console.WriteLine(df);
+                    break;
+                case Enums.Modes.Playground:
+                    _ = new PlaygroundTools(Cfg);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(args));
