@@ -21,7 +21,7 @@ public class FpnMsgTest
     ];
     
     [TestMethod]
-    public void TestRoundTrip()
+    public void MsgRoundTrip()
     {
         var ms = new MemoryStream(_mockMsg);
         var msg =  new FpnMsg(ms);
@@ -34,7 +34,7 @@ public class FpnMsgTest
     }
 
     [TestMethod]
-    public void TestGetMessage()
+    public void MsgGetMessage()
     {
         var ms = new MemoryStream(_mockMsg);
         var msg =  new FpnMsg(ms);

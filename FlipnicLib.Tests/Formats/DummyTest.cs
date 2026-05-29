@@ -11,7 +11,7 @@ public class DummyTest
 {
 
     [TestMethod]
-    public void TestDummyFile()
+    public void DummyZeroFill()
     {
         const string prefix = "Zero padded: ";
         var ms = new MemoryStream();

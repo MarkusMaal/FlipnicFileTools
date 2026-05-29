@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using FlipnicLib.Formats;
 using JetBrains.Annotations;
@@ -24,7 +23,7 @@ public class FpnSstTest
     ];
 
     [TestMethod]
-    public void TestStringArray()
+    public void SstStringArray()
     {
         var ms = new MemoryStream(_mockSst);
         var sst = new FpnSst(ms);

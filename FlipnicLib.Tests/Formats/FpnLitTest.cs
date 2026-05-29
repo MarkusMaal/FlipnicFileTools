@@ -17,7 +17,7 @@ public class FpnLitTest
     ];
 
     [TestMethod]
-    public void TestRoundTrip()
+    public void LitRoundTrip()
     {
         var ms = new MemoryStream(_mockLit);
         var lit =  new FpnLit(ms);
@@ -29,7 +29,7 @@ public class FpnLitTest
     }
 
     [TestMethod]
-    public void TestRgb()
+    public void LitRgb()
     {
         var ms = new MemoryStream(_mockLit);
         var lit = new FpnLit(ms);

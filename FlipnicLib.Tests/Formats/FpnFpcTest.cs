@@ -19,7 +19,7 @@ public class FpnFpcTest
     ];
 
     [TestMethod]
-    public void TestParser()
+    public void FpcParser()
     {
         var ms = new MemoryStream(_mockFpc);
         var fpc = new FpnFpc(ms);
@@ -38,7 +38,7 @@ public class FpnFpcTest
     }
     
     [TestMethod]
-    public void TestRoundTrip()
+    public void FpcRoundTrip()
     {
         var ms = new MemoryStream(_mockFpc);
         var fpc = new FpnFpc(ms);

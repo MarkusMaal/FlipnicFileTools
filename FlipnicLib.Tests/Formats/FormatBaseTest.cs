@@ -12,7 +12,7 @@ public class FormatBaseTest
 {
 
     [TestMethod]
-    public void TestWriteByteArray()
+    public void BaseWriteByteArray()
     {
         byte[] modifiedArray = [0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x10];
         var originalArray = new byte[modifiedArray.Length];
@@ -41,7 +41,7 @@ public class FormatBaseTest
     }
 
     [TestMethod]
-    public void TestGetFloat()
+    public void BaseGetFloat()
     {
         byte[] rawData = [0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x3F, 0x53, 0x84, 0xFF, 0x02];
         
@@ -55,7 +55,7 @@ public class FormatBaseTest
     }
 
     [TestMethod]
-    public void TestGetString()
+    public void BaseGetString()
     {
         var rawData = "Hello world!\0Second string\0\0\0\0\0\0"u8.ToArray();
 
@@ -69,7 +69,7 @@ public class FormatBaseTest
     }
 
     [TestMethod]
-    public void TestGetStringAt()
+    public void BaseGetStringAt()
     {
         var rawData = "Hello world!\0Second string\0\0\0\0\0\0"u8.ToArray();
 
@@ -83,7 +83,7 @@ public class FormatBaseTest
     }
 
     [TestMethod]
-    public void TestGetFilesizeString()
+    public void BaseGetFilesizeString()
     {
         const int sampleSize = 1536;
         const int sampleSizeB = 122;
@@ -97,7 +97,7 @@ public class FormatBaseTest
     }
 
     [TestMethod]
-    public void TestDotFloatString()
+    public void BaseDotFloatString()
     {
         const float testValue = 1.33f;
         Assert.AreEqual("1.33", TestFormat.TestDotFloatString(testValue));

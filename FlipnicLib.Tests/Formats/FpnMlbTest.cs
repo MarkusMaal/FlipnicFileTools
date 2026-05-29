@@ -38,7 +38,7 @@ public class FpnMlbTest
     ];
 
     [TestMethod]
-    public void TestMenuEnumeration()
+    public void MlbMenuEnumeration()
     {
         var mlb = new FpnMlb(_mockMenu);
         
@@ -78,7 +78,7 @@ public class FpnMlbTest
     }
 
     [TestMethod]
-    public void TestRoundTrip()
+    public void MlbRoundTrip()
     {
         var ms = new MemoryStream(_mockMenu);
         var mlb =  new FpnMlb(_mockMenu);

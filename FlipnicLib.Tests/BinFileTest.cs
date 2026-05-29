@@ -69,7 +69,7 @@ public class BinFileTest
     }
 
     [TestMethod]
-    public void TestFileList()
+    public void BinFileList()
     {
         BinFile bf = new();
         var ls = bf.GetListBin(MockStream);

@@ -85,7 +85,7 @@ public class Tim2Test
     private readonly int[] _expectedColors = [0x000000, 0x000015, 0x000010, 0x000000, 0x010025, 0x000300, 0x010226, 0x004515, 0x3D0021, 0x00842D, 0x00466C, 0xEC0003, 0xA00011, 0x00BC43, 0x00EF56, 0x007FB8];
     
     [TestMethod]
-    public void TestTim2Magic()
+    public void Tim2Magic()
     {
         var tm2 = new Tim2(_mockHeader);
         Assert.IsNotNull(tm2);
@@ -94,7 +94,7 @@ public class Tim2Test
     }
 
     [TestMethod]
-    public void TestPalette()
+    public void Tim2Palette()
     {
         var tm2 = new Tim2(_mockTim2);
         Assert.Contains("Palette type: IDTEX4", tm2.ToString(false));
