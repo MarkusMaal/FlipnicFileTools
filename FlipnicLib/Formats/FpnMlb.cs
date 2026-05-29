@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace FlipnicLib.Formats;
 
 public class FpnMlb : FormatBase
@@ -22,6 +24,46 @@ public class FpnMlb : FormatBase
             offset += 0x30 + elementCount * 0x60;
             idx++;
         }
+    }
+
+    public byte[] GetBytes()
+    {
+        var ms = new MemoryStream();
+        for (var i = 0; i < 4; i++)
+        {
+            ms.Write(BitConverter.GetBytes(Sections.Count));
+        }
+
+        foreach (var section in Sections)
+        {
+            var limTex = ms.Position + 0x20;
+            ms.Write(Encoding.ASCII.GetBytes(section.Key));
+            ms.Seek(limTex, SeekOrigin.Begin);
+
+            for (var i = 0; i < 4; i++) ms.WriteByte(1);
+            for (var i = 0; i < 3; i++) ms.Write(BitConverter.GetBytes(section.Value.Length));
+
+            foreach (var elem in section.Value)
+            {
+                limTex = ms.Position + 0x40;
+                ms.Write(Encoding.ASCII.GetBytes(elem.Texture));
+                ms.Seek(limTex, SeekOrigin.Begin);
+                ms.Write(BitConverter.GetBytes(elem.PosX));
+                ms.Write(BitConverter.GetBytes(elem.PosY));
+                ms.Write(BitConverter.GetBytes(elem.Width));
+                ms.Write(BitConverter.GetBytes(elem.Height));
+                ms.WriteByte(1);
+                ms.WriteByte((byte)(elem.BgItem ? 1 : 0));
+                ms.WriteByte(1);
+                ms.WriteByte(0);
+                ms.Write(BitConverter.GetBytes(elem.Dipth));
+                ms.Write(BitConverter.GetBytes(elem.Blend));
+                ms.Write(BitConverter.GetBytes(elem.Index));
+            }
+        }
+        var data = ms.ToArray();
+        ms.Close();
+        return data;
     }
 
     public string ToString(bool asCsv)

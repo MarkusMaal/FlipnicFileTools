@@ -1,3 +1,4 @@
+using System.IO;
 using System.Linq;
 using FlipnicLib.Formats;
 using JetBrains.Annotations;
@@ -74,5 +75,18 @@ public class FpnMlbTest
         Assert.AreEqual(0, mlb.Sections["TestSuiteMenu"][0].PosX);
         Assert.AreEqual(0, mlb.Sections["TestSuiteMenu"][0].PosY);
         Assert.IsFalse(mlb.Sections["TestSuiteMenu"][0].BgItem);
+    }
+
+    [TestMethod]
+    public void TestRoundTrip()
+    {
+        var ms = new MemoryStream(_mockMenu);
+        var mlb =  new FpnMlb(_mockMenu);
+        foreach (var b in mlb.GetBytes())
+        {
+            Assert.AreEqual(ms.ReadByte(), b);
+        }
+
+        ms.Close();
     }
 }
