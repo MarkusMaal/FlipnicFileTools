@@ -248,13 +248,16 @@ public sealed partial class MainWindow : SukiWindow
     private void NewWindowMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
         if (Design.IsDesignMode) return;
-        new MainWindow
+        var nw = new MainWindow
         {
             DataContext = new MainWindowViewModel
             {
                 IsLightTheme = IsLightTheme
             },
-        }.Show();
+        };
+        nw.ToggleDarkNative(sender, null);
+        nw.ToggleDarkNative(sender, null);
+        nw.Show();
     }
 
     private void DataGrid_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -277,6 +280,8 @@ public sealed partial class MainWindow : SukiWindow
                 IsLightTheme = IsLightTheme
             }
         };
+        mw.ToggleDarkNative(sender, null);
+        mw.ToggleDarkNative(sender, null);
         DockPanel1.IsVisible = false;
         Loader.IsVisible = true;
         new Thread(() =>
@@ -930,6 +935,8 @@ public sealed partial class MainWindow : SukiWindow
                     {
                         IsLightTheme = IsLightTheme
                     };
+                    nw.ToggleDarkNative(sender, null);
+                    nw.ToggleDarkNative(sender, null);
                     nw.FileName = Path.Join(new FileInfo(FileName).DirectoryName, $"LAY{suffix}.LAY");
                     nw.Title = "Flipnic file tool - " + new FileInfo(nw.FileName).Name;
                     FileHelpers.LoadFromData(new FileStream(nw.FileName, FileMode.Open, FileAccess.Read), nw.FileName[^3..], nw);

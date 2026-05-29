@@ -322,9 +322,10 @@ public class Tim2 : FormatBase
                 done++;
             }).Start();
             
+            var ts = new TimeSpan(0, 0, 0, 0, 0, 5);
             while (done != 4)
             {
-                Thread.Sleep(1);
+                Thread.Sleep(ts);
             }
             return result;
         }
