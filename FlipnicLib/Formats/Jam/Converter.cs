@@ -101,11 +101,12 @@ public abstract class Converter
             if (prog == null) continue;
 
             uint wavLoopStart = 0;
+            uint wavLoopEnd = 0;
             foreach (var splitChunk in prog.SplitChunks.Where(splitChunk => !vagSamples.ContainsKey(splitChunk.SampleOffset)))
             {
                 ms.Seek( headerSize + splitChunk.SampleOffset * 8,  SeekOrigin.Begin);
 
-                var vag = splitChunk.GetData(new BinaryStream(ms), out var loopStart, out _);
+                var vag = splitChunk.GetData(new BinaryStream(ms), out var loopStart, out var loopEnd);
                 
                 vagSamples.Add(splitChunk.SampleOffset, new SampleInfo(vag, (ushort)vagSamples.Count));
 
@@ -125,12 +126,13 @@ public abstract class Converter
                 if (looping)
                 {
                     var a = (pcm16.Length / ((double)vag.Length / 0x10));
-                    wavLoopStart = (uint)(a * loopStart);
+                    wavLoopStart = (uint)(a * loopStart) + 8;
+                    wavLoopEnd = (uint)(a * loopEnd);
                 }
                 doLoops.Add(splitChunk.SampleOffset, looping);
                 
                 // Add the sample to the sound bank. Instruments will then pick which sample to use.
-                var sampleId = sf2.AddSample(pcm16, $"sample{sampleIdx++}", looping, wavLoopStart, 44100, (byte)splitChunk.BaseNote, 0);
+                var sampleId = sf2.AddSample(pcm16, $"sample{sampleIdx++}", looping, wavLoopStart, wavLoopEnd , 44100, (byte)splitChunk.BaseNote, 0);
             }
         }
 
