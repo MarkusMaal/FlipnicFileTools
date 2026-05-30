@@ -131,7 +131,8 @@ public class App : Application
             mw.MainTabControl.HeaderMinHeight = 0;
             mw.ShowBottomBorder = false;
             mw.ModelTab.Icon = null;
-            mw.IsTitleBarVisible = false;
+            mw.IsTitleBarVisible = true;
+            mw.TitleBarVisibilityOnFullScreen = SukiWindow.TitleBarVisibilityMode.Hidden;
             mw.WindowDecorations = WindowDecorations.Full;
             mw.MainTabControl.Margin = new Thickness(-48, 0, 0, 0);
         }

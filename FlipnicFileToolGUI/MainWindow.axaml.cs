@@ -108,6 +108,8 @@ public sealed partial class MainWindow : SukiWindow
     {
         SukiTheme.GetInstance().SwitchBaseTheme();
         ApplyCustomTheme();
+        InfoBox.IsLightTheme = !InfoBox.IsLightTheme;
+        EventBox.IsLightTheme = InfoBox.IsLightTheme;
     }
 
     private void OpenMenuItem_OnClick(object? sender, RoutedEventArgs e)
@@ -163,7 +165,6 @@ public sealed partial class MainWindow : SukiWindow
         }
         FileName = file;
         FileHelpers.LoadFromData(new FileStream(file, FileMode.Open, FileAccess.Read), file[^3..], this);
-        Title = "Flipnic file tool - " + new FileInfo(file).Name;
     }
 
     private void WindowDropped(object? sender, DragEventArgs e)
@@ -174,7 +175,6 @@ public sealed partial class MainWindow : SukiWindow
         var fullPath = Uri.UnescapeDataString(pathAbsolutePath);
         FileName = fullPath;
         FileHelpers.LoadFromData(new FileStream(fullPath, FileMode.Open, FileAccess.Read), fullPath[^3..], this);
-        Title = "Flipnic file tool - " + new FileInfo(fullPath).Name;
     }
 
 
@@ -734,7 +734,6 @@ public sealed partial class MainWindow : SukiWindow
         nmi.Header = $"Normal vectors decoding: Method {letter}";
         if (FileName is null) return;
         FileHelpers.LoadFromData(new FileStream(FileName, FileMode.Open, FileAccess.Read), FileName[^3..], this);
-        Title = "Flipnic file tool - " + new FileInfo(FileName).Name;
     }
 
     private void AltNormalMethod_Click(object? sender, RoutedEventArgs e)
@@ -745,7 +744,6 @@ public sealed partial class MainWindow : SukiWindow
         mi.Header = $"Normal vectors decoding: Method {letter}";
         if (FileName is null) return;
         FileHelpers.LoadFromData(new FileStream(FileName, FileMode.Open, FileAccess.Read), FileName[^3..], this);
-        Title = "Flipnic file tool - " + new FileInfo(FileName).Name;
     }
 
     private void DocsMenu1_OnClick(object? sender, RoutedEventArgs? e)
@@ -938,7 +936,6 @@ public sealed partial class MainWindow : SukiWindow
                     nw.ToggleDarkNative(sender, null);
                     nw.ToggleDarkNative(sender, null);
                     nw.FileName = Path.Join(new FileInfo(FileName).DirectoryName, $"LAY{suffix}.LAY");
-                    nw.Title = "Flipnic file tool - " + new FileInfo(nw.FileName).Name;
                     FileHelpers.LoadFromData(new FileStream(nw.FileName, FileMode.Open, FileAccess.Read), nw.FileName[^3..], nw);
                     nw.IsMenuVisible = false;
                     nw.WindowStartupLocation = WindowStartupLocation.CenterOwner;

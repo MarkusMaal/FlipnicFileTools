@@ -350,6 +350,7 @@ namespace FlipnicFileToolGUI.Controls
         //OpenTkTeardown is called when the control is being destroyed
         protected override void OpenTkTeardown()
         {
+            if (!Program.GpuAccel) return;
             //Bind ArrayBuffer to null so we get an error if any more draw operations go through (helps with debugging)
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             //And ElementArrayBuffer

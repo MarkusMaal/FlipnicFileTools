@@ -98,7 +98,7 @@ public static class FileHelpers
             mw.InfoBox.WrapText = false;
             mw.InfoBox.Text = sender?.ToString() ?? "";
             mw.InfoTab.IsVisible = true;
-            mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, type);
+            mw.FileTypeLabel.Content = Program.GpuAccel ? "Model preview" : string.Format(MainWindow.FTypeFormat, type);
         });
     }
     
@@ -121,6 +121,12 @@ public static class FileHelpers
         mw.AdsrPanel.IsVisible = false;
         mw.WavToggle.IsVisible = false;
         mw.FakeSustainRateToggle.IsVisible = false;
+
+        mw.Title = "Flipnic file tool";
+        if (mw.FileName != null)
+        {
+            mw.Title += " - " + new FileInfo(mw.FileName).Name;
+        }
 
         List<VirtualFile> fsEntries;
 
