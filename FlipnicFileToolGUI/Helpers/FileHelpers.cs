@@ -166,9 +166,12 @@ public static class FileHelpers
                         mw.Init3DStuff();
                         mw.ModelTab.IsSelected = false;
                         mw.ModelTab.IsVisible = true;
-                        mw.ImagePreviewTab.IsVisible = true;
+                        mw.ImagePreviewTab.IsVisible = !Program.GpuAccel;
+                        mw.InfoTab.IsVisible = !Program.GpuAccel;
                         mw.PreviewImage.Source = bt.IconToBitmap();
                     });
+                    Thread.Sleep(1000);
+                    Dispatcher.UIThread.Post(() => mw.ModelTab.IsSelected = Program.GpuAccel);
                     break;
                 case "MID":
                     if (!File.Exists(mw.FileName))
@@ -208,10 +211,13 @@ public static class FileHelpers
                             mw.ImagePreviewTab.IsVisible = true;
                             mw.PreviewImage.Source = new Bitmap(texture);
                         }
+                        mw.InfoTab.IsVisible = !Program.GpuAccel;
 
                         mw.ModelTab.IsSelected = false;
                         mw.ModelTab.IsVisible = true;
                     });
+                    Thread.Sleep(1000);
+                    Dispatcher.UIThread.Post(() => mw.ModelTab.IsSelected = Program.GpuAccel);
                     break;
                 case "VSD":
                     var vsd = new FpnVsd(ds);
@@ -412,7 +418,8 @@ public static class FileHelpers
                         mw.Init3DStuff(lp4);
                         mw.ModelTab.IsSelected = false;
                         mw.ModelTab.IsVisible = true;
-                        mw.ImagePreviewTab.IsVisible = true;
+                        mw.ImagePreviewTab.IsVisible = !Program.GpuAccel;
+                        mw.InfoTab.IsVisible = !Program.GpuAccel;
                         try
                         {
                             var ms = new MemoryStream(lp4.Texture);
@@ -428,6 +435,8 @@ public static class FileHelpers
                             mw.ImagePreviewTab.IsVisible = false;
                         }
                     });
+                    Thread.Sleep(1000);
+                    Dispatcher.UIThread.Post(() => mw.ModelTab.IsSelected = Program.GpuAccel);
                     break;
                 case "IPU":
                     var ipu = Ipu.GetInfoAsString(ds);

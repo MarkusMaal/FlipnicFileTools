@@ -2,7 +2,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="clr-namespace:FlipnicFileToolGUI.Controls"
         xmlns:ns="clr-namespace:FlipnicFileToolGUI"
         mc:Ignorable="d"
         d:DesignWidth="800" d:DesignHeight="800"
@@ -103,7 +102,7 @@
                               </StackPanel>
                               <OnPlatform>
                                   <OnPlatform.Default>
-                                      <Button Grid.Row="0" IsVisible="True" Name="RestartWglButton" VerticalAlignment="Center" HorizontalAlignment="Center" Click="RestartWglButton_Click">Open with 3D graphics support</Button>
+                                      <Button Grid.Row="0" IsVisible="True" Name="RestartWglButton" VerticalAlignment="Center" HorizontalAlignment="Center" Click="RestartWglButton_Click">Open 3D preview</Button>
                                   </OnPlatform.Default>
                                   <OnPlatform.macOS>
                                       <Button Grid.Row="0" IsVisible="True" VerticalAlignment="Center" HorizontalAlignment="Center" IsEnabled="False">macOS is not supported for 3D model previews</Button>

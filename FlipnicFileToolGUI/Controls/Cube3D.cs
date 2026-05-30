@@ -41,7 +41,7 @@ namespace FlipnicFileToolGUI.Controls
         private const float Speed = 0.015f;
         private object? _texture;
         private bool CycleUV;
-        private Window? fs3;
+        private int _debounce = 0;
         
         public new bool Rotate
         {
@@ -366,10 +366,15 @@ namespace FlipnicFileToolGUI.Controls
             _brickTexture.Dispose();
         }
 
-        //Demonstrating use of the Avalonia keyboard state provided by OpenTKAvalonia to control the camera 
         private void DoUpdate()
         {
             var effectiveSpeed = Speed;
+            
+            if (_debounce > 0) // temporarily disables keyboard input to prevent unwanted double presses
+            {
+                _debounce--;
+                return;
+            }
 
             if (KeyboardState.IsKeyDown(Key.LeftCtrl))
             {
@@ -396,29 +401,10 @@ namespace FlipnicFileToolGUI.Controls
                 _cameraPosition += Vector3.Normalize(Vector3.Cross(_cameraFront, _up)) * effectiveSpeed; //Right
             }
 
-            if (TopLevel.GetTopLevel(this) is Fullscreen3D fs3d)
-            {
-                if (KeyboardState.IsKeyDown(Key.Escape))
-                {
-                    fs3d.Close();
-                }
-                if (KeyboardState.IsKeyDown(Key.R))
-                {
-                    Rotate = true;
-                }
-                if (KeyboardState.IsKeyDown(Key.T))
-                {
-                    Rotate = false;
-                }
-            }
-
             if (KeyboardState.IsKeyDown(Key.U))
             {
-                CycleUV = true;
-            }
-            if (KeyboardState.IsKeyDown(Key.I))
-            {
-                CycleUV = false;
+                CycleUV = !CycleUV;
+                _debounce = 10;
             }
             if (KeyboardState.IsKeyDown(Key.X))
             {
@@ -431,7 +417,6 @@ namespace FlipnicFileToolGUI.Controls
             }
             if (TopLevel.GetTopLevel(this) is MainWindow mw)
             {
-                
                 if (KeyboardState.IsKeyDown(Key.F1))
                 {
                     mw.ShowDialog("Hotkeys", """
@@ -440,54 +425,26 @@ namespace FlipnicFileToolGUI.Controls
                                                         Left mouse drag - Pitch/Yaw adjustment
                                                         Ctrl (hold) - Speed up
                                                         Left shift/Space - Move down/up
-                                                        F/Escape - Toggle fullscreen mode
-                                                        R/T - Rotate model/Disable rotation (fullscreen only)
-                                                        U/I - Play/Pause UV cycle (for FPD files)
+                                                        F - Toggle fullscreen mode
+                                                        U - Play/Pause UV cycle (for FPD files)
                                                         Mouse wheel scroll - Increase/decrease FOV
                                                         Middle/mouse wheel click - Reset FOV
                                                         X - Disable texture, use test pattern instead
-                                                        H/J - Hide/Show interface (windowed only)
+                                                        H - Hide/Show interface
                                                         """, NotificationType.Information);
                 }
                 if (KeyboardState.IsKeyDown(Key.H))
                 {
-                    mw.ModelInfoSection.IsVisible = false;
-                    mw.ModelBottomSection.IsVisible = false;
+                    mw.ModelInfoSection.IsVisible = !mw.ModelInfoSection.IsVisible;
+                    mw.ModelBottomSection.IsVisible = !mw.ModelBottomSection.IsVisible;
+                    _debounce = 10;
                 }
 
                 if (KeyboardState.IsKeyDown(Key.F))
                 {
-                    
-                    fs3 ??= new Fullscreen3D
-                    {
-                        GlControl =
-                        {
-                            FsControl = true
-                        }
-                    };
-                    if (fs3.IsVisible) return;
-                    fs3 = new Fullscreen3D
-                    {
-                        GlControl =
-                        {
-                            _vertices = _vertices,
-                            _shader = _shader,
-                            CycleUV = CycleUV,
-                            Rotate = Rotate,
-                            _texture = _texture,
-                            _brickTexture = _brickTexture,
-                            _cameraFront =  _cameraFront,
-                            _cameraPosition =  _cameraPosition,
-                        }
-                    };
-                    ((Fullscreen3D)fs3).GlControl.OpenTkInit();
-                    fs3.Show();
-                }
-
-                if (KeyboardState.IsKeyDown(Key.J))
-                {
-                    mw.ModelInfoSection.IsVisible = true;
-                    mw.ModelBottomSection.IsVisible = true;
+                    mw.WindowDecorations = mw.WindowDecorations == WindowDecorations.None ? WindowDecorations.Full : WindowDecorations.None;
+                    mw.WindowState = mw.WindowState == WindowState.FullScreen ? WindowState.Normal : WindowState.FullScreen;
+                    _debounce = 10;
                 }
             }
 

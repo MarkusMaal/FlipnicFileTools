@@ -1,5 +1,4 @@
 using System;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -122,12 +121,19 @@ public class App : Application
         mw.ModelInfoSection.IsVisible = Program.GpuAccel;
         mw.TpModelButton.IsVisible = Program.GpuAccel;
         mw.RotateModelCheck.IsVisible = Program.GpuAccel;
-        if (OperatingSystem.IsWindows() && Program.GpuAccel)
+        if (Program.GpuAccel)
         {
             mw.FileMenu1.IsEnabled = false;
             mw.OptionMenu1.IsEnabled = false;
             mw.InfoMenu1.IsEnabled = false;
             mw.IsMenuVisible = false;
+            mw.MainTabControl.SidebarToggleEnabled = false;
+            mw.MainTabControl.HeaderMinHeight = 0;
+            mw.ShowBottomBorder = false;
+            mw.ModelTab.Icon = null;
+            mw.IsTitleBarVisible = false;
+            mw.WindowDecorations = WindowDecorations.Full;
+            mw.MainTabControl.Margin = new Thickness(-48, 0, 0, 0);
         }
         if (Design.IsDesignMode)
         {
