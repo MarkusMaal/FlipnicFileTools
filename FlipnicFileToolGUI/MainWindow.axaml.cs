@@ -73,12 +73,10 @@ public sealed partial class MainWindow : SukiWindow
         AddHandler(DragDrop.DragOverEvent, DragOver);
         AddHandler(DragDrop.DropEvent, WindowDropped);
 
-        if (Design.IsDesignMode)
-        {
-            PreviewImage.Source = new Bitmap(StaticUtils.GenerateCheckerboardPng(320, 240));
-            SukiTheme.GetInstance().SwitchBaseTheme();
-            ApplyCustomTheme();
-        }
+        if (!Design.IsDesignMode) return;
+        PreviewImage.Source = new Bitmap(StaticUtils.GenerateCheckerboardPng(320, 240));
+        SukiTheme.GetInstance().SwitchBaseTheme();
+        ApplyCustomTheme();
     }
 
     public MainWindowViewModel GetViewModel()
@@ -101,7 +99,7 @@ public sealed partial class MainWindow : SukiWindow
         }
     }
 
-    private static void ApplyCustomTheme()
+    internal void ApplyCustomTheme()
     {
         SukiTheme.GetInstance().SwitchColorTheme();
     }
@@ -526,6 +524,7 @@ public sealed partial class MainWindow : SukiWindow
     private void Models_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (Models.SelectedIndex < 0) return;
+        if (Models.SelectedItems?.Count < 1) return;
         GlControl.SwitchModel(Models.SelectedItems?[0]?.ToString(), PreviewImage);
         ImagePreviewTab.IsVisible = GlControl.IsTextureValid();
         GlControl.ReloadModel = true;
@@ -731,7 +730,8 @@ public sealed partial class MainWindow : SukiWindow
     {
         if (sender is not NativeMenuItem nmi) return;
         StaticUtils.AlternateNormals = !StaticUtils.AlternateNormals;
-        nmi.IsChecked = StaticUtils.AlternateNormals;
+        var letter = StaticUtils.AlternateNormals ? "B" : "A";
+        nmi.Header = $"Normal vectors decoding: Method {letter}";
         if (FileName is null) return;
         FileHelpers.LoadFromData(new FileStream(FileName, FileMode.Open, FileAccess.Read), FileName[^3..], this);
         Title = "Flipnic file tool - " + new FileInfo(FileName).Name;

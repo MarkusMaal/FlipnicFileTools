@@ -21,7 +21,7 @@ internal abstract class Program
          Disclaimer: {StaticUtils.DisclaimerText}
          """;
 
-    public static bool GpuAccel = !OperatingSystem.IsWindows();
+    public static bool GpuAccel;
     
     // Initialization code. Don't use any Avalonia, third-party APIs or any
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
@@ -31,10 +31,7 @@ internal abstract class Program
     {
         try
         {
-            if (OperatingSystem.IsWindows())
-            {
-                GpuAccel = args.Contains("--gpu");
-            }
+            GpuAccel = args.Contains("--gpu");
             BuildAvaloniaApp()
                 .StartWithClassicDesktopLifetime(args);
         }

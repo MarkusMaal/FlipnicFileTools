@@ -96,11 +96,12 @@ namespace FlipnicFileToolGUI.Controls
             }
             Dispatcher.UIThread.Post(() => 
             {
+                _vertices = lp4.GetVerticies();
+                OpenContainer = lp4;
+                if (!Program.GpuAccel) return;
                 OpenTkInit();
                 GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-                _vertices = lp4.GetVerticies();
-                OpenContainer = lp4;
                 GL.GenBuffer();
                 CycleUV = false;
                 GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject); 
@@ -125,8 +126,16 @@ namespace FlipnicFileToolGUI.Controls
             {
                 _texture = lp4.SelectedModel.GenerateDummyTexture();
             }
-            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            var ms = new MemoryStream((byte[])(_texture ?? new byte[]{}));
+            try
+            {
+                previewImg.Source = new Bitmap(ms);
+            }
+            catch
+            {
+                previewImg.Source = new Bitmap(StaticUtils.GenerateCheckerboardPng(256, 256));
+            }
+
             if (lp4.SelectedModel != null)
             {
                 _vertices = lp4.SelectedModel.RawVertices.ToArray();
@@ -141,28 +150,23 @@ namespace FlipnicFileToolGUI.Controls
                 }
             }
             StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded 3D model data to memory ({StaticUtils.GetFilesizeString(_vertices.Length)})\n");
+            if (!Program.GpuAccel) return;
+            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            var ms = new MemoryStream((byte[])(_texture ?? new byte[]{}));
-            try
-            {
-                previewImg.Source = new Bitmap(ms);
-            }
-            catch
-            {
-                previewImg.Source = new Bitmap(StaticUtils.GenerateCheckerboardPng(256, 256));
-            }
         }
 
         public void ImportFPD(FpnFpd pathTrace, object? texture)
         {
             _texture = texture;
             OpenTkInit();
-            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             List<float> vertices = new();
             vertices.AddRange(pathTrace.DrawPath());
             _vertices = vertices.ToArray();
             StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded 3D model data to memory ({StaticUtils.GetFilesizeString(_vertices.Length)})\n");
+            if (!Program.GpuAccel) return;
+            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             CycleUV = true;
             GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
@@ -171,9 +175,6 @@ namespace FlipnicFileToolGUI.Controls
         public void ImportICO(SaveIcon saveIcon)
         {
             _texture = saveIcon.Texture;
-            OpenTkInit();
-            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             List<float> vertices = new();
             foreach (var vertex in saveIcon.Vertices)
             {
@@ -188,6 +189,10 @@ namespace FlipnicFileToolGUI.Controls
             }
             _vertices = vertices.ToArray();
             StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded 3D model data to memory ({StaticUtils.GetFilesizeString(_vertices.Length)})\n");
+            if (!Program.GpuAccel) return;
+            OpenTkInit();
+            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             CycleUV = false;
             GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
@@ -262,6 +267,7 @@ namespace FlipnicFileToolGUI.Controls
         //OpenTkInit is called once when the control is created
         protected override void OpenTkInit()
         {
+            if (!Program.GpuAccel) return;
             DefaultShaders();
             //Compile shaders
             _shader = new(Path.GetTempPath() + "Shaders/shader.vert", Path.GetTempPath() + "Shaders/shader.frag");

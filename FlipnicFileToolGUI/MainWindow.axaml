@@ -36,7 +36,7 @@
             <NativeMenuItem Header="Options">
                 <NativeMenu>                    
                     <NativeMenuItem Header="Toggle dark theme" Click="ToggleDarkNative" />
-                    <NativeMenuItem Header="Use alternate method for decoding normal vectors" Click="AltNormalMethod_NativeClick" />
+                    <NativeMenuItem Header="Normal vectors decoding: Method A" Click="AltNormalMethod_NativeClick" />
                     <NativeMenuItemSeparator/>
                     <NativeMenuItem Header="Import JA.MSG" Click="OpenNativeMenuItem_OnClick"></NativeMenuItem>
                     <NativeMenuItem Header="Always use brute-force for LP4 decoding: No" Click="AlwaysUseBruteForceNativeMenuItem_Click" />
@@ -101,8 +101,22 @@
                                   <Label Margin="5" Name="MoreInfoLabel">No info</Label>
                                   <Label Margin="5" Name="FPSLabel">No info</Label>
                               </StackPanel>
-                              <Button Grid.Row="0" IsVisible="True" Name="RestartWglButton" VerticalAlignment="Center" HorizontalAlignment="Center" Click="RestartWglButton_Click">Open with 3D graphics support</Button>
-                              <controls:CubeRenderingTkOpenGlControl Rotate="False" Grid.Row="0"  Focusable="True" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="GlControl" Loaded="GlControl_OnLoaded"></controls:CubeRenderingTkOpenGlControl>
+                              <OnPlatform>
+                                  <OnPlatform.Default>
+                                      <Button Grid.Row="0" IsVisible="True" Name="RestartWglButton" VerticalAlignment="Center" HorizontalAlignment="Center" Click="RestartWglButton_Click">Open with 3D graphics support</Button>
+                                  </OnPlatform.Default>
+                                  <OnPlatform.macOS>
+                                      <Button Grid.Row="0" IsVisible="True" VerticalAlignment="Center" HorizontalAlignment="Center" IsEnabled="False">macOS is not supported for 3D model previews</Button>
+                                  </OnPlatform.macOS>
+                              </OnPlatform>
+                              <OnPlatform>
+                                  <OnPlatform.Default>
+                                    <controls:CubeRenderingTkOpenGlControl Rotate="False" Grid.Row="0"  Focusable="True" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="GlControl" Loaded="GlControl_OnLoaded"></controls:CubeRenderingTkOpenGlControl>
+                                  </OnPlatform.Default>
+                                  <OnPlatform.macOS>
+                                      
+                                  </OnPlatform.macOS>
+                              </OnPlatform>
                               <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0" Name="ModelBottomSection">
                                   <Button Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>
                                   <Button Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Name="TpModelButton" Click="TpModelButton_OnClick">Teleport to model</Button>

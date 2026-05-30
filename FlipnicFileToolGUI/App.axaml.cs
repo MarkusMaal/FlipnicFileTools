@@ -76,6 +76,11 @@ public class App : Application
             DataContext = new MainWindowViewModel(),
         };
         mw.Show();
+        for (var i = 0; i < 2; i++)
+        {
+            SukiTheme.GetInstance().SwitchBaseTheme();
+            mw.ApplyCustomTheme();
+        }
     }
 
     private void AboutNativeMenu_OnClick(object? sender, EventArgs e)
@@ -109,7 +114,10 @@ public class App : Application
 
     public static void Init(MainWindow mw)
     {
-        mw.RestartWglButton.IsVisible = !Program.GpuAccel;
+        if (!OperatingSystem.IsMacOS())
+        {
+            mw.RestartWglButton.IsVisible = !Program.GpuAccel;
+        }
         mw.GlControl.IsVisible = Program.GpuAccel;
         mw.ModelInfoSection.IsVisible = Program.GpuAccel;
         mw.TpModelButton.IsVisible = Program.GpuAccel;
@@ -148,7 +156,6 @@ public class App : Application
               Flipnic file tools
               ---------------------------------
               No file loaded, open a file by clicking File > Open
-              or press Ctrl+Alt+V to paste a file.
               
               """;
         
