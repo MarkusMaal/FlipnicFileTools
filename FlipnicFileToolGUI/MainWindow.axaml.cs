@@ -55,13 +55,10 @@ public sealed partial class MainWindow : SukiWindow
     public MainWindow()
     {
         InitializeComponent();
-        ApplyCustomTheme();
-        SukiTheme.GetInstance().OnBaseThemeChanged += variant =>
+        if (((IClassicDesktopStyleApplicationLifetime?)Application.Current?.ApplicationLifetime)?.Windows.Count == 0)
         {
-            GetViewModel().IsLightTheme = variant == ThemeVariant.Light;
-            ForceRefresh();
-            UpdateSpecialTabThemes();
-        };
+            ApplyCustomTheme();
+        }
         DialogHost.Manager = DialogManager;
 
         DragDrop.SetAllowDrop(this, true);
@@ -75,8 +72,6 @@ public sealed partial class MainWindow : SukiWindow
         PreviewImage.Source = new Bitmap(StaticUtils.GenerateCheckerboardPng(320, 240));
         SukiTheme.GetInstance().SwitchBaseTheme();
         ApplyCustomTheme();
-        InfoBox.IsLightTheme = IsLightTheme;
-        EventBox.IsLightTheme = IsLightTheme;
     }
 
     public MainWindowViewModel GetViewModel()
@@ -110,11 +105,12 @@ public sealed partial class MainWindow : SukiWindow
         ApplyCustomTheme();
         
         var windows = ((IClassicDesktopStyleApplicationLifetime?)Application.Current?.ApplicationLifetime)?.Windows;
+        GetViewModel().IsLightTheme = !GetViewModel().IsLightTheme;
         foreach (var window in windows ?? [])
         {
             if (window is not MainWindow mainWindow) continue;
-            mainWindow.InfoBox.IsLightTheme = !mainWindow.InfoBox.IsLightTheme;
-            mainWindow.EventBox.IsLightTheme = mainWindow.InfoBox.IsLightTheme;
+            mainWindow.InfoBox.IsLightTheme = GetViewModel().IsLightTheme;
+            mainWindow.EventBox.IsLightTheme = GetViewModel().IsLightTheme;
         }
     }
 
@@ -900,6 +896,7 @@ public sealed partial class MainWindow : SukiWindow
 
     private void Window_OnClosing(object? sender, WindowClosingEventArgs e)
     {
-        Preferences.SavePreferences(IsLightTheme, StaticUtils.MsgFile);
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime al) return;
+        if (al.Windows.Count == 1) Preferences.SavePreferences(InfoBox.IsLightTheme, StaticUtils.MsgFile);
     }
 }

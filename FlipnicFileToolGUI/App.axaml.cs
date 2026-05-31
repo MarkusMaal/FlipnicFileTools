@@ -65,6 +65,17 @@ public class App : Application
 
     private void NativeMenuItem_OnClick(object? sender, EventArgs e)
     {
+        // close all windows safely before force quitting
+        // this is necessary to make sure all settings are saved properly
+        var lifeTime = ((IClassicDesktopStyleApplicationLifetime?)Current?.ApplicationLifetime)!;
+        var lastCount = -1;
+        while (lifeTime.Windows.Count > 0)
+        {
+            var windows = lifeTime.Windows;
+            windows[0].Close();
+            if (windows.Count == lastCount) return; // something is preventing us from closing the app, so just stop and wait for the user to respond
+            lastCount = windows.Count;
+        }
         Environment.Exit(0);
     }
 
@@ -74,12 +85,19 @@ public class App : Application
         {
             DataContext = new MainWindowViewModel(),
         };
-        mw.Show();
-        for (var i = 0; i < 2; i++)
+        var activeLightMode = false;
+        var windows = ((IClassicDesktopStyleApplicationLifetime?)Current?.ApplicationLifetime)?.Windows;
+        foreach (var window in windows ?? [])
         {
-            SukiTheme.GetInstance().SwitchBaseTheme();
-            mw.ApplyCustomTheme();
+            if (!window.IsActive) continue;
+            if (window is not MainWindow mainWindow) continue;
+            activeLightMode = mainWindow.InfoBox.IsLightTheme;
+            break;
         }
+        mw.Show();
+        mw.InfoBox.IsLightTheme = activeLightMode;
+        mw.EventBox.IsLightTheme = activeLightMode;
+
     }
 
     private void AboutNativeMenu_OnClick(object? sender, EventArgs e)
@@ -190,8 +208,9 @@ public class App : Application
         p.Start();
         DetectFromOutput(p, mw.FFmpegBox , "FFmpeg", mw);
         mw.ReverbSlider.Value = StaticUtils.ReverbStrength;
-        Preferences.LoadPreferences(mw);
         if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop) return;
+        
+        if (desktop.Windows.Count == 1) Preferences.LoadPreferences(mw);
         if (desktop.Args?.Length == 0) return;
         if (MainWindow.ErrorDisplayed || desktop.Args?[0] != "-e") return;
 
