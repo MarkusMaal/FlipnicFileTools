@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using FlipnicLib.Formats;
 using FlipnicLib.Types;
 
@@ -43,8 +45,12 @@ public class MainWindowViewModel
     /// </summary>
     public bool IsLightTheme { get; set; } = Design.IsDesignMode;
 
-    /// <summary>
-    /// List of controls to be displayed on a Combobox
-    /// </summary>
-    public ObservableCollection<string> Controls { get; set; } = new(["L2", "R2", "L1", "R1", "Triangle", "Circle", "Cross", "Square", "Unk8", "Unk9", "UnkA", "UnkB", "DPadUp", "DPadRight", "DPadDown", "DPadLeft"]);
+    public bool MultipleWindowsOpen
+    {
+        get
+        {
+            if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime al) return false;
+            return al.Windows.Count > 1;
+        }
+    }
 }

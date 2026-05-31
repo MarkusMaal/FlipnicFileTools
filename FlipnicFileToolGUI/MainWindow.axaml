@@ -14,6 +14,7 @@
         xmlns:controls="clr-namespace:FlipnicFileToolGUI.Controls"
         x:DataType="viewModels:MainWindowViewModel" x:Class="FlipnicFileToolGUI.MainWindow"
         Title="Flipnic file tool" Loaded="Window_Loaded" BackgroundStyle="Bubble"
+        Closing="Window_OnClosing"
         IsMenuVisible="{OnPlatform True, macOS=False}">
     <sukiUi:SukiWindow.RightWindowTitleBarControls>
         <Label Name="FileTypeLabel" Content="Ready" VerticalContentAlignment="Center" VerticalAlignment="Center"></Label>
@@ -25,10 +26,11 @@
     <NativeMenu.Menu>
         <NativeMenu>
             <NativeMenuItem Header="File" IsVisible="true">
-                <NativeMenu>                    
+                <NativeMenu Opening="NativeFileMenuOpening">                    
                     <NativeMenuItem Header="Open" Gesture="Meta+O" Click="OpenNativeMenuItem_OnClick"/>
                     <NativeMenuItem IsVisible="{Binding CanOpenImhex}" Header="Open in ImHex" Click="OpenImHexNativeMenuItemClick"></NativeMenuItem>
                     <NativeMenuItemSeparator />
+                    <NativeMenuItem IsVisible="{Binding MultipleWindowsOpen}" Header="Close all other windows" Gesture="Meta+Alt+W" Click="CloseOthersNativeMenuItem_OnClick"></NativeMenuItem>
                     <NativeMenuItem Header="Close" Gesture="Meta+W" Click="CloseNativeMenuItem_Click" />
                 </NativeMenu>
             </NativeMenuItem>
@@ -57,6 +59,7 @@
             <MenuItem Header="Open" Name="OpenMenuItem" Click="OpenMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Open in ImHex" Name="OpenImHexMenuItem" IsEnabled="False" Click="OpenImHexMenuItem_OnClick"></MenuItem>
             <Separator/>
+            <MenuItem Header="Close all other windows" Name="CloseOthersMenuItem" Click="CloseOthersMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Close window" Name="CloseMenuItem" Click="CloseMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Exit" Name="ExitMenuItem" Click="ExitMenuItem_OnClick"></MenuItem>
         </MenuItem>

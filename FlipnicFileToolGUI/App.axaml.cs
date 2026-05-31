@@ -165,7 +165,6 @@ public class App : Application
               No file loaded, open a file by clicking File > Open
               
               """;
-        
         mw.ForceRefresh();
         var p = new Process();
         try
@@ -191,6 +190,7 @@ public class App : Application
         p.Start();
         DetectFromOutput(p, mw.FFmpegBox , "FFmpeg", mw);
         mw.ReverbSlider.Value = StaticUtils.ReverbStrength;
+        Preferences.LoadPreferences(mw);
         if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop) return;
         if (desktop.Args?.Length == 0) return;
         if (MainWindow.ErrorDisplayed || desktop.Args?[0] != "-e") return;
