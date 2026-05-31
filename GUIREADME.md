@@ -28,10 +28,13 @@ The GUI version can open the following formats:
 
 * BD - Voicebank body
 * BIN - Blob files
+* CNF - PlayStation 2 game configuration file
 * COL - Collision maps
 * CSV - Comma Separated Values
+* DAT - Dummy file
 * FPC - Camera Sequences
 * FPD - Fixed Path Data
+* FTL - Texture list
 * HD - Voicebank headers
 * ICO - PlayStation 2 save icon (single frame non-animated, RLE compressed texture)
 * IPU - PlayStation 2 MPEG-2 video stream
@@ -43,12 +46,14 @@ The GUI version can open the following formats:
 * MLB - Menu file
 * MSG - Message table
 * PSS - Interleaved audio/video streams
+* SCC - Microsoft SourceSafe Source Code Control file
 * SST - Stage metadata and script files
 * SVAG/INT - Compressed Sony ADPCM audio
 * TM2 - PlayStation 2 texture files
 * TXT - Plain text
 * VSD - Vibration strength data
 * XML - Extensible Markup Language files
+* Game executable
 
 ## Getting the correct version
 
@@ -165,6 +170,8 @@ When opening a .TM2 or .LP4 file, the texture tab may be visible. This tab allow
 
 This tab allows you to see 3D models associate with this file.
 
+**Note**: By default Flipnic file tools launches in non-GPU accelerated mode, in which case you have to press the "Open 3D preview" button to see the actual 3D model. In addition, 3D previews in macOS are not supported at all. 
+
 ![models.png](Images/models.png)
 
 To move around, use WASD keys. Hold Space/Shift to mode up/down. Drag with a mouse button to look around. Hold the CTRL key to move faster. To see more keybinds press F1.
@@ -175,7 +182,7 @@ Checking "Spin" makes the model spin until you untick it.
 
 ![path.png](Images/path.png)
 
-When you open a .PTH file you will see a shape the resembles a path stored in the file. As the path is followed, the shape eventually fills with green and once the end is reached, it repeats the path. You can press I to freeze the path and U to resume it.
+When you open a .PTH file you will see a shape the resembles a path stored in the file. As the path is followed, the shape eventually fills with green and once the end is reached, it repeats the path. You can press U to freeze/resume it.
 
 ## Camera sequences tab
 
@@ -185,7 +192,7 @@ When opening a .FPC file, you will enter the camera sequences tab. In Flipnic, a
 
 The root position can be seen at the top left. If the camera sequence is animated, you'll see a table at the bottom with values for every frame of the animation. If the animation table is empty, the root position is used.
 
-Flipnic file tools allows you to save the camera sequence as either a TXT file or XML file. The TXT file will basically have the same info as opening the file from the CLI version.
+Flipnic file tools allows you to save the camera sequence as a new FPC file with the changes you've made, a TXT file or XML file. The TXT file will basically have the same info as opening the file from the CLI version.
 
 
 ## Menu mockup tab
@@ -226,7 +233,7 @@ The DEFSAVE.SST file contains the default rankings data. This tab allows you to 
 
 Stages have interactable objects that are internally referred to as gimmicks. This tab allows you to view information about each gimmick.
 
-![gimmicks.png](Images/gimmicks.png)
+![gimmicks2.png](Images/gimmicks2.png)
 
 This information includes the following:
 
@@ -239,6 +246,10 @@ This information includes the following:
 * Bounciness - How strongly the ball bounces off this object when falling on it
 
 You can switch between gimmick areas using the top dropdown menu.
+
+Each gimmick area is tied to a .LAY file. If you want to open the associated layout file, press the "Locate layout file" button. If a matching layout is found, a message box will appear, asking whether or not you want to open that file for editing.
+
+If you want to export a .SST file with the modified gimmicks, you can press the "Export changes" button.
 
 ## Event script tab
 

@@ -27,10 +27,12 @@ Jump to section:
 * [Disc images (*.ISO)](#disc-images-iso)
 * [Blob files (*.BIN)](#blob-files-bin)
 * [Movies (*.PSS)](#movies-pss)
+    * [Creating custom FMVs from video files](#creating-custom-fmvs-from-video-files)
 * [Sound files (*.INT / *.SVAG)](#sound-files-int--svag)
 * [Texture files (*.TM2)](#texture-files-tm2)
 * [Menu files (*.MLB)](#menu-files-mlb)
 * [Camera sequences (*.FPC)](#camera-sequences-fpc)
+    + [Creating animated camera sequences](#creating-animated-camera-sequences)
 * [Stage information files (*.SST)](#stage-information-files-sst)
 * [Message files (*.MSG)](#message-files-msg)
     + [Generating custom message files](#generating-custom-message-files)
@@ -133,7 +135,8 @@ If you have the PAL version, you should also add a --pal flag: `FlipnicFileTool 
 If you just want to see what streams a .PSS file contains, run this: `FlipnicFileTool SHUKYAKUDEMO.PSS --list-pss-streams`
 
 Outputs:
-``` 
+```
+Stream summary
 +-----------------+-----------------+
 | Stream          | Size            | 
 +-----------------+-----------------+
@@ -144,9 +147,59 @@ Outputs:
 | Audio 5         | 4.09 MiB        | 
 | Video           | 101.48 MiB      | 
 +-----------------+-----------------+
+
+Audio duration: 00:01:24.984
+Video duration: 00:01:23.720
+Video standard: PAL (interlaced)
+Total frames: 2093
+
+Interleaving data
++---------+------------+----------+
+| Stream  | Fr./Sampl. | Time     |
++---------+------------+----------+
+| Audio 1 | 34405      | 780.16ms |
+| Audio 2 | 34405      | 780.16ms |
+| Audio 3 | 34405      | 780.16ms |
+| Audio 4 | 34405      | 780.16ms |
+| Audio 5 | 34405      | 780.16ms |
+| Video   | 0          | 0ms      |
+| Video   | 1          | 40ms     |
+| Video   | 0          | 0ms      |
+| Video   | 1          | 40ms     |
+| Video   | 1          | 40ms     |
+...
 ```
 
 If you just want to separate streams and not convert any of the files: `FlipnicFileTool --extract-pss-streams --input ./FREEZE_OVER.PSS --output .`
+
+If you want to create a new .PSS container from 1 audio and 1 interlaced PAL video stream, you can use the following command: `FlipnicFileTool --generate-pss SAMPLE.INT --input SAMPLE.IPU --output SAMPLE.PSS --pal`
+
+While there is NTSC support, it is still in experimental status, so created .PSS files will stop playing at some point in-game.
+
+### Creating custom FMVs from video files
+
+First, you must create compatible source files.
+
+Video: PlayStation 2 IPU
+
+* PAL progressive: 256x512@50p
+* PAL interlaced: 512x512@25i
+* NTSC progressive: 256x512@60p
+* NTSC interlaced: 512x448@30i
+
+Audio: Sony Compressed ADPCM
+
+* Sample rate: 44100Hz
+* Interleave: 0x400
+* Channels: 2
+
+For creating the .INT file, you can use MFAudio. Yes, it's old AF, but it works.
+
+For creating the .IPU file, you have to first encode your source video to MPEG-2. You may use TMPEGEnc for best results, but you can also just use FFmpeg with this command: `ffmpeg -i <source video> -c:v mpeg2video -profile:v main -level:v 8 -h:v 4.531M -maxrate 5M -minrate 4.531M -bufsize 1835k -pix_fmt yuv420p -g 1 -hf 0 -flags +ildct+ilme -top 1 -r <framerate for the specific video format> -s <resolution for the specific video format> <output .m2v>`. Then you can import this M2V file to the ps2str and from there you can convert it to .IPU.
+
+It's possible that the created .IPU file will be broken. To fix it, you can use the following command: `FlipnicFileTool --ipu-duct-tape [--pal] [--progressive] --input <.ipu file>` (use the flags in brackets only when applicable to chosen video format).
+
+After you have both .IPU and .INT files, you can merge them. Use the following command: `FlipnicFileTool --generate-pss <int file> --input <ipu file> --output <pss file> [--pal] [--progressive]`. Once again, use the flags in brackets only when applicable for the chosen video format.
 
 ## Sound files (*.INT / *.SVAG)
 
@@ -259,6 +312,19 @@ Target:  (850.5004; 1.8749; 771.5004)
 | 140             | 841             | 25              | 775             | 854             | 1               | 775             | 34.999996       | 
 +-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
 ```
+
+To create a XML file containing this information, which you can easily modify, you can run `FlipnicFileTool --input EXAMPLE.FPC --convert-fpc-to-xml --output EXAMPLE.XML`. Once you've modified the created XML file, you can turn it back into a .FPC file by running `FlipnicFileTool --input EXAMPLE.XML --convert-xml-to-fpc --output EXAMPLE_NEW.FPC`.
+
+### Creating animated camera sequences
+
+This tool allows you to interpolate between two .FPC files to create an animated sequence. Here's an example use case:
+
+* Using Flipnic freecam, setup the camera for first frame
+* Click the "Generate FPC" button and save it as a .FPC file
+* Now setup the camera for the final frame
+* Click the "Generate FPC" button again and save it as another .FPC file
+* Now in FlipnicFileTool, you can run a command like this to generate a 300 frame animation: `FlipnicFileTool --input A.FPC --input B.FPC --generate-animation 300 --output C.FPC`
+* You can now use this C.FPC file inside the game by either modifying an existing .FPC file or adding it as a new file by repacking RES.BIN container and then using it with the .SST event script
 
 ## Stage information files (*.SST)
 
@@ -416,7 +482,7 @@ Joints:
 
 You can also attempt to convert the 3D models stored inside LP4 files to Wavefront OBJ by running the following command: `FlipnicFileTool --input CHOU01.LP4 --convert-obj --output CHOU01.OBJ`
 
-**Note**: LP4 parser is unreliable, so this will often fall back to a brute-force method, which will comb through the entire file trying to find patterns that match 3D model data. Also, not all LP4 files contain model data.
+**Note**: LP4 parser is unreliable, so this will often fall back to a brute-force method, which will comb through the entire file trying to find patterns that match 3D model data. Also, not all LP4 files contain model data. If you want to always skip the parsing part and go straight for the brute-force method, you can append the `--force-brute-force` parameter to the above command.
 
 Sometimes this will produce a file, which has incorrect normals (shading looks weird). If that's the case, you may need to append `--alternate-normals` parameter to the above command.
 
