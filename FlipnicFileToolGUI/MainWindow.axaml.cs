@@ -5,7 +5,6 @@ using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
-using Avalonia.Styling;
 using Avalonia.Threading;
 using FlipnicFileToolGUI.Controls;
 using FlipnicFileToolGUI.Helpers;
@@ -233,6 +232,7 @@ public sealed partial class MainWindow : SukiWindow
     private void Window_Loaded(object? sender, RoutedEventArgs e)
     {
         App.Init(this);
+        if (Program.GpuAccel) Preferences.LoadPreferences(this);
     }
 
     public void Init3DStuff(Lp4? container = null)
@@ -270,7 +270,7 @@ public sealed partial class MainWindow : SukiWindow
                 IsLightTheme = IsLightTheme
             },
         };
-        nw.ToggleDarkNative(sender, null);
+        //nw.ToggleDarkNative(sender, null);
         nw.Show();
     }
 
@@ -843,6 +843,7 @@ public sealed partial class MainWindow : SukiWindow
     private void RestartWglButton_Click(object? sender, RoutedEventArgs e)
     {
         if (Design.IsDesignMode) return;
+        Preferences.SavePreferences(IsLightTheme, StaticUtils.MsgFile);
         var exePath = Environment.ProcessPath;
         if (exePath == null) return;
         Process.Start(new ProcessStartInfo(exePath)
@@ -897,6 +898,6 @@ public sealed partial class MainWindow : SukiWindow
     private void Window_OnClosing(object? sender, WindowClosingEventArgs e)
     {
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime al) return;
-        if (al.Windows.Count == 1) Preferences.SavePreferences(InfoBox.IsLightTheme, StaticUtils.MsgFile);
+        if (!Program.GpuAccel && al.Windows.Count == 1) Preferences.SavePreferences(InfoBox.IsLightTheme, StaticUtils.MsgFile);
     }
 }

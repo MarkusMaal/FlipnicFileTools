@@ -426,7 +426,7 @@ public class Lp4(byte[] data, string fileName) : FormatBase
         }
 
         if (Models.Count <= 0) return;
-        foreach (var model in Models.ToArray().Reverse().ToArray())
+        foreach (var model in ((IEnumerable<Model>)Models.ToArray()).Reverse().ToArray())
         {
             StaticUtils.LiveLoadStatus = "Precaching textures";
             SetSelectedModel(model);
@@ -459,7 +459,7 @@ public class Lp4(byte[] data, string fileName) : FormatBase
             var ms = new MemoryStream();
             tim2.SavePng(ms);
             Texture = ms.ToArray();
-            foreach (var model in Models.ToArray().Reverse().ToArray())
+            foreach (var model in ((IEnumerable<Model>)Models.ToArray()).Reverse().ToArray())
             {
                 StaticUtils.LiveLoadStatus = "Precaching textures";
                 SetSelectedModel(model);

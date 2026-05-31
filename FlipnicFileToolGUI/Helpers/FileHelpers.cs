@@ -164,7 +164,7 @@ public static class FileHelpers
                         mw.ModelTab.IsSelected = true;
                         mw.InfoTab.IsSelected = false;
                     });
-                    Thread.Sleep(1000);
+                    if (Program.GpuAccel) Thread.Sleep(1000);
                     LoadAsString(ico, "PlayStation 2 save file icon", mw);
                     Dispatcher.UIThread.Post(() =>
                     {
@@ -176,7 +176,7 @@ public static class FileHelpers
                         mw.InfoTab.IsVisible = !Program.GpuAccel;
                         mw.PreviewImage.Source = bt.IconToBitmap();
                     });
-                    Thread.Sleep(1000);
+                    if (Program.GpuAccel) Thread.Sleep(1000);
                     Dispatcher.UIThread.Post(() => mw.ModelTab.IsSelected = Program.GpuAccel);
                     break;
                 case "MID":
@@ -204,7 +204,7 @@ public static class FileHelpers
                         mw.InfoTab.IsSelected = false;
                     });
                     
-                    Thread.Sleep(1000);
+                    if (Program.GpuAccel) Thread.Sleep(1000);
                     LoadAsString(fpd, "Fixed Path Data", mw);
                     Dispatcher.UIThread.Post(() =>
                     {
@@ -222,7 +222,7 @@ public static class FileHelpers
                         mw.ModelTab.IsSelected = false;
                         mw.ModelTab.IsVisible = true;
                     });
-                    Thread.Sleep(1000);
+                    if (Program.GpuAccel) Thread.Sleep(1000);
                     Dispatcher.UIThread.Post(() => mw.ModelTab.IsSelected = Program.GpuAccel);
                     break;
                 case "VSD":
@@ -441,7 +441,7 @@ public static class FileHelpers
                             mw.ImagePreviewTab.IsVisible = false;
                         }
                     });
-                    Thread.Sleep(1000);
+                    if (Program.GpuAccel) Thread.Sleep(1000);
                     Dispatcher.UIThread.Post(() => mw.ModelTab.IsSelected = Program.GpuAccel);
                     break;
                 case "IPU":

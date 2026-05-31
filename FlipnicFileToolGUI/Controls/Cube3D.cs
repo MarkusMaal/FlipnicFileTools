@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
@@ -443,8 +444,16 @@ namespace FlipnicFileToolGUI.Controls
 
                 if (KeyboardState.IsKeyDown(Key.F))
                 {
-                    mw.WindowDecorations = mw.WindowDecorations == WindowDecorations.None ? WindowDecorations.Full : WindowDecorations.None;
+                    if (mw.WindowState == WindowState.FullScreen)
+                    {
+                        new Thread(() =>
+                        {
+                            Thread.Sleep(500);
+                            Dispatcher.UIThread.Post(() => mw.IsTitleBarVisible = true);
+                        }).Start();
+                    }
                     mw.WindowState = mw.WindowState == WindowState.FullScreen ? WindowState.Normal : WindowState.FullScreen;
+
                     _debounce = 10;
                 }
             }

@@ -24,17 +24,17 @@ public class FpnFpcTest
         var ms = new MemoryStream(_mockFpc);
         var fpc = new FpnFpc(ms);
         Assert.HasCount(4, fpc.CamFrames);
-        Assert.AreEqual("90", fpc.FoVf);
-        Assert.AreEqual("15", fpc.OriginXf);
-        Assert.AreEqual("30", fpc.OriginYf);
-        Assert.AreEqual("80.5", fpc.OriginZf);
-        Assert.AreEqual("100.25", fpc.TargetXf);
-        Assert.AreEqual("80.75", fpc.TargetYf);
-        Assert.AreEqual("30.1", fpc.TargetZf);
-        Assert.AreEqual("10", fpc.CamFrames[0].OriginY);
-        Assert.AreEqual("5", fpc.CamFrames[1].OriginY);
-        Assert.AreEqual("0", fpc.CamFrames[2].OriginY);
-        Assert.AreEqual("-5", fpc.CamFrames[3].OriginY);
+        Assert.AreEqual(90f, fpc.Fov);
+        Assert.AreEqual(15f, fpc.OriginX);
+        Assert.AreEqual(30f, fpc.OriginY);
+        Assert.AreEqual(80.5f, fpc.OriginZ);
+        Assert.AreEqual(100.25f, fpc.TargetX);
+        Assert.AreEqual(80.75f, fpc.TargetY);
+        Assert.AreEqual(30.1f, fpc.TargetZ);
+        Assert.AreEqual(10f, fpc.CamFrames[0].OriginY);
+        Assert.AreEqual(5f, fpc.CamFrames[1].OriginY);
+        Assert.AreEqual(0f, fpc.CamFrames[2].OriginY);
+        Assert.AreEqual(-5f, fpc.CamFrames[3].OriginY);
     }
     
     [TestMethod]
