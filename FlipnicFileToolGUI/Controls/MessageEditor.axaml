@@ -4,7 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="FlipnicFileToolGUI.Controls.MessageEditor"
-             DataContext="{Binding RelativeSource={RelativeSource Self}}">
+             DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             x:CompileBindings="False">
     <Grid ColumnDefinitions="*,*">
         <ListBox Grid.Column="0" Margin="0,0,0,10" ItemsSource="{Binding MsgObject.Messages}"
                  BorderThickness="1" BorderBrush="Gray" Name="MessageList" SelectionChanged="MessageList_OnSelectionChanged">

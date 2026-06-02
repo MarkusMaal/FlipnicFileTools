@@ -15,7 +15,8 @@
         x:DataType="viewModels:MainWindowViewModel" x:Class="FlipnicFileToolGUI.MainWindow"
         Title="Flipnic file tool" Loaded="Window_Loaded" BackgroundStyle="Bubble"
         Closing="Window_OnClosing"
-        IsMenuVisible="{OnPlatform True, macOS=False}">
+        IsMenuVisible="{OnPlatform True, macOS=False}"
+        x:CompileBindings="True">
     <sukiUi:SukiWindow.RightWindowTitleBarControls>
         <Label Name="FileTypeLabel" Content="Ready" VerticalContentAlignment="Center" VerticalAlignment="Center"></Label>
     </sukiUi:SukiWindow.RightWindowTitleBarControls>
@@ -24,7 +25,7 @@
     </sukiUi:SukiWindow.Hosts>
     <!-- Menu bar (macOS) -->
     <NativeMenu.Menu>
-        <NativeMenu>
+        <NativeMenu x:CompileBindings="False">
             <NativeMenuItem Header="File" IsVisible="true">
                 <NativeMenu Opening="NativeFileMenuOpening">                    
                     <NativeMenuItem Header="Open" Gesture="Meta+O" Click="OpenNativeMenuItem_OnClick"/>
@@ -79,8 +80,8 @@
         </MenuItem>
     </sukiUi:SukiWindow.MenuItems>
     <Grid>
-        <Grid Name="DockPanel1">
-            <sukiUi:SukiSideMenu IsSearchEnabled="False" IsMenuExpanded="False" Name="MainTabControl" SelectionMode="AlwaysSelected" SelectionChanged="MainTabControl_OnSelectionChanged">
+        <Grid Name="DockPanel1" x:CompileBindings="True">
+            <sukiUi:SukiSideMenu IsSearchEnabled="False" IsMenuExpanded="False" Name="MainTabControl" SelectionMode="AlwaysSelected" SelectionChanged="MainTabControl_OnSelectionChanged" x:CompileBindings="False">
                 <sukiUi:SukiSideMenu.Items>
                     <!-- Info tab -->
                     <sukiUi:SukiSideMenuItem Name="InfoTab" Header="Info">
@@ -430,7 +431,7 @@
                             <controls:CircleDot ColorA="DodgerBlue" ColorB="DarkBlue" Source="Assets\TabIcons\save.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
-                            <Grid RowDefinitions="30,30,*" Margin="10" DataContext="{Binding SaveData}">
+                            <Grid RowDefinitions="30,30,*" Margin="10" DataContext="{Binding SaveData}" x:CompileBindings="False">
                                 <Label>Ranking data</Label>
                                 <ComboBox Grid.Row="1" SelectedIndex="{Binding LeaderboardId}" SelectionChanged="ScoreGrid_SelectionChanged">
                                     <ComboBoxItem>Original game</ComboBoxItem>

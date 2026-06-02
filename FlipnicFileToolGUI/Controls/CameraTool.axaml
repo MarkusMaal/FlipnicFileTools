@@ -6,7 +6,8 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="FlipnicFileToolGUI.Controls.CameraTool"
              xmlns:controls="clr-namespace:FlipnicFileToolGUI.Controls"
-             DataContext="{Binding RelativeSource={RelativeSource Self}}">
+             DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             x:CompileBindings="False">
     <Grid RowDefinitions="140, *">
         <StackPanel DataContext="{Binding CameraObject}" Margin="10" Spacing="10">
             <StackPanel Orientation="Horizontal" Spacing="10">

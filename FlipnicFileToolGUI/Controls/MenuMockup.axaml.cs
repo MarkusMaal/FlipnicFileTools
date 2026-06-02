@@ -55,18 +55,22 @@ public partial class MenuMockup : UserControl
     public new static readonly StyledProperty<int> HeightProperty = AvaloniaProperty.Register<MenuMockup, int>(nameof(Height));
 
     private void ToggleButton_OnIsCheckedChanged(object? sender, RoutedEventArgs e)
-    { 
+    {
+        if (sender is not CheckBox cb) return;
         List<MenuElementViewModel> menuElements = [];
+        var chk = false;
         foreach (var menuElement in MenuElementSource)
         {
-            if (menuElement.MenuElement.ToString() == (((CheckBox?)sender)?.Content?.ToString() ?? ""))
+            if (menuElement.MenuElement.ToString() == (cb?.Content?.ToString() ?? ""))
             {
-                menuElement.IsVisible = ((CheckBox?)sender)?.IsChecked ?? false;
+                menuElement.IsVisible = cb?.IsChecked ?? false;
+                chk = menuElement.IsVisible;
             }
             menuElements.Add(menuElement);
         }
         MenuElementSource = new ObservableCollection<MenuElementViewModel>(menuElements);
         DataContext = this;
+        cb?.IsChecked = chk;
     }
 
     private async void SaveAsMenuItem_OnClick(object? sender, RoutedEventArgs e)

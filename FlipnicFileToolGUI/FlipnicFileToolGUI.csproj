@@ -2,11 +2,11 @@
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
         <ApplicationIcon>Assets\F.ico</ApplicationIcon>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <ApplicationManifest>app.manifest</ApplicationManifest>
-        <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,7 +21,6 @@
         <PackageReference Include="OpenTK" Version="4.9.4" />
         <PackageReference Include="OpenTK.Graphics" Version="4.9.4" />
         <PackageReference Include="OpenTKAvalonia" Version="1.0.0" />
-        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
         <PackageReference Include="SukiUI" Version="7.0.1" />
 
         <ProjectReference Include="..\FlipnicLib\FlipnicLib.csproj" />
