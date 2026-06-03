@@ -12,6 +12,7 @@
         xmlns:types="clr-namespace:FlipnicLib.Types;assembly=FlipnicLib"
         xmlns:viewModels="clr-namespace:FlipnicFileToolGUI.ViewModels"
         xmlns:controls="clr-namespace:FlipnicFileToolGUI.Controls"
+        xmlns:formats="clr-namespace:FlipnicLib.Formats;assembly=FlipnicLib"
         x:DataType="viewModels:MainWindowViewModel" x:Class="FlipnicFileToolGUI.MainWindow"
         Title="Flipnic file tool" Loaded="Window_Loaded" BackgroundStyle="Bubble"
         Closing="Window_OnClosing"
@@ -189,7 +190,7 @@
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
                     <!-- Gimmicks tab -->
-                    <sukiUi:SukiSideMenuItem Name="StageGimmickTab" Header="Edit gimmicks" IsVisible="False">
+                    <sukiUi:SukiSideMenuItem Name="StageGimmickTab" Header="Edit gimmicks" IsVisible="False" DataContext="{Binding}" x:DataType="viewModels:MainWindowViewModel" x:CompileBindings="True">
                         <sukiUi:SukiSideMenuItem.Icon>
                             <controls:CircleDot ColorA="Gray" ColorB="Black" Source="Assets\TabIcons\gimmicks.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
@@ -202,20 +203,20 @@
                                         <Button Content="Export changes" Margin="5" Click="ExportGimmicksButton"></Button>
                                     </StackPanel>
                                 </Grid>
-                                <DataGrid Grid.Row="1" Name="GimmickGrid" ItemsSource="{Binding SelectedGimmick}"
+                                <DataGrid Grid.Row="1" Name="GimmickGrid" ItemsSource="{Binding SelectedGimmick}" DataContext="{Binding}" x:DataType="viewModels:MainWindowViewModel"
                                           CanUserResizeColumns="True">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Label" Binding="{Binding Label}" x:DataType="types:Gimmick"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Type" Binding="{Binding  Type}" x:DataType="types:Gimmick"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Label" Binding="{Binding Label}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Type" Binding="{Binding  Type}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
                                         <DataGridTextColumn Header="Model" Binding="{Binding  Lp4File}" x:DataType="types:Gimmick" IsReadOnly="True"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Sound effect" Binding="{Binding SoundEffect}" x:DataType="types:Gimmick"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Bounciness" Binding="{Binding Bounciness}" x:DataType="types:Gimmick"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Flipper strength" Binding="{Binding FlipperStrength}" x:DataType="types:Gimmick"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Knockback" Binding="{Binding Knockback}" x:DataType="types:Gimmick"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Analog range" Binding="{Binding AnalogRange}" x:DataType="types:Gimmick"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Button" Binding="{Binding Button}" x:DataType="types:Gimmick"></DataGridTextColumn>
-                                        <DataGridCheckBoxColumn Header="Invisible" Binding="{Binding Invisible}" x:DataType="types:Gimmick"></DataGridCheckBoxColumn>
-                                        <DataGridCheckBoxColumn Header="No spawn" Binding="{Binding  NoSpawn}" x:DataType="types:Gimmick"></DataGridCheckBoxColumn>
+                                        <DataGridTextColumn Header="Sound effect" Binding="{Binding SoundEffect}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Bounciness" Binding="{Binding Bounciness}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Flipper strength" Binding="{Binding FlipperStrength}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Knockback" Binding="{Binding Knockback}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Analog range" Binding="{Binding AnalogRange}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Button" Binding="{Binding Button}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridCheckBoxColumn Header="Invisible" Binding="{Binding Invisible}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridCheckBoxColumn>
+                                        <DataGridCheckBoxColumn Header="No spawn" Binding="{Binding  NoSpawn}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridCheckBoxColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </Grid>
@@ -241,7 +242,7 @@
                                           BorderThickness="1" BorderBrush="Gray" Name="SamplesGrid"
                                           CanUserResizeColumns="True"
                                           CanUserReorderColumns="True" SelectionChanged="SampleGridSelectionChanged"
-                                          CanUserSortColumns="True" SelectionMode="Single"
+                                          CanUserSortColumns="True" SelectionMode="Single" x:CompileBindings="True"
                                           IsReadOnly="True">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Id" Binding="{Binding Id}"></DataGridTextColumn>
@@ -259,7 +260,7 @@
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
                     <!-- Files tab -->
-                    <sukiUi:SukiSideMenuItem Name="FileListTab" Header="Files" IsVisible="False">
+                    <sukiUi:SukiSideMenuItem Name="FileListTab" Header="Files" IsVisible="False" x:CompileBindings="True">
                         <sukiUi:SukiSideMenuItem.Icon>
                             <controls:CircleDot ColorA="Lime" ColorB="DarkSlateGray" Source="Assets\TabIcons\files.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
@@ -426,14 +427,14 @@
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
                     <!-- Save file tab -->
-                    <sukiUi:SukiSideMenuItem Header="Save file" IsVisible="False" Name="SaveEditor">
+                    <sukiUi:SukiSideMenuItem Header="Save file" IsVisible="False" Name="SaveEditor" DataContext="{Binding}" x:CompileBindings="True">
                         <sukiUi:SukiSideMenuItem.Icon>
                             <controls:CircleDot ColorA="DodgerBlue" ColorB="DarkBlue" Source="Assets\TabIcons\save.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
-                            <Grid RowDefinitions="30,30,*" Margin="10" DataContext="{Binding SaveData}" x:CompileBindings="False">
+                            <Grid RowDefinitions="30,30,*" Margin="10" DataContext="{Binding SaveData}">
                                 <Label>Ranking data</Label>
-                                <ComboBox Grid.Row="1" SelectedIndex="{Binding LeaderboardId}" SelectionChanged="ScoreGrid_SelectionChanged">
+                                <ComboBox Grid.Row="1" SelectedIndex="{Binding LeaderboardId}"  x:DataType="formats:FpnSave" SelectionChanged="ScoreGrid_SelectionChanged">
                                     <ComboBoxItem>Original game</ComboBoxItem>
                                     <ComboBoxItem>Biology A</ComboBoxItem>
                                     <ComboBoxItem>Biology B</ComboBoxItem>
@@ -453,15 +454,15 @@
                                 <DataGrid Grid.Row="2" ItemsSource="{Binding Rank}" Margin="0,0,0,10" GridLinesVisibility="All"
                                           BorderThickness="1" BorderBrush="Gray" Name="RankGrid"
                                           CanUserResizeColumns="True" SelectionMode="Single"
-                                          CanUserReorderColumns="True"
-                                          CanUserSortColumns="True" 
+                                          CanUserReorderColumns="True" DataContext="{Binding}"
+                                          CanUserSortColumns="True"  x:DataType="formats:FpnSave" 
                                           IsReadOnly="False">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Rank" x:DataType="types:Rank" Binding="{Binding Position}"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Initials" x:DataType="types:Rank" Binding="{Binding Initials}"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Score" x:DataType="types:Rank" Binding="{Binding Score}"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Combos" x:DataType="types:Rank" Binding="{Binding Combos}"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Difficulty" x:DataType="types:Rank" Binding="{Binding Difficulty}"/>
+                                        <DataGridTextColumn Header="Initials" x:DataType="types:Rank" Binding="{Binding Initials}" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Score" x:DataType="types:Rank" Binding="{Binding Score}" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Combos" x:DataType="types:Rank" Binding="{Binding Combos}" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Difficulty" x:DataType="types:Rank" Binding="{Binding Difficulty}" IsReadOnly="False"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </Grid>

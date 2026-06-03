@@ -18,7 +18,7 @@ public abstract class StaticUtils
     public static int[] AdsrMultipliers = [1200, 1200, 1400, 1200, 320];
 
     public static readonly float LibVersion = 2.31f;
-    public static readonly bool IsBeta = true;
+    public static readonly bool IsBeta = false;
     
     public static bool LowMem { get; set; }
     

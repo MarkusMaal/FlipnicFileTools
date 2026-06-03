@@ -6,10 +6,11 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="FlipnicFileToolGUI.Controls.CameraTool"
              xmlns:controls="clr-namespace:FlipnicFileToolGUI.Controls"
+             xmlns:formats="clr-namespace:FlipnicLib.Formats;assembly=FlipnicLib"
              DataContext="{Binding RelativeSource={RelativeSource Self}}"
-             x:CompileBindings="False">
+             x:CompileBindings="True">
     <Grid RowDefinitions="140, *">
-        <StackPanel DataContext="{Binding CameraObject}" Margin="10" Spacing="10">
+        <StackPanel DataContext="{Binding CameraObject}" Margin="10" Spacing="10" x:DataType="formats:FpnFpc">
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <Label Content="Origin: " VerticalAlignment="Center"></Label>
                 <TextBox Text="{Binding OriginX, TargetNullValue=0}" MinWidth="60" ></TextBox>
@@ -34,20 +35,20 @@
             <Button Content="Export TXT" Click="Button_OnClick"/>
             <Button Content="Export XML" Click="Button_OnClick"/>
         </WrapPanel>
-        <DataGrid Grid.Row="1" Margin="0,0,0,10" GridLinesVisibility="All" ItemsSource="{Binding $parent[controls:CameraTool].CameraObject.CamFrames}"
+        <DataGrid Grid.Row="1" Margin="0,0,0,10" GridLinesVisibility="All" ItemsSource="{Binding $parent[controls:CameraTool].CameraObject.CamFrames}" x:DataType="controls:CameraTool"
                   BorderThickness="1" BorderBrush="Gray" Name="CameraGrid"
                   CanUserResizeColumns="True"
                   CanUserReorderColumns="True" DataContext="{Binding $parent[controls:CameraTool].CameraObject}"
                   CanUserSortColumns="True" SelectionMode="Single"
                   IsReadOnly="False" CellEditEnding="DataGrid_OnCellEditEnding">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Origin X" x:DataType="types:CameraFrame" Binding="{Binding OriginX, TargetNullValue=0}"></DataGridTextColumn>
-                <DataGridTextColumn Header="Origin Y" x:DataType="types:CameraFrame" Binding="{Binding OriginY, TargetNullValue=0}"></DataGridTextColumn>
-                <DataGridTextColumn Header="Origin Z" x:DataType="types:CameraFrame"  Binding="{Binding OriginZ, TargetNullValue=0}"></DataGridTextColumn>
-                <DataGridTextColumn Header="Target X" x:DataType="types:CameraFrame" Binding="{Binding TargetX, TargetNullValue=0}"></DataGridTextColumn>
-                <DataGridTextColumn Header="Target Y" x:DataType="types:CameraFrame" Binding="{Binding TargetY, TargetNullValue=0}"></DataGridTextColumn>
-                <DataGridTextColumn Header="Target Z" x:DataType="types:CameraFrame" Binding="{Binding TargetZ, TargetNullValue=0}"></DataGridTextColumn>
-                <DataGridTextColumn Header="Field of view" x:DataType="types:CameraFrame"  Binding="{Binding Fov, TargetNullValue=0}"></DataGridTextColumn>
+                <DataGridTextColumn Header="Origin X" x:DataType="types:CameraFrame" Binding="{Binding OriginX, TargetNullValue=0}" IsReadOnly="False"></DataGridTextColumn>
+                <DataGridTextColumn Header="Origin Y" x:DataType="types:CameraFrame" Binding="{Binding OriginY, TargetNullValue=0}" IsReadOnly="False"></DataGridTextColumn>
+                <DataGridTextColumn Header="Origin Z" x:DataType="types:CameraFrame"  Binding="{Binding OriginZ, TargetNullValue=0}" IsReadOnly="False"></DataGridTextColumn>
+                <DataGridTextColumn Header="Target X" x:DataType="types:CameraFrame" Binding="{Binding TargetX, TargetNullValue=0}" IsReadOnly="False"></DataGridTextColumn>
+                <DataGridTextColumn Header="Target Y" x:DataType="types:CameraFrame" Binding="{Binding TargetY, TargetNullValue=0}" IsReadOnly="False"></DataGridTextColumn>
+                <DataGridTextColumn Header="Target Z" x:DataType="types:CameraFrame" Binding="{Binding TargetZ, TargetNullValue=0}" IsReadOnly="False"></DataGridTextColumn>
+                <DataGridTextColumn Header="Field of view" x:DataType="types:CameraFrame"  Binding="{Binding Fov, TargetNullValue=0}" IsReadOnly="False"></DataGridTextColumn>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

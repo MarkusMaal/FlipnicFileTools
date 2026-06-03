@@ -1,10 +1,13 @@
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Media.Imaging;
-using FlipnicLib.Formats;
+using FlipnicLib.Types;
 
 namespace FlipnicFileToolGUI.ViewModels;
 
-public class MenuElementViewModel
+public sealed class MenuElementViewModel : INotifyPropertyChanged
 {
     /// <summary>
     /// Name of the layer/section
@@ -14,7 +17,7 @@ public class MenuElementViewModel
     /// <summary>
     /// Menu element object (describing the layout)
     /// </summary>
-    public FpnMlb.MenuElement MenuElement { get; init; }
+    public MenuElement MenuElement { get; init; }
     
     /// <summary>
     /// Position of the menu element as Avalonia thickness property
@@ -30,4 +33,19 @@ public class MenuElementViewModel
     /// Toggles the visibility of a menu element
     /// </summary>
     public bool IsVisible { get; set; } = true;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        field = value;
+        OnPropertyChanged(propertyName);
+        return true;
+    }
 }

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -8,7 +10,7 @@ using FlipnicLib.Types;
 
 namespace FlipnicFileToolGUI.ViewModels;
 
-public class MainWindowViewModel
+public sealed class MainWindowViewModel : INotifyPropertyChanged
 {
     /// <summary>
     /// SST > Gimmicks
@@ -52,5 +54,20 @@ public class MainWindowViewModel
             if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime al) return false;
             return al.Windows.Count > 1;
         }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        field = value;
+        OnPropertyChanged(propertyName);
+        return true;
     }
 }

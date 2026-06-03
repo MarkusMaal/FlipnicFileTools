@@ -3,11 +3,14 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:FlipnicFileToolGUI"
+             xmlns:controls="clr-namespace:FlipnicFileToolGUI.Controls"
+             xmlns:formats="clr-namespace:FlipnicLib.Formats;assembly=FlipnicLib"
+             xmlns:types="clr-namespace:FlipnicLib.Types;assembly=FlipnicLib"
              xmlns:viewModels="clr-namespace:FlipnicFileToolGUI.ViewModels"
              mc:Ignorable="d" d:DesignWidth="512" d:DesignHeight="512"
              DataContext="{Binding RelativeSource={RelativeSource Self}}"
-             x:Class="FlipnicFileToolGUI.Controls.MenuMockup"
-             x:CompileBindings="False">
+             x:Class="FlipnicFileToolGUI.Controls.MenuMockup" x:DataType="controls:MenuMockup"
+             x:CompileBindings="True">
     <Grid ColumnDefinitions="400,*">
         <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
             <StackPanel Spacing="10" Margin="10">
@@ -28,7 +31,7 @@
                 </ItemsControl>
             </StackPanel>
         </ScrollViewer>
-        <Viewbox Grid.Column="1">
+        <Viewbox Grid.Column="1" DataContext="{Binding}">
             <Grid MinWidth="{Binding Width}" MinHeight="{Binding Height}">
                 <Grid.ContextMenu>
                     <ContextMenu>
