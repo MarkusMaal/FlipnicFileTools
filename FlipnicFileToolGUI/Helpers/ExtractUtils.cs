@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -7,11 +8,15 @@ using Avalonia.Threading;
 using FlipnicLib;
 using FlipnicLib.Formats.Vag;
 using FlipnicLib.Types;
+using NetCoreAudio;
 
 namespace FlipnicFileToolGUI.Helpers;
 
 public class ExtractUtils
 {
+    
+    private static Player player = new();
+    
     /// <summary>
     /// Extract VAG sample from a BD file and convert it to WAV
     /// </summary>
@@ -73,32 +78,55 @@ public class ExtractUtils
     }
 
     /// <summary>
+    /// Stops audio playback
+    /// </summary>
+    public static void Stop(MainWindow mw)
+    {
+        if (player.Playing)
+        {
+            player.Stop();
+        }
+        Clean(mw);
+
+        RenableButtons(mw);
+    }
+
+    private static void RenableButtons(MainWindow mw)
+    {
+        mw.PlaybackStateLabel.Content = "Stopped";
+        mw.PlayButton.IsEnabled = true;
+        mw.PlaySampleButton.IsEnabled = true;
+        mw.StopButton.IsEnabled = false;
+    }
+
+    private static void Clean(MainWindow mw)
+    {
+        var outPath = Path.GetTempPath() + "/temp.wav";
+        mw.PlaybackStateLabel.Content = "Cleaning";
+        while (FileHelpers.IsFileLocked(new FileInfo(outPath))) { Thread.Sleep(100); } // prevent race errors
+        File.Delete(outPath);
+        player = new Player();
+    }
+
+    /// <summary>
     /// Plays the temporary WAV without doing any conversions first
     /// </summary>
     /// <param name="mw">Main window instance</param>
     private static void JustPlay(MainWindow mw)
     {
         if (Design.IsDesignMode) return;
-        var outPath = Path.GetTempPath() + "/temp.wav";
-        var player = new NetCoreAudio.Player();
-        player.Play(outPath);
+        player.Play(Path.GetTempPath() + "/temp.wav");
         Dispatcher.UIThread.Post(() => {
             mw.PlaySampleButton.IsEnabled = false;
             mw.PlaybackStateLabel.Content = "Now playing";
+            mw.StopButton.IsEnabled = true;
         });
         player.PlaybackFinished += (_, _) =>
         {
             Dispatcher.UIThread.Post(() =>
             {
-                mw.PlaybackStateLabel.Content = "Cleaning";
-            });
-            while (FileHelpers.IsFileLocked(new FileInfo(outPath))) { Thread.Sleep(100); } // prevent race errors
-            File.Delete(outPath);
-            Dispatcher.UIThread.Post(() =>
-            {
-                mw.PlaybackStateLabel.Content = "Stopped";
-                mw.PlayButton.IsEnabled = true;
-                mw.PlaySampleButton.IsEnabled = true;
+                Clean(mw);
+                RenableButtons(mw);
             });
         };
     }
@@ -111,8 +139,6 @@ public class ExtractUtils
     {
         var outputDir = await FileHelpers.SelectFolder(mw);
         if (outputDir is null) return;
-        mw.DockPanel1.IsVisible = false;
-        mw.Loader.IsVisible = true;
         mw.LoadProgress.IsIndeterminate = false;
         MainWindow.ProgressMax = 1;
         new Thread(() =>
@@ -125,12 +151,7 @@ public class ExtractUtils
 
                     if (!mw.FileName!.ToUpper().EndsWith(".ISO"))
                     {
-                        mw.LoadProgress.Maximum = MainWindow.ProgressMax;
-                        mw.LoadProgress.Value = MainWindow.Progress;
-                    }
-                    else
-                    {
-                        mw.LoadStatus.Text = StaticUtils.LiveLoadStatus;
+                        mw.LoadProgress.Value = MainWindow.Progress/(double)MainWindow.ProgressMax * 28.0;
                     }
                 });
             }
@@ -158,7 +179,7 @@ public class ExtractUtils
                     if (vf.Path.EndsWith('\\')) continue;
                     Dispatcher.UIThread.Post(() =>
                     {
-                        mw.LoadStatus.Text = $"Extracting {vf.Path} ({StaticUtils.GetFilesizeString(vf.Length)})";
+                        StaticUtils.LiveLoadStatus = $"Extracting {vf.Path} ({StaticUtils.GetFilesizeString(vf.Length)})";
                         MainWindow.Progress = 0;
                         MainWindow.ProgressMax = 1;
                     });
@@ -167,12 +188,11 @@ public class ExtractUtils
             }
             Dispatcher.UIThread.Post(() =>
             {
-                mw.DockPanel1.IsVisible = true;
-                mw.Loader.IsVisible = false;
                 mw.LoadProgress.IsIndeterminate = true;
                 MainWindow.ProgressMax = 0;
                 MainWindow.Progress = 0;
             });
+            StaticUtils.LiveLoadStatus = "";
         }).Start();
     }
 
@@ -185,34 +205,38 @@ public class ExtractUtils
     /// <param name="mw">Main window instance</param>
     internal static void SaveFile(VirtualFile vf, string file, MainWindow mw)
     {
-        if (file.Contains('*')) return;
-        var fs = new FileStream(mw.FileName!, FileMode.Open, FileAccess.Read);
-        var os = new FileStream(file, FileMode.Create, FileAccess.Write);
-        fs.Seek(vf.Offset, SeekOrigin.Begin);
-        for (var i = 0; i < vf.Length / 2048; i += 1)
-        {
-            var buffer = new byte[2048];
-            MainWindow.Progress = i;
-            MainWindow.ProgressMax = (int)vf.Length / 2048;
-            fs.ReadExactly(buffer);
-            os.Write(buffer, 0, 2048);
-        }
 
         try
         {
+            if (file.Contains('*')) return;
+            var fs = new FileStream(mw.FileName!, FileMode.Open, FileAccess.Read);
+            var os = new FileStream(file, FileMode.Create, FileAccess.Write);
+            fs.Seek(vf.Offset, SeekOrigin.Begin);
+            for (var i = 0; i < vf.Length / 2048; i += 1)
+            {
+                var buffer = new byte[2048];
+                MainWindow.Progress = i;
+                MainWindow.ProgressMax = (int)vf.Length / 2048;
+                fs.ReadExactly(buffer);
+                os.Write(buffer, 0, 2048);
+            }
+
             var buffer2 = new byte[vf.Length % 2048];
             MainWindow.Progress = (int)vf.Length / 2048;
             MainWindow.ProgressMax = (int)vf.Length / 2048 + 1;
             fs.ReadExactly(buffer2);
             os.Write(buffer2, 0, (int)vf.Length % 2048);
 
+            os.Close();
         }
         catch (OverflowException)
         {
             // ignored
         }
-
-        os.Close();
+        catch (Exception ex) when (!Debugger.IsAttached)
+        {
+            StaticUtils.LiveLoadStatus = $"!!!{ex.Message}\n{ex.StackTrace}";
+        }
     }
 
     /// <summary>
@@ -224,8 +248,6 @@ public class ExtractUtils
         var file = await FileHelpers.SaveFile(mw, []);
         if (file == null) return;
         var vf = mw.FilesGrid.SelectedItem as VirtualFile;
-        mw.DockPanel1.IsVisible = false;
-        mw.Loader.IsVisible = true;
         mw.LoadProgress.IsIndeterminate = false;
         StaticUtils.LiveLoadStatus = $"Extracting {vf!.Path} ({StaticUtils.GetFilesizeString(vf.Length)})";
         MainWindow.ProgressMax = 1;
@@ -237,9 +259,7 @@ public class ExtractUtils
                 Thread.Sleep(100);
                 Dispatcher.UIThread.Post(() =>
                 {
-                    mw.LoadProgress.Maximum = MainWindow.ProgressMax;
-                    mw.LoadProgress.Value = MainWindow.Progress;
-                    mw.LoadStatus.Text = StaticUtils.LiveLoadStatus;
+                    mw.LoadProgress.Value = MainWindow.Progress/(double)MainWindow.ProgressMax * 28.0;
                 });
             }
         }).Start();
@@ -248,12 +268,11 @@ public class ExtractUtils
             SaveFile(vf, Uri.UnescapeDataString(file), mw);
             Dispatcher.UIThread.Post(() =>
             {
-                mw.DockPanel1.IsVisible = true;
-                mw.Loader.IsVisible = false;
                 mw.LoadProgress.IsIndeterminate = true;
                 MainWindow.ProgressMax = 0;
                 MainWindow.Progress = 0;
             });
+            StaticUtils.LiveLoadStatus = "";
         }).Start();
     }
 }

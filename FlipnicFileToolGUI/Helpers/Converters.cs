@@ -19,7 +19,6 @@ public static class Converters
     public static void ConvertMovAac(MainWindow mw)
     {
         mw.DockPanel1.IsVisible = false;
-        mw.Loader.IsVisible = true;
         StaticUtils.Pal = mw.PalToggle.IsChecked ?? false;
         var outPut = (mw.FileBox.Text ?? "") + new FileInfo(mw.FileName!).Name + ".MP4";
         var ffMpegPath = mw.FFmpegBox.Text ?? "";
@@ -76,19 +75,8 @@ public static class Converters
             Dispatcher.UIThread.Post(() =>
             {
                 mw.DockPanel1.IsVisible = true;
-                mw.Loader.IsVisible = false;
                 mw.FileName = originalFileName;
             });
-        }).Start();
-        new Thread(() =>
-        {
-            Thread.Sleep(100);
-            while (true)
-            {
-                if (StaticUtils.LiveLoadStatus == "") break;
-                Dispatcher.UIThread.Post(() => mw.LoadStatus.Text = StaticUtils.LiveLoadStatus);
-                Thread.Sleep(100);
-            }
         }).Start();
     }
 
@@ -98,28 +86,11 @@ public static class Converters
     /// <param name="mw">Main window instance</param>
     public static void Demux(MainWindow mw)
     {
-        mw.DockPanel1.IsVisible = false;
-        mw.Loader.IsVisible = true;
         var outPut = mw.FileBox.Text ?? "";
         new Thread(() =>
         {
             new Pss(mw.FileName!).ListPss(File.OpenRead(mw.FileName!), true, outPut);
             StaticUtils.LiveLoadStatus = "";
-            Dispatcher.UIThread.Post(() =>
-            {
-                mw.DockPanel1.IsVisible = true;
-                mw.Loader.IsVisible = false;
-            });
-        }).Start();
-        new Thread(() =>
-        {
-            Thread.Sleep(100);
-            while (true)
-            {
-                if (StaticUtils.LiveLoadStatus == "") break;
-                Dispatcher.UIThread.Post(() => mw.LoadStatus.Text = StaticUtils.LiveLoadStatus);
-                Thread.Sleep(100);
-            }
         }).Start();
     }
 
@@ -129,8 +100,6 @@ public static class Converters
     /// <param name="mw">Main window instance</param>
     public static void ConvertMov(MainWindow mw)
     {
-        mw.DockPanel1.IsVisible = false;
-        mw.Loader.IsVisible = true;
         StaticUtils.Pal = mw.PalToggle.IsChecked ?? false;
         var outPut = (mw.FileBox.Text ?? "") + new FileInfo(mw.FileName!).Name + ".M2V";
         var ffMpegPath = mw.FFmpegBox.Text ?? "";
@@ -139,21 +108,7 @@ public static class Converters
         {
             StaticUtils.LiveLoadStatus = "Converting IPU to M2V";
             Ipu.IpuConvert(originalFileName!, outPut, ffMpegPath);
-            Dispatcher.UIThread.Post(() =>
-            {
-                mw.DockPanel1.IsVisible = true;
-                mw.Loader.IsVisible = false;
-            });
-        }).Start();
-        new Thread(() =>
-        {
-            Thread.Sleep(100);
-            while (true)
-            {
-                if (StaticUtils.LiveLoadStatus == "") break;
-                Dispatcher.UIThread.Post(() => mw.LoadStatus.Text = StaticUtils.LiveLoadStatus);
-                Thread.Sleep(100);
-            }
+            StaticUtils.LiveLoadStatus = "";
         }).Start();
     }
 
@@ -163,8 +118,6 @@ public static class Converters
     /// <param name="mw">Main window instance</param>
     public static void ConvertSf2(MainWindow mw)
     {
-        mw.DockPanel1.IsVisible = false;
-        mw.Loader.IsVisible = true;
         StaticUtils.ExportEnvelopes = mw.EnvelopeToggle.IsChecked ?? false;
         StaticUtils.ReverbStrength = (short)mw.ReverbSlider.Value;
         StaticUtils.AdsrMultipliers =
@@ -193,10 +146,10 @@ public static class Converters
                 error = ex;
             }
 
+            StaticUtils.LiveLoadStatus = "";
+
             Dispatcher.UIThread.Post(() =>
             {
-                mw.DockPanel1.IsVisible = true;
-                mw.Loader.IsVisible = false;
                 if (error is null)
                 {
                     mw.ShowDialog("Flipnic file tools", "File converted successfully!", NotificationType.Success);

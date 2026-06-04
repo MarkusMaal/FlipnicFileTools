@@ -259,6 +259,7 @@ public abstract class Converter
         if (!synthesizeWav) return;
         
         // WAV synthesis
+        StaticUtils.LiveLoadStatus = "Setting up synthesizer";
         var sampleRate = 44100;
         var synthesizer = new Synthesizer(outputFilePath, sampleRate);
 
@@ -270,8 +271,10 @@ public abstract class Converter
         var sampleLength = (int)(sampleRate * midi.Length.TotalSeconds);
         var samples = new float[sampleLength * numChannels];
 
+        StaticUtils.LiveLoadStatus = "Synthesizing WAV file";
         sequencer.RenderInterleaved(samples);
 
+        StaticUtils.LiveLoadStatus = "Saving WAV file";
         var waveFormat = new WaveFormat(sampleRate, 16, 2);
         using var writer = new WaveFileWriter(Path.ChangeExtension(outputFilePath, ".WAV"), waveFormat);
         writer.WriteSamples(samples, 0, samples.Length);

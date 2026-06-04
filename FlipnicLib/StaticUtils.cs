@@ -7,7 +7,7 @@ using SonyVag = FlipnicLib.Formats.Vag.SonyVag;
 
 namespace FlipnicLib;
 
-public abstract class StaticUtils
+public class StaticUtils
 {
     public static string DisclaimerText =>
         "This software is provided to you free of charge AS IS without a warranty. If you paid for this software, you should ask for a refund. The copyrights of original Flipnic game assets belong to Japan Studio of Sony Interactive Entertainment (a.k.a. SCEI) and these assets are not distributed with this software. This tool is designed for personal non-commercial use only.";
@@ -17,15 +17,30 @@ public abstract class StaticUtils
 
     public static int[] AdsrMultipliers = [1200, 1200, 1400, 1200, 320];
 
-    public static readonly float LibVersion = 2.31f;
-    public static readonly bool IsBeta = false;
+    public static readonly float LibVersion = 2.4f;
+    public static readonly bool IsBeta = true;
     
     public static bool LowMem { get; set; }
     
     public static bool SimpleOutput { get; set; }
     public static bool Pal { get; set; }
-    
-    public static string? LiveLoadStatus { get; set; }
+
+    /// <summary>
+    /// Allows you to specify a method to run when the value of "LiveLoadStatus" is changed, for example:<br/>
+    /// <br/>
+    /// StaticUtils.UpdateText += (v) => Console.WriteLine($"New value: {v}");
+    /// </summary>
+    public static event UpdateText? TextUpdate;
+    public delegate void UpdateText(string? text);
+    public static string? LiveLoadStatus
+    {
+        get;
+        set
+        {
+            field = value;
+            TextUpdate?.Invoke(value);
+        }
+    }
 
     public static int WindowWidth { get; set; }
 

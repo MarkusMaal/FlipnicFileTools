@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using FlipnicLib.Types;
 using Ps2IsoTools.UDF;
@@ -12,24 +13,31 @@ public class IsoUdf
     
     public IsoUdf(string path)
     {
-        using var reader = new UdfReader(path);
-        // Get list of all files
-        _volumeLabel = reader.VolumeLabel != "" ? reader.VolumeLabel : "Untitled";
-        var fullNames = reader.GetAllFileFullNames();
-
-        foreach (var name in fullNames)
+        try
         {
-            var fileRead = reader.GetFileByName(name);
-            if (fileRead == null) continue;
-            var fileStream = reader.GetFileStream(fileRead);
-            _records.Add(new UdfFileEntry
+            using var reader = new UdfReader(path);
+            // Get list of all files
+            _volumeLabel = reader.VolumeLabel != "" ? reader.VolumeLabel : "Untitled";
+            var fullNames = reader.GetAllFileFullNames();
+
+            foreach (var name in fullNames)
             {
-                File = fileRead,
-                Size = fileStream.Length,
-                Path = name,
-            });
+                var fileRead = reader.GetFileByName(name);
+                if (fileRead == null) continue;
+                var fileStream = reader.GetFileStream(fileRead);
+                _records.Add(new UdfFileEntry
+                {
+                    File = fileRead,
+                    Size = fileStream.Length,
+                    Path = name,
+                });
+            }
         }
-        
+        catch (Exception e) when (!Debugger.IsAttached)
+        {
+            StaticUtils.LiveLoadStatus = $"!!!{e.Message}\n{e.StackTrace}";
+        }
+
     }
 
     /// <summary>
@@ -39,13 +47,19 @@ public class IsoUdf
     /// <param name="outputDir">Full path to the output directory</param>
     public void ExtractFiles(string fileName, string outputDir)
     {
-        using var reader = new UdfReader(fileName);
-        foreach (var f in _records)
+        try {
+            using var reader = new UdfReader(fileName);
+            foreach (var f in _records)
+            {
+                StaticUtils.LiveLoadStatus = "Extracting " + f.Path + " (" + StaticUtils.GetFilesizeString(f.Size) + ")";
+                var dir = new FileInfo(Path.Combine(outputDir, f.Path.Replace("\\", "/"))).Directory!.FullName;
+                if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                reader.CopyFile(f.File, Path.Combine(outputDir, f.Path.Replace("\\", "/")));
+            }
+        }
+        catch (Exception e) when (!Debugger.IsAttached)
         {
-            StaticUtils.LiveLoadStatus = "Extracting " + f.Path + " (" + StaticUtils.GetFilesizeString(f.Size) + ")";
-            var dir = new FileInfo(Path.Combine(outputDir, f.Path.Replace("\\", "/"))).Directory!.FullName;
-            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
-            reader.CopyFile(f.File, Path.Combine(outputDir, f.Path.Replace("\\", "/")));
+            StaticUtils.LiveLoadStatus = $"!!!{e.Message}\n{e.StackTrace}";
         }
     }
 

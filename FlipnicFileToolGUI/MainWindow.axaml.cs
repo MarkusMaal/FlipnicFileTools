@@ -58,6 +58,50 @@ public sealed partial class MainWindow : SukiWindow
         {
             ApplyCustomTheme();
         }
+
+        StaticUtils.TextUpdate += (value) =>
+        {   
+            if (value?.StartsWith("!!!") ?? false)
+            {
+                new Thread(() =>
+                {
+                    Thread.Sleep(500);
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        InfoTab.IsSelected = false;
+                        foreach (var t in MainTabControl.Items)
+                        {
+                            ((SukiSideMenuItem)t!).IsVisible = false;
+                        }
+                        InfoTab.IsVisible = true;
+                        MainTabControl.SelectedItems.Clear();
+                        MainTabControl.SelectedItems.Add(InfoTab);
+                        InfoBox.Text = "A run-time error has occured\n\n" + value[3..];
+                        InfoBox.WrapText = true;
+                    });
+                    StaticUtils.LiveLoadStatus = "";
+                }).Start();
+                return;
+            }
+            Dispatcher.UIThread.Post(() =>
+            {
+                LoadStatus.Text = value;
+                LoadProgress.IsIndeterminate = !(StaticUtils.LiveLoadStatus?.Contains('%') ?? false);
+                Loader.IsVisible = value != "";
+                DockPanel1.IsVisible = value == "";
+                if (LoadProgress.IsIndeterminate) return;
+                LoadProgress.Value = 100;
+                try
+                {
+                    LoadProgress.Value =
+                        int.Parse(StaticUtils.LiveLoadStatus!.Split(" (")[1].Split('%')[0].Split('.')[0]) / 100.0 * 28.0;
+                }
+                catch
+                {
+                    LoadProgress.Value = 0;
+                }
+            });
+        };
         DialogHost.Manager = DialogManager;
 
         DragDrop.SetAllowDrop(this, true);
@@ -296,26 +340,29 @@ public sealed partial class MainWindow : SukiWindow
         };
         mw.ToggleDarkNative(sender, null);
         mw.ToggleDarkNative(sender, null);
-        DockPanel1.IsVisible = false;
-        Loader.IsVisible = true;
         new Thread(() =>
         {
-            StaticUtils.LiveLoadStatus = "Reading data...";
-            var fs = new FileStream(FileName!, FileMode.Open, FileAccess.Read);
-            var ms = new MemoryStream();
-            var buffer = new byte[vf.Length];
-            fs.Seek(vf.Offset, SeekOrigin.Begin);
-            fs.ReadExactly(buffer);
-            fs.Close();
-            ms.Write(buffer, 0, (int)vf.Length);
-            ms.Position = 0;
-            Dispatcher.UIThread.Post(() =>
+            try
             {
-                DockPanel1.IsVisible = true;
-                Loader.IsVisible = false;
-                mw.Show();
-                FileHelpers.LoadFromData(ms, vf.Path[^3..], mw);
-            });
+                StaticUtils.LiveLoadStatus = "Reading data...";
+                var fs = new FileStream(FileName!, FileMode.Open, FileAccess.Read);
+                var ms = new MemoryStream();
+                var buffer = new byte[vf.Length];
+                fs.Seek(vf.Offset, SeekOrigin.Begin);
+                fs.ReadExactly(buffer);
+                fs.Close();
+                ms.Write(buffer, 0, (int)vf.Length);
+                ms.Position = 0;
+                Dispatcher.UIThread.Post(() =>
+                {
+                    mw.Show();
+                    FileHelpers.LoadFromData(ms, vf.Path[^3..], mw);
+                });
+            }
+            catch (Exception ex) when (!Debugger.IsAttached)
+            {
+                StaticUtils.LiveLoadStatus = "!!!" + ex.Message + "\n" + ex.StackTrace;
+            }
         }).Start();
     }
 
@@ -417,6 +464,12 @@ public sealed partial class MainWindow : SukiWindow
 
     private void PlayButton_OnClick(object? sender, RoutedEventArgs e)
     {
+        if (sender is not Button b) return;
+        if (b.Content?.ToString() == "Stop")
+        {
+            ExtractUtils.Stop(this);
+            return;
+        }
         ExtractUtils.Play(this);
     }
 
@@ -446,14 +499,13 @@ public sealed partial class MainWindow : SukiWindow
                 Thread.Sleep(100);
                 Dispatcher.UIThread.Post(() =>
                 {
-                    LoadStatus.Text = StaticUtils.LiveLoadStatus;
                     visible = MainTabControl.IsVisible;
                 });
             }
         }).Start();
     }
 
-    private async void ExtractSampleButton_OnClick(object? sender, RoutedEventArgs e)
+    private void ExtractSampleButton_OnClick(object? sender, RoutedEventArgs e)
     {
         if (Design.IsDesignMode || sender is not Button button) return;
         ExtractUtils.ExtractSample(button, this);
@@ -550,7 +602,6 @@ public sealed partial class MainWindow : SukiWindow
             var bckType = "";
             Dispatcher.UIThread.Post(() =>
             {
-                LoadStatus.Text = "Generating model";
                 bckType = FileTypeLabel.Content?.ToString();
                 FileTypeLabel.Content = "Please wait...";
                 bck = ModelTab.IsSelected;
@@ -559,7 +610,6 @@ public sealed partial class MainWindow : SukiWindow
             {
                 ModelTab.IsSelected = bck;
                 FileTypeLabel.Content = bckType;
-                LoadStatus.Text = "Loading";
             });
         }).Start();
     }
@@ -740,13 +790,14 @@ public sealed partial class MainWindow : SukiWindow
         CloseOthersMenuItem.IsVisible = al.Windows.Count > 1;
         CloseMenuItem.IsVisible = al.Windows.Count > 1;
     }
-    static async Task<byte[]?> GetUrlContent(string url)
+
+    private static async Task<byte[]?> GetUrlContent(string url)
     {
-        using (var result = await Client.GetAsync(url))
-            return result.IsSuccessStatusCode ? await result.Content.ReadAsByteArrayAsync() : null;
+        using var result = await Client.GetAsync(url);
+        return result.IsSuccessStatusCode ? await result.Content.ReadAsByteArrayAsync() : null;
     }
 
-    static async Task DownloadFile(string url, string pathToSave)
+    private static async Task DownloadFile(string url, string pathToSave)
     {
         var content = await GetUrlContent(url);
         if (content != null)

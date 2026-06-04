@@ -8,6 +8,7 @@
         <RootNamespace>FlipnicFileTool</RootNamespace>
         <Configurations>Debug;Release;Publish</Configurations>
         <Platforms>AnyCPU</Platforms>
+        <PublishAot>true</PublishAot>
     </PropertyGroup>
     
     <ItemGroup>

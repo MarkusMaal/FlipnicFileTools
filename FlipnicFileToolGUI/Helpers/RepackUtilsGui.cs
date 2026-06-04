@@ -25,32 +25,14 @@ public abstract class RepackUtilsGui
             {
                 new Thread(() =>
                 {
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        mw.Loader.IsVisible = true;
-                        mw.MainTabControl.IsVisible = false;
-                    });
                     new IsoUdf(mw.FileName).ReplaceFile(replacement, mw.FileName, vf.Path);
                     Dispatcher.UIThread.Post(() =>
                     {
-                        mw.Loader.IsVisible = false;
-                        mw.MainTabControl.IsVisible = true;
-                        StaticUtils.LiveLoadStatus = "Done!";
+                        StaticUtils.LiveLoadStatus = "";
                         mw.ShowDialog("Flipnic file tools", "File replaced successfully.", NotificationType.Success);
                     });
                 }).Start();
-                new Thread(() =>
-                {
-                    while (StaticUtils.LiveLoadStatus != "Done!")
-                    {
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.LoadStatus.Text = StaticUtils.LiveLoadStatus;
-                        });
-                        Thread.Sleep(100);
-                    }
-                    StaticUtils.LiveLoadStatus = "Please wait...";
-                }).Start();
+                StaticUtils.LiveLoadStatus = "Please wait...";
                 return;
             }
             var offset = vf.Offset;
@@ -82,9 +64,7 @@ public abstract class RepackUtilsGui
                     .WithContent("It appears the replacement file is bigger than the original file. We will need to update other file records and increase the size of the .BIN file. This should only be done if you know exactly what you're doing. Are you sure you want to continue?")
                     .WithActionButton("Yes", _ =>
                     {
-                        mw.Loader.IsVisible = true;
-                        mw.MainTabControl.IsVisible = false;
-                        mw.LoadStatus.Text = "Rebuilding .BIN file";
+                        StaticUtils.LiveLoadStatus = "Rebuilding .BIN file";
                         new Thread(() =>
                         {
                             if (vf.LargeBuffer)
@@ -126,11 +106,10 @@ public abstract class RepackUtilsGui
                                 ns2.Close();
                             }
 
+                            StaticUtils.LiveLoadStatus = "";
                             Dispatcher.UIThread.Post(() =>
                             {
                                 mw.ShowDialog("Flipnic file tools", "File replaced successfully.", NotificationType.Success);
-                                mw.Loader.IsVisible = false;
-                                mw.MainTabControl.IsVisible = true;
                             });
                         }).Start();
                     }, true)

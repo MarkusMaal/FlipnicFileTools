@@ -2,11 +2,13 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Xml.Linq;
 using Avalonia.Controls;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using BigGustave;
 using FlipnicLib;
 using SukiUI;
 
@@ -23,6 +25,7 @@ public abstract class Preferences
         var root = new XElement("FlipnicFileTools");
         root.SetAttributeValue("Version", StaticUtils.LibVersion);
         root.SetAttributeValue("Beta", StaticUtils.IsBeta);
+        root.SetAttributeValue("Check", CalcSum(lightTheme, msgFile));
         root.Add(new XElement("IsLightTheme", lightTheme));
         root.Add(new XElement("MsgFile", msgFile));
         saveData.Add(root);
@@ -35,6 +38,17 @@ public abstract class Preferences
         {
             Console.WriteLine("Failed to save preferences");
         }
+    }
+
+    private static string CalcSum(bool lightTheme, string? msgFile)
+    {
+        var mainSum = (Crc32
+            .Calculate(Encoding.UTF8.GetBytes(lightTheme + msgFile)) ^ 0xFFFFFFFF)
+            .ToString("X");
+        var backupSum = (Crc32
+                .Calculate(Encoding.UTF8.GetBytes(mainSum + lightTheme + msgFile)) ^ 0xFFFFFFFF)
+            .ToString("X");
+        return backupSum + mainSum;
     }
 
     public static void LoadPreferences(MainWindow mw)
@@ -54,6 +68,18 @@ public abstract class Preferences
             if (mw.FileName == null)
             {
                 mw.InfoBox.Text += "\nWarning: Incompatible preferences file, settings have been reset!";
+            }
+            return;
+        }
+        var testLight = xml.Root!.Element("IsLightTheme")!.Value == "true";
+        var testMsg = xml.Root!.Element("MsgFile")!.Value;
+        var realCrc = CalcSum(testLight, testMsg);
+        var readCrc = xml.Root!.Attribute("Check")!.Value;
+        if (realCrc != readCrc)
+        {
+            if (mw.FileName == null)
+            {
+                mw.InfoBox.Text += "\nWarning: Preferences file may be corrupt, settings have been reset!";
             }
             return;
         }
