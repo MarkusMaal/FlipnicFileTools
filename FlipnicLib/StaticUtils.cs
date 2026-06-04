@@ -10,7 +10,7 @@ namespace FlipnicLib;
 public class StaticUtils
 {
     public static string DisclaimerText =>
-        "This software is provided to you free of charge AS IS without a warranty. If you paid for this software, you should ask for a refund. The copyrights of original Flipnic game assets belong to Japan Studio of Sony Interactive Entertainment (a.k.a. SCEI) and these assets are not distributed with this software. This tool is designed for personal non-commercial use only.";
+        "This software is provided to you free of charge AS IS without a warranty. If you paid for this software, you should ask for a refund. The copyrights of original Flipnic game assets belong to Japan Studio of Sony Interactive Entertainment (a.k.a. SCEI) and these assets are not distributed with this software.";
     
     private static readonly char[] Loaders = ['/', '-', '\\', '|'];
     public static int LoadIdx;

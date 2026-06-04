@@ -2,7 +2,7 @@
 using FlipnicLib;
 using System;
 using System.Diagnostics;
-using System.Linq;
+using System.Globalization;
 
 namespace FlipnicFileToolGUI;
 
@@ -31,6 +31,9 @@ internal abstract class Program
     {
         try
         {
+            var culture = new CultureInfo("en-US");
+            CultureInfo.DefaultThreadCurrentCulture = culture;
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
             GpuAccel = args.Contains("--gpu");
             BuildAvaloniaApp()
                 .StartWithClassicDesktopLifetime(args);
