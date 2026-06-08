@@ -235,6 +235,31 @@ public class Tim2 : FormatBase
         public byte[]? ClutData { get; set; }
         public bool ClutCompoundFailed;
 
+        /// <summary>
+        /// Internal method used to speed up the decoding of TIM2 pixel colors (for multithreading)
+        /// </summary>
+        /// <param name="remainderX">Remainder for every X coordinate to use</param>
+        /// <param name="remainderY">Remainder for every Y coordinate to use</param>
+        /// <param name="divisor">Number of pixels to jump when multi-threading</param>
+        /// <param name="cancellationSource">Task cancellation token</param>
+        /// <param name="width">Width of the image</param>
+        /// <param name="height">Height of the image</param>
+        /// <param name="result">Pixels array</param>
+        /// <param name="mipLevel">Mip level (should always be 0 for Flipnic textures)</param>
+        private void BufferImage(int remainderX, int remainderY, int divisor, CancellationTokenSource cancellationSource, int width, int height, Color32[] result, int mipLevel)
+        {
+            for (var y = 0; y < height; ++y)
+            {
+                if (y % divisor == remainderY) continue;
+                for (var x = 0; x < width; ++x)
+                {
+                    if (cancellationSource.Token.IsCancellationRequested)  return;
+                    if (x % divisor == remainderX) continue;
+                    result[y * width + x] = GetPixelColor(x, y, mipLevel);
+                }
+            }
+        }
+        
         /**
          * Turn one TIM2 picture into a flat RGBA8 buffer.
          *
@@ -258,75 +283,29 @@ public class Tim2 : FormatBase
             
             var result = new Color32[width * height];
 
-            var done = 0;
-            // multithreading here helps speed up the conversion up to 4x
-            new Thread(() =>
-            {
+            // using multiple tasks here helps speed up the pixel decoding significantly
+            CancellationTokenSource cancellationSource = new();
 
-                for (var y = 0; y < height; ++y)
+            var tasks = new List<Task>();
+            var div = Math.Min(2, Math.Min(height, width)); // edge cases for 1x2/2x1/1x1
+            for (var yr = 0; yr < div; yr++)
+            {
+                for (var xr = 0; xr < div; xr++)
                 {
-                    if (y % 2 == 0) continue;
-                    for (var x = 0; x < width; ++x)
-                    {
-                        if (x % 2 == 0) continue;
-                        result[y * width + x] = GetPixelColor(x, y, mipLevel);
-                    }
+                    var yr1 = yr;
+                    var xr1 = xr;
+                    tasks.Add(new Task(() => BufferImage(xr1, yr1, div, cancellationSource, width, height, result, mipLevel)));
                 }
-
-                done++;
-            }).Start();
-
-            new Thread(() =>
-            {
-
-                for (var y = 0; y < height; ++y)
-                {
-                    if (y % 2 == 1) continue;
-                    for (var x = 0; x < width; ++x)
-                    {
-                        if (x % 2 == 1) continue;
-                        result[y * width + x] = GetPixelColor(x, y, mipLevel);
-                    }
-                }
-
-                done++;
-            }).Start();
-            new Thread(() =>
-            {
-
-                for (var y = 0; y < height; ++y)
-                {
-                    if (y % 2 == 0) continue;
-                    for (var x = 0; x < width; ++x)
-                    {
-                        if (x % 2 == 1) continue;
-                        result[y * width + x] = GetPixelColor(x, y, mipLevel);
-                    }
-                }
-
-                done++;
-            }).Start();
-            new Thread(() =>
-            {
-
-                for (var y = 0; y < height; ++y)
-                {
-                    if (y % 2 == 1) continue;
-                    for (var x = 0; x < width; ++x)
-                    {
-                        if (x % 2 == 0) continue;
-                        result[y * width + x] = GetPixelColor(x, y, mipLevel);
-                    }
-                }
-
-                done++;
-            }).Start();
-            
-            var ts = new TimeSpan(0, 0, 0, 0, 0, 5);
-            while (done != 4)
-            {
-                Thread.Sleep(ts);
             }
+
+            tasks.ForEach(task => task.Start());
+            
+            // if decoding takes too long, just cancel it
+            // even the slowest PCs should take less than 30s to decode a TIM2 (maybe 15s at most)
+            const int timeout = 30000;
+            cancellationSource.CancelAfter(timeout);
+            Task.WaitAll(tasks.ToArray(), cancellationSource.Token);
+            
             return result;
         }
 
@@ -690,6 +669,7 @@ public class Tim2 : FormatBase
     public void SavePng(Stream output)
     {
         var complete = false;
+        var taskStart = DateTime.Now;
         new Thread(() =>
         {
             StaticUtils.LoadIdx = 1;
@@ -699,6 +679,10 @@ public class Tim2 : FormatBase
                 Console.Write("  Converting...    \r");
                 Thread.Sleep(100);
                 StaticUtils.LoadIdx+=1000;
+                if (DateTime.Now - taskStart >= new TimeSpan(0, 0, 30)) // 30s timeout for loader
+                {
+                    complete = true;
+                }
             }
             Console.Write("                    \r");
         }).Start();

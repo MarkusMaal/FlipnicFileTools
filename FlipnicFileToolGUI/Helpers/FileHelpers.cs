@@ -134,242 +134,243 @@ public static class FileHelpers
 
             new Thread(() =>
             {
-                switch (ext?.ToUpper())
+                try
                 {
-                    case "TM2":
-                        StaticUtils.LiveLoadStatus = "Parsing TIM2";
-                        var data = new byte[ds.Length];
-                        ds.ReadExactly(data);
-                        ds.Position = 0;
-                        var img = new Tim2(data, mw.FileName!);
-                        var bt = new BitmapTools { Image = img };
-                        var finalBmp = bt.ToBitmap();
-                        LoadAsString(img, "PlayStation 2 texture file", mw);
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.ImagePreviewTab.IsVisible = true;
-                            mw.PreviewImage.Source = finalBmp;
-                        });
-                        break;
-                    case "ICO":
-                        data = new byte[ds.Length];
-                        ds.ReadExactly(data);
-                        ds.Position = 0;
-                        var ico = new SaveIcon(data);
-                        ico.Read();
-                        bt = new BitmapTools { Icon = ico.Texture };
-
-
-                        StaticUtils.LiveLoadStatus = "Initializing OpenGL";
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.ModelTab.IsSelected = true;
-                            mw.InfoTab.IsSelected = false;
-                        });
-                        if (Program.GpuAccel) Thread.Sleep(1000);
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.GlControl.ImportICO(ico);
-                            mw.Init3DStuff();
-                            mw.ModelTab.IsSelected = false;
-                            mw.ModelTab.IsVisible = true;
-                            mw.ImagePreviewTab.IsVisible = !Program.GpuAccel;
-                            mw.InfoTab.IsVisible = !Program.GpuAccel;
-                            mw.PreviewImage.Source = bt.IconToBitmap();
-                        });
-                        switch (Program.GpuAccel)
-                        {
-                            case true:
-                                Thread.Sleep(1000);
-                                StaticUtils.LiveLoadStatus = "";
-                                break;
-                            case false:
-                                LoadAsString(ico, "PlayStation 2 save file icon", mw);
-                                break;
-                        }
-
-                        Dispatcher.UIThread.Post(() => mw.ModelTab.IsSelected = Program.GpuAccel);
-                        break;
-                    case "MID":
-                        StaticUtils.LiveLoadStatus = "Searching for MIDI events";
-                        if (!File.Exists(mw.FileName))
-                        {
+                    switch (ext?.ToUpper())
+                    {
+                        case "TM2":
+                            StaticUtils.LiveLoadStatus = "Parsing TIM2";
+                            var data = new byte[ds.Length];
+                            BitmapTools bt;
+                            ds.ReadExactly(data);
+                            ds.Position = 0;
+                            var img = new Tim2(data, mw.FileName!);
+                            bt = new BitmapTools { Image = img };
+                            var finalBmp = bt.ToBitmap();
+                            LoadAsString(img, "PlayStation 2 texture file", mw);
                             Dispatcher.UIThread.Post(() =>
-                            {
-                                mw.InfoBox.Text = "You must extract this file before opening it";
-                                mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "General MIDI");
-                                mw.InfoTab.IsVisible = true;
-                            });
-                            break;
-                        }
-
-                        var midi = new Midi(mw.FileName);
-                        midi.Read(ds);
-                        LoadAsString(midi, "General MIDI", mw);
-                        break;
-                    case "FPD":
-                        StaticUtils.LiveLoadStatus = "Parsing path data";
-                        var fpd = new FpnFpd(ds);
-
-                        StaticUtils.LiveLoadStatus = "Initializing OpenGL";
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.ModelTab.IsSelected = true;
-                            mw.InfoTab.IsSelected = false;
-                        });
-
-                        if (Program.GpuAccel) Thread.Sleep(1000);
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            var texture = StaticUtils.GenerateCheckerboardPng(16, 32,
-                                new Pixel(64, 51, 102, 180, false), new Pixel(0, 255, 0, 255, false));
-                            mw.GlControl.ImportFPD(fpd, texture);
-                            mw.Init3DStuff();
-                            if (Debugger.IsAttached)
                             {
                                 mw.ImagePreviewTab.IsVisible = true;
-                                mw.PreviewImage.Source = new Bitmap(texture);
-                            }
-
-                            mw.InfoTab.IsVisible = !Program.GpuAccel;
-
-                            mw.ModelTab.IsSelected = false;
-                            mw.ModelTab.IsVisible = true;
-                        });
-                        switch (Program.GpuAccel)
-                        {
-                            case false:
-                                LoadAsString(fpd, "Fixed Path Data", mw);
-                                break;
-                            case true:
-                                Thread.Sleep(1000);
-                                StaticUtils.LiveLoadStatus = "";
-                                break;
-                        }
-
-                        Dispatcher.UIThread.Post(() => mw.ModelTab.IsSelected = Program.GpuAccel);
-                        break;
-                    case "VSD":
-                        var vsd = new FpnVsd(ds);
-                        LoadAsString(vsd, "Vibration Strength Data", mw);
-                        break;
-                    case "BD":
-                    case ".BD":
-                        Dispatcher.UIThread.Post(() => mw.GetViewModel().Samples = []);
-                        var s = new Samples(ds);
-                        var samples = new List<SampleColl>();
-                        var offset = 0;
-                        for (var i = 0; i < s.RawSamples.Count; i++)
-                        {
-                            samples.Add(new SampleColl
-                            {
-                                Data = s.RawSamples[i],
-                                Id = i,
-                                Offset = offset + 0x10,
-                                LoopStart = s.LoopStarts[i],
-                                LoopEnd = s.LoopEnds[i],
-                            });
-                            offset += s.Lengths[i];
-                        }
-
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.GetViewModel().Samples = new ObservableCollection<SampleColl>(samples);
-                            mw.BdSampleTab.IsVisible = true;
-                            mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "JAM body");
-                        });
-                        break;
-                    case "HD":
-                    case ".HD":
-                        var jh = new JamHeader();
-                        try
-                        {
-                            jh.Read(new BinaryStream(ds));
-                        }
-                        catch (InvalidDataException)
-                        {
-                            Dispatcher.UIThread.Post(() =>
-                            {
-                                mw.ShowDialog("Flipnic File Tools",
-                                    "Cannot parse this file, because it's missing the SShd header. The file may be corrupt or incompatible with this program.",
-                                    NotificationType.Error);
-                                mw.InfoTab.IsVisible = true;
-                                mw.InfoBox.Text = "Error opening file!";
-                                mw.FileTypeLabel.Content = "Ready";
-                                mw.Title = "Flipnic file tool";
+                                mw.PreviewImage.Source = finalBmp;
                             });
                             break;
-                        }
+                        case "ICO":
+                            data = new byte[ds.Length];
+                            ds.ReadExactly(data);
+                            ds.Position = 0;
+                            var ico = new SaveIcon(data);
+                            ico.Read();
+                            bt = new BitmapTools { Icon = ico.Texture };
 
-                        LoadAsString(jh, "JAM header", mw);
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.ConvertTab.IsVisible = jh.ProgramChunks.Count > 0;
-                            mw.FfmpegBrowserGrid.IsVisible = false;
-                            mw.BdBrowserGrid.IsVisible = true;
-                            mw.MidiBrowserGrid.IsVisible = true;
-                            mw.PalToggle.IsVisible = false;
-                            mw.EnvelopeToggle.IsVisible = true;
-                            mw.ConvertSf2Button.IsVisible = true;
-                            mw.ConvertMovAacButton.IsVisible = false;
-                            mw.ConvertMovButton.IsVisible = false;
-                            mw.DemuxButton.IsVisible = false;
-                            mw.AdsrPanel.IsVisible = true;
-                            mw.WavToggle.IsVisible = true;
-                            mw.FakeSustainRateToggle.IsVisible = true;
 
-                            var fileDirectory = new FileInfo(mw.FileName!).Directory?.FullName ?? "";
-                            var extension = Path.GetExtension(mw.FileName);
-                            var fileName = new FileInfo(mw.FileName!).Name.Replace(extension!, "");
-                            var bdPath = Path.Combine(fileDirectory, fileName) + ".BD";
-                            var midPath = Path.Combine(fileDirectory, fileName) + ".MID";
-                            if (File.Exists(bdPath)) mw.BdBox.Text = bdPath;
-                            if (File.Exists(midPath)) mw.MidiBox.Text = midPath;
-                        });
-                        break;
-                    case "CSV":
-                    case "TXT":
-                    case "XML":
-                    case "CNF":
-                        var txt = Encoding.UTF8.GetString(ds.ReadBytes((int)ds.Length));
-                        LoadAsString(txt, ext switch
-                        {
-                            "CNF" => "PlayStation title information",
-                            "CSV" => "Comma Separated Values",
-                            "XML" => "eXtensible Markup Language",
-                            _ => "Plain Text"
-                        }, mw);
-                        break;
-                    case "SVAG":
-                    case "INT":
-                    case "VAG":
-                        StaticUtils.LiveLoadStatus = "Decoding sound data";
-                        var va = new byte[ds.Length];
-                        ds.ReadExactly(va);
-                        SonyVag.Decode(va);
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.SoundPlayerTab.IsVisible = true;
-                            mw.AudioFilename.Content = "Filename: " + Path.GetFileName(mw.FileName);
-                            mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat,
-                                "Compressed Sony ADPCM Audio " +
-                                (mw.FileName!.EndsWith("INT") ? "(Stereo)" : "(Mono)"));
-                        });
-                        StaticUtils.LiveLoadStatus = "";
-                        break;
-                    case "MLB":
-                        var mlbDa = new byte[ds.Length];
-                        ds.ReadExactly(mlbDa);
-                        var mlb = new FpnMlb(mlbDa);
-                        StaticUtils.LiveLoadStatus = "Generating menu...";
-                        Dispatcher.UIThread.Post(() => mw.GetViewModel().Menu.Clear());
-                        var menuIndex = 0;
-                        var div = 28.0 / mlb.Sections.Count;
-                        Dispatcher.UIThread.Post(() => mw.LoadProgress.IsIndeterminate = false);
-                        var mbCheckerboard = new Bitmap(StaticUtils.GenerateCheckerboardPng(128, 128));
-                        foreach (var (key, value) in mlb.Sections)
-                        {
+                            StaticUtils.LiveLoadStatus = "Initializing OpenGL";
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.ModelTab.IsSelected = true;
+                                mw.InfoTab.IsSelected = false;
+                            });
+                            if (Program.GpuAccel) Thread.Sleep(1000);
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.GlControl.ImportICO(ico);
+                                mw.Init3DStuff();
+                                mw.ModelTab.IsSelected = false;
+                                mw.ModelTab.IsVisible = true;
+                                mw.ImagePreviewTab.IsVisible = !Program.GpuAccel;
+                                mw.InfoTab.IsVisible = !Program.GpuAccel;
+                                mw.PreviewImage.Source = bt.IconToBitmap();
+                            });
+                            switch (Program.GpuAccel)
+                            {
+                                case true:
+                                    Thread.Sleep(1000);
+                                    StaticUtils.LiveLoadStatus = "";
+                                    break;
+                                case false:
+                                    LoadAsString(ico, "PlayStation 2 save file icon", mw);
+                                    break;
+                            }
+
+                            Dispatcher.UIThread.Post(() => mw.ModelTab.IsSelected = Program.GpuAccel);
+                            break;
+                        case "MID":
+                            StaticUtils.LiveLoadStatus = "Searching for MIDI events";
+                            if (!File.Exists(mw.FileName))
+                            {
+                                Dispatcher.UIThread.Post(() =>
+                                {
+                                    mw.InfoBox.Text = "You must extract this file before opening it";
+                                    mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "General MIDI");
+                                    mw.InfoTab.IsVisible = true;
+                                });
+                                break;
+                            }
+
+                            var midi = new Midi(mw.FileName);
+                            midi.Read(ds);
+                            LoadAsString(midi, "General MIDI", mw);
+                            break;
+                        case "FPD":
+                            StaticUtils.LiveLoadStatus = "Parsing path data";
+                            var fpd = new FpnFpd(ds);
+
+                            StaticUtils.LiveLoadStatus = "Initializing OpenGL";
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.ModelTab.IsSelected = true;
+                                mw.InfoTab.IsSelected = false;
+                            });
+
+                            if (Program.GpuAccel) Thread.Sleep(1000);
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                var texture = StaticUtils.GenerateCheckerboardPng(16, 32,
+                                    new Pixel(64, 51, 102, 180, false), new Pixel(0, 255, 0, 255, false));
+                                mw.GlControl.ImportFPD(fpd, texture);
+                                mw.Init3DStuff();
+                                if (Debugger.IsAttached)
+                                {
+                                    mw.ImagePreviewTab.IsVisible = true;
+                                    mw.PreviewImage.Source = new Bitmap(texture);
+                                }
+
+                                mw.InfoTab.IsVisible = !Program.GpuAccel;
+
+                                mw.ModelTab.IsSelected = false;
+                                mw.ModelTab.IsVisible = true;
+                            });
+                            switch (Program.GpuAccel)
+                            {
+                                case false:
+                                    LoadAsString(fpd, "Fixed Path Data", mw);
+                                    break;
+                                case true:
+                                    Thread.Sleep(1000);
+                                    StaticUtils.LiveLoadStatus = "";
+                                    break;
+                            }
+
+                            Dispatcher.UIThread.Post(() => mw.ModelTab.IsSelected = Program.GpuAccel);
+                            break;
+                        case "VSD":
+                            var vsd = new FpnVsd(ds);
+                            LoadAsString(vsd, "Vibration Strength Data", mw);
+                            break;
+                        case "BD":
+                        case ".BD":
+                            Dispatcher.UIThread.Post(() => mw.GetViewModel().Samples = []);
+                            var s = new Samples(ds);
+                            var samples = new List<SampleColl>();
+                            var offset = 0;
+                            for (var i = 0; i < s.RawSamples.Count; i++)
+                            {
+                                samples.Add(new SampleColl
+                                {
+                                    Data = s.RawSamples[i],
+                                    Id = i,
+                                    Offset = offset + 0x10,
+                                    LoopStart = s.LoopStarts[i],
+                                    LoopEnd = s.LoopEnds[i],
+                                });
+                                offset += s.Lengths[i];
+                            }
+
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.GetViewModel().Samples = new ObservableCollection<SampleColl>(samples);
+                                mw.BdSampleTab.IsVisible = true;
+                                mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "JAM body");
+                            });
+                            break;
+                        case "HD":
+                        case ".HD":
+                            var jh = new JamHeader();
                             try
+                            {
+                                jh.Read(new BinaryStream(ds));
+                            }
+                            catch (InvalidDataException)
+                            {
+                                Dispatcher.UIThread.Post(() =>
+                                {
+                                    mw.ShowDialog("Flipnic File Tools",
+                                        "Cannot parse this file, because it's missing the SShd header. The file may be corrupt or incompatible with this program.",
+                                        NotificationType.Error);
+                                    mw.InfoTab.IsVisible = true;
+                                    mw.InfoBox.Text = "Error opening file!";
+                                    mw.FileTypeLabel.Content = "Ready";
+                                    mw.Title = "Flipnic file tool";
+                                });
+                                break;
+                            }
+
+                            LoadAsString(jh, "JAM header", mw);
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.ConvertTab.IsVisible = jh.ProgramChunks.Count > 0;
+                                mw.FfmpegBrowserGrid.IsVisible = false;
+                                mw.BdBrowserGrid.IsVisible = true;
+                                mw.MidiBrowserGrid.IsVisible = true;
+                                mw.PalToggle.IsVisible = false;
+                                mw.EnvelopeToggle.IsVisible = true;
+                                mw.ConvertSf2Button.IsVisible = true;
+                                mw.ConvertMovAacButton.IsVisible = false;
+                                mw.ConvertMovButton.IsVisible = false;
+                                mw.DemuxButton.IsVisible = false;
+                                mw.AdsrPanel.IsVisible = true;
+                                mw.WavToggle.IsVisible = true;
+                                mw.FakeSustainRateToggle.IsVisible = true;
+
+                                var fileDirectory = new FileInfo(mw.FileName!).Directory?.FullName ?? "";
+                                var extension = Path.GetExtension(mw.FileName);
+                                var fileName = new FileInfo(mw.FileName!).Name.Replace(extension!, "");
+                                var bdPath = Path.Combine(fileDirectory, fileName) + ".BD";
+                                var midPath = Path.Combine(fileDirectory, fileName) + ".MID";
+                                if (File.Exists(bdPath)) mw.BdBox.Text = bdPath;
+                                if (File.Exists(midPath)) mw.MidiBox.Text = midPath;
+                            });
+                            break;
+                        case "CSV":
+                        case "TXT":
+                        case "XML":
+                        case "CNF":
+                            var txt = Encoding.UTF8.GetString(ds.ReadBytes((int)ds.Length));
+                            LoadAsString(txt, ext switch
+                            {
+                                "CNF" => "PlayStation title information",
+                                "CSV" => "Comma Separated Values",
+                                "XML" => "eXtensible Markup Language",
+                                _ => "Plain Text"
+                            }, mw);
+                            break;
+                        case "SVAG":
+                        case "INT":
+                        case "VAG":
+                            StaticUtils.LiveLoadStatus = "Decoding sound data";
+                            var va = new byte[ds.Length];
+                            ds.ReadExactly(va);
+                            SonyVag.Decode(va);
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.SoundPlayerTab.IsVisible = true;
+                                mw.AudioFilename.Content = "Filename: " + Path.GetFileName(mw.FileName);
+                                mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat,
+                                    "Compressed Sony ADPCM Audio " +
+                                    (mw.FileName!.EndsWith("INT") ? "(Stereo)" : "(Mono)"));
+                            });
+                            StaticUtils.LiveLoadStatus = "";
+                            break;
+                        case "MLB":
+                            var mlbDa = new byte[ds.Length];
+                            ds.ReadExactly(mlbDa);
+                            var mlb = new FpnMlb(mlbDa);
+                            StaticUtils.LiveLoadStatus = "Generating menu...";
+                            Dispatcher.UIThread.Post(() => mw.GetViewModel().Menu.Clear());
+                            var menuIndex = 0;
+                            var div = 28.0 / mlb.Sections.Count;
+                            Dispatcher.UIThread.Post(() => mw.LoadProgress.IsIndeterminate = false);
+                            var mbCheckerboard = new Bitmap(StaticUtils.GenerateCheckerboardPng(128, 128));
+                            foreach (var (key, value) in mlb.Sections)
                             {
                                 var mevm = new List<MenuElementViewModel>();
                                 foreach (var ima in value)
@@ -399,289 +400,290 @@ public static class FileHelpers
                                 }
 
                                 Dispatcher.UIThread.Post(() => mw.GetViewModel().Menu.AddRange(mevm));
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine("ERROR: " + ex.Message);
+                                Dispatcher.UIThread.Post(() => mw.LoadProgress.Value = ++menuIndex * div);
                             }
 
-                            Dispatcher.UIThread.Post(() => mw.LoadProgress.Value = ++menuIndex * div);
-                        }
-
-                        Dispatcher.UIThread.Post(() => mw.LoadProgress.IsIndeterminate = true);
-                        StaticUtils.LiveLoadStatus = "Please wait...";
+                            Dispatcher.UIThread.Post(() => mw.LoadProgress.IsIndeterminate = true);
+                            StaticUtils.LiveLoadStatus = "Please wait...";
 
 
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            var idx = -32768;
-                            var orderedMenus = new List<MenuElementViewModel>();
-                            while (true)
-                            {
-                                var idx1 = idx;
-                                var layer = mw.GetViewModel().Menu.Where(iter => iter.MenuElement.Dipth == idx1);
-                                if (idx == 32768) break;
-                                orderedMenus.AddRange(layer);
-                                idx++;
-                            }
-
-                            mw.MenuMockupTab.IsVisible = true;
-                            mw.MenuMockup.MenuElementSource =
-                                new ObservableCollection<MenuElementViewModel>(orderedMenus);
-                        });
-                        LoadAsString(mlb, "Menu layout file", mw);
-                        break;
-                    case "LP4":
-                        var lp4Da = new byte[ds.Length];
-                        ds.ReadExactly(lp4Da);
-                        var lp4 = new Lp4(lp4Da, mw.FileName!);
-                        if (lp4.HasEmbeddedResources)
-                        {
-                            StaticUtils.LiveLoadStatus = "Initializing OpenGL";
                             Dispatcher.UIThread.Post(() =>
                             {
-                                mw.ModelTab.IsSelected = true;
-                                mw.InfoTab.IsSelected = false;
-                            });
-                            if (Program.GpuAccel) Thread.Sleep(1000);
-                            StaticUtils.LiveLoadStatus = "Parsing LP4";
-                            mw.GlControl.ImportLP4(lp4);
-                        }
+                                var idx = -32768;
+                                var orderedMenus = new List<MenuElementViewModel>();
+                                while (true)
+                                {
+                                    var idx1 = idx;
+                                    var layer = mw.GetViewModel().Menu.Where(iter => iter.MenuElement.Dipth == idx1);
+                                    if (idx == 32768) break;
+                                    orderedMenus.AddRange(layer);
+                                    idx++;
+                                }
 
-                        LoadAsString(lp4, "Flipnic resource file", mw);
-                        if (!lp4.HasEmbeddedResources)
+                                mw.MenuMockupTab.IsVisible = true;
+                                mw.MenuMockup.MenuElementSource =
+                                    new ObservableCollection<MenuElementViewModel>(orderedMenus);
+                            });
+                            LoadAsString(mlb, "Menu layout file", mw);
+                            break;
+                        case "LP4":
+                            var lp4Da = new byte[ds.Length];
+                            ds.ReadExactly(lp4Da);
+                            var lp4 = new Lp4(lp4Da, mw.FileName!);
+                            if (lp4.HasEmbeddedResources)
+                            {
+                                StaticUtils.LiveLoadStatus = "Initializing OpenGL";
+                                Dispatcher.UIThread.Post(() =>
+                                {
+                                    mw.ModelTab.IsSelected = true;
+                                    mw.InfoTab.IsSelected = false;
+                                });
+                                if (Program.GpuAccel) Thread.Sleep(1000);
+                                StaticUtils.LiveLoadStatus = "Parsing LP4";
+                                mw.GlControl.ImportLP4(lp4);
+                            }
+
+                            LoadAsString(lp4, "Flipnic resource file", mw);
+                            if (!lp4.HasEmbeddedResources)
+                            {
+                                StaticUtils.LiveLoadStatus = "";
+                                break;
+                            }
+
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.Init3DStuff(lp4);
+                                mw.ModelTab.IsSelected = false;
+                                mw.ModelTab.IsVisible = true;
+                                mw.ImagePreviewTab.IsVisible = !Program.GpuAccel;
+                                mw.InfoTab.IsVisible = !Program.GpuAccel;
+                                try
+                                {
+                                    var ms = new MemoryStream(lp4.Texture);
+                                    mw.PreviewImage.Source = new Bitmap(ms);
+                                }
+                                catch
+                                {
+                                    mw.ImagePreviewTab.IsVisible = false;
+                                }
+
+                                if (!mw.GlControl.IsTextureValid())
+                                {
+                                    mw.ImagePreviewTab.IsVisible = false;
+                                }
+                            });
+                            if (Program.GpuAccel)
+                            {
+                                StaticUtils.LiveLoadStatus = "Preparing model preview";
+                                Thread.Sleep(1000);
+                                StaticUtils.LiveLoadStatus = "";
+                            }
+
+                            Dispatcher.UIThread.Post(() => mw.ModelTab.IsSelected = Program.GpuAccel);
+                            break;
+                        case "IPU":
+                            var ipu = Ipu.GetInfoAsString(ds);
+                            LoadAsString(ipu, "IPU video stream", mw);
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.ConvertTab.IsVisible = true;
+                                mw.ConvertMovButton.IsVisible = true;
+                                mw.ConvertMovAacButton.IsVisible = false;
+                                mw.FfmpegBrowserGrid.IsVisible = true;
+                                mw.PalToggle.IsVisible = true;
+                                mw.EnvelopeToggle.IsVisible = false;
+                                mw.ConvertSf2Button.IsVisible = false;
+                                mw.DemuxButton.IsVisible = false;
+                                mw.BdBrowserGrid.IsVisible = false;
+                                mw.MidiBrowserGrid.IsVisible = false;
+                            });
+                            break;
+                        case "COL":
+                            var col = new FpnCol(ds);
+                            LoadAsString(col, "Collision map", mw);
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.ColTab.IsVisible = true;
+                                mw.ColMap.ColObject = col;
+                            });
+                            break;
+                        case "LIT":
+                            var lit = new FpnLit(ds);
+                            LoadAsString(lit, "Light map", mw);
+                            break;
+                        case "SCC":
+                            var das = new byte[ds.Length];
+                            ds.ReadExactly(das);
+                            var vss = new VssVer(das);
+                            LoadAsString(vss, "Source code control file", mw);
+                            break;
+                        case "FTL":
+                            var ftl = new FpnTexList(ds);
+                            LoadAsString(ftl, "Texture list", mw);
+                            break;
+                        case "LAY":
+                            var da = new byte[ds.Length];
+                            ds.ReadExactly(da);
+                            var lay = new FpnLay(da);
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.LayTab.IsVisible = true;
+                                mw.StageLayoutsControl.LayoutSource =
+                                    new ObservableCollection<FpnLay.Layout>(lay.Layouts);
+                                mw.FileTypeLabel.Content = "Stage layout file";
+                            });
+                            break;
+                        case "MSG":
+                            var msg = new FpnMsg(ds);
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.MsgEditor.MsgObject = msg;
+                                mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "Message table");
+                                mw.MessageEditorTab.IsVisible = true;
+                                mw.MessageEditorTab.IsSelected = true;
+                            });
+                            break;
+                        case "FPC":
+                            var fpc = new FpnFpc(ds);
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.CameraTool.CameraObject = fpc;
+                                mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "Camera sequence");
+                                mw.CameraToolTab.IsVisible = true;
+                                mw.CameraToolTab.IsSelected = true;
+                            });
+                            break;
+                        case "SST":
+                            var sst = new FpnSst(ds);
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.InfoBox.Text =
+                                    $"Entries\n{sst.ListEntries()}\n\nCameras:\n{sst.GetCamData()}\n\nResources\n{sst.GenerateMagicNumbers()}";
+                                mw.GetViewModel().Gimmicks = sst.GetGimmicks();
+                                mw.StageGimmickTab.IsVisible = mw.GetViewModel().Gimmicks?.Count > 0;
+                                mw.GimmickCombobox.Items.Clear();
+                                foreach (var key in mw.GetViewModel().Gimmicks?.Keys.ToArray() ?? [])
+                                {
+                                    mw.GimmickCombobox.Items.Add(key);
+                                }
+
+                                mw.PseudoCodeTab.IsVisible = sst.TableOfContents.ContainsKey("EVENT");
+                                if (mw.PseudoCodeTab.IsVisible)
+                                {
+                                    mw.EventBox.Text = sst.GeneratePseudoCode();
+                                }
+
+                                if (sst.HasScoreRecord())
+                                {
+                                    mw.GetViewModel().SaveData = sst.GetSaveFromRecord();
+                                    mw.SaveEditor.IsVisible = true;
+                                }
+
+                                mw.GimmickCombobox.SelectedIndex = 0;
+                                mw.InfoTab.IsVisible = true;
+                                mw.FileTypeLabel.Content =
+                                    string.Format(MainWindow.FTypeFormat, "Stage information file");
+                                if (mw.PseudoCodeTab.IsVisible && StaticUtils.MsgFile == "")
+                                {
+                                    mw.ShowDialog("Flipnic file tools",
+                                        "JA.MSG not loaded. Event pseudo-code will show numbers instead of actual mission names. To fix this, select \"Import JA.MSG\" from the options menu and then reload the .SST file.",
+                                        NotificationType.Warning);
+                                }
+                            });
+                            break;
+                        case "BIN":
+                            mw.Fs = new BinFile();
+                            mw.Fs.FsEntries.Clear();
+                            mw.Fs.ListBin(ds);
+
+                            fsEntries = mw.Fs.FsEntries.ToList();
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.GetViewModel().VirtualFiles = new ObservableCollection<VirtualFile>(fsEntries);
+                                mw.FileListTab.IsVisible = true;
+                                mw.FilesGrid.ItemsSource = mw.GetViewModel().VirtualFiles;
+                                mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "Blob file");
+                                mw.OpenButton.IsVisible = true;
+                                mw.ExtractButton.IsVisible = true;
+                            });
+                            break;
+                        case "ISO":
+                            ds.Close(); // fix access violation
+                            mw.IsoFile = new IsoUdf(mw.FileName!);
+                            fsEntries = mw.IsoFile.GetFiles().ToList();
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.GetViewModel().VirtualFiles = new ObservableCollection<VirtualFile>(fsEntries);
+                                mw.FileListTab.IsVisible = true;
+                                mw.FilesGrid.ItemsSource = mw.GetViewModel().VirtualFiles;
+                                mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "UDF disc image");
+                                mw.OpenButton.IsVisible = false;
+                                mw.ExtractButton.IsVisible = false;
+                            });
+                            break;
+                        case "PSS":
+                            var pssInfo = new Pss(mw.FileName!).ListPss(ds);
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.InfoBox.Text = pssInfo;
+                                mw.ConvertTab.IsVisible = true;
+                                mw.InfoTab.IsVisible = true;
+                                mw.FileTypeLabel.Content =
+                                    string.Format(MainWindow.FTypeFormat, "Interleaved video/audio streams");
+                                mw.ConvertMovButton.IsVisible = false;
+                                mw.ConvertMovAacButton.IsVisible = true;
+                                mw.DemuxButton.IsVisible = true;
+                                mw.FfmpegBrowserGrid.IsVisible = true;
+                                mw.PalToggle.IsVisible = true;
+                                mw.EnvelopeToggle.IsVisible = false;
+                                mw.ConvertSf2Button.IsVisible = false;
+                                mw.BdBrowserGrid.IsVisible = false;
+                                mw.MidiBrowserGrid.IsVisible = false;
+                            });
+                            break;
+                        case ".49":
+                        case ".57":
+                        case ".65":
+                        case ".50":
+                        case "49":
+                        case "57":
+                        case "65":
+                        case "50":
+                            var game = new Game(ds);
+                            LoadAsString(game, "Game Executable", mw);
+                            break;
+                        case "DAT":
+                            LoadAsString(new Dummy(ds), "Dummy file", mw);
+                            break;
+                        default:
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                mw.InfoBox.Text = "Unrecognized file type";
+                                mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "Unknown");
+                                mw.InfoTab.IsVisible = true;
+                            });
+                            break;
+                    }
+
+                    ds.Close();
+
+                    StaticUtils.LiveLoadStatus = "";
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        // switch to first visible tab
+                        mw.MainTabControl.UnselectAll();
+                        foreach (SukiSideMenuItem? sSmi in mw.MainTabControl.Items)
                         {
-                            StaticUtils.LiveLoadStatus = "";
+                            if (sSmi is not { IsVisible: true }) continue;
+                            sSmi.IsSelected = true;
                             break;
                         }
-
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.Init3DStuff(lp4);
-                            mw.ModelTab.IsSelected = false;
-                            mw.ModelTab.IsVisible = true;
-                            mw.ImagePreviewTab.IsVisible = !Program.GpuAccel;
-                            mw.InfoTab.IsVisible = !Program.GpuAccel;
-                            try
-                            {
-                                var ms = new MemoryStream(lp4.Texture);
-                                mw.PreviewImage.Source = new Bitmap(ms);
-                            }
-                            catch
-                            {
-                                mw.ImagePreviewTab.IsVisible = false;
-                            }
-
-                            if (!mw.GlControl.IsTextureValid())
-                            {
-                                mw.ImagePreviewTab.IsVisible = false;
-                            }
-                        });
-                        if (Program.GpuAccel)
-                        {
-                            StaticUtils.LiveLoadStatus = "Preparing model preview";
-                            Thread.Sleep(1000);
-                            StaticUtils.LiveLoadStatus = "";
-                        }
-
-                        Dispatcher.UIThread.Post(() => mw.ModelTab.IsSelected = Program.GpuAccel);
-                        break;
-                    case "IPU":
-                        var ipu = Ipu.GetInfoAsString(ds);
-                        LoadAsString(ipu, "IPU video stream", mw);
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.ConvertTab.IsVisible = true;
-                            mw.ConvertMovButton.IsVisible = true;
-                            mw.ConvertMovAacButton.IsVisible = false;
-                            mw.FfmpegBrowserGrid.IsVisible = true;
-                            mw.PalToggle.IsVisible = true;
-                            mw.EnvelopeToggle.IsVisible = false;
-                            mw.ConvertSf2Button.IsVisible = false;
-                            mw.DemuxButton.IsVisible = false;
-                            mw.BdBrowserGrid.IsVisible = false;
-                            mw.MidiBrowserGrid.IsVisible = false;
-                        });
-                        break;
-                    case "COL":
-                        var col = new FpnCol(ds);
-                        LoadAsString(col, "Collision map", mw);
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.ColTab.IsVisible = true;
-                            mw.ColMap.ColObject = col;
-                        });
-                        break;
-                    case "LIT":
-                        var lit = new FpnLit(ds);
-                        LoadAsString(lit, "Light map", mw);
-                        break;
-                    case "SCC":
-                        var das = new byte[ds.Length];
-                        ds.ReadExactly(das);
-                        var vss = new VssVer(das);
-                        LoadAsString(vss, "Source code control file", mw);
-                        break;
-                    case "FTL":
-                        var ftl = new FpnTexList(ds);
-                        LoadAsString(ftl, "Texture list", mw);
-                        break;
-                    case "LAY":
-                        var da = new byte[ds.Length];
-                        ds.ReadExactly(da);
-                        var lay = new FpnLay(da);
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.LayTab.IsVisible = true;
-                            mw.StageLayoutsControl.LayoutSource = new ObservableCollection<FpnLay.Layout>(lay.Layouts);
-                            mw.FileTypeLabel.Content = "Stage layout file";
-                        });
-                        break;
-                    case "MSG":
-                        var msg = new FpnMsg(ds);
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.MsgEditor.MsgObject = msg;
-                            mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "Message table");
-                            mw.MessageEditorTab.IsVisible = true;
-                            mw.MessageEditorTab.IsSelected = true;
-                        });
-                        break;
-                    case "FPC":
-                        var fpc = new FpnFpc(ds);
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.CameraTool.CameraObject = fpc;
-                            mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "Camera sequence");
-                            mw.CameraToolTab.IsVisible = true;
-                            mw.CameraToolTab.IsSelected = true;
-                        });
-                        break;
-                    case "SST":
-                        var sst = new FpnSst(ds);
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.InfoBox.Text =
-                                $"Entries\n{sst.ListEntries()}\n\nCameras:\n{sst.GetCamData()}\n\nResources\n{sst.GenerateMagicNumbers()}";
-                            mw.GetViewModel().Gimmicks = sst.GetGimmicks();
-                            mw.StageGimmickTab.IsVisible = mw.GetViewModel().Gimmicks?.Count > 0;
-                            mw.GimmickCombobox.Items.Clear();
-                            foreach (var key in mw.GetViewModel().Gimmicks?.Keys.ToArray() ?? [])
-                            {
-                                mw.GimmickCombobox.Items.Add(key);
-                            }
-
-                            mw.PseudoCodeTab.IsVisible = sst.TableOfContents.ContainsKey("EVENT");
-                            if (mw.PseudoCodeTab.IsVisible)
-                            {
-                                mw.EventBox.Text = sst.GeneratePseudoCode();
-                            }
-
-                            if (sst.HasScoreRecord())
-                            {
-                                mw.GetViewModel().SaveData = sst.GetSaveFromRecord();
-                                mw.SaveEditor.IsVisible = true;
-                            }
-
-                            mw.GimmickCombobox.SelectedIndex = 0;
-                            mw.InfoTab.IsVisible = true;
-                            mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "Stage information file");
-                            if (mw.PseudoCodeTab.IsVisible && StaticUtils.MsgFile == "")
-                            {
-                                mw.ShowDialog("Flipnic file tools",
-                                    "JA.MSG not loaded. Event pseudo-code will show numbers instead of actual mission names. To fix this, select \"Import JA.MSG\" from the options menu and then reload the .SST file.",
-                                    NotificationType.Warning);
-                            }
-                        });
-                        break;
-                    case "BIN":
-                        mw.Fs = new BinFile();
-                        mw.Fs.FsEntries.Clear();
-                        mw.Fs.ListBin(ds);
-
-                        fsEntries = mw.Fs.FsEntries.ToList();
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.GetViewModel().VirtualFiles = new ObservableCollection<VirtualFile>(fsEntries);
-                            mw.FileListTab.IsVisible = true;
-                            mw.FilesGrid.ItemsSource = mw.GetViewModel().VirtualFiles;
-                            mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "Blob file");
-                            mw.OpenButton.IsVisible = true;
-                            mw.ExtractButton.IsVisible = true;
-                        });
-                        break;
-                    case "ISO":
-                        ds.Close(); // fix access violation
-                        mw.IsoFile = new IsoUdf(mw.FileName!);
-                        fsEntries = mw.IsoFile.GetFiles().ToList();
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.GetViewModel().VirtualFiles = new ObservableCollection<VirtualFile>(fsEntries);
-                            mw.FileListTab.IsVisible = true;
-                            mw.FilesGrid.ItemsSource = mw.GetViewModel().VirtualFiles;
-                            mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "UDF disc image");
-                            mw.OpenButton.IsVisible = false;
-                            mw.ExtractButton.IsVisible = false;
-                        });
-                        break;
-                    case "PSS":
-                        var pssInfo = new Pss(mw.FileName!).ListPss(ds);
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.InfoBox.Text = pssInfo;
-                            mw.ConvertTab.IsVisible = true;
-                            mw.InfoTab.IsVisible = true;
-                            mw.FileTypeLabel.Content =
-                                string.Format(MainWindow.FTypeFormat, "Interleaved video/audio streams");
-                            mw.ConvertMovButton.IsVisible = false;
-                            mw.ConvertMovAacButton.IsVisible = true;
-                            mw.DemuxButton.IsVisible = true;
-                            mw.FfmpegBrowserGrid.IsVisible = true;
-                            mw.PalToggle.IsVisible = true;
-                            mw.EnvelopeToggle.IsVisible = false;
-                            mw.ConvertSf2Button.IsVisible = false;
-                            mw.BdBrowserGrid.IsVisible = false;
-                            mw.MidiBrowserGrid.IsVisible = false;
-                        });
-                        break;
-                    case ".49":
-                    case ".57":
-                    case ".65":
-                    case ".50":
-                    case "49":
-                    case "57":
-                    case "65":
-                    case "50":
-                        var game = new Game(ds);
-                        LoadAsString(game, "Game Executable", mw);
-                        break;
-                    case "DAT":
-                        LoadAsString(new Dummy(ds), "Dummy file", mw);
-                        break;
-                    default:
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            mw.InfoBox.Text = "Unrecognized file type";
-                            mw.FileTypeLabel.Content = string.Format(MainWindow.FTypeFormat, "Unknown");
-                            mw.InfoTab.IsVisible = true;
-                        });
-                        break;
+                    });
                 }
-
-                ds.Close();
-
-                StaticUtils.LiveLoadStatus = "";
-                Dispatcher.UIThread.Post(() =>
+                catch (Exception ex) when (!Debugger.IsAttached)
                 {
-                    // switch to first visible tab
-                    mw.MainTabControl.UnselectAll();
-                    foreach (SukiSideMenuItem? sSmi in mw.MainTabControl.Items)
-                    {
-                        if (sSmi is not { IsVisible: true }) continue;
-                        sSmi.IsSelected = true;
-                        break;
-                    }
-                });
+                    StaticUtils.LiveLoadStatus = $"!!!{ex.Message}\n{ex.StackTrace}";
+                }
             }).Start();
             // display loading screen if applicable
             new Thread(() =>

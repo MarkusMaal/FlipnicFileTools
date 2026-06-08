@@ -69,11 +69,7 @@ public class StaticUtils
         try
         {
             WindowWidth = Console.WindowWidth;
-            Console.Write($"\r   {Loaders[LoadIdx++ / 1000]}");
-            if (LoadIdx / 1000 >= Loaders.Length)
-            {
-                LoadIdx = 0;
-            }
+            Console.Write($"\r   {Loaders[LoadIdx++ / 1000 % 4]}");
         }
         catch
         {
