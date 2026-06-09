@@ -666,19 +666,18 @@ public class Tim2 : FormatBase
     /// Convert the TIM2 file to PNG
     /// </summary>
     /// <param name="output">Output .PNG file stream</param>
-    public void SavePng(Stream output)
+    public void SavePng(Stream output, bool quiet = false)
     {
         var complete = false;
         var taskStart = DateTime.Now;
         new Thread(() =>
         {
-            StaticUtils.LoadIdx = 1;
+            if (quiet) return;
             while (!complete)
             {
                 StaticUtils.PrintLoader();
                 Console.Write("  Converting...    \r");
                 Thread.Sleep(100);
-                StaticUtils.LoadIdx+=1000;
                 if (DateTime.Now - taskStart >= new TimeSpan(0, 0, 30)) // 30s timeout for loader
                 {
                     complete = true;
@@ -688,7 +687,10 @@ public class Tim2 : FormatBase
         }).Start();
         var builder = PngBuilder.Create(_mPictures[0].Header.ImageWidth, _mPictures[0].Header.ImageHeight, true);
         var i = 0;
-        StaticUtils.LiveLoadStatus = "Converting image(s)";
+        if (!quiet)
+        {
+            StaticUtils.LiveLoadStatus = "Converting image(s)";
+        }
         foreach (var pixel in _mPictures[0].DecodeImage(_mPictures[0].Header.MipMapTextures - 1))
         {
             var y = i / _mPictures[0].Header.ImageWidth;

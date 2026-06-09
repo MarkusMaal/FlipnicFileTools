@@ -13,9 +13,11 @@ public class StaticUtils
         "This software is provided to you free of charge AS IS without a warranty. If you paid for this software, you should ask for a refund. The copyrights of original Flipnic game assets belong to Japan Studio of Sony Interactive Entertainment (a.k.a. SCEI) and these assets are not distributed with this software.";
     
     private static readonly char[] Loaders = ['/', '-', '\\', '|'];
-    public static int LoadIdx;
+    private static int LoadIdx;
 
     public static int[] AdsrMultipliers = [1200, 1200, 1400, 1200, 320];
+
+    private static DateTime LastUpdate { get; set; } = DateTime.Now;
 
     public static readonly float LibVersion = 2.4f;
     public static readonly bool IsBeta = true;
@@ -65,16 +67,14 @@ public class StaticUtils
     /// </summary>
     public static void PrintLoader()
     {
-        
-        try
+        WindowWidth = Console.WindowWidth;
+        if (DateTime.Now - LastUpdate >= TimeSpan.FromMilliseconds(100))
         {
-            WindowWidth = Console.WindowWidth;
-            Console.Write($"\r   {Loaders[LoadIdx++ / 1000 % 4]}");
+            LoadIdx++;
+            if (LoadIdx >= Loaders.Length) LoadIdx = 0;
+            LastUpdate = DateTime.Now;
         }
-        catch
-        {
-            LoadIdx = 0;
-        }
+        Console.Write($"\r   {Loaders[LoadIdx]}");
     }
     /// <summary>
     /// Generates an ASCII table with the data provided

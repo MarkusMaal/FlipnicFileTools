@@ -13,6 +13,7 @@ internal static class Program
     {
         try
         {
+            StaticUtils.TextUpdate += LoadScreen;
             Cfg.LoadFromArgs(args);
             if (Cfg.Mode == Enums.Modes.Quit)
             {
@@ -20,7 +21,7 @@ internal static class Program
             }
 
             Cfg.ShowSignature();
-            var code = Cfg.DetectAndDisplayErrors();
+            var code = Cfg.DetectAndDisplayErrors(args);
             if (code != -1) return code;
             switch (Cfg.Mode)
             {
@@ -177,5 +178,17 @@ internal static class Program
                                   """);
         Help.HelpUtils.GenerateHelp();
         StaticUtils.DecodeColors("~-7* ~-FDefault action\n");
+    }
+
+    private static void LoadScreen(string? text)
+    {
+        if (StaticUtils.SimpleOutput) return;
+        if (text == "")
+        {
+            Console.Write("".PadRight(Console.WindowWidth - 6, ' ') + "\r");
+            return;
+        }
+        StaticUtils.PrintLoader();
+        Console.Write(("  " + text).PadRight(Console.WindowWidth - 6, ' ') + "\r");
     }
 }

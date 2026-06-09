@@ -102,12 +102,15 @@ public class MTrk
 
                 Messages.Add(message);
                 lastStatus = message.Status;
+                StaticUtils.LiveLoadStatus = $"Searching for MIDI messages ({Math.Round(bs.BaseStream.Position / (double)bs.BaseStream.Length * 100.0)}%)";
             }
             catch
             {
                 break;
             }
         }
+
+        StaticUtils.LiveLoadStatus = "Processing...";
     }
 }
 

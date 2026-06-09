@@ -37,6 +37,14 @@ public class Pss(string fileName) : FormatBase
             var seek = 0;
             while (src.Read(buffer, 0, buffer.Length) > 0)
             {
+                if (src.Position % 0x100 == 0)
+                {
+                    var msg = "Searching for video/audio streams... (" + Math.Round(src.Position / (double)src.Length * 100.0) + "%)";
+                    if (msg != StaticUtils.LiveLoadStatus)
+                    {
+                        StaticUtils.LiveLoadStatus = msg;
+                    }
+                }
                 // audio stream
                 if ((buffer[0] == 0x49) && (buffer[1] == 0x4E) && (buffer[2] == 0x54) && (buffer[3] == 0x00))
                 {
@@ -149,9 +157,17 @@ public class Pss(string fileName) : FormatBase
             StaticUtils.LiveLoadStatus = "Preparing to extract...";
             Console.Write($"\r{StaticUtils.LiveLoadStatus}");
             List<string> outputFilesList = [];
-            foreach (var args in extractCommands.Select(cmd => cmd.Split(',')))
+            foreach (var (i, args) in extractCommands.Select(cmd => cmd.Split(',')).Index())
             {
                 var outf = outFile + args[1];
+                if (i % 0x10 == 0)
+                {
+                    var msg = "Extracting streams, please wait... (" + Math.Round(i / (double)extractCommands.Count * 100.0) + "%)";
+                    if (msg != StaticUtils.LiveLoadStatus)
+                    {
+                        StaticUtils.LiveLoadStatus = msg;
+                    }
+                }
                 CutFile(args[0], outf, Convert.ToInt64(args[2]), Convert.ToInt64(args[3]));
 
                 if (!outputFilesList.Contains(outf))
@@ -169,6 +185,7 @@ public class Pss(string fileName) : FormatBase
         }
         else
         {
+            StaticUtils.LiveLoadStatus = "Processing interleaving data...";
             Console.Write("\r");
 
             // try to figure out video standard based on how close video duration is 
@@ -204,6 +221,7 @@ public class Pss(string fileName) : FormatBase
             o += $"\nTotal frames: {totalFrames}\n";
             foreach (var (idx, fr) in frames.Index())
             {
+                StaticUtils.LiveLoadStatus = "Processing interleaving data... (" + Math.Round(idx / (double)frames.Count * 100.0) + "%)";
                 if (fr[0].Contains("Audio"))
                 {
                     frames[idx][2] = DotFloatString((float)Math.Round(long.Parse(fr[1]) / 44100.0 * 1000.0, 2)) + "ms";
@@ -230,6 +248,7 @@ public class Pss(string fileName) : FormatBase
                     frames[idx][2] = DotFloatString((float)Math.Round(long.Parse(fr[1]) / divider * 1000.0, 2)) + "ms";
                 }
             }
+            StaticUtils.LiveLoadStatus = "Processing...";
             o += "\nInterleaving data\n";
             colHeaders = ["Stream", "Fr./Sampl.", "Time"];
             rows.Clear();
@@ -375,9 +394,8 @@ public class Pss(string fileName) : FormatBase
     
     private void CutFile(string sourceFilePath, string destinationFilePath, long startPosition, long endPosition) // internal
     {
-        StaticUtils.LiveLoadStatus = "Extracting streams, please wait...";
         Console.Write($"\r     {StaticUtils.LiveLoadStatus}".PadRight(StaticUtils.WindowWidth));
-        StaticUtils.LoadIdx += 9;
+        //StaticUtils.LoadIdx += 9;
         StaticUtils.PrintLoader();
         const FileMode fm = FileMode.Create;
         using (var sourceStream = new FileStream(sourceFilePath, FileMode.Open))

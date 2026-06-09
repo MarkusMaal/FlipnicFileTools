@@ -7,15 +7,17 @@ namespace FlipnicLib;
 public class BinFile : FormatBase
 {
     public List<VirtualFile> FsEntries { get; set; } = [];
-    
+
     /// <summary>
     /// Generate a table containing a list of all the files stored inside the .BIN file
     /// </summary>
     /// <param name="src">The source .BIN file stream</param>
-    public void ListBin(Stream src)
+    /// <param name="noDisplay">Only get filesystem entries, don't display anything</param>
+    public void ListBin(Stream src, bool noDisplay = false)
     {
         string[] colHeader = ["Path", "Offset", "Size", "TOC offset", "Large buffer"];
         var rows = GetFsEntriesNew(src);
+        if (noDisplay) return;
         foreach (var t in rows)
         {
             t[2] = GetFilesizeString(long.Parse(t[2]));
@@ -58,6 +60,7 @@ public class BinFile : FormatBase
         {
             string filename;
             var tOff = loc;
+            var perc = Math.Round(src.Position / (double)src.Length * 100.0);
             if (intoc)
             {
                 if (loc >= endOfToc)
@@ -91,7 +94,7 @@ public class BinFile : FormatBase
                         insub = true;
                         folder = kvp.Key;
                         folderLoc = loc;
-                        StaticUtils.LiveLoadStatus = $"Processing folder {folder}";
+                        StaticUtils.LiveLoadStatus = $"Processing folder {folder} ({perc}%)";
                         break;
                     }
                 }
@@ -122,7 +125,7 @@ public class BinFile : FormatBase
                         insub = true;
                         folder = kvp.Key;
                         folderLoc = loc;
-                        StaticUtils.LiveLoadStatus = $"Processing {folder}";
+                        StaticUtils.LiveLoadStatus = $"Processing {folder} ({perc}%)";
                         break;
                     }
 
@@ -148,8 +151,11 @@ public class BinFile : FormatBase
         List<string[]> realRows = [];
         for (var i = 0; i < sizes.Count; i++)
         {
+            StaticUtils.LiveLoadStatus = "Populating file entries... (" + Math.Round(i / (double)sizes.Count * 100.0) + "%)";
             FsEntries.Add(new VirtualFile(rows[i][0], offsets[i], sizes[i], Convert.ToInt64(rows[i][2], 16), rows[i][3] == "Y"));
         }
+
+        StaticUtils.LiveLoadStatus = "Processing...";
         realRows.AddRange(rows.Select((t, i) => (string[]) [t[0], t[1], sizes[i].ToString(), t[2], t[3]]));
         return realRows;
     }
@@ -384,12 +390,13 @@ public class BinFile : FormatBase
                 Console.Write("\n");
             }
         }
-        Console.Write("\r     Interpreting TOC data...");
+
+        StaticUtils.LiveLoadStatus = "Interpreting TOC data...";
         var fsEntries = GetFsEntriesNew(source);
         source.Position = 0;
         using (var src = source)
         {
-            Console.Write("\r     Loading file to memory...".PadRight(StaticUtils.WindowWidth));
+            StaticUtils.LiveLoadStatus = "Loading file to memory...";
             for (var i = 0; i < fsEntries.Count; i++)
             {
                 var fsEntry = fsEntries[i];
@@ -403,8 +410,7 @@ public class BinFile : FormatBase
 
                 var size = end - src.Position;
                 var outFile = Path.Combine(destination, fileNam[1..]);
-                Console.Write(
-                    $"\r     Extracting {fileNam} ({GetFilesizeString(size)})".PadRight(StaticUtils.WindowWidth));
+                StaticUtils.LiveLoadStatus = $"Extracting {fileNam} ({GetFilesizeString(size)})";
                 if (fileNam.EndsWith('/')) continue;
                 if (size < 0) continue;
                 src.Position = Convert.ToInt64(fsEntry[1], 16);
@@ -424,12 +430,14 @@ public class BinFile : FormatBase
                     var buffer = new byte[bufSize];
                     src.ReadExactly(buffer, 0, buffer.Length);
                     fs.Write(buffer, 0, buffer.Length);
-                    if (j % 0x4000 == 0) StaticUtils.PrintLoader();
+                    if (j % 0x4000 == 0) StaticUtils.LiveLoadStatus = $"Extracting {fileNam} ({GetFilesizeString(size)})";
                 }
 
                 fs.Close();
             }
         }
+
+        StaticUtils.LiveLoadStatus = "";
         Console.WriteLine($"\r   Files have been extracted to: {destination}".PadRight(StaticUtils.WindowWidth));
 
     }

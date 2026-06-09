@@ -33,11 +33,9 @@ public class IsoTools
         Console.CursorVisible = false;
         while (StaticUtils.LiveLoadStatus != "Done!" && StaticUtils.LiveLoadStatus != "Failed!")
         {
-            Console.Write($"\r     {StaticUtils.LiveLoadStatus}".PadRight(Console.WindowWidth, ' '));
-            StaticUtils.PrintLoader();
-            StaticUtils.LoadIdx += 999;
             Thread.Sleep(100);
         }
+        StaticUtils.LiveLoadStatus = "";
         Console.CursorVisible = true;
         if (StaticUtils.LiveLoadStatus == "Failed!")
         {
@@ -82,7 +80,6 @@ public class IsoTools
         {
             Console.Write($"\r     {StaticUtils.LiveLoadStatus}".PadRight(Console.WindowWidth, ' '));
             StaticUtils.PrintLoader();
-            StaticUtils.LoadIdx += 999;
             Thread.Sleep(100);
         }
         Console.CursorVisible = true;

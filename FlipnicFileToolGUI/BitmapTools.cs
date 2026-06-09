@@ -13,10 +13,10 @@ public class BitmapTools
     /// Converts TIM2 to a standard bitmap
     /// </summary>
     /// <returns>Bitmap object containing the converted image</returns>
-    public Bitmap? ToBitmap()
+    public Bitmap? ToBitmap(bool quiet = false)
     {
         var ms =  new MemoryStream();
-        Image?.SavePng(ms);
+        Image?.SavePng(ms, quiet);
         ms.Position = 0;
         try
         {

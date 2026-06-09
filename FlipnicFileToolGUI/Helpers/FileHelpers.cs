@@ -370,12 +370,14 @@ public static class FileHelpers
                             var div = 28.0 / mlb.Sections.Count;
                             Dispatcher.UIThread.Post(() => mw.LoadProgress.IsIndeterminate = false);
                             var mbCheckerboard = new Bitmap(StaticUtils.GenerateCheckerboardPng(128, 128));
+                            var idx = 0;
+                            var elCount = mlb.Sections.Sum(m => m.Value.Length);
                             foreach (var (key, value) in mlb.Sections)
                             {
                                 var mevm = new List<MenuElementViewModel>();
                                 foreach (var ima in value)
                                 {
-                                    StaticUtils.LiveLoadStatus = "Parsing " + ima.Texture;
+                                    StaticUtils.LiveLoadStatus = "Parsing " + ima.Texture + " (" + Math.Round(idx / (double)elCount * 100.0) + "%)";
                                     var p = Path.Combine(Path.GetDirectoryName(mw.FileName) ?? string.Empty,
                                         ima.Texture.Split('\\')[^1].ToUpper());
                                     Tim2? tim2 = null;
@@ -393,10 +395,11 @@ public static class FileHelpers
 
                                     var bmp = File.Exists(p)
                                         ? new BitmapTools
-                                            { Image = tim2, }.ToBitmap()
+                                            { Image = tim2, }.ToBitmap(true)
                                         : mbCheckerboard;
                                     Dispatcher.UIThread.Post(() => mevm.Add(new MenuElementViewModel()
                                         { Layer = key, MenuElement = ima, ImageSource = bmp }));
+                                    idx++;
                                 }
 
                                 Dispatcher.UIThread.Post(() => mw.GetViewModel().Menu.AddRange(mevm));
@@ -594,7 +597,7 @@ public static class FileHelpers
                         case "BIN":
                             mw.Fs = new BinFile();
                             mw.Fs.FsEntries.Clear();
-                            mw.Fs.ListBin(ds);
+                            mw.Fs.ListBin(ds, true);
 
                             fsEntries = mw.Fs.FsEntries.ToList();
                             Dispatcher.UIThread.Post(() =>
@@ -683,21 +686,6 @@ public static class FileHelpers
                 catch (Exception ex) when (!Debugger.IsAttached)
                 {
                     StaticUtils.LiveLoadStatus = $"!!!{ex.Message}\n{ex.StackTrace}";
-                }
-            }).Start();
-            // display loading screen if applicable
-            new Thread(() =>
-            {
-                Thread.Sleep(100);
-                while (true)
-                {
-                    if (StaticUtils.LiveLoadStatus == "")
-                    {
-                        Dispatcher.UIThread.Post(() => mw.LoadProgress.IsIndeterminate = true);
-                        break;
-                    }
-
-                    Thread.Sleep(100);
                 }
             }).Start();
         }

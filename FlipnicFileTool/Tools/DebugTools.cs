@@ -32,7 +32,6 @@ public class DebugTools(Exception e)
                                        Live load status: {StaticUtils.LiveLoadStatus}
                                        Message file: {StaticUtils.MsgFile}
                                        PAL: {StaticUtils.Pal}
-                                       Load index: {StaticUtils.LoadIdx}
                                        Window width: {StaticUtils.WindowWidth}
                                        Reverb strength: {StaticUtils.ReverbStrength}
                                        Force brute-force: {StaticUtils.ForceBruteForce}

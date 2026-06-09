@@ -78,7 +78,11 @@ public abstract class Ipu : FormatBase
             if (reader.BaseStream.Position % 0x8000 == 0)
             {
                 var perc = Math.Round(reader.BaseStream.Position / (double)endVideo * 100.0, 2);
-                StaticUtils.LiveLoadStatus = $"Parsing IPU ({DotFloatString((float)perc)}% complete)";
+                var msg = $"Parsing IPU ({Math.Round((float)perc)}% complete)";
+                if (StaticUtils.LiveLoadStatus != msg)
+                {
+                    StaticUtils.LiveLoadStatus = $"Parsing IPU ({Math.Round((float)perc)}% complete)";
+                }
             }
             reader.BaseStream.Seek(pos, SeekOrigin.Begin);
             _ = reader.Read(shiftRegister);
@@ -95,7 +99,7 @@ public abstract class Ipu : FormatBase
             cSum += 1;
             pos++;
         }
-
+        StaticUtils.LiveLoadStatus = "Processing...";
         var table = StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput);
         var avgBitRate = GetFilesizeString((long)(bandWidthSum / (double)frames));
         string[] intraDcStrs = ["8-bits", "9-bits", "10-bits", "Invalid"];

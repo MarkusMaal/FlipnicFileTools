@@ -230,9 +230,16 @@ public class Config
     /// Detect any obvious errors
     /// </summary>
     /// <returns>Exit code, if -1 then there were no errors found and execution can continue</returns>
-    public int DetectAndDisplayErrors()
+    public int DetectAndDisplayErrors(string[] args)
     {
         Enums.Modes[] exceptions = [Enums.Modes.ShowHelp, Enums.Modes.Playground];
+        
+        if (args.Length == 1 && !File.Exists(args[0]) && exceptions.All(p => p != Mode))
+        {
+            StaticUtils.DecodeColors("~-CError~--: Input file does not exist!");
+            Console.WriteLine();
+            return 2;
+        }
         
         if (FileName == "" && exceptions.All(p => p != Mode))
         {
