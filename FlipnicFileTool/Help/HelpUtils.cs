@@ -224,6 +224,7 @@ public abstract class HelpUtils
                 [
                     new HelpLine("show-sst-resources", "Display all resources referenced by SST file"),
                     new HelpLine("show-sst-toc*", "Display table of contents of the SST file"),
+                    new HelpLine("show-sst-missions", "Allows you to display missions stored inside a FNECMN.SST file"),
                     new HelpLine("show-cameras", "Display camera metadata stored inside the SST file"),
                     new HelpLine("show-gimmick [name]", "Display a gimmick (name from TOC)"),
                     new HelpLine("get-pseudo-code", "Transform stage event into something that's somewhat human-readable"),

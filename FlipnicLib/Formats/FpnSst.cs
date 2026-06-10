@@ -33,6 +33,56 @@ public class FpnSst : FormatBase
         return StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput);
     }
 
+    private KeyValuePair<string, int> GetStageById(int id)
+    {
+        if (!TableOfContents.TryGetValue("STGINF", out var stgInfEntry)) return new KeyValuePair<string, int>("N/A", -1);
+        for (var i = 0; i < stgInfEntry.Count; i++)
+        {
+            var absoluteOffset = i * stgInfEntry.EntrySize + stgInfEntry.Offset;
+            var str = GetString(_data.Skip(absoluteOffset).Take(stgInfEntry.EntrySize)
+                .ToArray());
+            var cId = GetInt32(_data.Skip(absoluteOffset).Take(stgInfEntry.EntrySize).ToArray(), 0x20);
+            if (i == id)
+            {
+                return new KeyValuePair<string, int>(str, cId);
+            }
+        }
+        return new KeyValuePair<string, int>("N/A", -1);
+    }
+
+    /// <summary>
+    /// Decode mission data stored in FNECMN.SST 
+    /// </summary>
+    /// <returns>Table containing the decoded values</returns>
+    public string GetEvtInf()
+    {
+        if (!TableOfContents.TryGetValue("EVTINF", out _)) return "";
+        string[] colHeaders = ["Offset", "Stage", "Texture", "Red", "Mission"];
+        List<string[]> rows = [];
+        
+        var eventsEntry = TableOfContents["EVTINF"];
+        var useJaMsg = File.Exists(StaticUtils.MsgFile);
+        for (var i = 0; i < eventsEntry.Count; i += 1)
+        {
+            var absoluteOffset = eventsEntry.Offset + i * eventsEntry.EntrySize;
+            var fullEntry = _data.Skip(absoluteOffset).Take(eventsEntry.EntrySize).ToArray();
+            var stageIndex = GetInt32(fullEntry, 0);
+            var stgInf = GetStageById(stageIndex);
+            var isRed = fullEntry[4] == 0x01;
+            var imgIdx = fullEntry[6];
+            var stgIdx = stgInf.Value + 1;
+            if (stgIdx > 4) stgIdx = 4 - (stgInf.Value % 4 + 1);
+            if (stgIdx == 0) stgIdx = 2; // hack for Metallurgy B
+            var pageRange = string.Join(",", Enumerable.Range(1, fullEntry[7]));
+            var imgStr = "MI_ST" + (stgIdx) + "_M" + imgIdx.ToString().PadLeft(2, '0') + "_" + pageRange + ".TM2";
+            var msgIdx = GetInt32(fullEntry, 8);
+            var jaMsg = useJaMsg ? new FpnMsg(StaticUtils.MsgFile) : null;
+            var msg = jaMsg != null ? (jaMsg?.Messages.Length > msgIdx ? jaMsg.Messages[msgIdx] : "JA.MSG:" + msgIdx) : "JA.MSG:" + msgIdx;
+            rows.Add(["0x" + absoluteOffset.ToString("X"), stgInf.Key, imgStr, isRed ? "*" : "", msg]);
+        }
+        return (StaticUtils.SimpleOutput ? "" : "Missions:\n") + StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput) + (!useJaMsg ? "Note: Using placeholders for mission names, please import JA.MSG and reload to display actual names!\n" : "");
+    }
+
     /// <summary>
     /// Get a resource name from the ID specified
     /// </summary>
@@ -272,6 +322,7 @@ public class FpnSst : FormatBase
     /// <returns>Table containing the data</returns>
     public string GetCamData(bool asCsv = false)
     {
+        if (TableOfContents.All(e => e.Key != "CAMD")) return "";
         string[] colHeaders = ["Area code", "Reference file", "Lock axes", "Anchored", "Stiffness"];
         List<CamData> cameras = [];
         foreach (var (_, tocEntry) in TableOfContents.Where(e => e.Key == "CAMD"))
@@ -284,7 +335,7 @@ public class FpnSst : FormatBase
         }
         List<string[]> rows = [];
         rows.AddRange(cameras.Select(cam => (string[])[GetStringById("KUIDX", cam.CameraId), cam.CameraName, cam.GetAxisString(), (cam.AnchorToTarget ? "Yes" : "No"), cam.GetStiffnessXyz()]));
-
-        return StaticUtils.GenerateTable(colHeaders, rows, asCsv);
+        
+        return (StaticUtils.SimpleOutput ? "" : "\nCameras:\n") + StaticUtils.GenerateTable(colHeaders, rows, asCsv);
     }
 }

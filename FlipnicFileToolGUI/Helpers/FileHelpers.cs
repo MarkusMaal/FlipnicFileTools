@@ -561,7 +561,7 @@ public static class FileHelpers
                             Dispatcher.UIThread.Post(() =>
                             {
                                 mw.InfoBox.Text =
-                                    $"Entries\n{sst.ListEntries()}\n\nCameras:\n{sst.GetCamData()}\n\nResources\n{sst.GenerateMagicNumbers()}";
+                                    $"Entries\n{sst.ListEntries()}{sst.GetCamData()}\nResources\n{sst.GenerateMagicNumbers()}\n{sst.GetEvtInf()}";
                                 mw.GetViewModel().Gimmicks = sst.GetGimmicks();
                                 mw.StageGimmickTab.IsVisible = mw.GetViewModel().Gimmicks?.Count > 0;
                                 mw.GimmickCombobox.Items.Clear();

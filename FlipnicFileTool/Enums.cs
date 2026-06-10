@@ -70,7 +70,8 @@ public abstract class Enums
         ReplacePak,
         ConvertFpc,
         GenerateAnimation,
-        Playground
+        Playground,
+        ShowSstMissions
     }
     
     /// <summary>
@@ -125,6 +126,7 @@ public abstract class Enums
             "--convert-fpc-to-xml" => Modes.ConvertXml,
             "--convert-xml-to-fpc" => Modes.ConvertFpc,
             "--show-sst-toc" => Modes.ShowSstToc,
+            "--show-sst-missions" => Modes.ShowSstMissions,
             "--show-messages" => Modes.ShowMessages,
             "--list-pss-streams" => Modes.ListPssStreams,
             "--extract-pss-streams" => Modes.ExtractPssStreams,

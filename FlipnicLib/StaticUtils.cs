@@ -76,6 +76,15 @@ public class StaticUtils
         }
         Console.Write($"\r   {Loaders[LoadIdx]}");
     }
+    
+    
+    private static string PadBoth(string str, int length)
+    {
+        var spaces = length - str.Length;
+        var padLeft = spaces / 2 + str.Length;
+        return str.PadLeft(padLeft).PadRight(length);
+    }
+    
     /// <summary>
     /// Generates an ASCII table with the data provided
     /// </summary>
@@ -123,7 +132,7 @@ public class StaticUtils
         var cI = 0;
         foreach (var column in columns)
         {
-            o = o + column.PadRight(colSizes[cI]) + " | ";
+            o = o + PadBoth(column, colSizes[cI]) + " | ";
             cI++;
         }
 
