@@ -67,14 +67,20 @@ public class StaticUtils
     /// </summary>
     public static void PrintLoader()
     {
-        WindowWidth = Console.WindowWidth;
-        if (DateTime.Now - LastUpdate >= TimeSpan.FromMilliseconds(100))
+        try
         {
-            LoadIdx++;
-            if (LoadIdx >= Loaders.Length) LoadIdx = 0;
-            LastUpdate = DateTime.Now;
+            WindowWidth = Console.WindowWidth;
+            if (DateTime.Now - LastUpdate >= TimeSpan.FromMilliseconds(100))
+            {
+                LoadIdx++;
+                if (LoadIdx >= Loaders.Length) LoadIdx = 0;
+                LastUpdate = DateTime.Now;
+            }
+            Console.Write($"\r   {Loaders[LoadIdx]}");
+        } catch (IOException)
+        {
+            // no command window, just avoid printing the loader
         }
-        Console.Write($"\r   {Loaders[LoadIdx]}");
     }
     
     
@@ -111,11 +117,7 @@ public class StaticUtils
         List<int> colSizes = [];
         for (var c = 0; c < columns.Length; c++)
         {
-            var max = 0;
-            if (rows.Count > 0)
-            {
-                max = rows.Select(row => row[c].Length).Max();
-            }
+            var max = rows.Max(row => row[c].Length);
             if (max < columns[c].Length) max = columns[c].Length;
             colSizes.Add(max);
         }
@@ -135,6 +137,7 @@ public class StaticUtils
             o = o + PadBoth(column, colSizes[cI]) + " | ";
             cI++;
         }
+        o = o[..^1];
 
         o += "\n";
         o += $"{sep}\n";
@@ -157,7 +160,7 @@ public class StaticUtils
                 line = line + s.PadRight(colSizes[cI]) + " | ";
                 cI++;
             }
-            o += line + "\n";
+            o += line[..^1] + "\n";
             if (LowMem)
             {
                 Console.Write(o);

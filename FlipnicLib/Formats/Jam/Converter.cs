@@ -126,13 +126,13 @@ public abstract class Converter
                 if (looping)
                 {
                     var a = (pcm16.Length / ((double)vag.Length / 0x10));
-                    wavLoopStart = (uint)(a * loopStart) + 8;
+                    wavLoopStart = (uint)(a * loopStart);
                     wavLoopEnd = (uint)(a * loopEnd);
                 }
                 doLoops.Add(splitChunk.SampleOffset, looping);
                 
                 // Add the sample to the sound bank. Instruments will then pick which sample to use.
-                var sampleId = sf2.AddSample(pcm16, $"sample{sampleIdx++}", looping, wavLoopStart, wavLoopEnd , 44100, (byte)splitChunk.BaseNote, 0);
+                var sampleId = sf2.AddSample(pcm16, $"sample{sampleIdx++}", looping, wavLoopStart, (uint)pcm16.Length - 18 , 44100, (byte)splitChunk.BaseNote, 0);
             }
         }
 
