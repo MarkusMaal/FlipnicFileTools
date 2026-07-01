@@ -71,7 +71,8 @@ public abstract class Enums
         ConvertFpc,
         GenerateAnimation,
         Playground,
-        ShowSstMissions
+        ShowSstMissions,
+        ExportLp4Json
     }
     
     /// <summary>
@@ -179,6 +180,7 @@ public abstract class Enums
             "--replace-pak" => Modes.ReplacePak,
             "--generate-animation" => Modes.GenerateAnimation,
             "--playground" => Modes.Playground,
+            "--export-lp4-json" => Modes.ExportLp4Json,
             _ => mode
         };
         

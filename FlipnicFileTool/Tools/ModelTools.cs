@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 using FlipnicLib;
 using FlipnicLib.Formats;
 
@@ -22,7 +23,24 @@ public class ModelTools
             case Enums.Modes.ExportBbox: ExportBoxObj(); break;
             case Enums.Modes.ShowCol: Console.WriteLine(new FpnCol(FileName).ToString()); break;
             case Enums.Modes.ExportColObj: ExportColObj(FileName, cfg.SecondaryFileName, cfg.Output); break;
+            case Enums.Modes.ExportLp4Json: ExportLp4Json(cfg); break;
         }
+    }
+
+    /// <summary>
+    /// Allows for parsing the entire content of a LP4 file and then serializing the parsed information as a JSON file
+    /// </summary>
+    /// <param name="cfg">Application configuration</param>
+    private static void ExportLp4Json(
+        Config cfg)
+    {
+        var fs = File.OpenRead(cfg.FileName);
+        var lp4test = new Lp4Test(fs);
+        fs.Close();
+        var os = File.CreateText(cfg.Output);
+        os.Write(JsonSerializer.Serialize(lp4test, Lp4TestGenerationContext.Default.Lp4Test));
+        os.Close();
+        StaticUtils.DecodeColors($"~-ASuccess~--: File exported as {cfg.Output}");
     }
 
     /// <summary>
