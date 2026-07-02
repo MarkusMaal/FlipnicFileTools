@@ -1,5 +1,6 @@
 ﻿using FlipnicLib.Formats;
 using System.Diagnostics;
+using System.Text;
 using System.Text.Json.Serialization;
 
 namespace FlipnicLib.Types
@@ -154,7 +155,7 @@ namespace FlipnicLib.Types
                                 Console.ForegroundColor = ConsoleColor.Red;
                                 if (Debugger.IsAttached) Console.Write(" EOF JOINTS ");
                                 Console.ResetColor();
-                                return;
+                                throw new IndexOutOfRangeException();
                             }
                             data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
                             skews = new Lp4Test.Vec4[3];
@@ -227,7 +228,7 @@ namespace FlipnicLib.Types
                                 Console.ForegroundColor = ConsoleColor.Red;
                                 if (Debugger.IsAttached) Console.Write(" EOF ALPHA ");
                                 Console.ResetColor();
-                                return;
+                                throw new IndexOutOfRangeException();
                             }
                             data.ReadExactly(dataBuffer);
                             ModelProperties[k].AlphaSequence[i] = new Lp4Test.Vec4
@@ -252,7 +253,7 @@ namespace FlipnicLib.Types
                                 Console.ForegroundColor = ConsoleColor.Red;
                                 if (Debugger.IsAttached) Console.Write(" EOF LIGHTMAP ");
                                 Console.ResetColor();
-                                return;
+                                throw new IndexOutOfRangeException();
                             }
                             data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
                             ModelProperties[k].Lightmap[i] = new Lp4Test.Vec4
@@ -297,6 +298,11 @@ namespace FlipnicLib.Types
                     Materials = new Material[GetInt32(dataBuffer, 0)]
                 };
 
+                if (ModelVertexProperties.AdDataCount > 0)
+                {
+                    data.Position += 0x10 * ModelVertexProperties.AdDataCount;
+                }
+
                 if (ModelVertexProperties.AnimIndicesCount > 0 && ModelVertexProperties.AnimIndicesCount < 10000)
                 {
                     dataBuffer = new byte[0x10];
@@ -335,8 +341,8 @@ namespace FlipnicLib.Types
                 data.ReadExactly(dataBuffer);
                 var vertexCount = GetUInt32(dataBuffer, 0) * ModelVertexProperties.Multiplier;
                 var normalCount = GetUInt32(dataBuffer, 4) * ModelVertexProperties.Multiplier;
-                var colorCount = GetUInt32(dataBuffer, 8) * ModelVertexProperties.Multiplier;
-                var uvCount = GetUInt32(dataBuffer, 12) * ModelVertexProperties.Multiplier;
+                var colorCount = GetUInt32(dataBuffer, 8);
+                var uvCount = GetUInt32(dataBuffer, 12);
                 var limSigned32 = Math.Pow(2, 31);
                 RawModel rm = new RawModel
                 {
@@ -405,7 +411,7 @@ namespace FlipnicLib.Types
                     }
                 } catch
                 {
-                    return;
+                    throw new IndexOutOfRangeException();
                 }
 
                 if (ModelVertexProperties.MaterialCount > 0)
@@ -424,9 +430,39 @@ namespace FlipnicLib.Types
                     }
                 }
             }
+            if (LayoutChunkHeader.UnkCount > 0) // maybe uncompressed vertices?
+            {
+                data.Position += 0xB0;
+                dataBuffer = new byte[0x10];
+                List<Lp4Test.Vec4> UncompressedVertices = [];
+                data.ReadExactly(dataBuffer);
+                var uncompressedVertexCount = GetInt32(dataBuffer, 0);
+                for (var i = 0; i < uncompressedVertexCount * 2; i++)
+                {
+                    dataBuffer = new byte[0x10];
+                    if (data.Position > data.Length - 0x10) return;
+                    data.ReadExactly(dataBuffer);
+                    Lp4Test.Vec4 vec4 = new()
+                    {
+                        X = GetFloat(dataBuffer, 0),
+                        Y = GetFloat(dataBuffer, 4),
+                        Z = GetFloat(dataBuffer, 8),
+                        W = GetFloat(dataBuffer, 12),
+                    };
+                    UncompressedVertices.Add(vec4);
+                }
+                Model = new RawModel
+                {
+                    Vertices = [.. UncompressedVertices]
+                };
+            }
             dataBuffer = new byte[0x20];
             if (data.Position > data.Length - 0x20) return;
             data.ReadExactly(dataBuffer);
+            if (GetStringAt(dataBuffer, 0x10).Length > 4) // oops, we accidentally read the next layout chunk header, undo that real quick :/
+            {
+                data.Position -= 0x20;
+            }
             if (ModelVertexProperties.MaterialCount <= 0)
             {
                 Console.ForegroundColor = ConsoleColor.Magenta;
@@ -434,7 +470,11 @@ namespace FlipnicLib.Types
             {
                 Console.ForegroundColor = ConsoleColor.DarkGray;
             }
-            if (Debugger.IsAttached) Console.Write(" " + (ModelVertexProperties.MaterialCount > 0 ? string.Join(",", ModelVertexProperties.Materials.Select(p => p.Name + ":" + p.TextureFile)) : "N/A") + " ");
+            if (!Ascii.IsValid(Name))
+            {
+                throw new FormatException();
+            }
+            if (Debugger.IsAttached) Console.Write(" " + (ModelVertexProperties.MaterialCount > 0 ? string.Join(",", ModelVertexProperties.Materials.Select(p => p.Name + ":" + p.TextureFile)) : Name));
             Console.ResetColor();
         }
 
