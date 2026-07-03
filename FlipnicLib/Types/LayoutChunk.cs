@@ -7,6 +7,9 @@ namespace FlipnicLib.Types
 {
     public class LayoutChunk : FormatBase
     {
+        /// <summary>
+        /// Name of the layout chunk used internally by the game
+        /// </summary>
         public string? Name { get; set; }
 
         [JsonIgnore]
@@ -14,9 +17,15 @@ namespace FlipnicLib.Types
 
         public Properties[]? ModelProperties { get; set; }
 
+        /// <summary>
+        /// Defines a box of the model that can collide with other models.
+        /// </summary>
         public Lp4Test.Vec4[]? Hitbox { get; set; }
 
 
+        /// <summary>
+        /// Information about the layout chunk
+        /// </summary>
         public LayoutHeader LayoutChunkHeader { get; set; }
 
         public VertexProperties ModelVertexProperties { get; set; }
@@ -59,10 +68,6 @@ namespace FlipnicLib.Types
             {
                 LayoutHeader? lH = LayoutChunkHeader;
                 dataBuffer = new byte[128];
-                if (data.Position > data.Length - dataBuffer.Length)
-                {
-                    return;
-                }
                 data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
                 if (GetStringAt(dataBuffer, 0x20).Length > 4)
                 {
@@ -74,10 +79,6 @@ namespace FlipnicLib.Types
                 {
                     data.Position -= 0x40; // similar to the last if statement, but with a different alignment
                     return;
-                }
-                if (k > 0)
-                {
-                    _ = "";
                 }
                 var skews = new Lp4Test.Vec4[3];
                 for (var i = 0; i <  skews.Length; i++)
@@ -153,9 +154,7 @@ namespace FlipnicLib.Types
                             {
                                 ModelProperties = null;
                                 Console.ForegroundColor = ConsoleColor.Red;
-                                if (Debugger.IsAttached) Console.Write(" EOF JOINTS ");
-                                Console.ResetColor();
-                                throw new IndexOutOfRangeException();
+                                throw new IndexOutOfRangeException("JOINTS");
                             }
                             data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
                             skews = new Lp4Test.Vec4[3];
@@ -225,10 +224,7 @@ namespace FlipnicLib.Types
                             if (data.Position >= data.Length - dataBuffer.Length)
                             {
                                 ModelProperties = null;
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                if (Debugger.IsAttached) Console.Write(" EOF ALPHA ");
-                                Console.ResetColor();
-                                throw new IndexOutOfRangeException();
+                                throw new IndexOutOfRangeException("ALPHA");
                             }
                             data.ReadExactly(dataBuffer);
                             ModelProperties[k].AlphaSequence[i] = new Lp4Test.Vec4
@@ -250,10 +246,7 @@ namespace FlipnicLib.Types
                             if (data.Position >= data.Length - dataBuffer.Length)
                             {
                                 ModelProperties = null;
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                if (Debugger.IsAttached) Console.Write(" EOF LIGHTMAP ");
-                                Console.ResetColor();
-                                throw new IndexOutOfRangeException();
+                                throw new IndexOutOfRangeException("LIGHTMAP");
                             }
                             data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
                             ModelProperties[k].Lightmap[i] = new Lp4Test.Vec4
@@ -274,7 +267,10 @@ namespace FlipnicLib.Types
                 for (var i = 0; i < Hitbox.Length; i++)
                 {
                     dataBuffer = new byte[16];
-                    if (data.Position >= data.Length - 0x10) return;
+                    if (data.Position >= data.Length - 0x10)
+                    {
+                        return;
+                    }
                     data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
                     Hitbox[i] = new Lp4Test.Vec4
                     {
@@ -300,7 +296,7 @@ namespace FlipnicLib.Types
 
                 if (ModelVertexProperties.AdDataCount > 0)
                 {
-                    data.Position += 0x10 * ModelVertexProperties.AdDataCount;
+                    data.Position += 0x10 * ModelVertexProperties.AdDataCount * Math.Max(ModelVertexProperties.UnkMouse, 1);
                 }
 
                 if (ModelVertexProperties.AnimIndicesCount > 0 && ModelVertexProperties.AnimIndicesCount < 10000)
@@ -382,7 +378,7 @@ namespace FlipnicLib.Types
                         };
                     }
                     dataBuffer = new byte[colorCount * 0x4];
-                    if (data.Position >= data.Length - dataBuffer.Length && Debugger.IsAttached) { Console.ForegroundColor = ConsoleColor.Red; Console.Write(" EOF COLORS "); Console.ResetColor(); return; }
+                    if (data.Position >= data.Length - dataBuffer.Length && Debugger.IsAttached) { throw new IndexOutOfRangeException("COLORS"); }
                     data.ReadExactly(dataBuffer);
                     for (var i = 0; i < colorCount * 4; i += 4)
                     {
@@ -409,7 +405,7 @@ namespace FlipnicLib.Types
                             DuplicationFlagB = (allFlags & 0x1) != 0,
                         };
                     }
-                } catch
+                } catch when (!Debugger.IsAttached)
                 {
                     throw new IndexOutOfRangeException();
                 }
@@ -426,7 +422,13 @@ namespace FlipnicLib.Types
                         }
                         data.ReadExactly(dataBuffer);
                         ModelVertexProperties.Materials[i].Name = GetString(dataBuffer);
+                        ModelVertexProperties.Materials[i].ContainsAdditionalSection = GetInt32(dataBuffer, 0x48) == 1;
                         ModelVertexProperties.Materials[i].TextureFile = GetStringAt(dataBuffer, 0x80);
+                        /*if (ModelVertexProperties.Materials[i].ContainsAdditionalSection)
+                        {
+                            // TODO: make sense of this section
+                            data.Position += 0x100;
+                        }*/
                     }
                 }
             }
@@ -440,7 +442,10 @@ namespace FlipnicLib.Types
                 for (var i = 0; i < uncompressedVertexCount * 2; i++)
                 {
                     dataBuffer = new byte[0x10];
-                    if (data.Position > data.Length - 0x10) return;
+                    if (data.Position > data.Length - 0x10)
+                    {
+                        return;
+                    }
                     data.ReadExactly(dataBuffer);
                     Lp4Test.Vec4 vec4 = new()
                     {
@@ -457,7 +462,10 @@ namespace FlipnicLib.Types
                 };
             }
             dataBuffer = new byte[0x20];
-            if (data.Position > data.Length - 0x20) return;
+            if (data.Position > data.Length - 0x20)
+            {
+                return;
+            }
             data.ReadExactly(dataBuffer);
             if (GetStringAt(dataBuffer, 0x10).Length > 4) // oops, we accidentally read the next layout chunk header, undo that real quick :/
             {
@@ -478,6 +486,9 @@ namespace FlipnicLib.Types
             Console.ResetColor();
         }
 
+        /// <summary>
+        /// Header for the 3D model section
+        /// </summary>
         public struct VertexProperties
         {
             public int MaterialCount { get; set; }
@@ -500,13 +511,22 @@ namespace FlipnicLib.Types
             public Material[] Materials { get; set; }
         }
 
+        /// <summary>
+        /// Material to use for this model. Sometimes this also contains
+        /// a texture filename.
+        /// </summary>
         public struct Material
         {
             public string Name { get; set; }
 
             public string TextureFile { get; set; }
+
+            public bool ContainsAdditionalSection { get; set; }
         }
 
+        /// <summary>
+        /// The actual 3D model data without the model section header.
+        /// </summary>
         public struct RawModel
         {
             public readonly int VertexCount => Vertices?.Length ?? 0;
@@ -520,6 +540,10 @@ namespace FlipnicLib.Types
             public UV[] UVs { get; set; }
         }
 
+        /// <summary>
+        /// Defines points of the model that can be indipendently animated.
+        /// These points don't appear to use UV compression.
+        /// </summary>
         public struct JointIndexArr
         {
             public string JointName { get; set; }
@@ -527,6 +551,10 @@ namespace FlipnicLib.Types
             public readonly uint IndexCount => (uint)(Indices?.Length ?? 0);
         };
 
+        /// <summary>
+        /// When a model doesn't have a texture material, it may use embedded pixels
+        /// instead. These correspond to each vertex.
+        /// </summary>
         public struct Pixel
         {
             public byte R { get; set; }
@@ -538,6 +566,9 @@ namespace FlipnicLib.Types
             public byte A { get; set; }
         }
 
+        /// <summary>
+        /// Index within the compressed array of vertices
+        /// </summary>
         public struct JointIndex
         {
             public uint Index { get; set; }
@@ -549,6 +580,9 @@ namespace FlipnicLib.Types
             public long Padding { get; set; }
         }
 
+        /// <summary>
+        /// Defines the initial state of the joint (similar to a part of model properties)
+        /// </summary>
         public struct Joint
         {
             public string Name { get; set; }
@@ -556,6 +590,9 @@ namespace FlipnicLib.Types
             public Lp4Test.Vec4 JointOffset { get; set; }
         }
 
+        /// <summary>
+        /// Defines the structure and properties of the section
+        /// </summary>
         public struct Properties
         {
             public LayoutHeader? PropertiesLayoutHeader { get; set; }
@@ -603,6 +640,9 @@ namespace FlipnicLib.Types
             public Lp4Test.Vec4[] AnotherUnknownSection { get; set; }
         }
 
+        /// <summary>
+        /// Defines normal vectors for each vertex (outer point)
+        /// </summary>
         public struct Normal
         {
             public short X { get; set; }
@@ -614,6 +654,14 @@ namespace FlipnicLib.Types
             public short W { get; set; }
         }
 
+        /// <summary>
+        /// Defines the point inside the material to use for this vertex.
+        /// X/Y values correspond to a coordinate within the texture material,
+        /// which are divided by divider to get a fractional value.
+        /// <br/>
+        /// Duplication flags are related to how each polygon gets extracted
+        /// from the points array.
+        /// </summary>
         public struct UV
         {
             public short X { get; set; }
@@ -627,6 +675,12 @@ namespace FlipnicLib.Types
             public bool DuplicationFlagB { get; set; }
         }
 
+        /// <summary>
+        /// Based on observations of 2D character animations.
+        /// S-values define skewing and XYZW are the position.
+        /// <br/>
+        /// It may also be possible that all these values are just skews.
+        /// </summary>
         public struct AnimationSequenceFrame
         {
             public float Sx { get; set; }
@@ -661,6 +715,10 @@ namespace FlipnicLib.Types
 
             [JsonIgnore]
             public int Padding { get; set; }
+
+            /// <summary>
+            /// Also specifies if this section has a model
+            /// </summary>
             public bool HasHitbox { get; set; }
 
             [JsonIgnore]

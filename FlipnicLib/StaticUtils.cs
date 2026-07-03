@@ -430,8 +430,9 @@ public class StaticUtils
     /// <param name="vertices">Array containing raw model data (each chunk is 7*sizeof(float), where first 2 items are XY UV coordinates, next 3 items are XYZ vertex coordinates and final 3 items are XYZ normal coordinates)</param>
     /// <param name="texture">Texture object (either Tim or Tim2 is accepted here)</param>
     /// <param name="ignoreNormals">Optional: If set to true, ensures that no normal vectors will get exported to the final OBJ file</param>
-    public static void ExportObj(string fileName, float[] vertices, object? texture, bool ignoreNormals = false)
+    public static void ExportObj(string fileName, float[] vertices, object? texture, bool ignoreNormals = false, float[]? diffuse = null)
     {
+        var culture = CultureInfo.InvariantCulture;
         // generate .png file
         var hasTexture = true;
         switch (texture)
@@ -451,19 +452,22 @@ public class StaticUtils
         }
             
         // generate .mtl file
-        if (hasTexture)
+        if (hasTexture || (diffuse != null))
         {
             using var mtlwriter = new StreamWriter(fileName[..^4] + ".mtl");
             mtlwriter.WriteLine($"newmtl {new FileInfo(fileName).Name[..^4]}");
-            mtlwriter.WriteLine($"map_Kd {new FileInfo(fileName).Name[..^4]}.png");
+            if (hasTexture) mtlwriter.WriteLine($"map_Kd {new FileInfo(fileName).Name[..^4]}.png");
+            if (diffuse != null)
+            {
+                mtlwriter.WriteLine($"Kd {diffuse[0].ToString(culture)} {diffuse[1].ToString(culture)} {diffuse[2].ToString(culture)}");
+            }
             mtlwriter.Close();
             Console.WriteLine($"Saved as: {fileName[..^4]}.mtl");
         }
 
         var vertexCount = vertices.Length / 8;
         using var writer = new StreamWriter(fileName);
-        var culture = CultureInfo.InvariantCulture;
-        if (hasTexture)
+        if (hasTexture || diffuse != null)
         {
             writer.WriteLine($"mtllib {new FileInfo(fileName).Name[..^4]}.mtl");
             writer.WriteLine($"usemtl {new FileInfo(fileName).Name[..^4]}");
