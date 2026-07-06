@@ -296,7 +296,7 @@ namespace FlipnicLib.Types
 
                 if (ModelVertexProperties.AdDataCount > 0)
                 {
-                    data.Position += 0x10 * ModelVertexProperties.AdDataCount * Math.Max(ModelVertexProperties.UnkMouse, 1);
+                    data.Position += 0x10 * ModelVertexProperties.AdDataCount * Math.Max(Math.Max(ModelVertexProperties.UnkMouse, ModelVertexProperties.UnkRat), 1);
                 }
 
                 if (ModelVertexProperties.AnimIndicesCount > 0 && ModelVertexProperties.AnimIndicesCount < 10000)
