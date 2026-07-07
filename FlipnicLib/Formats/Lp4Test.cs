@@ -6,7 +6,7 @@ using static FlipnicLib.Types.LayoutChunk;
 
 namespace FlipnicLib.Formats
 {
-    public partial class Lp4Test : FormatBase
+    public class Lp4Test : FormatBase
     {
         /// <summary>
         /// Required. First 0x20 bytes of the LP4 file
@@ -53,7 +53,7 @@ namespace FlipnicLib.Formats
             {
                 HeaderSize = GetInt32(dataBuffer, 0),
                 HasLayouts = dataBuffer[4] > 0,
-                UnkLizard = GetInt32(dataBuffer, 8),
+                LayoutChunkPropertiesCount = GetInt32(dataBuffer, 8),
                 TimelineCount = GetInt32(dataBuffer, 12),
                 UnkFlamingo = dataBuffer[16],
                 HasBoundingBox = dataBuffer[17] > 0,
@@ -101,7 +101,8 @@ namespace FlipnicLib.Formats
                     HasHitbox = dataBuffer[12] > 0,
                     UnkCount = GetInt32(dataBuffer, 16),
                     UnkRabbit = GetInt32(dataBuffer, 20),
-                    EndPadding = GetInt64(dataBuffer, 24),
+                    UnkAlpaca = GetInt32(dataBuffer, 24),
+                    MaterialsHaveAdditionalSection = GetInt32(dataBuffer, 28) == 1,
                 };
                 LayoutChunks = [];
                 data.Position -= 32;
@@ -113,14 +114,7 @@ namespace FlipnicLib.Formats
                     while (data.Position < data.Length)
                     {
                         
-                        LayoutChunks.Add(new LayoutChunk(data, FormatHeader.TimelineCount));
-                        if (LayoutChunks[^1].ModelVertexProperties.AnimIndicesCount > 0)
-                        {
-                            data.Position -= 0x20;
-                            if (data.Position < data.Length) max += 1;
-                            i++;
-                            continue;
-                        }
+                        LayoutChunks.Add(new LayoutChunk(data, FormatHeader.LayoutChunkPropertiesCount));
                         dataBuffer = new byte[32];
                         if (data.Position > data.Length - 0x20)
                         {
@@ -134,14 +128,6 @@ namespace FlipnicLib.Formats
                         {
                             data.Position -= 0x20;
                         }
-                        if (data.Position == startPos)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.Write(" not read ");
-                            Console.ResetColor();
-                            break;
-                        }
-                        if (LayoutChunks[i].ModelProperties[0].JointCount > 0) break;
                         if (data.Position >= data.Length) break;
                         i++;
                     }
@@ -171,14 +157,7 @@ namespace FlipnicLib.Formats
                 if (inputModel.UVs.Length > p.Index)
                 {
                     var uv = inputModel.UVs[p.Index];
-                    var nUv = new UV()
-                    {
-                        X = uv.X,
-                        Y = uv.Y,
-                        Divider = uv.Divider,
-                        DuplicationFlagA = first[0],
-                        DuplicationFlagB = first[1]
-                    };
+                    var nUv = uv with { DuplicationFlagA = first[0], DuplicationFlagB = first[1] };
                     uvs.Add(nUv);
                 }
                 pattern.RemoveAt(0);
@@ -434,7 +413,7 @@ namespace FlipnicLib.Formats
             public int TimelineCount { get; set; }
 
             [JsonIgnore]
-            public int UnkLizard { get; set; }
+            public int LayoutChunkPropertiesCount { get; set; }
 
             [JsonIgnore]
             public byte UnkFlamingo { get; set; }
@@ -492,7 +471,7 @@ namespace FlipnicLib.Formats
 
     [JsonSerializable(typeof(Lp4Test))]
     [JsonSerializable(typeof(LayoutChunk))]
-    [JsonSourceGenerationOptions(WriteIndented = true)]
+    [JsonSourceGenerationOptions(WriteIndented = true, NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals)]
     public partial class Lp4TestGenerationContext : JsonSerializerContext
     {
     }

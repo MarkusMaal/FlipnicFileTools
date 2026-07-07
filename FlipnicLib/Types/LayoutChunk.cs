@@ -44,6 +44,13 @@ namespace FlipnicLib.Types
         {
             var dataBuffer = new byte[0x20];
             data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
+            // if this is true, that means the layoutchunk actually starts 32 bytes later
+            // this fixes comaptibility issues with a few LP4 files (e.g. FLA01S.LP4)
+            if (dataBuffer[0x1E] == 0xF0 && dataBuffer[0x1F] == 0x3F)
+            {
+                dataBuffer = new byte[0x20];
+                data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
+            }
             LayoutChunkHeader = new LayoutHeader()
             {
                 ChunkCount = GetInt32(dataBuffer, 0),
@@ -52,7 +59,8 @@ namespace FlipnicLib.Types
                 HasHitbox = dataBuffer[12] > 0,
                 UnkCount = GetInt32(dataBuffer, 16),
                 UnkRabbit = GetInt32(dataBuffer, 20),
-                EndPadding = GetInt64(dataBuffer, 24),
+                UnkAlpaca = GetInt32(dataBuffer, 24),
+                MaterialsHaveAdditionalSection = GetInt32(dataBuffer, 28) == 1,
             };
             dataBuffer = new byte[0x20];
             if (data.Position > data.Length - dataBuffer.Length)
@@ -378,7 +386,10 @@ namespace FlipnicLib.Types
                         };
                     }
                     dataBuffer = new byte[colorCount * 0x4];
-                    if (data.Position >= data.Length - dataBuffer.Length && Debugger.IsAttached) { throw new IndexOutOfRangeException("COLORS"); }
+                    if (data.Position >= data.Length - dataBuffer.Length && Debugger.IsAttached)
+                    {
+                        throw new IndexOutOfRangeException("COLORS");
+                    }
                     data.ReadExactly(dataBuffer);
                     for (var i = 0; i < colorCount * 4; i += 4)
                     {
@@ -424,11 +435,11 @@ namespace FlipnicLib.Types
                         ModelVertexProperties.Materials[i].Name = GetString(dataBuffer);
                         ModelVertexProperties.Materials[i].ContainsAdditionalSection = GetInt32(dataBuffer, 0x48) == 1;
                         ModelVertexProperties.Materials[i].TextureFile = GetStringAt(dataBuffer, 0x80);
-                        /*if (ModelVertexProperties.Materials[i].ContainsAdditionalSection)
+                        if (LayoutChunkHeader.MaterialsHaveAdditionalSection)
                         {
-                            // TODO: make sense of this section
+                            // TODO: parse this section instead of skipping it
                             data.Position += 0x100;
-                        }*/
+                        }
                     }
                 }
             }
@@ -728,7 +739,10 @@ namespace FlipnicLib.Types
             public int UnkRabbit { get; set; }
 
             [JsonIgnore]
-            public long EndPadding { get; set; }
+            public int UnkAlpaca { get; set; }
+            
+            [JsonIgnore]
+            public bool MaterialsHaveAdditionalSection { get; set; }
         }
     }
 }
