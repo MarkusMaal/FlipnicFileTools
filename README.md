@@ -36,7 +36,7 @@ Jump to section:
 * [Stage information files (*.SST)](#stage-information-files-sst)
 * [Message files (*.MSG)](#message-files-msg)
     + [Generating custom message files](#generating-custom-message-files)
-* [Resource files (*.LP4)](#resource-files-lp4)
+* [Models (*.LP4)](#resource-files-lp4)
 * [VAB header files (*.HD)](#vab-header-files-hd)
 * [VAB body files (*.BD)](#vab-body-files-bd)
 * [Save file icon (*.ICO)](#save-file-icon-ico)
@@ -421,72 +421,86 @@ You can edit the converted file with notepad. Each line is one message. Make you
 
 The generated file will have the same layout that the game can understand.
 
-## Resource files (*.LP4)
+## Models (*.LP4)
 
-These files define stuff like 3D models and 2D animation sequences (e.g. the WONDERFUL text when you complete a mission). You can view all models and other information about the LP4 file.
+These contain the raw 3D model data and additional stuff, such as lighting, animations materials. Previously it was thought that this format supported 2D, but actually everything is in fact rendered in 3D space, even the text animation sequences (e.g. the WONDERFUL text when you complete a mission). You can view all models and other information about the LP4 file.
 
 Example: `FlipnicFileTool --input CHOU01.LP4 --show-lp4`
 
 Outputs:
 ```
-Type: StaticModel
-Model count: 0
+3D model data (CHOU01.LP4)
+
 Has bounding box: Yes
-Is 2D animation: No
+Has layouts chunks: Yes
 Timelines: 3
-Animation joints: 15
+Layout chunk sections count: 3
 
 Bounding box:
 +-----------+------------+------------+
-| X         | Y          | Z          | 
+|     X     |     Y      |     Z      |
 +-----------+------------+------------+
-| 6.7750607 | -1.4439601 | -5.1376605 | 
-| -6.77506  | -1.4439601 | -5.1376605 | 
-| 6.7750607 | -1.4439601 | 4.9989805  | 
+| 6.7750607 | -1.4439601 | -5.1376605 |
+| -6.77506  | -1.4439601 | -5.1376605 |
+| 6.7750607 | -1.4439601 | 4.9989805  |
+| -6.77506  | -1.4439601 | 4.9989805  |
+| 6.7750607 | 0.22978    | -5.1376605 |
+| -6.77506  | 0.22978    | -5.1376605 |
+| 6.7750607 | 0.22978    | 4.9989805  |
+| -6.77506  | 0.22978    | 4.9989805  |
++-----------+------------+------------+
+
+
+Layout chunks:
+
+
+Name: MO_CHOU_UV
+
+Contains model: Yes
+Joint indices: 15
+Materials: 3
+Vertices: 470
+Normals: 470
+Pixels: 0
+UVs: 470
+
+Properties:
++-----------+----------+-----------------+------------------+--------+
+| Keyframes | Lighting | Light animation | Vertex animation | Joints |
++-----------+----------+-----------------+------------------+--------+
+| 0         | Yes (3)  | No              | No               | 15     |
+| 0         | Yes (3)  | No              | No               | 15     |
+| 0         | Yes (3)  | No              | No               | 15     |
++-----------+----------+-----------------+------------------+--------+
+
 ...
-| -6.77506  | -1.4439601 | -5.1376605 | 
-| -6.77506  | 0.22978    | -5.1376605 | 
-| -6.77506  | 0.22978    | 4.9989805  | 
-+-----------+------------+------------+
 
+Name: HANE_S_R_NULL
 
-Models:
-+------------+---------+-------+--------+-------------------+----------+
-| Name       | Address | Scale | Offset | Texture           | Polygons | 
-+------------+---------+-------+--------+-------------------+----------+
-| MO_CHOU_UV | F0      | 1x1x1 | 0x0x0  | mo_chou_tex_1.tm2 | 8304     | 
-+------------+---------+-------+--------+-------------------+----------+
+Contains model: No
+Joint indices: 0
 
-Joints:
-+--------------------+----------+-------------+-------------+
-| Name               | Vertices | Position    | Size        | 
-+--------------------+----------+-------------+-------------+
-| CHOU_ASHI_2_L_NULL | 63       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| CHOU_ASHI_2_R_NULL | 63       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| HANE_L_L_NULL      | 10       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| HANE_L_R_NULL      | 12       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| HANE_S_L_NULL      | 8        | NaNxNaNxNaN | NaNxNaNxNaN | 
-| HANE_S_R_NULL      | 10       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT1_1             | 69       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT11_1            | 21       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT2_1             | 201      | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT2_2             | 30       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT3_1             | 6        | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT5_1             | 6        | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT6_1             | 8        | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT8_1             | 10       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT9_1             | 22       | NaNxNaNxNaN | NaNxNaNxNaN | 
-+--------------------+----------+-------------+-------------+
+Properties:
++-----------+----------+-----------------+------------------+--------+
+| Keyframes | Lighting | Light animation | Vertex animation | Joints |
++-----------+----------+-----------------+------------------+--------+
+| 8         | No       | No              | Yes              | 0      |
+| 0         | Yes (0)  | No              | No               | 0      |
+| 30        | Yes (0)  | No              | Yes              | 0      |
++-----------+----------+-----------------+------------------+--------+
+
 
 ```
 
 You can also attempt to convert the 3D models stored inside LP4 files to Wavefront OBJ by running the following command: `FlipnicFileTool --input CHOU01.LP4 --convert-obj --output CHOU01.OBJ`
 
-**Note**: LP4 parser is unreliable, so this will often fall back to a brute-force method, which will comb through the entire file trying to find patterns that match 3D model data. Also, not all LP4 files contain model data. If you want to always skip the parsing part and go straight for the brute-force method, you can append the `--force-brute-force` parameter to the above command.
+**Note**: Not all LP4 files contain model data, they may instead reference other files (e.g. F3D_*.LP4 files) or just contain the timeline info.
 
 Sometimes this will produce a file, which has incorrect normals (shading looks weird). If that's the case, you may need to append `--alternate-normals` parameter to the above command.
 
 In addition, you can extract the bounding box of the LP4 file (if it has one) and save it as a Wavefront OBJ by running the following command: `FlipnicFileTool --input CHOU01.LP4 --convert-box-obj --output CHOU01_BOX.OBJ`
+
+To see more detailed information about the LP4's structure, you can convert it to a JSON file by running the following command: `FlipnicFileTool --input CHOU01.LP4 --export-lp4-json --output CHOU01.JSON`
 
 ## VAB header files (*.HD)
 
