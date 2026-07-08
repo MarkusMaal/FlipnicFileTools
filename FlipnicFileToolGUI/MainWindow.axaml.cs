@@ -21,6 +21,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
@@ -291,7 +292,7 @@ public sealed partial class MainWindow : SukiWindow
         dpt.Start();
         Models.Items.Clear();
         if (container is null) return;
-        foreach (var s in container.Models)
+        foreach (var s in container.LayoutChunks?.Where(lc => lc.Hitbox?.Length > 0) ?? [])
         {
             Models.Items.Add(s.Name);
         }
@@ -546,7 +547,17 @@ public sealed partial class MainWindow : SukiWindow
 
     private async void ExportModelButton_Click(object? sender, RoutedEventArgs e)
     {
-        var file = await FileHelpers.SaveFile(this, [Filters.ObjFile]);
+        if (sender is not Button button) return;
+        string? file;
+        if (button.Name == "ExportJsonButton")
+        {
+            file = await FileHelpers.SaveFile(this, [Filters.JsonFile]);
+            if (file is null) return;
+            await File.WriteAllTextAsync(file, JsonSerializer.Serialize(GlControl.OpenContainer, Lp4TestGenerationContext.Default.Lp4));
+            ShowDialog("Flipnic file tools", "File saved successfully", NotificationType.Success);
+            return;
+        }
+        file = await FileHelpers.SaveFile(this, [Filters.ObjFile]);
         if (file is null) return;
         GlControl.SaveAs(Uri.UnescapeDataString(file));
         ShowDialog("Flipnic file tools", "File saved successfully", NotificationType.Success);

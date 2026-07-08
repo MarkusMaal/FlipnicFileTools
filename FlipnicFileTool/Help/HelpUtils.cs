@@ -149,7 +149,7 @@ public abstract class HelpUtils
                 "*.LP4",
                 [
                     new HelpLine("show-lp4*", "Display general information about the file"),
-                    new HelpLine("export-lp4-json", "Convert LP4 to JSON (experimental, may crash/leak)"),
+                    new HelpLine("export-lp4-json", "Convert LP4 to JSON"),
                     new HelpLine("export-obj", "Export models from the LP4 file as Wavefront OBJ"),
                     new HelpLine("export-box-obj", "Export bounding box from the LP4 file as Wavefront OBJ"),
                     new HelpLine("alternate-normals", "Use a different method for decoding normal vectors (required for some files)"),

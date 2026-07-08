@@ -89,15 +89,20 @@ namespace FlipnicFileToolGUI.Controls
 
         public void ImportLP4(Lp4 lp4)
         {
-            lp4.Read();
             _texture = null;
-            if (lp4.Texture != null)
+            if (lp4.CachedTexture != null)
             {
-                _texture = lp4.Texture;
+                _texture = lp4.CachedTexture;
             }
+
+            if (lp4.LayoutChunks?.First().Model == null) return;
             Dispatcher.UIThread.Post(() => 
             {
-                _vertices = lp4.GetVerticies();
+                try
+                {
+                    _vertices = lp4.GetRawVertices(lp4.LayoutChunks.First().Model!.Value);
+                } catch (ArgumentOutOfRangeException) {}
+
                 OpenContainer = lp4;
                 if (!Program.GpuAccel) return;
                 OpenTkInit();
@@ -118,15 +123,32 @@ namespace FlipnicFileToolGUI.Controls
         {
             if (name is null) return;
             var lp4 = OpenContainer;
-            foreach (var model in lp4.Models.Where(model => model.Name == name))
+            if (lp4 == null) return;
+            if (lp4.LayoutChunks == null) return;
+            foreach (var model in lp4.LayoutChunks.Where(model => model.Name == name))
             {
-                lp4.SetSelectedModel(model);
+                lp4.SelectedModel = model;
             }
-            _texture = lp4.Texture;
-            if (lp4.SelectedModel.HasEmbeddedTexture)
+
+            if (lp4.FilePath != null)
+            {
+                var texStr = new MemoryStream();
+                var texFile = Path.Combine(new FileInfo(lp4.FilePath).Directory?.FullName ?? "",
+                    lp4.SelectedModel.ModelVertexProperties.Materials.FirstOrDefault().TextureFile.ToUpper());
+                if (File.Exists(texFile))
+                {
+                    new Tim2(File.ReadAllBytes(texFile))
+                        .SavePng(texStr);
+                    _texture = texStr.ToArray();
+                    texStr.Close();
+                    StaticUtils.LiveLoadStatus = "";
+                }
+            }
+
+            /*if (lp4.SelectedModel.Model.ColorCount > 0)
             {
                 _texture = lp4.SelectedModel.GenerateDummyTexture();
-            }
+            }*/
             var ms = new MemoryStream((byte[])(_texture ?? new byte[]{}));
             try
             {
@@ -139,15 +161,22 @@ namespace FlipnicFileToolGUI.Controls
 
             if (lp4.SelectedModel != null)
             {
-                _vertices = lp4.SelectedModel.RawVertices.ToArray();
-                for (var i = 0; i < _vertices.Length; i+=8)
+                try
                 {
-                    _vertices[i + 2] *= lp4.SelectedModel.Scale[0];
-                    _vertices[i + 3] *= lp4.SelectedModel.Scale[1];
-                    _vertices[i + 4] *= lp4.SelectedModel.Scale[2];
-                    _vertices[i + 2] += lp4.SelectedModel.Offset[0];
-                    _vertices[i + 3] += lp4.SelectedModel.Offset[1];
-                    _vertices[i + 4] += lp4.SelectedModel.Offset[2];
+                    _vertices = lp4.GetRawVertices(lp4.SelectedModel.Model.Value);
+                    for (var i = 0; i < _vertices.Length; i += 8)
+                    {
+                        _vertices[i + 2] *= lp4.SelectedModel.ModelProperties[0].ModelSkewing[0].X;
+                        _vertices[i + 3] *= lp4.SelectedModel.ModelProperties[0].ModelSkewing[1].Y;
+                        _vertices[i + 4] *= lp4.SelectedModel.ModelProperties[0].ModelSkewing[2].Z;
+                        _vertices[i + 2] += lp4.SelectedModel.ModelProperties[0].ModelOffset.X;
+                        _vertices[i + 3] += lp4.SelectedModel.ModelProperties[0].ModelOffset.Y;
+                        _vertices[i + 4] += lp4.SelectedModel.ModelProperties[0].ModelOffset.Z;
+                    }
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    
                 }
             }
             StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded 3D model data to memory ({StaticUtils.GetFilesizeString(_vertices.Length)})\n");

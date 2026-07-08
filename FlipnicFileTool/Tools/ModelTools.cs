@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using FlipnicLib;
 using FlipnicLib.Formats;
+using FlipnicLib.Types;
 
 namespace FlipnicFileTool.Tools;
 
@@ -35,10 +36,10 @@ public class ModelTools
         Config cfg)
     {
         var fs = File.OpenRead(cfg.FileName);
-        var lp4test = new Lp4Test(fs);
+        var lp4test = new Lp4(fs);
         fs.Close();
         var os = File.CreateText(cfg.Output);
-        os.Write(JsonSerializer.Serialize(lp4test, Lp4TestGenerationContext.Default.Lp4Test));
+        os.Write(JsonSerializer.Serialize(lp4test, Lp4TestGenerationContext.Default.Lp4));
         os.Close();
         StaticUtils.DecodeColors($"~-ASuccess~--: File exported as {cfg.Output}");
     }
@@ -48,8 +49,7 @@ public class ModelTools
     /// </summary>
     private void ShowLp4()
     {
-        var lp4 = new Lp4(File.ReadAllBytes(FileName), FileName);
-        lp4.Read();
+        var lp4 = new Lp4(File.OpenRead(FileName));
         Console.Write("\r".PadRight(Console.WindowWidth) + "\r");
         Console.WriteLine(lp4.ToString());
     }
@@ -81,19 +81,44 @@ public class ModelTools
     /// </summary>
     private void ExportObj()
     {
-        var lp4 = new Lp4(File.ReadAllBytes(FileName), FileName);
-        lp4.Read();
-        foreach (var model in lp4.Models)
+        var lp4 = new Lp4(File.OpenRead(FileName));
+        foreach (var chunk in (lp4.LayoutChunks ?? []).Where(chunk => chunk.LayoutChunkHeader.HasHitbox))
         {
-            lp4.SetSelectedModel(model);
+            if (chunk.Model == null) continue;
+            var model = chunk.Model;
             var ext = Path.GetExtension(Output);
-            if (model.HasEmbeddedTexture)
+            var textureFile = "";
+            Tim2? texture = null;
+            if (chunk.ModelVertexProperties.MaterialCount > 0)
+            {
+                textureFile = chunk.ModelVertexProperties.Materials[0].TextureFile;
+            }
+
+            List<float>? diffuse = null;
+
+            if ((chunk.ModelProperties?[0].HasLightmap ?? false) && chunk.ModelProperties?[0].LightmapDataCount > 0)
+            {
+                diffuse = [];
+                for (var i = 0; i < chunk.ModelProperties[0].LightmapDataCount; i++)
+                {
+                    diffuse.Add(chunk.ModelProperties[0].Lightmap[i].X);
+                    diffuse.Add(chunk.ModelProperties[0].Lightmap[i].Y);
+                    diffuse.Add(chunk.ModelProperties[0].Lightmap[i].Z);
+                    diffuse.Add(chunk.ModelProperties[0].Lightmap[i].W);
+                }
+            }
+            
+            var tFileFull = Path.Join(new FileInfo(FileName).DirectoryName, textureFile.ToUpper());
+            if (File.Exists(tFileFull))
+            {
+                texture = new Tim2(File.ReadAllBytes(tFileFull));
+            }
+            /*if (model.HasEmbeddedTexture)
             {
                 lp4.Texture = model.GenerateDummyTexture();
-            }
-            StaticUtils.ExportObj(Output[..^ext.Length] + $".{model.Name}" + ext, lp4.GetVerticies(), lp4.Texture);
+            }*/
+            StaticUtils.ExportObj(Output[..^ext.Length] + $".{chunk.Name}" + ext, lp4.GetRawVertices((LayoutChunk.RawModel)model), texture, false, diffuse?.ToArray());
         }
-
     }
 
     /// <summary>
@@ -101,8 +126,7 @@ public class ModelTools
     /// </summary>
     private void ExportBoxObj()
     {
-        var lp4 = new Lp4(File.ReadAllBytes(FileName), FileName);
-        lp4.Read();
+        var lp4 = new Lp4(File.OpenRead(FileName));
         StaticUtils.ExportObj(Output, lp4.GetBoundingBox(), null, true);
     }
 }

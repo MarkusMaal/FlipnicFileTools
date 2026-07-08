@@ -20,7 +20,7 @@ namespace FlipnicLib.Types
         /// <summary>
         /// Defines a box of the model that can collide with other models.
         /// </summary>
-        public Lp4Test.Vec4[]? Hitbox { get; set; }
+        public Lp4.Vec4[]? Hitbox { get; set; }
 
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace FlipnicLib.Types
 
         public VertexProperties ModelVertexProperties { get; set; }
 
-        public RawModel Model { get; set; }
+        public RawModel? Model { get; set; }
 
         public JointIndexArr[]? Indices { get; set; }
 
@@ -88,7 +88,7 @@ namespace FlipnicLib.Types
                     data.Position -= 0x40; // similar to the last if statement, but with a different alignment
                     return;
                 }
-                var skews = new Lp4Test.Vec4[3];
+                var skews = new Lp4.Vec4[3];
                 for (var i = 0; i <  skews.Length; i++)
                 {
                     skews[i].X = GetFloat(dataBuffer, 0x30 + (i * 0x10));
@@ -112,7 +112,7 @@ namespace FlipnicLib.Types
                     LightmapDataCount = GetInt32(dataBuffer, 0x28),
                     EvenMorePadding = GetInt32(dataBuffer, 0x2C),
                     ModelSkewing = skews,
-                    ModelOffset = new Lp4Test.Vec4
+                    ModelOffset = new Lp4.Vec4
                     {
                         X = GetFloat(dataBuffer, 0x60),
                         Y = GetFloat(dataBuffer, 0x64),
@@ -165,7 +165,7 @@ namespace FlipnicLib.Types
                                 throw new IndexOutOfRangeException("JOINTS");
                             }
                             data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
-                            skews = new Lp4Test.Vec4[3];
+                            skews = new Lp4.Vec4[3];
                             for (var j = 0; j < skews.Length; j++)
                             {
                                 skews[j].X = GetFloat(dataBuffer, 0x20 + (j * 0x10));
@@ -177,7 +177,7 @@ namespace FlipnicLib.Types
                             {
                                 Name = GetString(dataBuffer),
                                 JointSkewing = skews,
-                                JointOffset = new Lp4Test.Vec4
+                                JointOffset = new Lp4.Vec4
                                 {
                                     X = GetFloat(dataBuffer, 0x50),
                                     Y = GetFloat(dataBuffer, 0x54),
@@ -190,12 +190,12 @@ namespace FlipnicLib.Types
 
                     if (ModelProperties[k].HasUnknownSection && ModelProperties[k].KeyFrameCount > 0)
                     {
-                        ModelProperties[k].UnknownSection = new Lp4Test.Vec4[ModelProperties[k].KeyFrameCount];
+                        ModelProperties[k].UnknownSection = new Lp4.Vec4[ModelProperties[k].KeyFrameCount];
                         for (var i = 0; i < ModelProperties[k].UnknownSection.Length; i++)
                         {
                             dataBuffer = new byte[16];
                             data.ReadExactly(dataBuffer);
-                            ModelProperties[k].UnknownSection[i] = new Lp4Test.Vec4
+                            ModelProperties[k].UnknownSection[i] = new Lp4.Vec4
                             {
                                 X = GetFloat(dataBuffer, 0),
                                 Y = GetFloat(dataBuffer, 4),
@@ -207,12 +207,12 @@ namespace FlipnicLib.Types
 
                     if (ModelProperties[k].HasAnotherUnknownSection > 0 && ModelProperties[k].KeyFrameCount > 0)
                     {
-                        ModelProperties[k].AnotherUnknownSection = new Lp4Test.Vec4[ModelProperties[k].KeyFrameCount];
+                        ModelProperties[k].AnotherUnknownSection = new Lp4.Vec4[ModelProperties[k].KeyFrameCount];
                         for (var i = 0; i < ModelProperties[k].AnotherUnknownSection.Length; i++)
                         {
                             dataBuffer = new byte[16];
                             data.ReadExactly(dataBuffer);
-                            ModelProperties[k].AnotherUnknownSection[i] = new Lp4Test.Vec4
+                            ModelProperties[k].AnotherUnknownSection[i] = new Lp4.Vec4
                             {
                                 X = GetFloat(dataBuffer, 0),
                                 Y = GetFloat(dataBuffer, 4),
@@ -225,7 +225,7 @@ namespace FlipnicLib.Types
 
                     if (ModelProperties[k].HasAlphaSequence && ModelProperties[k].KeyFrameCount > 0)
                     {
-                        ModelProperties[k].AlphaSequence = new Lp4Test.Vec4[ModelProperties[k].KeyFrameCount * ModelProperties[k].LightmapDataCount];
+                        ModelProperties[k].AlphaSequence = new Lp4.Vec4[ModelProperties[k].KeyFrameCount * ModelProperties[k].LightmapDataCount];
                         for (var i = 0; i < ModelProperties[k].AlphaSequence.Length; i++)
                         {
                             dataBuffer = new byte[16];
@@ -235,7 +235,7 @@ namespace FlipnicLib.Types
                                 throw new IndexOutOfRangeException("ALPHA");
                             }
                             data.ReadExactly(dataBuffer);
-                            ModelProperties[k].AlphaSequence[i] = new Lp4Test.Vec4
+                            ModelProperties[k].AlphaSequence[i] = new Lp4.Vec4
                             {
                                 X = GetFloat(dataBuffer, 0),
                                 Y = GetFloat(dataBuffer, 4),
@@ -247,7 +247,7 @@ namespace FlipnicLib.Types
 
                     if (ModelProperties[k].HasLightmap && ModelProperties[k].LightmapDataCount > 0)
                     {
-                        ModelProperties[k].Lightmap = new Lp4Test.Vec4[ModelProperties[k].LightmapDataCount];
+                        ModelProperties[k].Lightmap = new Lp4.Vec4[ModelProperties[k].LightmapDataCount];
                         for (var i = 0; i < ModelProperties[k].Lightmap.Length; i++)
                         {
                             dataBuffer = new byte[16];
@@ -257,7 +257,7 @@ namespace FlipnicLib.Types
                                 throw new IndexOutOfRangeException("LIGHTMAP");
                             }
                             data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
-                            ModelProperties[k].Lightmap[i] = new Lp4Test.Vec4
+                            ModelProperties[k].Lightmap[i] = new Lp4.Vec4
                             {
                                 X = GetFloat(dataBuffer, 0),
                                 Y = GetFloat(dataBuffer, 4),
@@ -271,7 +271,7 @@ namespace FlipnicLib.Types
             }
             if (LayoutChunkHeader.HasHitbox)
             {
-                Hitbox = new Lp4Test.Vec4[8];
+                Hitbox = new Lp4.Vec4[8];
                 for (var i = 0; i < Hitbox.Length; i++)
                 {
                     dataBuffer = new byte[16];
@@ -280,7 +280,7 @@ namespace FlipnicLib.Types
                         return;
                     }
                     data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
-                    Hitbox[i] = new Lp4Test.Vec4
+                    Hitbox[i] = new Lp4.Vec4
                     {
                         X = GetFloat(dataBuffer, 0),
                         Y = GetFloat(dataBuffer, 4),
@@ -350,7 +350,7 @@ namespace FlipnicLib.Types
                 var limSigned32 = Math.Pow(2, 31);
                 RawModel rm = new RawModel
                 {
-                    Vertices = new Lp4Test.Vec4[vertexCount < limSigned32 ? vertexCount : 0],
+                    Vertices = new Lp4.Vec4[vertexCount < limSigned32 ? vertexCount : 0],
                     Normals = new Normal[normalCount < limSigned32 ? normalCount : 0],
                     Pixels = new Pixel[colorCount < limSigned32 ? colorCount : 0],
                     UVs = new UV[uvCount < limSigned32 ? uvCount : 0],
@@ -364,7 +364,7 @@ namespace FlipnicLib.Types
                     for (var i = 0; i < vertexCount; i++)
                     {
                         var offset = i * 0x10;
-                        rm.Vertices[i] = new Lp4Test.Vec4
+                        rm.Vertices[i] = new Lp4.Vec4
                         {
                             X = GetFloat(dataBuffer, offset),
                             Y = GetFloat(dataBuffer, offset + 4),
@@ -447,7 +447,7 @@ namespace FlipnicLib.Types
             {
                 data.Position += 0xB0;
                 dataBuffer = new byte[0x10];
-                List<Lp4Test.Vec4> UncompressedVertices = [];
+                List<Lp4.Vec4> UncompressedVertices = [];
                 data.ReadExactly(dataBuffer);
                 var uncompressedVertexCount = GetInt32(dataBuffer, 0);
                 for (var i = 0; i < uncompressedVertexCount * 2; i++)
@@ -458,7 +458,7 @@ namespace FlipnicLib.Types
                         return;
                     }
                     data.ReadExactly(dataBuffer);
-                    Lp4Test.Vec4 vec4 = new()
+                    Lp4.Vec4 vec4 = new()
                     {
                         X = GetFloat(dataBuffer, 0),
                         Y = GetFloat(dataBuffer, 4),
@@ -545,7 +545,7 @@ namespace FlipnicLib.Types
             public readonly int ColorCount => Pixels?.Length ?? 0;
             public readonly int UvCount => UVs?.Length ?? 0;
 
-            public Lp4Test.Vec4[] Vertices { get; set; }
+            public Lp4.Vec4[] Vertices { get; set; }
             public Normal[] Normals { get; set; }
             public Pixel[] Pixels { get; set; }
             public UV[] UVs { get; set; }
@@ -597,8 +597,8 @@ namespace FlipnicLib.Types
         public struct Joint
         {
             public string Name { get; set; }
-            public Lp4Test.Vec4[] JointSkewing { get; set; }
-            public Lp4Test.Vec4 JointOffset { get; set; }
+            public Lp4.Vec4[] JointSkewing { get; set; }
+            public Lp4.Vec4 JointOffset { get; set; }
         }
 
         /// <summary>
@@ -628,8 +628,8 @@ namespace FlipnicLib.Types
 
             public int EvenMorePadding { get; set; }
 
-            public Lp4Test.Vec4[] ModelSkewing { get; set; }
-            public Lp4Test.Vec4 ModelOffset { get; set; }
+            public Lp4.Vec4[] ModelSkewing { get; set; }
+            public Lp4.Vec4 ModelOffset { get; set; }
 
             [JsonIgnore]
             public int UnkSnake { get; set; }
@@ -645,10 +645,10 @@ namespace FlipnicLib.Types
 
             public Joint[] Joints { get; set; }
             public AnimationSequenceFrame[] AnimationSequence { get; set; }
-            public Lp4Test.Vec4[] AlphaSequence { get; set; }
-            public Lp4Test.Vec4[] Lightmap { get; set; }
-            public Lp4Test.Vec4[] UnknownSection { get; set; }
-            public Lp4Test.Vec4[] AnotherUnknownSection { get; set; }
+            public Lp4.Vec4[] AlphaSequence { get; set; }
+            public Lp4.Vec4[] Lightmap { get; set; }
+            public Lp4.Vec4[] UnknownSection { get; set; }
+            public Lp4.Vec4[] AnotherUnknownSection { get; set; }
         }
 
         /// <summary>

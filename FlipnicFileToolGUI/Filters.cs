@@ -137,6 +137,13 @@ public abstract class Filters
         AppleUniformTypeIdentifiers = ["public.xml"]
     };
 
+    public static FilePickerFileType JsonFile { get; } = new("JavaScript Object Notation (.JSON)")
+    {
+        Patterns = ["*.JSON"],
+        MimeTypes = ["application/json"],
+        AppleUniformTypeIdentifiers = ["public.json"]
+    };
+
     public static FilePickerFileType CsvFile { get; } = new("Comma Separated Values (.CSV)")
     {
         Patterns = ["*.CSV"],

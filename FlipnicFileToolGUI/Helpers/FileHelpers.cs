@@ -430,10 +430,8 @@ public static class FileHelpers
                             LoadAsString(mlb, "Menu layout file", mw);
                             break;
                         case "LP4":
-                            var lp4Da = new byte[ds.Length];
-                            ds.ReadExactly(lp4Da);
-                            var lp4 = new Lp4(lp4Da, mw.FileName!);
-                            if (lp4.HasEmbeddedResources)
+                            var lp4 = new Lp4((FileStream)ds);
+                            if (lp4.FormatHeader.HasLayouts)
                             {
                                 StaticUtils.LiveLoadStatus = "Initializing OpenGL";
                                 Dispatcher.UIThread.Post(() =>
@@ -446,8 +444,8 @@ public static class FileHelpers
                                 mw.GlControl.ImportLP4(lp4);
                             }
 
-                            LoadAsString(lp4, "Flipnic resource file", mw);
-                            if (!lp4.HasEmbeddedResources)
+                            LoadAsString(lp4, "Flipnic model file", mw);
+                            if (!lp4.FormatHeader.HasLayouts)
                             {
                                 StaticUtils.LiveLoadStatus = "";
                                 break;
@@ -462,7 +460,7 @@ public static class FileHelpers
                                 mw.InfoTab.IsVisible = !Program.GpuAccel;
                                 try
                                 {
-                                    var ms = new MemoryStream(lp4.Texture);
+                                    var ms = new MemoryStream(lp4.CachedTexture);
                                     mw.PreviewImage.Source = new Bitmap(ms);
                                 }
                                 catch
