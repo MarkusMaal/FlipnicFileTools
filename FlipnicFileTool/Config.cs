@@ -1,4 +1,5 @@
 using System.Globalization;
+using FlipnicFileTool.Help;
 using FlipnicLib;
 
 namespace FlipnicFileTool;
@@ -239,6 +240,23 @@ public class Config
             StaticUtils.DecodeColors("~-CError~--: Input file does not exist!");
             Console.WriteLine();
             return 2;
+        }
+
+        if (exceptions.All(p => p != Mode))
+        {
+            if (HelpUtils.Help == null)
+            {
+                HelpUtils.GenerateHelp(true);
+            }
+
+            var result = Validator.ValidateArgs(args, HelpUtils.Help!);
+            if (result != "ok")
+            {
+                StaticUtils.DecodeColors(
+                    $"~-CError~--: {result}");
+                Console.WriteLine();
+                return 4;
+            }
         }
         
         if (FileName == "" && exceptions.All(p => p != Mode))

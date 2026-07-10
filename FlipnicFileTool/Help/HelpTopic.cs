@@ -38,4 +38,9 @@ public class HelpTopic(string title, string ext, HelpLine[] lines)
     {
         Lines = Lines.Concat([line]).ToArray();
     }
+
+    public HelpLine[] GetLines()
+    {
+        return Lines;
+    }
 }

@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\FlipnicFileTool\FlipnicFileTool.csproj" />
     <ProjectReference Include="..\FlipnicLib\FlipnicLib.csproj" />
   </ItemGroup>
   

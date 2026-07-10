@@ -117,7 +117,14 @@ public class ModelTools
             {
                 lp4.Texture = model.GenerateDummyTexture();
             }*/
-            StaticUtils.ExportObj(Output[..^ext.Length] + $".{chunk.Name}" + ext, lp4.GetRawVertices((LayoutChunk.RawModel)model), texture, false, diffuse?.ToArray());
+            try
+            {
+                StaticUtils.ExportObj(Output[..^ext.Length] + $".{chunk.Name}" + ext,
+                    lp4.GetRawVertices((LayoutChunk.RawModel)model), texture, false, diffuse?.ToArray());
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+            }
         }
     }
 
