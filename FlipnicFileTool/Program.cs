@@ -13,6 +13,7 @@ internal static class Program
     {
         try
         {
+            StaticUtils.TextUpdate += LoadScreen;
             Cfg.LoadFromArgs(args);
             if (Cfg.Mode == Enums.Modes.Quit)
             {
@@ -20,9 +21,8 @@ internal static class Program
             }
 
             Cfg.ShowSignature();
-            var code = Cfg.DetectAndDisplayErrors();
+            var code = Cfg.DetectAndDisplayErrors(args);
             if (code != -1) return code;
-
             switch (Cfg.Mode)
             {
                 case Enums.Modes.NotImplemented:
@@ -49,9 +49,13 @@ internal static class Program
                 case Enums.Modes.ShowGimmick:
                 case Enums.Modes.ShowCameras:
                 case Enums.Modes.SstResize:
+                case Enums.Modes.ShowSstMissions:
                     _ = new SstTools(Cfg);
                     break;
                 case Enums.Modes.ShowFpc:
+                case Enums.Modes.ConvertXml:
+                case Enums.Modes.ConvertFpc:
+                case Enums.Modes.GenerateAnimation:
                     _ = new CameraTools(Cfg);
                     break;
                 case Enums.Modes.ShowMessages:
@@ -83,6 +87,7 @@ internal static class Program
                 case Enums.Modes.ShowCol:
                 case Enums.Modes.ExportColObj:
                 case Enums.Modes.ExportBbox:
+                case Enums.Modes.ExportLp4Json:
                     _ = new ModelTools(Cfg);
                     break;
                 case Enums.Modes.ShowTim2:
@@ -138,8 +143,11 @@ internal static class Program
                     Console.WriteLine(elf);
                     break;
                 case Enums.Modes.ShowDummy:
-                    var df = new Dummy(File.OpenRead(Cfg.FileName));
+                    var df = new Dummy(File.OpenRead(Cfg.FileName!));
                     Console.WriteLine(df);
+                    break;
+                case Enums.Modes.Playground:
+                    _ = new PlaygroundTools(Cfg);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(args));
@@ -172,5 +180,17 @@ internal static class Program
                                   """);
         Help.HelpUtils.GenerateHelp();
         StaticUtils.DecodeColors("~-7* ~-FDefault action\n");
+    }
+
+    private static void LoadScreen(string? text)
+    {
+        if (StaticUtils.SimpleOutput) return;
+        if (text == "")
+        {
+            Console.Write("".PadRight(Console.WindowWidth - 6, ' ') + "\r");
+            return;
+        }
+        StaticUtils.PrintLoader();
+        Console.Write(("  " + text).PadRight(Console.WindowWidth - 6, ' ') + "\r");
     }
 }

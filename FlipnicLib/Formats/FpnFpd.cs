@@ -108,7 +108,7 @@ public class FpnFpd : FormatBase
         return f.ToArray();
     }
 
-    public string ToString(bool asCsv)
+    private string ToString(bool asCsv)
     {
         string[] colHeaders = ["X", "Y", "Z", "W"];
         List<string[]> rows = [];
@@ -131,9 +131,9 @@ public class FpnFpd : FormatBase
     
     private struct Entry
     {
-        public short X { get; set; }
-        public short Y { get; set; }
-        public short Z { get; set; }
-        public short W { get; set; }
+        public short X { get; init; }
+        public short Y { get; init; }
+        public short Z { get; init; }
+        public short W { get; init; }
     }
 }

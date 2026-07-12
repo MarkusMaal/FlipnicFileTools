@@ -27,14 +27,16 @@ Jump to section:
 * [Disc images (*.ISO)](#disc-images-iso)
 * [Blob files (*.BIN)](#blob-files-bin)
 * [Movies (*.PSS)](#movies-pss)
+    * [Creating custom FMVs from video files](#creating-custom-fmvs-from-video-files)
 * [Sound files (*.INT / *.SVAG)](#sound-files-int--svag)
 * [Texture files (*.TM2)](#texture-files-tm2)
 * [Menu files (*.MLB)](#menu-files-mlb)
 * [Camera sequences (*.FPC)](#camera-sequences-fpc)
+    + [Creating animated camera sequences](#creating-animated-camera-sequences)
 * [Stage information files (*.SST)](#stage-information-files-sst)
 * [Message files (*.MSG)](#message-files-msg)
     + [Generating custom message files](#generating-custom-message-files)
-* [Resource files (*.LP4)](#resource-files-lp4)
+* [Models (*.LP4)](#resource-files-lp4)
 * [VAB header files (*.HD)](#vab-header-files-hd)
 * [VAB body files (*.BD)](#vab-body-files-bd)
 * [Save file icon (*.ICO)](#save-file-icon-ico)
@@ -133,7 +135,8 @@ If you have the PAL version, you should also add a --pal flag: `FlipnicFileTool 
 If you just want to see what streams a .PSS file contains, run this: `FlipnicFileTool SHUKYAKUDEMO.PSS --list-pss-streams`
 
 Outputs:
-``` 
+```
+Stream summary
 +-----------------+-----------------+
 | Stream          | Size            | 
 +-----------------+-----------------+
@@ -144,9 +147,59 @@ Outputs:
 | Audio 5         | 4.09 MiB        | 
 | Video           | 101.48 MiB      | 
 +-----------------+-----------------+
+
+Audio duration: 00:01:24.984
+Video duration: 00:01:23.720
+Video standard: PAL (interlaced)
+Total frames: 2093
+
+Interleaving data
++---------+------------+----------+
+| Stream  | Fr./Sampl. | Time     |
++---------+------------+----------+
+| Audio 1 | 34405      | 780.16ms |
+| Audio 2 | 34405      | 780.16ms |
+| Audio 3 | 34405      | 780.16ms |
+| Audio 4 | 34405      | 780.16ms |
+| Audio 5 | 34405      | 780.16ms |
+| Video   | 0          | 0ms      |
+| Video   | 1          | 40ms     |
+| Video   | 0          | 0ms      |
+| Video   | 1          | 40ms     |
+| Video   | 1          | 40ms     |
+...
 ```
 
 If you just want to separate streams and not convert any of the files: `FlipnicFileTool --extract-pss-streams --input ./FREEZE_OVER.PSS --output .`
+
+If you want to create a new .PSS container from 1 audio and 1 interlaced PAL video stream, you can use the following command: `FlipnicFileTool --generate-pss SAMPLE.INT --input SAMPLE.IPU --output SAMPLE.PSS --pal`
+
+While there is NTSC support, it is still in experimental status, so created .PSS files will stop playing at some point in-game.
+
+### Creating custom FMVs from video files
+
+First, you must create compatible source files.
+
+Video: PlayStation 2 IPU
+
+* PAL progressive: 256x512@50p
+* PAL interlaced: 512x512@25i
+* NTSC progressive: 256x512@60p
+* NTSC interlaced: 512x448@30i
+
+Audio: Sony Compressed ADPCM
+
+* Sample rate: 44100Hz
+* Interleave: 0x400
+* Channels: 2
+
+For creating the .INT file, you can use MFAudio. Yes, it's old AF, but it works.
+
+For creating the .IPU file, you have to first encode your source video to MPEG-2. You may use TMPEGEnc for best results, but you can also just use FFmpeg with this command: `ffmpeg -i <source video> -c:v mpeg2video -profile:v main -level:v 8 -h:v 4.531M -maxrate 5M -minrate 4.531M -bufsize 1835k -pix_fmt yuv420p -g 1 -hf 0 -flags +ildct+ilme -top 1 -r <framerate for the specific video format> -s <resolution for the specific video format> <output .m2v>`. Then you can import this M2V file to the ps2str and from there you can convert it to .IPU.
+
+It's possible that the created .IPU file will be broken. To fix it, you can use the following command: `FlipnicFileTool --ipu-duct-tape [--pal] [--progressive] --input <.ipu file>` (use the flags in brackets only when applicable to chosen video format).
+
+After you have both .IPU and .INT files, you can merge them. Use the following command: `FlipnicFileTool --generate-pss <int file> --input <ipu file> --output <pss file> [--pal] [--progressive]`. Once again, use the flags in brackets only when applicable for the chosen video format.
 
 ## Sound files (*.INT / *.SVAG)
 
@@ -260,6 +313,19 @@ Target:  (850.5004; 1.8749; 771.5004)
 +-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+-----------------+
 ```
 
+To create a XML file containing this information, which you can easily modify, you can run `FlipnicFileTool --input EXAMPLE.FPC --convert-fpc-to-xml --output EXAMPLE.XML`. Once you've modified the created XML file, you can turn it back into a .FPC file by running `FlipnicFileTool --input EXAMPLE.XML --convert-xml-to-fpc --output EXAMPLE_NEW.FPC`.
+
+### Creating animated camera sequences
+
+This tool allows you to interpolate between two .FPC files to create an animated sequence. Here's an example use case:
+
+* Using Flipnic freecam, setup the camera for first frame
+* Click the "Generate FPC" button and save it as a .FPC file
+* Now setup the camera for the final frame
+* Click the "Generate FPC" button again and save it as another .FPC file
+* Now in FlipnicFileTool, you can run a command like this to generate a 300 frame animation: `FlipnicFileTool --input A.FPC --input B.FPC --generate-animation 300 --output C.FPC`
+* You can now use this C.FPC file inside the game by either modifying an existing .FPC file or adding it as a new file by repacking RES.BIN container and then using it with the .SST event script
+
 ## Stage information files (*.SST)
 
 These files store various things, stuff like game events, list of filenames, gimmicks, etc.
@@ -355,72 +421,86 @@ You can edit the converted file with notepad. Each line is one message. Make you
 
 The generated file will have the same layout that the game can understand.
 
-## Resource files (*.LP4)
+## Models (*.LP4)
 
-These files define stuff like 3D models and 2D animation sequences (e.g. the WONDERFUL text when you complete a mission). You can view all models and other information about the LP4 file.
+These contain the raw 3D model data and additional stuff, such as lighting, animations materials. Previously it was thought that this format supported 2D, but actually everything is in fact rendered in 3D space, even the text animation sequences (e.g. the WONDERFUL text when you complete a mission). You can view all models and other information about the LP4 file.
 
 Example: `FlipnicFileTool --input CHOU01.LP4 --show-lp4`
 
 Outputs:
 ```
-Type: StaticModel
-Model count: 0
+3D model data (CHOU01.LP4)
+
 Has bounding box: Yes
-Is 2D animation: No
+Has layouts chunks: Yes
 Timelines: 3
-Animation joints: 15
+Layout chunk sections count: 3
 
 Bounding box:
 +-----------+------------+------------+
-| X         | Y          | Z          | 
+|     X     |     Y      |     Z      |
 +-----------+------------+------------+
-| 6.7750607 | -1.4439601 | -5.1376605 | 
-| -6.77506  | -1.4439601 | -5.1376605 | 
-| 6.7750607 | -1.4439601 | 4.9989805  | 
+| 6.7750607 | -1.4439601 | -5.1376605 |
+| -6.77506  | -1.4439601 | -5.1376605 |
+| 6.7750607 | -1.4439601 | 4.9989805  |
+| -6.77506  | -1.4439601 | 4.9989805  |
+| 6.7750607 | 0.22978    | -5.1376605 |
+| -6.77506  | 0.22978    | -5.1376605 |
+| 6.7750607 | 0.22978    | 4.9989805  |
+| -6.77506  | 0.22978    | 4.9989805  |
++-----------+------------+------------+
+
+
+Layout chunks:
+
+
+Name: MO_CHOU_UV
+
+Contains model: Yes
+Joint indices: 15
+Materials: 3
+Vertices: 470
+Normals: 470
+Pixels: 0
+UVs: 470
+
+Properties:
++-----------+----------+-----------------+------------------+--------+
+| Keyframes | Lighting | Light animation | Vertex animation | Joints |
++-----------+----------+-----------------+------------------+--------+
+| 0         | Yes (3)  | No              | No               | 15     |
+| 0         | Yes (3)  | No              | No               | 15     |
+| 0         | Yes (3)  | No              | No               | 15     |
++-----------+----------+-----------------+------------------+--------+
+
 ...
-| -6.77506  | -1.4439601 | -5.1376605 | 
-| -6.77506  | 0.22978    | -5.1376605 | 
-| -6.77506  | 0.22978    | 4.9989805  | 
-+-----------+------------+------------+
 
+Name: HANE_S_R_NULL
 
-Models:
-+------------+---------+-------+--------+-------------------+----------+
-| Name       | Address | Scale | Offset | Texture           | Polygons | 
-+------------+---------+-------+--------+-------------------+----------+
-| MO_CHOU_UV | F0      | 1x1x1 | 0x0x0  | mo_chou_tex_1.tm2 | 8304     | 
-+------------+---------+-------+--------+-------------------+----------+
+Contains model: No
+Joint indices: 0
 
-Joints:
-+--------------------+----------+-------------+-------------+
-| Name               | Vertices | Position    | Size        | 
-+--------------------+----------+-------------+-------------+
-| CHOU_ASHI_2_L_NULL | 63       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| CHOU_ASHI_2_R_NULL | 63       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| HANE_L_L_NULL      | 10       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| HANE_L_R_NULL      | 12       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| HANE_S_L_NULL      | 8        | NaNxNaNxNaN | NaNxNaNxNaN | 
-| HANE_S_R_NULL      | 10       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT1_1             | 69       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT11_1            | 21       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT2_1             | 201      | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT2_2             | 30       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT3_1             | 6        | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT5_1             | 6        | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT6_1             | 8        | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT8_1             | 10       | NaNxNaNxNaN | NaNxNaNxNaN | 
-| JNT9_1             | 22       | NaNxNaNxNaN | NaNxNaNxNaN | 
-+--------------------+----------+-------------+-------------+
+Properties:
++-----------+----------+-----------------+------------------+--------+
+| Keyframes | Lighting | Light animation | Vertex animation | Joints |
++-----------+----------+-----------------+------------------+--------+
+| 8         | No       | No              | Yes              | 0      |
+| 0         | Yes (0)  | No              | No               | 0      |
+| 30        | Yes (0)  | No              | Yes              | 0      |
++-----------+----------+-----------------+------------------+--------+
+
 
 ```
 
 You can also attempt to convert the 3D models stored inside LP4 files to Wavefront OBJ by running the following command: `FlipnicFileTool --input CHOU01.LP4 --convert-obj --output CHOU01.OBJ`
 
-**Note**: LP4 parser is unreliable, so this will often fall back to a brute-force method, which will comb through the entire file trying to find patterns that match 3D model data. Also, not all LP4 files contain model data.
+**Note**: Not all LP4 files contain model data, they may instead reference other files (e.g. F3D_*.LP4 files) or just contain the timeline info.
 
 Sometimes this will produce a file, which has incorrect normals (shading looks weird). If that's the case, you may need to append `--alternate-normals` parameter to the above command.
 
 In addition, you can extract the bounding box of the LP4 file (if it has one) and save it as a Wavefront OBJ by running the following command: `FlipnicFileTool --input CHOU01.LP4 --convert-box-obj --output CHOU01_BOX.OBJ`
+
+To see more detailed information about the LP4's structure, you can convert it to a JSON file by running the following command: `FlipnicFileTool --input CHOU01.LP4 --export-lp4-json --output CHOU01.JSON`
 
 ## VAB header files (*.HD)
 

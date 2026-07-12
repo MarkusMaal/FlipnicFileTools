@@ -5,7 +5,6 @@ using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
-using Avalonia.Styling;
 using Avalonia.Threading;
 using FlipnicFileToolGUI.Controls;
 using FlipnicFileToolGUI.Helpers;
@@ -17,14 +16,16 @@ using SukiUI;
 using SukiUI.Controls;
 using SukiUI.Dialogs;
 using System;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
 
@@ -38,15 +39,12 @@ public sealed partial class MainWindow : SukiWindow
 
     public const string FTypeFormat = "Type: {0}";
 
-    public ObservableCollection<string> Controls => GetViewModel().Controls;
-
-    public bool IsLightTheme => !Design.IsDesignMode && GetViewModel().IsLightTheme;
+    public bool IsLightTheme => GetViewModel().IsLightTheme;
 
     internal static bool ErrorDisplayed = false;
+    private static readonly HttpClient Client = new();
 
-    private readonly ISukiDialogManager _dialogManager = new SukiDialogManager();
-
-    public byte[]? PcmData { get; set; }
+    internal readonly ISukiDialogManager DialogManager = new SukiDialogManager();
 
     public string? FileName { get; set; }
 
@@ -57,14 +55,55 @@ public sealed partial class MainWindow : SukiWindow
     public MainWindow()
     {
         InitializeComponent();
-        ApplyCustomTheme();
-        SukiTheme.GetInstance().OnBaseThemeChanged += variant =>
+        if (((IClassicDesktopStyleApplicationLifetime?)Application.Current?.ApplicationLifetime)?.Windows.Count == 0)
         {
-            GetViewModel().IsLightTheme = variant == ThemeVariant.Light;
-            ForceRefresh();
-            UpdateSpecialTabThemes();
+            ApplyCustomTheme();
+        }
+
+        StaticUtils.TextUpdate += (value) =>
+        {   
+            if (value?.StartsWith("!!!") ?? false)
+            {
+                new Thread(() =>
+                {
+                    Thread.Sleep(500);
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        InfoTab.IsSelected = false;
+                        foreach (var t in MainTabControl.Items)
+                        {
+                            ((SukiSideMenuItem)t!).IsVisible = false;
+                        }
+                        InfoTab.IsVisible = true;
+                        MainTabControl.SelectedItems.Clear();
+                        MainTabControl.SelectedItems.Add(InfoTab);
+                        InfoBox.Text = "A run-time error has occured\n\n" + value[3..];
+                        InfoBox.WrapText = true;
+                    });
+                    StaticUtils.LiveLoadStatus = "";
+                }).Start();
+                return;
+            }
+            Dispatcher.UIThread.Post(() =>
+            {
+                LoadStatus.Text = value;
+                LoadProgress.IsIndeterminate = !(StaticUtils.LiveLoadStatus?.Contains('%') ?? false);
+                Loader.IsVisible = value != "";
+                DockPanel1.IsVisible = value == "";
+                if (LoadProgress.IsIndeterminate) return;
+                LoadProgress.Value = 100;
+                try
+                {
+                    LoadProgress.Value =
+                        int.Parse(StaticUtils.LiveLoadStatus!.Split(" (")[1].Split('%')[0].Split('.')[0]) / 100.0 * 28.0;
+                }
+                catch
+                {
+                    LoadProgress.Value = 0;
+                }
+            });
         };
-        DialogHost.Manager = _dialogManager;
+        DialogHost.Manager = DialogManager;
 
         DragDrop.SetAllowDrop(this, true);
         AddHandler(DragDrop.DragLeaveEvent, (_, e) =>
@@ -73,13 +112,10 @@ public sealed partial class MainWindow : SukiWindow
         });
         AddHandler(DragDrop.DragOverEvent, DragOver);
         AddHandler(DragDrop.DropEvent, WindowDropped);
-
-        if (Design.IsDesignMode)
-        {
-            PreviewImage.Source = new Bitmap(StaticUtils.GenerateCheckerboardPng(320, 240));
-            SukiTheme.GetInstance().SwitchBaseTheme();
-            ApplyCustomTheme();
-        }
+        if (!Design.IsDesignMode) { return; }
+        PreviewImage.Source = new Bitmap(StaticUtils.GenerateCheckerboardPng(320, 240));
+        SukiTheme.GetInstance().SwitchBaseTheme();
+        ApplyCustomTheme();
     }
 
     public MainWindowViewModel GetViewModel()
@@ -96,21 +132,30 @@ public sealed partial class MainWindow : SukiWindow
     {
         e.DragEffects &= (DragDropEffects.Copy | DragDropEffects.Link);
 
-        if (!e.Data.Contains(DataFormats.Files))
+        if (!e.DataTransfer.Contains(DataFormat.File))
         {
             e.DragEffects = DragDropEffects.None;
         }
     }
 
-    private static void ApplyCustomTheme()
+    internal void ApplyCustomTheme()
     {
         SukiTheme.GetInstance().SwitchColorTheme();
     }
 
-    private void PalMenuItem_OnClick(object? sender, RoutedEventArgs? e)
+    internal void PalMenuItem_OnClick(object? sender, RoutedEventArgs? e)
     {
         SukiTheme.GetInstance().SwitchBaseTheme();
         ApplyCustomTheme();
+        
+        var windows = ((IClassicDesktopStyleApplicationLifetime?)Application.Current?.ApplicationLifetime)?.Windows;
+        GetViewModel().IsLightTheme = !GetViewModel().IsLightTheme;
+        foreach (var window in windows ?? [])
+        {
+            if (window is not MainWindow mainWindow) continue;
+            mainWindow.InfoBox.IsLightTheme = GetViewModel().IsLightTheme;
+            mainWindow.EventBox.IsLightTheme = GetViewModel().IsLightTheme;
+        }
     }
 
     private void OpenMenuItem_OnClick(object? sender, RoutedEventArgs e)
@@ -166,17 +211,16 @@ public sealed partial class MainWindow : SukiWindow
         }
         FileName = file;
         FileHelpers.LoadFromData(new FileStream(file, FileMode.Open, FileAccess.Read), file[^3..], this);
-        Title = "Flipnic file tool - " + new FileInfo(file).Name;
     }
 
     private void WindowDropped(object? sender, DragEventArgs e)
     {
-        if (!e.Data.Contains(DataFormats.Files)) return;
-        if (e.Data.GetFiles()?.First() == null) return;
-        var fullPath = Uri.UnescapeDataString(e.Data.GetFiles()!.First().Path.AbsolutePath);
+        if (!e.DataTransfer.Contains(DataFormat.File)) return;
+        var pathAbsolutePath = e.DataTransfer.GetItems(DataFormat.File).First().TryGetFile()?.Path.AbsolutePath;
+        if (pathAbsolutePath == null) return;
+        var fullPath = Uri.UnescapeDataString(pathAbsolutePath);
         FileName = fullPath;
         FileHelpers.LoadFromData(new FileStream(fullPath, FileMode.Open, FileAccess.Read), fullPath[^3..], this);
-        Title = "Flipnic file tool - " + new FileInfo(fullPath).Name;
     }
 
 
@@ -184,7 +228,7 @@ public sealed partial class MainWindow : SukiWindow
     {
         var val = ((ComboBox)sender!).SelectedValue?.ToString();
         if (val == null) return;
-        GetViewModel().SelectedGimmick = GetViewModel().Gimmicks?[val!]!;
+        GetViewModel().SelectedGimmick = GetViewModel().Gimmicks?[val]!;
         GimmickGrid.ItemsSource = GetViewModel().SelectedGimmick;
     }
 
@@ -212,12 +256,28 @@ public sealed partial class MainWindow : SukiWindow
     private void ExitMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
         if (Design.IsDesignMode) return;
+        CloseOtherWindows();
         Close();
+    }
+
+    private void CloseOtherWindows()
+    {
+        var windows = ((IClassicDesktopStyleApplicationLifetime?)Application.Current?.ApplicationLifetime)?.Windows;
+        while (windows?.Count > 1)
+        {
+            foreach (var window in windows)
+            {
+                if (window.IsActive) continue;
+                window.Close();
+                break;
+            }
+        }
     }
 
     private void Window_Loaded(object? sender, RoutedEventArgs e)
     {
         App.Init(this);
+        if (Program.GpuAccel) Preferences.LoadPreferences(this);
     }
 
     public void Init3DStuff(Lp4? container = null)
@@ -232,7 +292,7 @@ public sealed partial class MainWindow : SukiWindow
         dpt.Start();
         Models.Items.Clear();
         if (container is null) return;
-        foreach (var s in container.Models)
+        foreach (var s in container.LayoutChunks?.Where(lc => lc.Hitbox?.Length > 0) ?? [])
         {
             Models.Items.Add(s.Name);
         }
@@ -248,20 +308,22 @@ public sealed partial class MainWindow : SukiWindow
     private void NewWindowMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
         if (Design.IsDesignMode) return;
-        new MainWindow
+        var nw = new MainWindow
         {
             DataContext = new MainWindowViewModel
             {
                 IsLightTheme = IsLightTheme
             },
-        }.Show();
+        };
+        //nw.ToggleDarkNative(sender, null);
+        nw.Show();
     }
 
     private void DataGrid_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         OpenButton.IsEnabled = ((DataGrid)sender!).SelectedIndex != -1;
-        ExtractButton.IsEnabled = ((DataGrid)sender!).SelectedIndex != -1;
-        ReplaceButton.IsEnabled = ((DataGrid)sender!).SelectedItems.Count == 1;
+        ExtractButton.IsEnabled = ((DataGrid)sender).SelectedIndex != -1;
+        ReplaceButton.IsEnabled = ((DataGrid)sender).SelectedItems.Count == 1;
     }
 
     private void OpenButton_OnClick(object? sender, RoutedEventArgs e)
@@ -271,32 +333,37 @@ public sealed partial class MainWindow : SukiWindow
         var mw = new MainWindow()
         {
             Title = myTitle + vf!.Path,
-            FileName = vf!.Path,
+            FileName = vf.Path,
             DataContext = new MainWindowViewModel
             {
                 IsLightTheme = IsLightTheme
             }
         };
-        DockPanel1.IsVisible = false;
-        Loader.IsVisible = true;
+        mw.ToggleDarkNative(sender, null);
+        mw.ToggleDarkNative(sender, null);
         new Thread(() =>
         {
-            StaticUtils.LiveLoadStatus = "Reading data...";
-            var fs = new FileStream(FileName, FileMode.Open, FileAccess.Read);
-            var ms = new MemoryStream();
-            var buffer = new byte[vf!.Length];
-            fs.Seek(vf.Offset, SeekOrigin.Begin);
-            fs.ReadExactly(buffer);
-            fs.Close();
-            ms.Write(buffer, 0, (int)vf.Length);
-            ms.Position = 0;
-            Dispatcher.UIThread.Post(() =>
+            try
             {
-                DockPanel1.IsVisible = true;
-                Loader.IsVisible = false;
-                mw.Show();
-                FileHelpers.LoadFromData(ms, vf.Path[^3..], mw);
-            });
+                StaticUtils.LiveLoadStatus = "Reading data...";
+                var fs = new FileStream(FileName!, FileMode.Open, FileAccess.Read);
+                var ms = new MemoryStream();
+                var buffer = new byte[vf.Length];
+                fs.Seek(vf.Offset, SeekOrigin.Begin);
+                fs.ReadExactly(buffer);
+                fs.Close();
+                ms.Write(buffer, 0, (int)vf.Length);
+                ms.Position = 0;
+                Dispatcher.UIThread.Post(() =>
+                {
+                    mw.Show();
+                    FileHelpers.LoadFromData(ms, vf.Path[^3..], mw);
+                });
+            }
+            catch (Exception ex) when (!Debugger.IsAttached)
+            {
+                StaticUtils.LiveLoadStatus = "!!!" + ex.Message + "\n" + ex.StackTrace;
+            }
         }).Start();
     }
 
@@ -345,7 +412,7 @@ public sealed partial class MainWindow : SukiWindow
 
     private void ConvertMovAacButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        _dialogManager.CreateDialog()
+        DialogManager.CreateDialog()
             .WithTitle("Warning")
             .WithContent("This operation is lossy meaning the video quality may be reduced. For lossless conversion, please demux the file first and convert the streams separately.\n\nAre you sure you want to continue?")
             .WithActionButton("Yes", _ => { Converters.ConvertMovAac(this); }, true)
@@ -375,7 +442,7 @@ public sealed partial class MainWindow : SukiWindow
     public void ShowDialog(string title, string content, NotificationType type)
     {
         if (Design.IsDesignMode) return;
-        _dialogManager.CreateDialog()
+        DialogManager.CreateDialog()
             .WithTitle(title)
             .WithContent(content)
             .WithActionButton("OK", _ => { }, true)
@@ -398,6 +465,12 @@ public sealed partial class MainWindow : SukiWindow
 
     private void PlayButton_OnClick(object? sender, RoutedEventArgs e)
     {
+        if (sender is not Button b) return;
+        if (b.Content?.ToString() == "Stop")
+        {
+            ExtractUtils.Stop(this);
+            return;
+        }
         ExtractUtils.Play(this);
     }
 
@@ -406,7 +479,7 @@ public sealed partial class MainWindow : SukiWindow
         var file = await FileHelpers.SaveFile(this, [Filters.WavFile]);
         if (file is null) return;
         var outPath = Uri.UnescapeDataString(file);
-        StaticUtils.ConvertAudio(outPath, FileName, FileName.EndsWith("VAG"));
+        StaticUtils.ConvertAudio(outPath, FileName!, FileName!.EndsWith("VAG"));
         ShowDialog("Flipnic file tools", "File saved successfully!", NotificationType.Success);
     }
 
@@ -427,14 +500,13 @@ public sealed partial class MainWindow : SukiWindow
                 Thread.Sleep(100);
                 Dispatcher.UIThread.Post(() =>
                 {
-                    LoadStatus.Text = StaticUtils.LiveLoadStatus;
                     visible = MainTabControl.IsVisible;
                 });
             }
-        });
+        }).Start();
     }
 
-    private async void ExtractSampleButton_OnClick(object? sender, RoutedEventArgs e)
+    private void ExtractSampleButton_OnClick(object? sender, RoutedEventArgs e)
     {
         if (Design.IsDesignMode || sender is not Button button) return;
         ExtractUtils.ExtractSample(button, this);
@@ -442,19 +514,8 @@ public sealed partial class MainWindow : SukiWindow
 
     private void SampleGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        ExtractLoopButton.IsEnabled = GetViewModel().Samples[SamplesGrid.SelectedIndex].LoopStart != GetViewModel().Samples[SamplesGrid.SelectedIndex].LoopEnd;
+        ExtractLoopButton.IsEnabled = GetViewModel().Samples![SamplesGrid.SelectedIndex].LoopStart != GetViewModel().Samples![SamplesGrid.SelectedIndex].LoopEnd;
     }
-
-    private void CrashTestMenuItem_Click(object? sender, EventArgs e)
-    {
-        throw new Exception("End-user manually initiated the crash");
-    }
-
-    private void CrashMenuItem_Click(object? sender, RoutedEventArgs e)
-    {
-        throw new Exception("End-user manually initiated the crash");
-    }
-
 
     private async void BrowseButtonBdMidi_OnClick(object? sender, RoutedEventArgs e)
     {
@@ -486,7 +547,17 @@ public sealed partial class MainWindow : SukiWindow
 
     private async void ExportModelButton_Click(object? sender, RoutedEventArgs e)
     {
-        var file = await FileHelpers.SaveFile(this, [Filters.ObjFile]);
+        if (sender is not Button button) return;
+        string? file;
+        if (button.Name == "ExportJsonButton")
+        {
+            file = await FileHelpers.SaveFile(this, [Filters.JsonFile]);
+            if (file is null) return;
+            await File.WriteAllTextAsync(file, JsonSerializer.Serialize(GlControl.OpenContainer, Lp4TestGenerationContext.Default.Lp4));
+            ShowDialog("Flipnic file tools", "File saved successfully", NotificationType.Success);
+            return;
+        }
+        file = await FileHelpers.SaveFile(this, [Filters.ObjFile]);
         if (file is null) return;
         GlControl.SaveAs(Uri.UnescapeDataString(file));
         ShowDialog("Flipnic file tools", "File saved successfully", NotificationType.Success);
@@ -519,9 +590,9 @@ public sealed partial class MainWindow : SukiWindow
         RankGrid.ItemsSource = GetViewModel().SaveData.Rank;
     }
 
-    private void UpdateSpecialTabThemes()
+    private static void UpdateSpecialTabThemes()
     {
-        if (MainTabControl.SelectedItem is not SukiSideMenuItem mi) return;
+        //if (MainTabControl.SelectedItem is not SukiSideMenuItem mi) return;
     }
 
     private void MainTabControl_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -532,6 +603,7 @@ public sealed partial class MainWindow : SukiWindow
     private void Models_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (Models.SelectedIndex < 0) return;
+        if (Models.SelectedItems?.Count < 1) return;
         GlControl.SwitchModel(Models.SelectedItems?[0]?.ToString(), PreviewImage);
         ImagePreviewTab.IsVisible = GlControl.IsTextureValid();
         GlControl.ReloadModel = true;
@@ -541,7 +613,6 @@ public sealed partial class MainWindow : SukiWindow
             var bckType = "";
             Dispatcher.UIThread.Post(() =>
             {
-                LoadStatus.Text = "Generating model";
                 bckType = FileTypeLabel.Content?.ToString();
                 FileTypeLabel.Content = "Please wait...";
                 bck = ModelTab.IsSelected;
@@ -550,144 +621,13 @@ public sealed partial class MainWindow : SukiWindow
             {
                 ModelTab.IsSelected = bck;
                 FileTypeLabel.Content = bckType;
-                LoadStatus.Text = "Loading";
             });
         }).Start();
     }
 
-    private async void ReplaceButton_OnClick(object? sender, RoutedEventArgs e)
+    private void ReplaceButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (FilesGrid.SelectedItem is not VirtualFile vf) return;
-        if (FileName is null) return;
-        var replacement = await FileHelpers.OpenFile(this, [], "Choose a replacement file");
-        if (replacement == null) return;
-        if (FileName.ToUpper().EndsWith(".ISO"))
-        {
-            new Thread(() =>
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    Loader.IsVisible = true;
-                    MainTabControl.IsVisible = false;
-                });
-                new IsoUdf(FileName).ReplaceFile(replacement, FileName, vf.Path);
-                Dispatcher.UIThread.Post(() =>
-                {
-                    Loader.IsVisible = false;
-                    MainTabControl.IsVisible = true;
-                    StaticUtils.LiveLoadStatus = "Done!";
-                    ShowDialog("Flipnic file tools", "File replaced successfully.", NotificationType.Success);
-                });
-            }).Start();
-            new Thread(() =>
-            {
-                while (StaticUtils.LiveLoadStatus != "Done!")
-                {
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        LoadStatus.Text = StaticUtils.LiveLoadStatus;
-                    });
-                    Thread.Sleep(100);
-                }
-                StaticUtils.LiveLoadStatus = "Please wait...";
-            }).Start();
-            return;
-        }
-        var offset = vf.Offset;
-        var size = vf.Length;
-        var rfi = new FileInfo(replacement);
-        var binFiles = new BinFile().GetListBin(File.OpenRead(FileName));
-        if (rfi.Length > size)
-        {
-            var nSize = new FileInfo(replacement).Length;
-            var rootDirName = "";
-            var rootDirOffset = 0L;
-            var rootDirSize = 0L;
-            if (vf.LargeBuffer)
-            {
-                while ((nSize - vf.Length) % 0x800 != 0)
-                {
-                    nSize++;
-                }
-            }
-            else
-            {
-                rootDirName = vf.Path[1..].Split('\\')[0] + "\\";
-                rootDirOffset = binFiles.First(bf => bf.Path == $"\\{rootDirName}").Offset;
-                rootDirSize = binFiles.First(bf => bf.Path == $"\\{rootDirName}").Length;
-            }
-
-            _dialogManager.CreateDialog()
-                .WithTitle("CAUTION")
-                .WithContent("It appears the replacement file is bigger than the original file. We will need to update other file records and increase the size of the .BIN file. This should only be done if you know exactly what you're doing. Are you sure you want to continue?")
-                .WithActionButton("Yes", _ =>
-                {
-                    Loader.IsVisible = true;
-                    MainTabControl.IsVisible = false;
-                    LoadStatus.Text = "Rebuilding .BIN file";
-                    new Thread(() =>
-                    {
-                        if (vf.LargeBuffer)
-                        {
-                            RepackUtils.ResizeFile(vf.Path, (int)nSize, File.Open(FileName, FileMode.Open), binFiles);
-                            RepackUtils.RepackFileUnsafe(offset, File.OpenRead(replacement), FileName, size,
-                                vf.Path[1..].Contains('\\') && !vf.Path[1..].EndsWith('\\') ? 1 : 2048);
-                        }
-                        else
-                        {
-                            // Load the entire subfolder to memory
-                            var s2 = File.OpenRead(FileName);
-                            s2.Seek(rootDirOffset, SeekOrigin.Begin);
-                            var ms = new MemoryStream();
-                            for (var i = 0; i < rootDirSize; i++)
-                            {
-                                ms.WriteByte((byte)s2.ReadByte());
-                            }
-
-                            s2.Close();
-
-                            // Resize subfolder entry and overwrite the contents
-                            var subF = new Subfolder(ms);
-                            var ns = new MemoryStream();
-                            var ns1 = subF.ResizeFile(vf.Path.Split('\\')[^1], (int)nSize, ns);
-                            var ns2 = subF.WriteFileUnsafe(vf.Path.Split('\\')[^1], File.ReadAllBytes(replacement), ns1);
-
-                            // Ensure that the length can be addressed by 2048 bytes
-                            for (var i = 0; i < ns2.Length % 0x800; i++)
-                            {
-                                ns2.WriteByte(0);
-                            }
-
-                            if (ns2.Length % 0x800 != 0) throw new FormatException("Stream length is not divisible by 2048");
-                            ns2.Position = 0;
-                            // Resize the subfolder container
-                            RepackUtils.ResizeFile(rootDirName, (int)ns2.Length, File.Open(FileName, FileMode.Open), binFiles);
-                            RepackUtils.RepackFileUnsafe(rootDirOffset, ns2, FileName, rootDirSize);
-                            ns2.Close();
-                        }
-
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            ShowDialog("Flipnic file tools", "File replaced successfully.", NotificationType.Success);
-                            Loader.IsVisible = false;
-                            MainTabControl.IsVisible = true;
-                        });
-                    }).Start();
-                }, true)
-                .WithActionButton("No", _ =>
-                {
-                    new Thread(() =>
-                    {
-                        Thread.Sleep(200);
-                        Dispatcher.UIThread.Post(() => ShowDialog("Flipnic file tools", "No changes were made.", NotificationType.Information));
-                    }).Start();
-                }, true)
-                .OfType(NotificationType.Warning)
-                .TryShow();
-            return;
-        }
-        RepackUtils.RepackFileUnsafe(offset, File.OpenRead(replacement), FileName, size, vf.Path[1..].Contains('\\') && !vf.Path[1..].EndsWith('\\') ? 1 : 2048);
-        ShowDialog("Flipnic file tools", "File replaced successfully.", NotificationType.Success);
+        RepackUtilsGui.ReplaceFile(this);
     }
 
     private void ReverbSlider_OnValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
@@ -737,13 +677,13 @@ public sealed partial class MainWindow : SukiWindow
     {
         if (sender is not NativeMenuItem nmi) return;
         StaticUtils.AlternateNormals = !StaticUtils.AlternateNormals;
-        nmi.IsChecked = StaticUtils.AlternateNormals;
+        var letter = StaticUtils.AlternateNormals ? "B" : "A";
+        nmi.Header = $"Normal vectors decoding: Method {letter}";
         if (FileName is null) return;
         FileHelpers.LoadFromData(new FileStream(FileName, FileMode.Open, FileAccess.Read), FileName[^3..], this);
-        Title = "Flipnic file tool - " + new FileInfo(FileName).Name;
     }
 
-    private void AltNormalMethod_Click(object? sender, RoutedEventArgs e)
+    internal void AltNormalMethod_Click(object? sender, RoutedEventArgs? e)
     {
         if (sender is not MenuItem mi) return;
         StaticUtils.AlternateNormals = !StaticUtils.AlternateNormals;
@@ -751,10 +691,9 @@ public sealed partial class MainWindow : SukiWindow
         mi.Header = $"Normal vectors decoding: Method {letter}";
         if (FileName is null) return;
         FileHelpers.LoadFromData(new FileStream(FileName, FileMode.Open, FileAccess.Read), FileName[^3..], this);
-        Title = "Flipnic file tool - " + new FileInfo(FileName).Name;
     }
 
-    private void DocsMenu1_OnClick(object? sender, RoutedEventArgs e)
+    private void DocsMenu1_OnClick(object? sender, RoutedEventArgs? e)
     {
         OpenUrl("https://github.com/MarkusMaal/FlipnicFileTools/blob/master/GUIREADME.md");
     }
@@ -788,17 +727,17 @@ public sealed partial class MainWindow : SukiWindow
         }
     }
 
-    private void DataStructsMenu1_OnClick(object? sender, RoutedEventArgs e)
+    private void DataStructsMenu1_OnClick(object? sender, RoutedEventArgs? e)
     {
         OpenUrl("https://github.com/MarkusMaal/FlipnicPatterns");
     }
 
-    private void SaveEditorMenu1_OnClick(object? sender, RoutedEventArgs e)
+    private void SaveEditorMenu1_OnClick(object? sender, RoutedEventArgs? e)
     {
         OpenUrl("https://github.com/MarkusMaal/FlipnicSaveEditor");
     }
 
-    private void OpenImHexMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    private void OpenImHexMenuItem_OnClick(object? sender, RoutedEventArgs? e)
     {
         if (!File.Exists(FileName)) return;
         new Thread(async void () =>
@@ -857,16 +796,19 @@ public sealed partial class MainWindow : SukiWindow
 
     private void FileMenu1_OnSubmenuOpened(object? sender, RoutedEventArgs e)
     {
-        OpenImHexMenuItem.IsEnabled = File.Exists(FileName);
-    }
-    static async Task<byte[]?> GetUrlContent(string url)
-    {
-        using (var client = new HttpClient())
-        using (var result = await client.GetAsync(url))
-            return result.IsSuccessStatusCode ? await result.Content.ReadAsByteArrayAsync() : null;
+        OpenImHexMenuItem.IsVisible = File.Exists(FileName);
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime al) return;
+        CloseOthersMenuItem.IsVisible = al.Windows.Count > 1;
+        CloseMenuItem.IsVisible = al.Windows.Count > 1;
     }
 
-    static async Task DownloadFile(string url, string pathToSave)
+    private static async Task<byte[]?> GetUrlContent(string url)
+    {
+        using var result = await Client.GetAsync(url);
+        return result.IsSuccessStatusCode ? await result.Content.ReadAsByteArrayAsync() : null;
+    }
+
+    private static async Task DownloadFile(string url, string pathToSave)
     {
         var content = await GetUrlContent(url);
         if (content != null)
@@ -931,7 +873,7 @@ public sealed partial class MainWindow : SukiWindow
         var doesExist = File.Exists(Path.Join(new FileInfo(FileName).DirectoryName, $"LAY{suffix}.LAY"));
         if (doesExist)
         {
-            _dialogManager.CreateDialog()
+            DialogManager.CreateDialog()
                 .WithTitle("Flipnic file tools")
                 .WithContent(
                     $"Layout file: LAY{suffix}.LAY\n\nDo you want to open it?")
@@ -942,8 +884,9 @@ public sealed partial class MainWindow : SukiWindow
                     {
                         IsLightTheme = IsLightTheme
                     };
+                    nw.ToggleDarkNative(sender, null);
+                    nw.ToggleDarkNative(sender, null);
                     nw.FileName = Path.Join(new FileInfo(FileName).DirectoryName, $"LAY{suffix}.LAY");
-                    nw.Title = "Flipnic file tool - " + new FileInfo(nw.FileName).Name;
                     FileHelpers.LoadFromData(new FileStream(nw.FileName, FileMode.Open, FileAccess.Read), nw.FileName[^3..], nw);
                     nw.IsMenuVisible = false;
                     nw.WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -962,7 +905,9 @@ public sealed partial class MainWindow : SukiWindow
     private void RestartWglButton_Click(object? sender, RoutedEventArgs e)
     {
         if (Design.IsDesignMode) return;
+        Preferences.SavePreferences(IsLightTheme, StaticUtils.MsgFile);
         var exePath = Environment.ProcessPath;
+        if (exePath == null) return;
         Process.Start(new ProcessStartInfo(exePath)
         {
             UseShellExecute = true,
@@ -994,5 +939,27 @@ public sealed partial class MainWindow : SukiWindow
     {
         StaticUtils.ForceBruteForce = !StaticUtils.ForceBruteForce;
         UpdateLabel(sender);
+    }
+
+    private void CloseOthersMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        CloseOtherWindows();
+    }
+
+    private void CloseOthersNativeMenuItem_OnClick(object? sender, EventArgs e)
+    {
+        CloseOtherWindows();
+    }
+
+    private void NativeFileMenuOpening(object? sender, EventArgs e)
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime al) return;
+        CloseOthersMenuItem.IsVisible = al.Windows.Count > 1;
+    }
+
+    private void Window_OnClosing(object? sender, WindowClosingEventArgs e)
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime al) return;
+        if (!Program.GpuAccel && al.Windows.Count == 1) Preferences.SavePreferences(InfoBox.IsLightTheme, StaticUtils.MsgFile);
     }
 }

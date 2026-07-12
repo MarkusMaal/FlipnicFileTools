@@ -76,7 +76,7 @@ namespace FlipnicFileToolGUI.Shaders
 
         public int GetAttribLocation(string attribName) => GL.GetAttribLocation(_handle, attribName);
 
-        public int GetUniformLocation(string uniformName) => GL.GetUniformLocation(_handle, uniformName);
+        private int GetUniformLocation(string uniformName) => GL.GetUniformLocation(_handle, uniformName);
 
         public void SetInt(string name, int value) => GL.Uniform1(GetUniformLocation(name), value);
 

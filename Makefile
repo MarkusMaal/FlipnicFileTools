@@ -31,6 +31,9 @@ publish-macos: clean ./deploy_macos.shell $(DEPENDS)
 publish-appimage: $(shell which appimagetool) ./publish-appimage ./publish-appimage.conf $(DEPENDS)
 	bash publish-appimage -y
 
+test: $(DEPENDS)
+	$(DOTNET) test --verbosity normal FlipnicLib.Tests/FlipnicLib.Tests.csproj
+
 run: $(DEPENDS)
 	$(DOTNET) run --project FlipnicFileToolGUI
 

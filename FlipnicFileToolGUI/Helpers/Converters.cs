@@ -19,17 +19,16 @@ public static class Converters
     public static void ConvertMovAac(MainWindow mw)
     {
         mw.DockPanel1.IsVisible = false;
-        mw.Loader.IsVisible = true;
         StaticUtils.Pal = mw.PalToggle.IsChecked ?? false;
-        var outPut = (mw.FileBox.Text ?? "") + new FileInfo(mw.FileName).Name + ".MP4";
+        var outPut = (mw.FileBox.Text ?? "") + new FileInfo(mw.FileName!).Name + ".MP4";
         var ffMpegPath = mw.FFmpegBox.Text ?? "";
         var originalFileName = mw.FileName;
         new Thread(() =>
         {
             StaticUtils.LiveLoadStatus = "Stage 1/4: Demuxing";
-            new Pss(mw.FileName).ListPss(File.OpenRead(mw.FileName), true, new FileInfo(outPut).Directory!.FullName);
+            new Pss(mw.FileName!).ListPss(File.OpenRead(mw.FileName!), true, new FileInfo(outPut).Directory!.FullName);
             StaticUtils.LiveLoadStatus = "Stage 2/4: Converting extracted IPU to M2V";
-            var nf = Path.Combine(new FileInfo(outPut).Directory!.FullName, new FileInfo(mw.FileName).Name);
+            var nf = Path.Combine(new FileInfo(outPut).Directory!.FullName, new FileInfo(mw.FileName!).Name);
             Ipu.IpuConvert(nf + ".IPU", nf + ".TEMP.M2V", ffMpegPath);
             var exist = true;
             var streams = 0;
@@ -76,19 +75,8 @@ public static class Converters
             Dispatcher.UIThread.Post(() =>
             {
                 mw.DockPanel1.IsVisible = true;
-                mw.Loader.IsVisible = false;
                 mw.FileName = originalFileName;
             });
-        }).Start();
-        new Thread(() =>
-        {
-            Thread.Sleep(100);
-            while (true)
-            {
-                if (StaticUtils.LiveLoadStatus == "") break;
-                Dispatcher.UIThread.Post(() => mw.LoadStatus.Text = StaticUtils.LiveLoadStatus);
-                Thread.Sleep(100);
-            }
         }).Start();
     }
 
@@ -98,28 +86,11 @@ public static class Converters
     /// <param name="mw">Main window instance</param>
     public static void Demux(MainWindow mw)
     {
-        mw.DockPanel1.IsVisible = false;
-        mw.Loader.IsVisible = true;
         var outPut = mw.FileBox.Text ?? "";
         new Thread(() =>
         {
-            new Pss(mw.FileName).ListPss(File.OpenRead(mw.FileName), true, outPut);
+            new Pss(mw.FileName!).ListPss(File.OpenRead(mw.FileName!), true, outPut);
             StaticUtils.LiveLoadStatus = "";
-            Dispatcher.UIThread.Post(() =>
-            {
-                mw.DockPanel1.IsVisible = true;
-                mw.Loader.IsVisible = false;
-            });
-        }).Start();
-        new Thread(() =>
-        {
-            Thread.Sleep(100);
-            while (true)
-            {
-                if (StaticUtils.LiveLoadStatus == "") break;
-                Dispatcher.UIThread.Post(() => mw.LoadStatus.Text = StaticUtils.LiveLoadStatus);
-                Thread.Sleep(100);
-            }
         }).Start();
     }
 
@@ -129,31 +100,15 @@ public static class Converters
     /// <param name="mw">Main window instance</param>
     public static void ConvertMov(MainWindow mw)
     {
-        mw.DockPanel1.IsVisible = false;
-        mw.Loader.IsVisible = true;
         StaticUtils.Pal = mw.PalToggle.IsChecked ?? false;
-        var outPut = (mw.FileBox.Text ?? "") + new FileInfo(mw.FileName).Name + ".M2V";
+        var outPut = (mw.FileBox.Text ?? "") + new FileInfo(mw.FileName!).Name + ".M2V";
         var ffMpegPath = mw.FFmpegBox.Text ?? "";
         var originalFileName = mw.FileName;
         new Thread(() =>
         {
             StaticUtils.LiveLoadStatus = "Converting IPU to M2V";
-            Ipu.IpuConvert(originalFileName, outPut, ffMpegPath);
-            Dispatcher.UIThread.Post(() =>
-            {
-                mw.DockPanel1.IsVisible = true;
-                mw.Loader.IsVisible = false;
-            });
-        }).Start();
-        new Thread(() =>
-        {
-            Thread.Sleep(100);
-            while (true)
-            {
-                if (StaticUtils.LiveLoadStatus == "") break;
-                Dispatcher.UIThread.Post(() => mw.LoadStatus.Text = StaticUtils.LiveLoadStatus);
-                Thread.Sleep(100);
-            }
+            Ipu.IpuConvert(originalFileName!, outPut, ffMpegPath);
+            StaticUtils.LiveLoadStatus = "";
         }).Start();
     }
 
@@ -163,8 +118,6 @@ public static class Converters
     /// <param name="mw">Main window instance</param>
     public static void ConvertSf2(MainWindow mw)
     {
-        mw.DockPanel1.IsVisible = false;
-        mw.Loader.IsVisible = true;
         StaticUtils.ExportEnvelopes = mw.EnvelopeToggle.IsChecked ?? false;
         StaticUtils.ReverbStrength = (short)mw.ReverbSlider.Value;
         StaticUtils.AdsrMultipliers =
@@ -184,19 +137,19 @@ public static class Converters
             {
                 StaticUtils.LiveLoadStatus = "Converting JAM to SF2";
                 var extension = Path.GetExtension(mw.FileName);
-                var fileName = new FileInfo(mw.FileName).Name.Replace(extension, "");
-                Converter.InstrumentToSoundFont2(midiFile ?? "",
-                    mw.FileName, bdFile ?? "", Path.Combine(outFile ?? "", fileName) + ".SF2", createWav, fakeSustainR);
+                var fileName = new FileInfo(mw.FileName!).Name.Replace(extension!, "");
+                Converter.InstrumentToSoundFont2(midiFile,
+                    mw.FileName!, bdFile, Path.Combine(outFile ?? "", fileName) + ".SF2", createWav, fakeSustainR);
             }
             catch (Exception ex) when (!Debugger.IsAttached)
             {
                 error = ex;
             }
 
+            StaticUtils.LiveLoadStatus = "";
+
             Dispatcher.UIThread.Post(() =>
             {
-                mw.DockPanel1.IsVisible = true;
-                mw.Loader.IsVisible = false;
                 if (error is null)
                 {
                     mw.ShowDialog("Flipnic file tools", "File converted successfully!", NotificationType.Success);

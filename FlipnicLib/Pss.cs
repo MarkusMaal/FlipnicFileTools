@@ -25,72 +25,75 @@ public class Pss(string fileName) : FormatBase
         Console.Write(StaticUtils.LiveLoadStatus);
         IDictionary<string, long> streams = new Dictionary<string, long>();
         var extractCommands = new List<string>();
-        var audioChunks = 0;
-        var videoChunks = 0;
         var streamRows = new List<string[]>();
         var relativeOffset = -0x99A0;
         List<string[]> frames = new List<string[]>();
-        var frameStarted = false;
         var totalSamples = 0L;
         var totalFrames = 0;
         using (var src = inFile)
         {
             var buffer = new byte[16];
 
-            var offset = 0;
             var seek = 0;
-            while ((offset = src.Read(buffer, 0, buffer.Length)) > 0)
+            while (src.Read(buffer, 0, buffer.Length) > 0)
             {
+                if (src.Position % 0x100 == 0)
+                {
+                    var msg = "Searching for video/audio streams... (" + Math.Round(src.Position / (double)src.Length * 100.0) + "%)";
+                    if (msg != StaticUtils.LiveLoadStatus)
+                    {
+                        StaticUtils.LiveLoadStatus = msg;
+                    }
+                }
                 // audio stream
                 if ((buffer[0] == 0x49) && (buffer[1] == 0x4E) && (buffer[2] == 0x54) && (buffer[3] == 0x00))
                 {
-                    byte[] idbytes = { buffer[4], buffer[5], buffer[6], buffer[7] };
-                    byte[] sizebytes = { buffer[8], buffer[9], buffer[10], buffer[11] };
-                    byte[] nextpointer = { buffer[12], buffer[13], buffer[14], buffer[15] };
-                    var streamID = BitConverter.ToInt32(idbytes, 0);
+                    byte[] idbytes = [buffer[4], buffer[5], buffer[6], buffer[7]];
+                    byte[] sizebytes = [buffer[8], buffer[9], buffer[10], buffer[11]];
+                    byte[] nextpointer = [buffer[12], buffer[13], buffer[14], buffer[15]];
+                    var streamId = BitConverter.ToInt32(idbytes, 0);
                     var streamSize = BitConverter.ToInt32(sizebytes, 0);
                     var gotoPointer = BitConverter.ToInt32(nextpointer, 0);
                     var exists = false;
                     var samples = (streamSize / 0x10 * 0xE + ((streamSize % 0x10) - 2));
                     totalSamples += samples;
-                    frames.Add(["Audio " + streamID, samples.ToString(), ""]);
+                    frames.Add(["Audio " + streamId, samples.ToString(), ""]);
                     foreach (var stream in streams.Keys)
                     {
-                        if (stream == "Audio " + streamID)
+                        if (stream == "Audio " + streamId)
                         {
                             exists = true;
                         }
                     }
                     if (!exists)
                     {
-                        streams.Add(new KeyValuePair<string, long>("Audio " + streamID, streamSize));
+                        streams.Add(new KeyValuePair<string, long>("Audio " + streamId, streamSize));
                     } else
                     {
-                        streams["Audio " + streamID] += streamSize;
+                        streams["Audio " + streamId] += streamSize;
                     }
-                    streamRows.Add([$"0x{relativeOffset:X}", $"0x{seek:X}", $"Audio {streamID}", StaticUtils.GetFilesizeString(gotoPointer), StaticUtils.GetFilesizeString(streamSize), gotoPointer.ToString("X"), streamSize.ToString("X")]);
+                    streamRows.Add([$"0x{relativeOffset:X}", $"0x{seek:X}", $"Audio {streamId}", StaticUtils.GetFilesizeString(gotoPointer), StaticUtils.GetFilesizeString(streamSize), gotoPointer.ToString("X"), streamSize.ToString("X")]);
                     if (extract)
                     {
                         long startRange = seek + 0x10;
                         var endRange = startRange + streamSize - 1;
-                        if (File.Exists(outFile + new FileInfo(FileName).Name + $".{streamID}.INT"))
+                        if (File.Exists(outFile + new FileInfo(FileName).Name + $".{streamId}.INT"))
                         {
-                            File.Delete(outFile + new FileInfo(FileName).Name + $".{streamID}.INT");
+                            File.Delete(outFile + new FileInfo(FileName).Name + $".{streamId}.INT");
                         }
-                        extractCommands.Add(FileName + "," + new FileInfo(FileName).Name + $".{streamID}.INT" + "," + startRange + "," + endRange);
+                        extractCommands.Add(FileName + "," + new FileInfo(FileName).Name + $".{streamId}.INT" + "," + startRange + "," + endRange);
                     }
                     seek += gotoPointer + 0x10;
                     relativeOffset += gotoPointer;
                     src.Seek(seek, 0);
-                    audioChunks++;
                     continue;
                 }
                 // video stream
 
                 if ((buffer[0] == 0x49) && (buffer[1] == 0x50) && (buffer[2] == 0x55) && (buffer[3] == 0x00))
                 {
-                    byte[] sizebytes = { buffer[8], buffer[9], buffer[10], buffer[11] };
-                    byte[] nextpointer = { buffer[12], buffer[13], buffer[14], buffer[15] };
+                    byte[] sizebytes = [buffer[8], buffer[9], buffer[10], buffer[11]];
+                    byte[] nextpointer = [buffer[12], buffer[13], buffer[14], buffer[15]];
                     var streamSize = BitConverter.ToInt32(sizebytes, 0);
                     var gotoPointer = BitConverter.ToInt32(nextpointer, 0);
                     var shiftRegister = "\0\0\0\0"u8.ToArray();
@@ -137,7 +140,6 @@ public class Pss(string fileName) : FormatBase
                     seek += gotoPointer + 0x10;
                     relativeOffset += gotoPointer;
                     src.Seek(seek, 0);
-                    videoChunks++;
                     continue;
                 }
                 // end of file
@@ -154,19 +156,27 @@ public class Pss(string fileName) : FormatBase
         {
             StaticUtils.LiveLoadStatus = "Preparing to extract...";
             Console.Write($"\r{StaticUtils.LiveLoadStatus}");
-            List<string> OutputFilesList = [];
-            foreach (var args in extractCommands.Select(cmd => cmd.Split(',')))
+            List<string> outputFilesList = [];
+            foreach (var (i, args) in extractCommands.Select(cmd => cmd.Split(',')).Index())
             {
                 var outf = outFile + args[1];
+                if (i % 0x10 == 0)
+                {
+                    var msg = "Extracting streams, please wait... (" + Math.Round(i / (double)extractCommands.Count * 100.0) + "%)";
+                    if (msg != StaticUtils.LiveLoadStatus)
+                    {
+                        StaticUtils.LiveLoadStatus = msg;
+                    }
+                }
                 CutFile(args[0], outf, Convert.ToInt64(args[2]), Convert.ToInt64(args[3]));
 
-                if (!OutputFilesList.Contains(outf))
+                if (!outputFilesList.Contains(outf))
                 {
-                    OutputFilesList.Add(outf);
+                    outputFilesList.Add(outf);
                 }
             }
             Console.WriteLine("\rThe following streams have been extracted:      ");
-            foreach (var outf in OutputFilesList)
+            foreach (var outf in outputFilesList)
             {
                 Console.WriteLine(outf);
             }
@@ -175,12 +185,13 @@ public class Pss(string fileName) : FormatBase
         }
         else
         {
+            StaticUtils.LiveLoadStatus = "Processing interleaving data...";
             Console.Write("\r");
 
             // try to figure out video standard based on how close video duration is 
             // to audio duration based on expected duration calculated with total
             // frame count
-            var durationMs = (long)(totalSamples / (streams.Count - 1) / 44100.0 * 1000.0); // based on audio sample count
+            var durationMs = (long)(totalSamples / (double)(streams.Count - 1) / 44100.0 * 1000.0); // based on audio sample count
             var deltaPalMs = Math.Abs((long)(totalFrames / 50.0 * 1000.0) - durationMs); // based on frame count (assuming progressive PAL)
             var deltaNtscMs = Math.Abs((long)(totalFrames / 59.94 * 1000.0) - durationMs); // based on frame count (assuming progressive NTSC)
             var deltaIlPalMs = Math.Abs((long)(totalFrames / 25.0 * 1000.0) - durationMs); // based on frame count (assuming interlaced PAL)
@@ -196,23 +207,24 @@ public class Pss(string fileName) : FormatBase
                 StaticUtils.Pal = true;
             }
             var o = "";
-            var sizeRatio = streams["Audio 1"] / (float)streams["Video"] * 100f;
-            var chunkRatio = audioChunks/(float)videoChunks*100f;
+            //var sizeRatio = streams["Audio 1"] / (float)streams["Video"] * 100f;
+            //var chunkRatio = audioChunks/(float)videoChunks*100f;
             o += "Stream summary\n";
             string[] colHeaders = ["Stream", "Size", "Size (hex)"];
             List<string[]> rows = [];
             rows.AddRange(streams.Select(kvp => (string[]) [kvp.Key, StaticUtils.GetFilesizeString(kvp.Value), kvp.Value.ToString("X")]));
             o += StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput);
-            var timeStr = GetMsAsDuration(durationMs).ToString();
+            var timeStr = GetMsAsDuration(durationMs);
             o += $"\nAudio duration: {timeStr}";
             o += $"\nVideo duration: {GetMsAsDuration(durationMs - deltas.Min())}";
             o += $"\nVideo standard: {vFormat}";
             o += $"\nTotal frames: {totalFrames}\n";
             foreach (var (idx, fr) in frames.Index())
             {
+                StaticUtils.LiveLoadStatus = "Processing interleaving data... (" + Math.Round(idx / (double)frames.Count * 100.0) + "%)";
                 if (fr[0].Contains("Audio"))
                 {
-                    frames[idx][2] = DotFloatString((float)Math.Round(long.Parse(fr[1]) / 44100.0 * 1000.0, 2)).ToString() + "ms";
+                    frames[idx][2] = DotFloatString((float)Math.Round(long.Parse(fr[1]) / 44100.0 * 1000.0, 2)) + "ms";
                 }
                 else
                 {
@@ -233,9 +245,10 @@ public class Pss(string fileName) : FormatBase
                             break;
 
                     }
-                    frames[idx][2] = DotFloatString((float)Math.Round(long.Parse(fr[1]) / divider * 1000.0, 2)).ToString() + "ms";
+                    frames[idx][2] = DotFloatString((float)Math.Round(long.Parse(fr[1]) / divider * 1000.0, 2)) + "ms";
                 }
             }
+            StaticUtils.LiveLoadStatus = "Processing...";
             o += "\nInterleaving data\n";
             colHeaders = ["Stream", "Fr./Sampl.", "Time"];
             rows.Clear();
@@ -265,12 +278,12 @@ public class Pss(string fileName) : FormatBase
         return (streamLength / 0x10) * 0x10 + 0x10;
     }
 
-    private static void WriteAudioStream(int streamLength, int streamID, Stream intFile, Stream output, bool ipuHack = false)
+    private static void WriteAudioStream(int streamLength, int streamId, Stream intFile, Stream output, bool ipuHack = false)
     {
         if (!ipuHack)
         {
             output.Write("INT\0"u8);
-            output.Write(BitConverter.GetBytes(streamID));
+            output.Write(BitConverter.GetBytes(streamId));
         }
         else
         {
@@ -332,7 +345,6 @@ public class Pss(string fileName) : FormatBase
         }
         WriteAudioStream(0x9999, 1, intFile, output);
         WriteFrames(progressive ? (isPal ? 6 : 8) : (isPal ? 3 : 4), ipuFile, output);
-        var r = new Random();
         var audioTime = 34405/44100.0 * (isPal ? 1 : 1.165832499);
         var idx = 0;
         while ((ipuFile.Position < ipuFile.Length - 0x8000) && (intFile.Position < intFile.Length - 0x2000))
@@ -382,9 +394,8 @@ public class Pss(string fileName) : FormatBase
     
     private void CutFile(string sourceFilePath, string destinationFilePath, long startPosition, long endPosition) // internal
     {
-        StaticUtils.LiveLoadStatus = "Extracting streams, please wait...";
         Console.Write($"\r     {StaticUtils.LiveLoadStatus}".PadRight(StaticUtils.WindowWidth));
-        StaticUtils.LoadIdx += 9;
+        //StaticUtils.LoadIdx += 9;
         StaticUtils.PrintLoader();
         const FileMode fm = FileMode.Create;
         using (var sourceStream = new FileStream(sourceFilePath, FileMode.Open))

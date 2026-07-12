@@ -1,4 +1,5 @@
 using System.Globalization;
+using FlipnicFileTool.Help;
 using FlipnicLib;
 
 namespace FlipnicFileTool;
@@ -6,9 +7,14 @@ namespace FlipnicFileTool;
 public class Config
 {
     /// <summary>
-    /// Input filename
+    /// Input filename array
     /// </summary>
-    public string FileName { get; set; } = "";
+    public List<string> FileNameArr { get; set; } = [];
+
+    /// <summary>
+    /// Input filename (for backwards compatibility)
+    /// </summary>
+    public string FileName => FileNameArr.Count > 0 ? FileNameArr[0] : "";
     
     /// <summary>
     /// Output filename
@@ -69,12 +75,12 @@ public class Config
     /// <summary>
     /// Enable testing mode
     /// </summary>
-    public bool Test { get; set; } = false;
+    public bool Test { get; set; }
     
     /// <summary>
     /// Do we create a .WAV file in addition to the .SF2 file?
     /// </summary>
-    public bool SynthesizeWav { get; set; } = false;
+    public bool SynthesizeWav { get; set; }
 
     /// <summary>
     /// Attempts to "fake" sustain rate by messing with the output decay rate and sustain level values.<br/>
@@ -82,17 +88,17 @@ public class Config
     /// decay. However, since SF2 doesn't support sustain rate natively, in some edge cases, it can<br/>
     /// lead to notes fading out too early.
     /// </summary>
-    public bool SimulateSustainRate { get; set; } = false;
+    public bool SimulateSustainRate { get; set; }
 
     /// <summary>
     /// If enabled, uses progressive scan settings for generating PSS files
     /// </summary>
-    public bool Progressive { get; set; } = false;
+    public bool Progressive { get; set; }
     
     /// <summary>
     /// Audio stream to use for .PSS merge
     /// </summary>
-    public string IntFile { get; set; }
+    public string? IntFile { get; set; }
 
     /// <summary>
     /// Count value
@@ -164,10 +170,13 @@ public class Config
                     MlbSect = arg;
                     break;
                 case "--input":
-                    FileName = arg;
+                    FileNameArr.Add(arg);
                     break;
                 case "--output":
                     Output = arg;
+                    break;
+                case "--generate-animation":
+                    Count = int.Parse(arg);
                     break;
                 case "--ffmpeg-path":
                     FFmpegPath = arg;
@@ -200,11 +209,9 @@ public class Config
                     IntFile = arg;
                     break;
                 case "--change-count":
-                    string[] values = arg.Split(",");
+                    var values = arg.Split(",");
                     VFile = values[0];
                     Count = int.Parse(values[1]);
-                    break;
-                default:
                     break;
             }
 
@@ -216,7 +223,7 @@ public class Config
         Mode = Enums.GuessAction(args[0]);
         if (Mode != Enums.Modes.ShowHelp)
         {
-            FileName = args[0];
+            FileNameArr.Add(args[0]);
         }
     }
 
@@ -224,10 +231,35 @@ public class Config
     /// Detect any obvious errors
     /// </summary>
     /// <returns>Exit code, if -1 then there were no errors found and execution can continue</returns>
-    public int DetectAndDisplayErrors()
+    public int DetectAndDisplayErrors(string[] args)
     {
+        Enums.Modes[] exceptions = [Enums.Modes.ShowHelp, Enums.Modes.Playground];
         
-        if (FileName == "" && Mode != Enums.Modes.ShowHelp)
+        if (args.Length == 1 && !File.Exists(args[0]) && exceptions.All(p => p != Mode))
+        {
+            StaticUtils.DecodeColors("~-CError~--: Input file does not exist!");
+            Console.WriteLine();
+            return 2;
+        }
+
+        if (exceptions.All(p => p != Mode))
+        {
+            if (HelpUtils.Help == null)
+            {
+                HelpUtils.GenerateHelp(true);
+            }
+
+            var result = Validator.ValidateArgs(args, HelpUtils.Help!);
+            if (result != "ok")
+            {
+                StaticUtils.DecodeColors(
+                    $"~-CError~--: {result}");
+                Console.WriteLine();
+                return 4;
+            }
+        }
+        
+        if (FileName == "" && exceptions.All(p => p != Mode))
         {
             StaticUtils.DecodeColors(
                 "~-CError~--: Must specify input filename in this case! To see command line usage, append the ~-F--help~-- flag.");
@@ -235,14 +267,20 @@ public class Config
             return 1;
         }
 
-        if (!File.Exists(FileName) && Mode != Enums.Modes.ShowHelp)
+        if (!File.Exists(FileName) && exceptions.All(p => p != Mode))
         {
             StaticUtils.DecodeColors("~-CError~--: Input file does not exist!");
             Console.WriteLine();
             return 2;
         }
+        
+        if (FileNameArr.Any(f => f == "" || !File.Exists(f)))
+        {
+            StaticUtils.DecodeColors("~-4Error~--: One or more specified input files do not exist!");
+            return 400;
+        }
 
-        if (Mode == Enums.Modes.ShowHelp || !new FileInfo(FileName).IsReadOnly || Output == "") return -1;
+        if (exceptions.Any(p => p == Mode) || !new FileInfo(FileName).IsReadOnly || Output == "") return -1;
         StaticUtils.DecodeColors("~-CError~--: Read-only file system");
         Console.WriteLine();
         return 3;

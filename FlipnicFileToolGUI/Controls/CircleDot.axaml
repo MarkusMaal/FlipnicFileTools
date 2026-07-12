@@ -5,7 +5,8 @@
              xmlns:vm="clr-namespace:FlipnicFileToolGUI"
              mc:Ignorable="d" d:DesignWidth="256" d:DesignHeight="256"
              DataContext="{Binding RelativeSource={RelativeSource Self}}"
-             x:Class="FlipnicFileToolGUI.Controls.CircleDot">
+             x:Class="FlipnicFileToolGUI.Controls.CircleDot"
+             x:CompileBindings="False">
         <Grid>
             <Ellipse Opacity="0.75">
                 <Ellipse.Fill>

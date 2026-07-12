@@ -35,7 +35,7 @@ namespace FlipnicLib.Formats;
  */
 public class Tim2 : FormatBase
 {
-    public string? Filename { get; set; }
+    private string? Filename { get; set; }
 
     private const byte Tim2FormatVersion = 0x04; // Official TIM2 version (0x04 per spec)
     private const byte Tim2Align16 = 0x00;       // 16-byte alignment mode
@@ -60,11 +60,11 @@ public class Tim2 : FormatBase
     }
 
     // File Header (16 bytes, fixed size, always at file start)
-    private struct FileHeader(byte[] data)
+    private readonly struct FileHeader(byte[] data)
     {
-        public char[] FileId { get; } = GetString(data.Take(4).ToArray()).ToCharArray();   // Must be 'T','I','M','2' to identify TIM2 file
+        private char[] FileId { get; } = GetString(data.Take(4).ToArray()).ToCharArray();   // Must be 'T','I','M','2' to identify TIM2 file
         public byte FormatRevision { get; } = data[4];  // Format version; official spec uses 0x04
-        public byte FormatId { get; } = data[5]; // Alignment: 0x00 = 16B, 0x01 = 128B
+        private byte FormatId { get; } = data[5]; // Alignment: 0x00 = 16B, 0x01 = 128B
         public ushort Pictures { get; } = GetUInt16(data, 6);  // Number of picture data blocks in file
         public byte[] Reserved { get; } = data.Skip(8).Take(8).ToArray();  // Must be all 0x00 (padding for 16-byte header)
 
@@ -73,16 +73,16 @@ public class Tim2 : FormatBase
     }
 
     // Picture Header (48 bytes, aligned to 16 or 128 bytes)
-    private struct PictureHeader(byte[] data)
+    private readonly struct PictureHeader(byte[] data)
     {
         public uint TotalSize { get; } = GetUInt32(data, 0);  // Total bytes for this picture (headers + image + CLUT)
-        public uint ClutSize { get; } = GetUInt32(data, 4); // Size of CLUT data (may be 0 if no CLUT)
+        public uint ClutSize { get; } = GetUInt32(data, 4); // Size of CLUT data (can be 0 if no CLUT)
         public uint ImageSize { get; } = GetUInt32(data, 8); // Size of image data (sum of MIPMAP levels)
         public ushort HeaderSize { get; } = GetUInt16(data, 12);  // Size of headers (picture + optional MIPMAP + user space)
         public ushort ClutColors { get; } = GetUInt16(data, 14);  // Actual number of colors in CLUT
         public byte PictFormat { get; } = data[0x10];  // Must be 0 for TIM2 v0x04
         public byte MipMapTextures { get; } = data[0x11];  // Number of MIPMAP textures (0x01 = LV0 only)
-        public byte ClutType { get; } =  data[0x12];  // Bit7=CSM2, Bit6=compound flag, Bits0-5=pixel fmt
+        private byte ClutType { get; } =  data[0x12];  // Bit7=CSM2, Bit6=compound flag, Bits0-5=pixel fmt
         public byte ImageType { get; } =  data[0x13];   // Pixel format of image data (see PixelFormat)
         public ushort ImageWidth { get; } =  GetUInt16(data, 0x14);  // Width in pixels (restrictions per format/levels)
         public ushort ImageHeight { get; } =  GetUInt16(data, 0x16);  // Height in pixels (no power-of-two requirement)
@@ -91,7 +91,7 @@ public class Tim2 : FormatBase
         public uint GsTexaFbaPabe { get; } = GetUInt32(data, 0x28);  // Packed TEXA, FBA, PABE register bits
         public uint GsTexClut { get; } = GetUInt32(data, 0x2C);  // TEXCLUT register (only valid if CSM2 mode)
 
-        public bool IsClutCSM2 => (ClutType & (1 << 6)) == 0;
+        public bool IsClutCsm2 => (ClutType & (1 << 6)) == 0;
         public bool IsClutCompound => (ClutType & (1 << 5)) == 0;
 
         public PixelFormat GetImagePixelFormat() => (PixelFormat)ImageType;
@@ -122,7 +122,7 @@ public class Tim2 : FormatBase
     // Extended Header (optional, 16 bytes, starts user space)
     private struct ExtendedHeader(byte[] data)
     {
-        public byte[] ExHeaderId { get; } = data.Take(4).ToArray();       // 'e','X','t','\0' identifier
+        private byte[] ExHeaderId { get; } = data.Take(4).ToArray();       // 'e','X','t','\0' identifier
         public uint UserSpaceSize = GetUInt32(data, 4); // Valid total size of user space (incl. this header)
         public uint UserDataSize = GetUInt32(data, 8);  // Bytes of user data before comment string
         public uint Reserved = GetUInt32(data, 12);     // Must be 0x00000000
@@ -194,24 +194,17 @@ public class Tim2 : FormatBase
     {
         public byte R = r, G = g, B = b, A = a;
 
-        public Color ToStdColor()
-        {
-            return Color.FromArgb(A, R, G, B);
-        }
-
         public Color32() : this(0, 0, 0, 255) {}
     }
 
-    private struct Color16(ushort value)
+    private readonly struct Color16(ushort value)
     {
-        public readonly ushort Value = value;
-
         public Color32 ToColor32()
         {
-            var r = (byte)(((Value & 0x001F) << 3) | ((Value & 0x001F) >> 2));
-            var g = (byte)(((Value & 0x03E0) >> 2) | ((Value & 0x03E0) >> 7));
-            var b = (byte)(((Value & 0x7C00) >> 7) | ((Value & 0x7C00) >> 12));
-            var a = (Value & 0x8000) != 0 ? (byte)255 : (byte)0;
+            var r = (byte)(((value & 0x001F) << 3) | ((value & 0x001F) >> 2));
+            var g = (byte)(((value & 0x03E0) >> 2) | ((value & 0x03E0) >> 7));
+            var b = (byte)(((value & 0x7C00) >> 7) | ((value & 0x7C00) >> 12));
+            var a = (value & 0x8000) != 0 ? (byte)255 : (byte)0;
             return new Color32(r, g, b, a);
         }
     }
@@ -230,19 +223,6 @@ public class Tim2 : FormatBase
         };
     }
 
-    private int GetBitsPerPixel(PixelFormat fmt)
-    {
-        return fmt switch
-        {
-            PixelFormat.Tim4Bpp => 4,
-            PixelFormat.Tim8Bpp => 8,
-            PixelFormat.Tim2Rgb16 => 16,
-            PixelFormat.Tim2Rgb24 => 24,
-            PixelFormat.Tim2Rgb32 => 32,
-            _ => 0
-        };
-    }
-
 
     // ─────────────────────────────────────────────────────────────
     // Picture implementation
@@ -250,14 +230,36 @@ public class Tim2 : FormatBase
     class Picture
     {
         public PictureHeader Header { get; set; }
-        public MipMapHeader? MipMapHeader { get; set; }
-        public byte[] UserData { get; set; }
-        public byte[] ImageData { get; set; }
+        public MipMapHeader? PictureMipMapHeader { get; set; }
+        public byte[]? ImageData { get; set; }
         public byte[]? ClutData { get; set; }
-        public ExtendedHeader? ExtHeader { get; set; }
-        public string Comment { get; set; }
-        public bool ClutCompoundFailed = false;
+        public bool ClutCompoundFailed;
 
+        /// <summary>
+        /// Internal method used to speed up the decoding of TIM2 pixel colors (for multithreading)
+        /// </summary>
+        /// <param name="remainderX">Remainder for every X coordinate to use</param>
+        /// <param name="remainderY">Remainder for every Y coordinate to use</param>
+        /// <param name="divisor">Number of pixels to jump when multi-threading</param>
+        /// <param name="cancellationSource">Task cancellation token</param>
+        /// <param name="width">Width of the image</param>
+        /// <param name="height">Height of the image</param>
+        /// <param name="result">Pixels array</param>
+        /// <param name="mipLevel">Mip level (should always be 0 for Flipnic textures)</param>
+        private void BufferImage(int remainderX, int remainderY, int divisor, CancellationTokenSource cancellationSource, int width, int height, Color32[] result, int mipLevel)
+        {
+            for (var y = 0; y < height; ++y)
+            {
+                if (y % divisor == remainderY) continue;
+                for (var x = 0; x < width; ++x)
+                {
+                    if (cancellationSource.Token.IsCancellationRequested)  return;
+                    if (x % divisor == remainderX) continue;
+                    result[y * width + x] = GetPixelColor(x, y, mipLevel);
+                }
+            }
+        }
+        
         /**
          * Turn one TIM2 picture into a flat RGBA8 buffer.
          *
@@ -281,74 +283,29 @@ public class Tim2 : FormatBase
             
             var result = new Color32[width * height];
 
-            var done = 0;
-            // multithreading here helps speed up the conversion up to 4x
-            new Thread(() =>
-            {
+            // using multiple tasks here helps speed up the pixel decoding significantly
+            CancellationTokenSource cancellationSource = new();
 
-                for (var y = 0; y < height; ++y)
+            var tasks = new List<Task>();
+            var div = Math.Min(2, Math.Min(height, width)); // edge cases for 1x2/2x1/1x1
+            for (var yr = 0; yr < div; yr++)
+            {
+                for (var xr = 0; xr < div; xr++)
                 {
-                    if (y % 2 == 0) continue;
-                    for (var x = 0; x < width; ++x)
-                    {
-                        if (x % 2 == 0) continue;
-                        result[y * width + x] = GetPixelColor(x, y, mipLevel);
-                    }
+                    var yr1 = yr;
+                    var xr1 = xr;
+                    tasks.Add(new Task(() => BufferImage(xr1, yr1, div, cancellationSource, width, height, result, mipLevel)));
                 }
-
-                done++;
-            }).Start();
-
-            new Thread(() =>
-            {
-
-                for (var y = 0; y < height; ++y)
-                {
-                    if (y % 2 == 1) continue;
-                    for (var x = 0; x < width; ++x)
-                    {
-                        if (x % 2 == 1) continue;
-                        result[y * width + x] = GetPixelColor(x, y, mipLevel);
-                    }
-                }
-
-                done++;
-            }).Start();
-            new Thread(() =>
-            {
-
-                for (var y = 0; y < height; ++y)
-                {
-                    if (y % 2 == 0) continue;
-                    for (var x = 0; x < width; ++x)
-                    {
-                        if (x % 2 == 1) continue;
-                        result[y * width + x] = GetPixelColor(x, y, mipLevel);
-                    }
-                }
-
-                done++;
-            }).Start();
-            new Thread(() =>
-            {
-
-                for (var y = 0; y < height; ++y)
-                {
-                    if (y % 2 == 1) continue;
-                    for (var x = 0; x < width; ++x)
-                    {
-                        if (x % 2 == 0) continue;
-                        result[y * width + x] = GetPixelColor(x, y, mipLevel);
-                    }
-                }
-
-                done++;
-            }).Start();
-            
-            while (done != 4)
-            {
-                Thread.Sleep(1);
             }
+
+            tasks.ForEach(task => task.Start());
+            
+            // if decoding takes too long, just cancel it
+            // even the slowest PCs should take less than 30s to decode a TIM2 (maybe 15s at most)
+            const int timeout = 30000;
+            cancellationSource.CancelAfter(timeout);
+            Task.WaitAll(tasks.ToArray(), cancellationSource.Token);
+            
             return result;
         }
 
@@ -366,7 +323,7 @@ public class Tim2 : FormatBase
          *   incorrect colors for certain CSM1 CLUTs, implement that swap step here.
          *   (See TIM2 spec §4.5 for the exact byte swap rules.)
          */
-        public Color32[] GetClutColors(bool forceNoCompound = false)
+        private Color32[] GetClutColors(bool forceNoCompound = false)
         {
             try
             {
@@ -377,8 +334,8 @@ public class Tim2 : FormatBase
                 var data = ClutData;
 
                 var fmt = Header.GetClutPixelFormat();
-                var isCompound = Header.IsClutCompound;
-
+                if (data == null) return colors;
+                
                 for (var i = 0; i < Header.ClutColors; ++i)
                 {
                     var index = i;
@@ -390,15 +347,16 @@ public class Tim2 : FormatBase
                         var block = i / 32;
                         var localIdx = i % 32;
 
-                        // This is the minimal reordering that matches the 32-entry table.
-                        // (It swaps [8..15] with [16..23] by +8 / -8.)
-                        if (localIdx >= 8 && localIdx < 16)
+                        switch (localIdx)
                         {
-                            localIdx += 8;
-                        }
-                        else if (localIdx >= 16 && localIdx < 24)
-                        {
-                            localIdx -= 8;
+                            // This is the minimal reordering that matches the 32-entry table.
+                            // (It swaps [8..15] with [16..23] by +8 / -8.)
+                            case >= 8 and < 16:
+                                localIdx += 8;
+                                break;
+                            case >= 16 and < 24:
+                                localIdx -= 8;
+                                break;
                         }
 
                         index = block * 32 + localIdx;
@@ -428,8 +386,6 @@ public class Tim2 : FormatBase
                             color.G = data[byteIdx + 1];
                             color.B = data[byteIdx + 2];
                             color.A = data[byteIdx + 3];
-                            break;
-                        default:
                             break;
                     }
 
@@ -470,7 +426,7 @@ public class Tim2 : FormatBase
             {
                 case PixelFormat.Tim2Rgb32:
                     idx = (y * width + x) * 4 + dataStart;
-                    result.R = data[idx + 0];
+                    result.R = data![idx + 0];
                     result.G = data[idx + 1];
                     result.B = data[idx + 2];
                     result.A = data[idx + 3];
@@ -479,14 +435,14 @@ public class Tim2 : FormatBase
                     // Packed 3 bytes per pixel, no padding between pixels here.
                     // See note above if you encounter layout mismatches.
                     idx = (y * width + x) * 3 + dataStart;
-                    result.R = data[idx + 0];
+                    result.R = data![idx + 0];
                     result.G = data[idx + 1];
                     result.B = data[idx + 2];
                     result.A = 255;
                     break;
                 case PixelFormat.Tim2Rgb16:
                     idx = (y * width + x) * 2 + dataStart;
-                    var val = BitConverter.ToUInt16(data, idx);
+                    var val = BitConverter.ToUInt16(data!, idx);
                     Color16 c16 = new(val);
                     result = c16.ToColor32();
                     break;
@@ -494,7 +450,7 @@ public class Tim2 : FormatBase
                     if (Header.HasClut)
                     {
                         idx = y * width + x + dataStart;
-                        var colorIdx = data[idx];
+                        var colorIdx = data![idx];
                         var colors = GetClutColors();
                         if (colorIdx < colors.Length)
                         {
@@ -508,7 +464,7 @@ public class Tim2 : FormatBase
                         var pixelIdx = y * width + x;
                         var byteIdx = pixelIdx / 2 + dataStart;
                         // Even pixel = low nibble, odd pixel = high nibble.
-                        var packed = data[byteIdx];
+                        var packed = data![byteIdx];
                         var colorIdx = (byte)((pixelIdx & 1) != 0 ? (packed >> 4) : (packed & 0x0F));
                         var colors = GetClutColors();
                         if (colorIdx < colors.Length)
@@ -529,11 +485,11 @@ public class Tim2 : FormatBase
          */
         private int GetImageOffset(int mipLevel)
         {
-            if ((MipMapHeader == null) || mipLevel == 0) return 0;
+            if ((PictureMipMapHeader == null) || mipLevel == 0) return 0;
             var offset = 0;
-            for (var i = 0; i < mipLevel && i < MipMapHeader?.Sizes.Length; ++i)
+            for (var i = 0; i < mipLevel && i < PictureMipMapHeader?.Sizes.Length; ++i)
             {
-                offset += (int)MipMapHeader?.Sizes[i]!;
+                offset += (int)PictureMipMapHeader?.Sizes[i]!;
             }
 
             return offset;
@@ -559,12 +515,12 @@ public class Tim2 : FormatBase
     {
         var headerData = new byte[0x10];
         file.ReadExactly(headerData, 0, 0x10);
-        m_fileHeader = new FileHeader(headerData);
-        return m_fileHeader.IsValid;
+        _mFileHeader = new FileHeader(headerData);
+        return _mFileHeader.IsValid;
     }
 
-    private FileHeader m_fileHeader;
-    private Picture[] m_pictures = [];
+    private FileHeader _mFileHeader;
+    private readonly Picture[] _mPictures;
 
     public Tim2(byte[] data)
     {
@@ -573,17 +529,17 @@ public class Tim2 : FormatBase
         {
             throw new FormatException("Invalid TIM2 file signature");
         }
-        var alignment = m_fileHeader.GetAlignment;
+        var alignment = _mFileHeader.GetAlignment;
         SkipAlignment(ms, alignment);
-        m_pictures = new Picture[m_fileHeader.Pictures];
+        _mPictures = new Picture[_mFileHeader.Pictures];
         
-        for (ushort i = 0; i < m_fileHeader.Pictures; ++i) {
+        for (ushort i = 0; i < _mFileHeader.Pictures; ++i) {
             Picture pic = new();
             if (!ParsePicture(ms, pic, alignment))
             {
                 throw new Exception($"Failed to parse picture {i}");
             }
-            m_pictures[i] = pic;
+            _mPictures[i] = pic;
         }
     }
 
@@ -602,7 +558,7 @@ public class Tim2 : FormatBase
         
         // If headerSize is bigger than what we already consumed, the remainder is “user space”.
         var headerDataSize = file.Position;
-        if (pic.MipMapHeader != null)
+        if (pic.PictureMipMapHeader != null)
         {
             var mipHeaderSize = 16 + pic.Header.MipMapTextures * 4; // 16 = two u64 fields
             mipHeaderSize = AlignOffset(mipHeaderSize, 16);
@@ -619,7 +575,7 @@ public class Tim2 : FormatBase
         var imageStart = AlignOffset(currentPos, alignment);
         if (imageStart > currentPos) file.Seek(imageStart, SeekOrigin.Begin);
         
-        // Image data (may be 0 for CLUT-only pictures)
+        // Image data (can be 0 for CLUT-only pictures)
         if (pic.Header.ImageSize > 0)
         {
             ParseImageData(file, pic);
@@ -637,12 +593,12 @@ public class Tim2 : FormatBase
         return true;
     }
 
-    private bool ParseMipMapHeader(Stream file, Picture pic)
+    private static bool ParseMipMapHeader(Stream file, Picture pic)
     {
         throw new NotImplementedException();
     }
 
-    private bool ParseUserSpace(Stream file, Picture pic)
+    private static bool ParseUserSpace(Stream file, Picture pic)
     {
         throw new NotImplementedException();
     }
@@ -692,15 +648,15 @@ public class Tim2 : FormatBase
     {
         string[] colHeaders = ["ID", "RGB", "Alpha"];
         List<string[]> rows = [];
-        if (this.m_pictures[0].ClutData == null)
+        if (this._mPictures[0].ClutData == null)
         {
             return "This texture does not contain an indexed palette";
         }
-        for (var i = 0; i < this.m_pictures[0].ClutData.Length; i += 4)
+        for (var i = 0; i < this._mPictures[0].ClutData!.Length; i += 4)
         {
-            var pal = Color.FromArgb(this.m_pictures[0].ClutData[i + 3], this.m_pictures[0].ClutData[i],
-                this.m_pictures[0].ClutData[i + 1],
-                this.m_pictures[0].ClutData[i + 2]);
+            var pal = Color.FromArgb(this._mPictures[0].ClutData![i + 3], this._mPictures[0].ClutData![i],
+                this._mPictures[0].ClutData![i + 1],
+                this._mPictures[0].ClutData![i + 2]);
             rows.Add(["0x" + (i / 4).ToString("X"), $"#{pal.R:X2}{pal.G:X2}{pal.B:X2}", pal.A.ToString()]);
         }
         return "Palette:\n" + StaticUtils.GenerateTable(colHeaders, rows, asCsv);
@@ -710,28 +666,35 @@ public class Tim2 : FormatBase
     /// Convert the TIM2 file to PNG
     /// </summary>
     /// <param name="output">Output .PNG file stream</param>
-    public void SavePng(Stream output)
+    public void SavePng(Stream output, bool quiet = false)
     {
         var complete = false;
+        var taskStart = DateTime.Now;
         new Thread(() =>
         {
-            StaticUtils.LoadIdx = 1;
+            if (quiet) return;
             while (!complete)
             {
                 StaticUtils.PrintLoader();
                 Console.Write("  Converting...    \r");
                 Thread.Sleep(100);
-                StaticUtils.LoadIdx+=1000;
+                if (DateTime.Now - taskStart >= new TimeSpan(0, 0, 30)) // 30s timeout for loader
+                {
+                    complete = true;
+                }
             }
             Console.Write("                    \r");
         }).Start();
-        var builder = PngBuilder.Create(m_pictures[0].Header.ImageWidth, m_pictures[0].Header.ImageHeight, true);
+        var builder = PngBuilder.Create(_mPictures[0].Header.ImageWidth, _mPictures[0].Header.ImageHeight, true);
         var i = 0;
-        StaticUtils.LiveLoadStatus = "Converting image(s)";
-        foreach (var pixel in m_pictures[0].DecodeImage(m_pictures[0].Header.MipMapTextures - 1))
+        if (!quiet)
         {
-            var y = i / m_pictures[0].Header.ImageWidth;
-            var x = i % m_pictures[0].Header.ImageWidth;
+            StaticUtils.LiveLoadStatus = "Converting image(s)";
+        }
+        foreach (var pixel in _mPictures[0].DecodeImage(_mPictures[0].Header.MipMapTextures - 1))
+        {
+            var y = i / _mPictures[0].Header.ImageWidth;
+            var x = i % _mPictures[0].Header.ImageWidth;
             builder.SetPixel(new Pixel(pixel.R, pixel.G, pixel.B, pixel.A, false), x, y);
 
 
@@ -751,15 +714,15 @@ public class Tim2 : FormatBase
     
     public string ToString(bool asCsv)
     {
-        var ct = PixelFormatToString((PixelFormat)m_pictures[0].Header.ImageType);
+        var ct = PixelFormatToString((PixelFormat)_mPictures[0].Header.ImageType);
         var fn = Filename != null ? new FileInfo(Filename).Name : "???";
-        var cC = (uint)(m_pictures[0].ClutData != null ? m_pictures[0].ClutData!.Length / 4 : 0);
-        var cmpC = (!m_pictures[0].ClutCompoundFailed) ? "Compound" : "Non-compound";
+        var cC = (uint)(_mPictures[0].ClutData != null ? _mPictures[0].ClutData!.Length / 4 : 0);
+        var cmpC = (!_mPictures[0].ClutCompoundFailed) ? "Compound" : "Non-compound";
         var pT = $"Palette type: {ct} ({cmpC})";
         pT = pT.Replace(") (", "/");
         if (cC == 0)
         {
-            cC = (PixelFormat)m_pictures[0].Header.ImageType switch
+            cC = (PixelFormat)_mPictures[0].Header.ImageType switch
             {
                 PixelFormat.Tim2Rgb24 => (uint)Math.Pow(2, 24),
                 PixelFormat.Tim2Rgb32 => (uint)Math.Pow(2, 32),
@@ -771,11 +734,11 @@ public class Tim2 : FormatBase
                 TIM2 texture file
 
                 Name: {fn}
-                Width: {m_pictures[0].Header.ImageWidth}
-                Height: {m_pictures[0].Header.ImageHeight}
+                Width: {_mPictures[0].Header.ImageWidth}
+                Height: {_mPictures[0].Header.ImageHeight}
                 Colors: {cC}
                 {pT}
-                Pictures: {m_pictures.Length}
+                Pictures: {_mPictures.Length}
 
                 {DisplayPalette(asCsv)}
                 """;
@@ -785,7 +748,7 @@ public class Tim2 : FormatBase
 
     public void ReplaceColor(byte[] rgb)
     {
-        foreach (var img in m_pictures)
+        foreach (var img in _mPictures)
         {
             if (img.ClutData == null) continue;
             var newClutData = new byte[img.ClutData.Length];

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
@@ -41,7 +42,7 @@ namespace FlipnicFileToolGUI.Controls
         private const float Speed = 0.015f;
         private object? _texture;
         private bool CycleUV;
-        private Window? fs3;
+        private int _debounce = 0;
         
         public new bool Rotate
         {
@@ -88,19 +89,25 @@ namespace FlipnicFileToolGUI.Controls
 
         public void ImportLP4(Lp4 lp4)
         {
-            lp4.Read();
             _texture = null;
-            if (lp4.Texture != null)
+            if (lp4.CachedTexture != null)
             {
-                _texture = lp4.Texture;
+                _texture = lp4.CachedTexture;
             }
+
+            if (lp4.LayoutChunks?.First().Model == null) return;
             Dispatcher.UIThread.Post(() => 
             {
+                try
+                {
+                    _vertices = lp4.GetRawVertices(lp4.LayoutChunks.First().Model!.Value);
+                } catch (ArgumentOutOfRangeException) {}
+
+                OpenContainer = lp4;
+                if (!Program.GpuAccel) return;
                 OpenTkInit();
                 GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-                _vertices = lp4.GetVerticies();
-                OpenContainer = lp4;
                 GL.GenBuffer();
                 CycleUV = false;
                 GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject); 
@@ -116,32 +123,32 @@ namespace FlipnicFileToolGUI.Controls
         {
             if (name is null) return;
             var lp4 = OpenContainer;
-            foreach (var model in lp4.Models.Where(model => model.Name == name))
+            if (lp4 == null) return;
+            if (lp4.LayoutChunks == null) return;
+            foreach (var model in lp4.LayoutChunks.Where(model => model.Name == name))
             {
-                lp4.SetSelectedModel(model);
+                lp4.SelectedModel = model;
             }
-            _texture = lp4.Texture;
-            if (lp4.SelectedModel.HasEmbeddedTexture)
+
+            if (lp4.FilePath != null)
             {
-                _texture = lp4.SelectedModel.GenerateDummyTexture();
-            }
-            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            if (lp4.SelectedModel != null)
-            {
-                _vertices = lp4.SelectedModel.RawVertices.ToArray();
-                for (var i = 0; i < _vertices.Length; i+=8)
+                var texStr = new MemoryStream();
+                var texFile = Path.Combine(new FileInfo(lp4.FilePath).Directory?.FullName ?? "",
+                    lp4.SelectedModel.ModelVertexProperties.Materials.FirstOrDefault().TextureFile.ToUpper());
+                if (File.Exists(texFile))
                 {
-                    _vertices[i + 2] *= lp4.SelectedModel.Scale[0];
-                    _vertices[i + 3] *= lp4.SelectedModel.Scale[1];
-                    _vertices[i + 4] *= lp4.SelectedModel.Scale[2];
-                    _vertices[i + 2] += lp4.SelectedModel.Offset[0];
-                    _vertices[i + 3] += lp4.SelectedModel.Offset[1];
-                    _vertices[i + 4] += lp4.SelectedModel.Offset[2];
+                    new Tim2(File.ReadAllBytes(texFile))
+                        .SavePng(texStr);
+                    _texture = texStr.ToArray();
+                    texStr.Close();
+                    StaticUtils.LiveLoadStatus = "";
                 }
             }
-            StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded 3D model data to memory ({StaticUtils.GetFilesizeString(_vertices.Length)})\n");
 
+            /*if (lp4.SelectedModel.Model.ColorCount > 0)
+            {
+                _texture = lp4.SelectedModel.GenerateDummyTexture();
+            }*/
             var ms = new MemoryStream((byte[])(_texture ?? new byte[]{}));
             try
             {
@@ -151,18 +158,45 @@ namespace FlipnicFileToolGUI.Controls
             {
                 previewImg.Source = new Bitmap(StaticUtils.GenerateCheckerboardPng(256, 256));
             }
+
+            if (lp4.SelectedModel != null)
+            {
+                try
+                {
+                    _vertices = lp4.GetRawVertices(lp4.SelectedModel.Model.Value);
+                    for (var i = 0; i < _vertices.Length; i += 8)
+                    {
+                        _vertices[i + 2] *= lp4.SelectedModel.ModelProperties[0].ModelSkewing[0].X;
+                        _vertices[i + 3] *= lp4.SelectedModel.ModelProperties[0].ModelSkewing[1].Y;
+                        _vertices[i + 4] *= lp4.SelectedModel.ModelProperties[0].ModelSkewing[2].Z;
+                        _vertices[i + 2] += lp4.SelectedModel.ModelProperties[0].ModelOffset.X;
+                        _vertices[i + 3] += lp4.SelectedModel.ModelProperties[0].ModelOffset.Y;
+                        _vertices[i + 4] += lp4.SelectedModel.ModelProperties[0].ModelOffset.Z;
+                    }
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    
+                }
+            }
+            StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded 3D model data to memory ({StaticUtils.GetFilesizeString(_vertices.Length)})\n");
+            if (!Program.GpuAccel) return;
+            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
         }
 
         public void ImportFPD(FpnFpd pathTrace, object? texture)
         {
             _texture = texture;
             OpenTkInit();
-            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             List<float> vertices = new();
             vertices.AddRange(pathTrace.DrawPath());
             _vertices = vertices.ToArray();
             StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded 3D model data to memory ({StaticUtils.GetFilesizeString(_vertices.Length)})\n");
+            if (!Program.GpuAccel) return;
+            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             CycleUV = true;
             GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
@@ -171,9 +205,6 @@ namespace FlipnicFileToolGUI.Controls
         public void ImportICO(SaveIcon saveIcon)
         {
             _texture = saveIcon.Texture;
-            OpenTkInit();
-            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             List<float> vertices = new();
             foreach (var vertex in saveIcon.Vertices)
             {
@@ -188,6 +219,10 @@ namespace FlipnicFileToolGUI.Controls
             }
             _vertices = vertices.ToArray();
             StaticUtils.DecodeColors($"~-B\rInfo~--: Loaded 3D model data to memory ({StaticUtils.GetFilesizeString(_vertices.Length)})\n");
+            if (!Program.GpuAccel) return;
+            OpenTkInit();
+            GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             CycleUV = false;
             GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
@@ -262,6 +297,7 @@ namespace FlipnicFileToolGUI.Controls
         //OpenTkInit is called once when the control is created
         protected override void OpenTkInit()
         {
+            if (!Program.GpuAccel) return;
             DefaultShaders();
             //Compile shaders
             _shader = new(Path.GetTempPath() + "Shaders/shader.vert", Path.GetTempPath() + "Shaders/shader.frag");
@@ -269,7 +305,7 @@ namespace FlipnicFileToolGUI.Controls
             //Load textures
             _brickTexture = new();
             _brickTexture.Use();
-            _brickTexture.LoadFromFile(_texture);
+            OpenGlTexture.LoadFromFile(_texture);
 
             //Set textures in shaders
             _shader.Use();
@@ -344,6 +380,7 @@ namespace FlipnicFileToolGUI.Controls
         //OpenTkTeardown is called when the control is being destroyed
         protected override void OpenTkTeardown()
         {
+            if (!Program.GpuAccel) return;
             //Bind ArrayBuffer to null so we get an error if any more draw operations go through (helps with debugging)
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             //And ElementArrayBuffer
@@ -360,10 +397,15 @@ namespace FlipnicFileToolGUI.Controls
             _brickTexture.Dispose();
         }
 
-        //Demonstrating use of the Avalonia keyboard state provided by OpenTKAvalonia to control the camera 
         private void DoUpdate()
         {
             var effectiveSpeed = Speed;
+            
+            if (_debounce > 0) // temporarily disables keyboard input to prevent unwanted double presses
+            {
+                _debounce--;
+                return;
+            }
 
             if (KeyboardState.IsKeyDown(Key.LeftCtrl))
             {
@@ -390,29 +432,10 @@ namespace FlipnicFileToolGUI.Controls
                 _cameraPosition += Vector3.Normalize(Vector3.Cross(_cameraFront, _up)) * effectiveSpeed; //Right
             }
 
-            if (TopLevel.GetTopLevel(this) is Fullscreen3D fs3d)
-            {
-                if (KeyboardState.IsKeyDown(Key.Escape))
-                {
-                    fs3d.Close();
-                }
-                if (KeyboardState.IsKeyDown(Key.R))
-                {
-                    Rotate = true;
-                }
-                if (KeyboardState.IsKeyDown(Key.T))
-                {
-                    Rotate = false;
-                }
-            }
-
             if (KeyboardState.IsKeyDown(Key.U))
             {
-                CycleUV = true;
-            }
-            if (KeyboardState.IsKeyDown(Key.I))
-            {
-                CycleUV = false;
+                CycleUV = !CycleUV;
+                _debounce = 10;
             }
             if (KeyboardState.IsKeyDown(Key.X))
             {
@@ -425,7 +448,6 @@ namespace FlipnicFileToolGUI.Controls
             }
             if (TopLevel.GetTopLevel(this) is MainWindow mw)
             {
-                
                 if (KeyboardState.IsKeyDown(Key.F1))
                 {
                     mw.ShowDialog("Hotkeys", """
@@ -434,54 +456,34 @@ namespace FlipnicFileToolGUI.Controls
                                                         Left mouse drag - Pitch/Yaw adjustment
                                                         Ctrl (hold) - Speed up
                                                         Left shift/Space - Move down/up
-                                                        F/Escape - Toggle fullscreen mode
-                                                        R/T - Rotate model/Disable rotation (fullscreen only)
-                                                        U/I - Play/Pause UV cycle (for FPD files)
+                                                        F - Toggle fullscreen mode
+                                                        U - Play/Pause UV cycle (for FPD files)
                                                         Mouse wheel scroll - Increase/decrease FOV
                                                         Middle/mouse wheel click - Reset FOV
                                                         X - Disable texture, use test pattern instead
-                                                        H/J - Hide/Show interface (windowed only)
+                                                        H - Hide/Show interface
                                                         """, NotificationType.Information);
                 }
                 if (KeyboardState.IsKeyDown(Key.H))
                 {
-                    mw.ModelInfoSection.IsVisible = false;
-                    mw.ModelBottomSection.IsVisible = false;
+                    mw.ModelInfoSection.IsVisible = !mw.ModelInfoSection.IsVisible;
+                    mw.ModelBottomSection.IsVisible = !mw.ModelBottomSection.IsVisible;
+                    _debounce = 10;
                 }
 
                 if (KeyboardState.IsKeyDown(Key.F))
                 {
-                    
-                    fs3 ??= new Fullscreen3D
+                    if (mw.WindowState == WindowState.FullScreen)
                     {
-                        GlControl =
+                        new Thread(() =>
                         {
-                            FsControl = true
-                        }
-                    };
-                    if (fs3.IsVisible) return;
-                    fs3 = new Fullscreen3D
-                    {
-                        GlControl =
-                        {
-                            _vertices = _vertices,
-                            _shader = _shader,
-                            CycleUV = CycleUV,
-                            Rotate = Rotate,
-                            _texture = _texture,
-                            _brickTexture = _brickTexture,
-                            _cameraFront =  _cameraFront,
-                            _cameraPosition =  _cameraPosition,
-                        }
-                    };
-                    ((Fullscreen3D)fs3).GlControl.OpenTkInit();
-                    fs3.Show();
-                }
+                            Thread.Sleep(500);
+                            Dispatcher.UIThread.Post(() => mw.IsTitleBarVisible = true);
+                        }).Start();
+                    }
+                    mw.WindowState = mw.WindowState == WindowState.FullScreen ? WindowState.Normal : WindowState.FullScreen;
 
-                if (KeyboardState.IsKeyDown(Key.J))
-                {
-                    mw.ModelInfoSection.IsVisible = true;
-                    mw.ModelBottomSection.IsVisible = true;
+                    _debounce = 10;
                 }
             }
 
@@ -506,7 +508,7 @@ namespace FlipnicFileToolGUI.Controls
             //Load textures
             _brickTexture = new();
             _brickTexture.Use();
-            _brickTexture.LoadFromFile(_texture);
+            OpenGlTexture.LoadFromFile(_texture);
             _shader.Use();
             _shader.SetInt("texture0", 2);
             ReloadModel = false;

@@ -44,48 +44,42 @@
                     break;
                 }
 
-                if(vc.Flags == (byte)VagFlag.VagfLoopStart)
+                if (vc.Flags == (byte)VagFlag.VagfLoopStart) continue;
+                var samples = new int[VagSampleNibbl];
+
+                // expand 4bit -> 8bit
+                for (var j = 0; j < VagSampleBytes; j++)
                 {
-                    var sample = pcmStream.Length / 2;
+                    try
+                    {
+                        samples[j * 2] = vc.Sample[j] & 0xF;
+                        samples[j * 2 + 1] = (vc.Sample[j] & 0xF0) >> 4;
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        samples[j * 2] = vc.Sample[0] & 0xF;
+                        samples[j * 2 + 1] = (vc.Sample[0] & 0xF0) >> 4; 
+                    }
                 }
-                else
+
+                //Decode samples
+                for (var j = 0; j < VagSampleNibbl; j++)
                 {
-                    var samples = new int[VagSampleNibbl];
-
-                    // expand 4bit -> 8bit
-                    for (var j = 0; j < VagSampleBytes; j++)
+                    // shift 4 bits to top range of int16_t
+                    var s = samples[j] << 12;
+                    if ((s & 0x8000) != 0)
                     {
-                        try
-                        {
-                            samples[j * 2] = vc.Sample[j] & 0xF;
-                            samples[j * 2 + 1] = (vc.Sample[j] & 0xF0) >> 4;
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            samples[j * 2] = vc.Sample[0] & 0xF;
-                            samples[j * 2 + 1] = (vc.Sample[0] & 0xF0) >> 4; 
-                        }
+                        s = (int)(s | 0xFFFF0000);
                     }
 
-                    //Decode samples
-                    for (var j = 0; j < VagSampleNibbl; j++)
-                    {
-                        // shift 4 bits to top range of int16_t
-                        var s = samples[j] << 12;
-                        if ((s & 0x8000) != 0)
-                        {
-                            s = (int)(s | 0xFFFF0000);
-                        }
+                    /* swy: don't overflow the LUT array access; limit the max allowed index */
+                    var predict = Math.Min(vc.Predict, (sbyte)(VagLutDecoder.GetLength(0) - 1));
 
-                        /* swy: don't overflow the LUT array access; limit the max allowed index */
-                        var predict = Math.Min(vc.Predict, (sbyte)(VagLutDecoder.GetLength(0) - 1));
+                    var sample = (s >> vc.Shift) + hist1 * VagLutDecoder[predict, 0] + hist2 * VagLutDecoder[predict, 1];
+                    hist2 = hist1;
+                    hist1 = sample;
 
-                        var sample = (s >> vc.Shift) + hist1 * VagLutDecoder[predict, 0] + hist2 * VagLutDecoder[predict, 1];
-                        hist2 = hist1;
-                        hist1 = sample;
-
-                        pcmWriter.Write((short)(Math.Min(short.MaxValue, Math.Max(sample, short.MinValue))));
-                    }
+                    pcmWriter.Write((short)(Math.Min(short.MaxValue, Math.Max(sample, short.MinValue))));
                 }
             }
             var pcmData = pcmStream.ToArray();

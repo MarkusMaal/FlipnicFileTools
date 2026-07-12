@@ -2,14 +2,17 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:formats="clr-namespace:FlipnicLib.Formats;assembly=FlipnicLib"
+             xmlns:controls="clr-namespace:FlipnicFileToolGUI.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="FlipnicFileToolGUI.Controls.MessageEditor"
-             DataContext="{Binding RelativeSource={RelativeSource Self}}">
+             DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             x:CompileBindings="True">
     <Grid ColumnDefinitions="*,*">
         <ListBox Grid.Column="0" Margin="0,0,0,10" ItemsSource="{Binding MsgObject.Messages}"
                  BorderThickness="1" BorderBrush="Gray" Name="MessageList" SelectionChanged="MessageList_OnSelectionChanged">
         </ListBox>
-        <StackPanel Grid.Column="1" Spacing="10" Margin="10">
+        <StackPanel Grid.Column="1" Spacing="10" Margin="10" DataContext="{Binding}" x:DataType="controls:MessageEditor">
             <Label Content="Table"></Label>
             <WrapPanel ItemSpacing="10" LineSpacing="10">
                 <Button Content="Export TXT" Name="ExportTxtButton" Click="ExportTxtButton_OnClick" />

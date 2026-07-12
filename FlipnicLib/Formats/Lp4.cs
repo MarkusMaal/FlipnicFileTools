@@ -1,616 +1,243 @@
+﻿using FlipnicLib.Types;
+using Syroot.BinaryData;
 using System.Diagnostics;
-using System.Text;
-using BigGustave;
+using System.Text.Json.Serialization;
+using static FlipnicLib.Types.LayoutChunk;
 
-namespace FlipnicLib.Formats;
-
-public class Lp4(byte[] data, string fileName) : FormatBase
+namespace FlipnicLib.Formats
 {
-    public enum FileType {
-        VariableList,
-        StaticModel,
-        AnimatedModel,
-        Particle,
-        HudElement,
-        TextAnimation = 0x16
-    };
-    
-    public FileType Type { get; set; } = (FileType)GetInt32(data, 4);
-    public int ModelCount { get; set; } = GetInt32(data, 0); // not sure if that's what it is anymore
-    public bool HasEmbeddedResources { get; set; } = data[0x11] == 0x01;
-    public bool Is2dAnimation { get; set; } = data[0x13] == 0x01;
-    private List<float[]> verticies = [];
-
-    private readonly List<float[]> _boundingBox = [];
-    
-
-    private int _animationJoints
+    public class Lp4 : FormatBase
     {
-        get
-        {
-            if (data[0x11] != 0x01) return 0;
-            var additionalDataLength = GetInt32(data, 8);
-            return GetInt32(data.Skip(0xF4 + additionalDataLength * 0x10).Take(4).ToArray(), 0);
-        }
-    }
-
-    private List<float> rawVerticies = [];
-
-    private string TexturePath { get; set; } = "";
-    
-    private string FileName { get; set; } = fileName;
-    private List<int> ModelOffsets { get; set; } = [];
-
-    public byte[] Texture { get; set; }
-
-    public List<Model> Models { get; set; } = [];
-    
-    public Model? SelectedModel { get; set; }
-
-    public override string ToString()
-    {
-        var er = HasEmbeddedResources ? "Yes" : "No";
-        var i2 = Is2dAnimation ? "Yes" : "No";
-        var o = $"""
-                Type: {Type.ToString()}
-                Model count: {ModelOffsets.Count}
-                Has bounding box: {er}
-                Is 2D animation: {i2}
-                Timelines: {GetInt32(data.Skip(8).Take(4).ToArray(), 0)}
-                Animation joints: {_animationJoints}
-                
-                """;
-        string[] cols = ["X", "Y", "Z"];
-        List<string[]> rows = [];
-        rows.AddRange(_boundingBox.Select(vertex => (string[])[DotFloatString(vertex[0]), DotFloatString(vertex[1]), DotFloatString(vertex[2])]));
-        o += $"""
-              
-              Bounding box:
-              {StaticUtils.GenerateTable(cols, rows, StaticUtils.SimpleOutput)}
-              
-              """;
-        rows.Clear();
-        //if (Type != FileType.StaticModel) return o;
-        o += $"""
-
-              Models:
-              
-              """;
-        cols = ["Name", "Address", "Scale", "Offset", "Texture", "Polygons", "Lightmaps", "Compressed"];
-        rows.AddRange(Models.Select(model => model.GetRow()));
-        o += StaticUtils.GenerateTable(cols, rows, StaticUtils.SimpleOutput);
-        if (_animationJoints <= 0) return o;
-        o += $"""
-
-              Joints:
-
-              """;
-        cols = ["Name", "Vertices", "Position", "Size"];
-        rows.Clear();
-        if (Models.Count <= 0) return o;
-        rows.AddRange(Models[0].AnimationJoints.Values.Select(jnt => new[] { jnt.Name, (jnt.Indicies ?? []).Length.ToString(), $"{DotFloatString(jnt.Position?[0] ?? float.NaN)}x{DotFloatString(jnt.Position?[1] ?? float.NaN)}x{DotFloatString(jnt.Position?[2] ?? float.NaN)}", $"{DotFloatString(jnt.Skew?[0] ?? float.NaN)}x{DotFloatString(jnt.Skew?[5] ?? float.NaN)}x{DotFloatString(jnt.Skew?[8] ?? float.NaN)}" }));
-        o += StaticUtils.GenerateTable(cols, rows, StaticUtils.SimpleOutput);
-        return o;
-    }
-
-    /// <summary>
-    /// Swap the selected model
-    /// </summary>
-    /// <param name="model">Model object from the Models list</param>
-    public void SetSelectedModel(Model model)
-    {
-        SelectedModel = model;
-        if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-                SelectedModel.Texture.ToUpper()))) return;
-        var fs = File.OpenRead(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-            SelectedModel.Texture.ToUpper()));
-        var d = new byte[fs.Length];
-        fs.ReadExactly(d, 0, d.Length);
-        if (SelectedModel.TextureCache == null)
-        {
-            var tim2 = new Tim2(d, SelectedModel.Texture);
-            var ms = new MemoryStream();
-            tim2.SavePng(ms);
-            Texture = ms.ToArray();
-            SelectedModel.TextureCache = ms.ToArray();
-        }
-        else
-        {
-            Texture = SelectedModel.TextureCache;
-        }
-    }
-
-    // this parser seems to fail most of the time, so further adjustments maybe needed
-    private void GetModelOffset()
-    {
-        try
-        {
-            if (StaticUtils.ForceBruteForce)
-            {
-                BruteForceMethod();
-                return;
-            }
-            var hasBoundingBox = data[17] == 0x01;
-            var additionalDataLength = GetInt32(data, 8); 
-            var i = 0x20;
-            if (hasBoundingBox) i += 0x80;
-            i += additionalDataLength * 0x10;
-            while ((i < data.Length) && (i >= 0))
-            {
-                var attributeSetCount = GetInt32(data, i + 4);
-                var extraUnknownDataCount = GetInt32(data, i + 12);
-                var modelOffset = i + 0x20;
-                var model = new Model { Address = modelOffset, Name = GetStringAt(data, modelOffset) };
-                var layoutCounts = GetInt32(data, i + 4);
-                var hasHitbox = data[i + 0xC] == 0x01;
-                i += 0x30; // name and params
-                model.Lightmap = [];
-                i += 0x10;
-                for (var k = 0; k < layoutCounts; k++)
-                {
-                    StaticUtils.LiveLoadStatus = $"Parsing layouts ({DotFloatString((float)Math.Round(k/(double)layoutCounts*100.0, 2))}% complete)";
-                    var keyframeCount = GetInt32(data, i);
-                    var animationJoints = GetInt32(data, i + 0x14);
-                    var hasLightMapData = data[i + 0x20] == 0x01;
-                    var hasUnknownData = data[i + 0x24] == 0x01;
-                    var lightMapLength = GetInt32(data, i + 0x28);
-                    
-                    if (animationJoints > 65536)
-                    {
-                        StaticUtils.DecodeColors("~-CError~--: Animation joint count was too large, continuing would cause hangs! Parser was halted!\n");
-                        BruteForceMethod();
-                        return;
-                    }
-                    if (keyframeCount > 65536)
-                    {
-                        StaticUtils.DecodeColors("~-CError~--: Keyframe count was too large, continuing would cause hangs! Parser was halted!\n");
-                        BruteForceMethod();
-                        return;
-                    }
-                    if (lightMapLength > 65536)
-                    {
-                        lightMapLength = 0;
-                    }
-                    model.Scale =
-                    [
-                        GetFloat(data, i + 0x30), GetFloat(data, i + 0x44),
-                        GetFloat(data, i + 0x58)
-                    ];
-                    model.Offset =
-                    [
-                        GetFloat(data, i + 0x60), GetFloat(data, i + 0x64),
-                        GetFloat(data, i + 0x68)
-                    ];
-                    i += 0x80;
-                    if (hasUnknownData)
-                    {
-                        i += 0x30 * (GetInt32(data, 0x24));
-                    }
-                    for (var j = 0; j < (hasLightMapData ? lightMapLength : 0); j++)
-                    {
-                        StaticUtils.LiveLoadStatus = $"Parsing lightmaps";
-                        model.Lightmap.Add([
-                            GetFloat(data, i), GetFloat(data, i + 0x4),
-                            GetFloat(data, i + 0x8), GetFloat(data, i + 0xC)
-                        ]);
-                        i += 0x10;
-                    }
-
-                    i += keyframeCount * 0x30;
-                    for (var a = 0; a < animationJoints; a++)
-                    {
-                        StaticUtils.LiveLoadStatus = $"Parsing animation joints ({DotFloatString((float)Math.Round(a/(double)animationJoints*100.0, 2))}% complete)";
-                        var sp = i + (0x60 * a);
-                        var name = GetString(data.Skip(sp - 0x10).ToArray());
-                        if (!Ascii.IsValid(name) || (name == "")) continue;
-                        var skew = new List<float?>();
-                        var pos = new List<float?>();
-                        for (var b = sp + 0x20; b < sp + 0x50; b+=4)
-                        {
-                            skew.Add(GetFloat(data, b));
-                        }
-                        for (var b = sp + 0x50; b < sp + 0x5C; b+=4)
-                        {
-                            pos.Add(GetFloat(data, b));
-                        }
-
-                        while (model.AnimationJoints.ContainsKey(name))
-                        {
-                            name += " (1)";
-                        }
-                        model.AnimationJoints.Add(name, new Joint()
-                        {
-                            Name = name,
-                            Skew = skew.ToArray(),
-                            Position = pos.ToArray()
-                        });
-                    }
-                    i += 0x60 * animationJoints;
-                }
-
-                if (hasHitbox)
-                {
-                    i += 0x80;
-                }
-
-                // model
-                var animIndices = GetInt32(data, i + 0x1C);
-                if (animIndices > 65536)
-                {
-                    StaticUtils.DecodeColors("~-CError~--: Animation indices count was too large, continuing would cause hangs! Parser was halted!\n");
-                    BruteForceMethod();
-                    return;
-                }
-                var padding = 0x10 * (GetInt32(data, i + 0x18));
-                i += 0x20; // model identifier, I guess?
-                i += padding;
-                if (animIndices > 0) i += 0x10;
-                for (var h = 0; h < animIndices; h++)
-                {
-                    StaticUtils.LiveLoadStatus = $"Parsing animation indicies ({DotFloatString((float)Math.Round(h/(double)animIndices*100.0, 2))}% complete)";
-                    var count = GetInt32(data, i+0x20);
-                    var name = GetString(data.Skip(i).Take(20).ToArray());
-                    if (model.AnimationJoints.ContainsKey(name))
-                    {
-                        model.AnimationJoints[name].DecodeIndicies(data.Skip(i).Take(0x30 + count * 0x10).ToArray());
-                    }
-                    else
-                    {
-                        var j = new Joint()
-                        {
-                            Name = name
-                        };
-                        j.DecodeIndicies(data.Skip(i).Take(0x30 + count * 0x10).ToArray());
-                        model.AnimationJoints.Add(name, j);
-                    }
-
-                    i += 0x30 + count * 0x10;
-                }
-                var vectCount = GetInt32(data, i);
-                var normalCount = GetInt32(data, i + 4);
-                var textureCoordCount = GetInt32(data, i + 12);
-                model.AppendVerticies(i, data);
-                i += 0x10; // the counts
-                i += 0x10 * vectCount; // vertices
-                i += 0x8 * normalCount; // normals
-                i += 0x8 * textureCoordCount; // texture coordinates
-                i += 0x80; // weird section that says "prefix" something-something
-                model.Texture = GetStringAt(data, i);
-                i += 0x30; // footer containing the name of the texture
-                Models.Add(model);
-                if (model.AnimationJoints.Count > 0) break;
-            }
-
-
-            if (Models.Count > 0)
-            {
-                SelectedModel = Models[0];
-            }
-
-            if (SelectedModel?.RawVertices.Count != 0)
-            {
-                StaticUtils.DecodeColors("~-ASuccess~--: Successfully decoded the LP4 file!");
-                Console.WriteLine();
-                return;
-            }
-            Models.Clear();
-            BruteForceMethod();
-        }
-        catch when (!Debugger.IsAttached)
-        {
-            BruteForceMethod();
-        }
-    }
-    
-    private void BruteForceMethod()
-    {
-        StaticUtils.DecodeColors("~-EWarning~--: failed to parse LP4 file correctly, falling back to brute-force method!\n");
-        int i;
-        var modelIdx = 0;
-        List<string> names = [];
-        for (i = 0x30; i < data.Length - 0x20; i += 0x10)
-        {
-            if (GetInt32(data, i + 0x2C) == 0 && GetInt32(data, i + 0x3C) == 0) continue; // joint definition, ignore those
-            var nameTest =  GetStringAt(data, i);
-            if (nameTest.Contains("JNT")) continue;
-            if (names.Contains(nameTest)) continue;
-            var validLetters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_";
-            var isValid = nameTest.All(letter => validLetters.Contains(letter));
-            if (!isValid || !Ascii.IsValid(nameTest) || nameTest.Length < 0x3) continue;
-            names.Add(nameTest);
-        }
-
-        names = names[1..];
-        for (i = 0; i < data.Length - 0x20; i+=0x10)
-        {
-            StaticUtils.LiveLoadStatus = $"Scanning for 3D model data ({DotFloatString((float)Math.Round(i/(double)data.Length*100.0, 2))}% complete)";
-            var c1 = GetInt32(data, i);
-            var c2 = GetInt32(data, i+4);
-            var c3 = GetInt32(data, i+8);
-            var c4 = GetInt32(data, i+12);
-            if (c1 > 0)
-            {
-                if (i + 0x10 + c1 * 0x10 > data.Length) continue;
-                var ok = true;
-                for (var j = i + 0x10; j < i + 0x10 + c1 * 0x10; j += 0x10)
-                {
-                    if (float.IsNaN(GetFloat(data, j))) ok = false;
-                    if (float.IsNaN(GetFloat(data, j+4))) ok = false;
-                    if (float.IsNaN(GetFloat(data, j+8))) ok = false;
-                    if (Math.Abs(GetFloat(data, j+12) - 1f) > 0.0001) ok = false;
-                }
-
-                if (!ok) continue;
-            }
-
-            if (c2 > 0)
-            {
-                if (i + 0x10 + c1 * 0x10 + c2 * 0x8 > data.Length) continue;
-                var ok = true;
-                for (var j = i + 0x10 + c1 * 0x10; j < i + 0x10 * c1 + 0x10 + c2 * 0x8; j += 0x8)
-                {
-                    if (GetInt16(data, j + 6) == 0) continue;
-                    ok = false;
-                    break;
-                }
-
-                if (!ok) continue;
-            }
-
-            if (c4 > 0)
-            {
-                if (i + 0x10 + c1 * 0x10 + c2 * 0x8 + c3 * 0x4 + c4 * 0x8 > data.Length) continue;
-                var ok = true;
-                var start = i + 0x10 + c1 * 0x10 + c2 * 0x8 + c3 * 0x4;
-                var end =  i + 0x10 + c1 * 0x10 + c2 * 0x8 + c3 * 0x4 + c4 * 0x8;
-                for (var j = start; j < end; j += 0x8)
-                {
-                    ok = GetUInt16(data, j + 6) == 0x00 ||
-                         GetUInt16(data, j + 6) == 0x01 ||
-                         GetUInt16(data, j + 6) == 0x8000 ||
-                         GetUInt16(data, j + 6) == 0x8001;
-                    if (!ok) break;
-                }
-
-                if (!ok) continue;
-            }
-
-            if (c1 == 0) continue;
-            if (i < 0x80) continue;
-            try
-            {
-                var modelEnd = i + 0x10 + (c1 * 0x10) + (c2 * 0x8) + (c3 * 0x4) + (c4 * 0x08);
-                var tm = new Model
-                {
-                    Name = $"Unrecognized model {modelIdx++}"
-                };
-                if (names.Count > Models.Count)
-                {
-                    tm.Name = names[Models.Count];
-                }
-                tm.AppendVerticies(i, data);
-                tm.Offset = [0, 0 ,0];
-                tm.Address = i;
-                tm.Scale = [1, 1, 1];
-
-                if (tm.RawVertices.Count > 0)
-                {
-                    StaticUtils.DecodeColors($"~-ASuccess~--: Detected valid model data at offset 0x{i:X}\n");
-
-                    for (var j = 0x0; j < 0x500; j++)
-                    {
-                        var texOffset = modelEnd + (0x10 * j);
-                        if (texOffset >= data.Length) break;
-                        tm.Texture = GetString(data.Skip(texOffset).Take(0x20).ToArray());
-                        if (!Ascii.IsValid(tm.Texture) || tm.Texture.Length == 0 ||
-                            !tm.Texture.ToLower().EndsWith(".tm2")) continue;
-                        break;
-                    }
-                    if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-                            tm.Texture.ToUpper())))
-                    {
-                        StaticUtils.DecodeColors("~-EWarning~--: The model does not have a texture\n");
-                    }
-
-                    Models.Add(tm);
-                }
-                else
-                {
-                    i += 0x10;
-                }
-            }
-            catch
-            {
-                StaticUtils.DecodeColors($"~-CError~--: Attempt to read from offset 0x{i:X} threw an error\n");
-            }
-        }
-
-        if (Models.Count <= 0) return;
-        foreach (var model in Models.ToArray().Reverse().ToArray())
-        {
-            StaticUtils.LiveLoadStatus = "Precaching textures";
-            SetSelectedModel(model);
-        }
-
-    }
-    
-    /// <summary>
-    /// Process the data provided
-    /// </summary>
-    public void Read()
-    {
-        try
-        {
-            GetModelOffset();
-            ParseBoundingBox();
-            if (rawVerticies.Count > 0) return;
-            if (SelectedModel == null) return;
-            if (Models.Count == 0)
-            {
-                return;
-            }
-            if (!File.Exists(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-                    SelectedModel.Texture.ToUpper()))) return;
-            var fs = File.OpenRead(Path.Combine(new FileInfo(FileName).Directory?.FullName ?? "/",
-                SelectedModel.Texture.ToUpper()));
-            var d = new byte[fs.Length];
-            fs.ReadExactly(d, 0, d.Length);
-            var tim2 = new Tim2(d, SelectedModel.Texture);
-            var ms = new MemoryStream();
-            tim2.SavePng(ms);
-            Texture = ms.ToArray();
-            foreach (var model in Models.ToArray().Reverse().ToArray())
-            {
-                StaticUtils.LiveLoadStatus = "Precaching textures";
-                SetSelectedModel(model);
-            }
-        }
-        catch (Exception ex) when (!Debugger.IsAttached)
-        {
-            StaticUtils.DecodeColors($"~-CError~--: LP4.Read method exception — {ex.Message}\n");
-            return;
-        }
-    }
-
-    /// <summary>
-    /// Get the 3D float array of the selected model
-    /// </summary>
-    /// <returns>An array containing chunks of 8 * sizeof(float), where first 2 entries are XY UV coordinates, next 3 are XYZ vertex coordinates, final 3 are XYZ normal coordinates</returns>
-    public float[] GetVerticies()
-    {
-        if ((rawVerticies.Count == 0) && (Models.Count > 0) && (SelectedModel != null))
-        {
-            return SelectedModel.RawVertices.ToArray();
-        }
-        return rawVerticies.ToArray();
-    }
-
-    private void ParseBoundingBox()
-    {
-        if (data[0x11] != 0x01) return;
-        var additionalDataLength = GetInt32(data, 8);
-        var boxRaw = data.Skip(0x20 + additionalDataLength * 0x10).Take(0x80).ToArray();
-        var boxRawFloats = new List<float[]>();
-        for (var i = 0; i < boxRaw.Length; i += 0x10)
-        {
-            boxRawFloats.Add([GetFloat(boxRaw, i), GetFloat(boxRaw, i+4), GetFloat(boxRaw, i+8)]);
-        }
-        // basically the points in the file define the top and bottom side of the rectangle let's call these 0 1 2 3 4 5 6 7,
-        // where 0 1 2 3 are the points of the first rectangle in a 3D space and 4 5 6 7 define the second rectangle
-        //
-        // with some very basic 3D geometry we can simply "connect the dots" to get the remaining triangles required to generate a full
-        // box shape
-        foreach (var i in new[]{ 0, 1, 2, 1, 2, 3, 4, 5, 6, 6, 7, 5, 2, 3, 6, 3, 7, 6, 0, 1, 5, 0, 5, 4, 2, 0, 4, 6, 4, 2, 1, 3, 7, 1, 5, 7 })
-        {
-            _boundingBox.Add(boxRawFloats[i]);   
-        }
-    }
-
-    public float[] GetBoundingBox()
-    {
-        var floats = new List<float>();
-        foreach (var vtx in _boundingBox)
-        {
-            floats.Add(0f);
-            floats.Add(0f);
-            floats.AddRange(vtx);
-            floats.Add(0f);
-            floats.Add(0f);
-            floats.Add(0f);
-        }
-
-        return floats.ToArray();
-    }
-    
-    public class Joint
-    {
-        public string Name { get; set; }
-        public int[] Indicies { get; set; }
-        public float[] UnknownFloats { get; set; }
-    
-        public float?[] Skew { get; set; }
-        public float?[] Position { get; set; }
-    
-        public Joint() {}
-
-        public void DecodeIndicies(byte[] data)
-        {
-            Name = GetString(data.Take(0x20).ToArray());
-            var count =  GetInt32(data, 0x20);
-            List<int> indicies = [];
-            List<float> unknownFloats = [];
-            for (var i = 0x30; i < count * 0x10 + 0x30; i += 0x10)
-            {
-                indicies.Add(GetInt32(data, i));
-                unknownFloats.Add(GetFloat(data, i + 4));
-            }
-
-            Indicies = indicies.ToArray();
-            UnknownFloats = unknownFloats.ToArray();
-        }
-    }
-    
-
-    public class Model
-    {
-        public string Name { get; set; }
-        public string Texture { get; set; }
-        
-        public float[] Scale { get; set; }
-        public float[] Offset { get; set; }
-        public int Address { get; set; }
-        public byte[]? TextureCache { get; set; }
-
-        public List<float[]> Lightmap { get; set; } = [];
-        public List<float> RawVertices { get; set; } = [];
-        
-        public List<byte[]> Colors { get; set; } = [];
-
-        private bool IsOptimized { get; set; } = false;
-
-        public Dictionary<string, Joint> AnimationJoints { get; set; } = [];
-
-        public bool HasEmbeddedTexture = true;
+        /// <summary>
+        /// Required. First 0x20 bytes of the LP4 file
+        /// </summary>
+        public Header FormatHeader { get; set; }
 
         /// <summary>
-        /// Generate a table row of this model
+        /// Required. Sometimes a model may have multiple timelines that the game can choose between.
+        /// There has to be at least 1 timeline and these are defined right after the
+        /// format header. This also means the minimum size for a LP4 file is 48 bytes (1 header, 1 timeline).
         /// </summary>
-        /// <returns>Table row containing information about the model, including name, address, scale, offset, texture and vertex count</returns>
-        public string[] GetRow()
+        public Timeline[]? Timelines { get; set; }
+
+        /// <summary>
+        /// Optional. This is a box that defines global bounds for every model inside the LP4 file
+        /// (for position calculation purposes).
+        /// </summary>
+        public Vec4[]? BoundingBox { get; set; }
+
+        /// <summary>
+        /// Optional. These define the actual models, animations, joints, etc. of a specific model.
+        /// If these parts and bounding box are omitted, that likely means this file is used as a
+        /// trigger for some kind of action (e.g. playing a sound effect).
+        /// </summary>
+        public List<LayoutChunk>? LayoutChunks { get; set; }
+        
+        [JsonIgnore]
+        public LayoutChunk SelectedModel { get; set; }
+        
+        [JsonIgnore]
+        public byte[]? CachedTexture { get; set; }
+        
+        [JsonIgnore]
+        public string? FilePath { get; set; }
+
+        /// <summary>
+        /// This constructor is present for serialization purposes
+        /// </summary>
+        public Lp4()
         {
-            try
+
+        }
+
+        public Lp4(FileStream data) : this((Stream)data)
+        {
+            FilePath = data.Name;
+        }
+        
+        /// <summary>
+        /// Opens and processes a LP4 file
+        /// </summary>
+        /// <param name="data">Stream containing the LP4 data (any class that extends Stream is also accepted here, e.g. FileStream)</param>
+        public Lp4(Stream data)
+        {
+            var dataBuffer = new byte[32];
+            data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
+            FormatHeader = new Header()
             {
-                return
-                [
-                    Name, Address.ToString("X"),
-                    $"{DotFloatString(Scale[0])}x{DotFloatString(Scale[1])}x{DotFloatString(Scale[2])}",
-                    $"{DotFloatString(Offset[0])}x{DotFloatString(Offset[1])}x{DotFloatString(Offset[2])}",
-                    (Ascii.IsValid(Texture) && Texture.Length > 0) ? Texture : HasEmbeddedTexture ? "Embedded material" : "N/A",
-                    RawVertices.Count.ToString(),
-                    Lightmap.Count.ToString(),
-                    IsOptimized ? "Yes" : "No"
-                ];
+                HeaderSize = GetInt32(dataBuffer, 0),
+                HasLayouts = dataBuffer[4] > 0,
+                LayoutChunkPropertiesCount = GetInt32(dataBuffer, 8),
+                TimelineCount = GetInt32(dataBuffer, 12),
+                UnkFlamingo = dataBuffer[16],
+                HasBoundingBox = dataBuffer[17] > 0,
+                Padding = GetInt16(dataBuffer, 18),
+                UnkLion = GetFloat(dataBuffer, 20),
+                EndPadding = GetInt64(dataBuffer, 24)
+            };
+            Timelines = new Timeline[FormatHeader.TimelineCount];
+            BoundingBox = FormatHeader.HasBoundingBox ? new Vec4[8] : [];
+
+            for (var i = 0; i < Timelines.Length; i++)
+            {
+                dataBuffer = new byte[16];
+                data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
+                Timelines[i] = new Timeline
+                {
+                    FrameCountA = GetInt32(dataBuffer, 0),
+                    FrameCountB = GetInt32(dataBuffer, 4),
+                    UnkBear = GetInt32(dataBuffer, 8),
+                    LoopingEnable = dataBuffer[12] > 0,
+                };
             }
-            catch
+
+            for (var i = 0; i < BoundingBox.Length; i++)
             {
-                return ["Error", "Error", "Error", "Error", "Error", "Error", "Error", "Error"];
+                dataBuffer = new byte[16];
+                data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
+                BoundingBox[i] = new Vec4
+                {
+                    X = GetFloat(dataBuffer, 0),
+                    Y = GetFloat(dataBuffer, 4),
+                    Z = GetFloat(dataBuffer, 8),
+                    W = GetFloat(dataBuffer, 12),
+                };
+            }
+            if (FormatHeader.HasLayouts)
+            {
+                dataBuffer = new byte[32];
+                data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
+                var firstLayoutHeader = new LayoutHeader
+                {
+                    ChunkCount = GetInt32(dataBuffer, 0),
+                    LayoutCount = GetInt32(dataBuffer, 4),
+                    Padding = GetInt32(dataBuffer, 8),
+                    HasHitbox = dataBuffer[12] > 0,
+                    UnkCount = GetInt32(dataBuffer, 16),
+                    UnkRabbit = GetInt32(dataBuffer, 20),
+                    UnkAlpaca = GetInt32(dataBuffer, 24),
+                    MaterialsHaveAdditionalSection = GetInt32(dataBuffer, 28) == 1,
+                };
+                LayoutChunks = [];
+                data.Position -= 32;
+                var startPos = data.Position;
+                if (firstLayoutHeader.LayoutCount > 0)
+                {
+                    var max = 1;
+                    var i = 0;
+                    while (data.Position < data.Length)
+                    {
+                        
+                        LayoutChunks.Add(new LayoutChunk(data, FormatHeader.LayoutChunkPropertiesCount));
+                        dataBuffer = new byte[32];
+                        if (data.Position > data.Length - 0x20)
+                        {
+                            break;
+                        }
+                        data.ReadExactly(dataBuffer, 0, dataBuffer.Length);
+                        if (GetString(dataBuffer).Length > 0)
+                        {
+                            data.Position -= 0x40;
+                        } else
+                        {
+                            data.Position -= 0x20;
+                        }
+                        if (data.Position >= data.Length) break;
+                        i++;
+                    }
+                }
             }
         }
 
-        public byte[] GenerateDummyTexture()
+        /// <summary>
+        /// Extract an independently animated part of the model.
+        /// </summary>
+        /// <param name="joint">Index array to extract</param>
+        /// <param name="inputModel">Full 3D model inside a layout chunk</param>
+        /// <returns>Floats ready for rendering (Ux-Uy-Vx-Vy-Vz-Nx-Ny-Nz)</returns>
+        public float[] DecodeIndices(JointIndexArr joint, RawModel inputModel)
         {
-            if ((Colors.Count == 0) && (Lightmap.Count > 0))
+            var vertices = new List<Vec4>();
+            var normals = new List<Normal>();
+            var colors = new List<Pixel>();
+            var uvs = new List<UV>();
+            List<bool[]> pattern = [[false, true], [true, false], [true, true]];
+            foreach (var p in joint.Indices)
             {
-                Colors.Add([(byte)(255 * Lightmap[0][0]), (byte)(255 * Lightmap[0][1]), (byte)(255 * Lightmap[0][2]), (byte)(255 * Lightmap[0][3])]);
+                if (inputModel.Vertices.Length > p.Index) vertices.Add(inputModel.Vertices[p.Index]);
+                if (inputModel.Normals.Length > p.Index) normals.Add(inputModel.Normals[p.Index]);
+                if (inputModel.Pixels.Length > p.Index) colors.Add(inputModel.Pixels[p.Index]);
+                var first = pattern[0];
+                if (inputModel.UVs.Length > p.Index)
+                {
+                    var uv = inputModel.UVs[p.Index];
+                    var nUv = uv with { DuplicationFlagA = first[0], DuplicationFlagB = first[1] };
+                    uvs.Add(nUv);
+                }
+                pattern.RemoveAt(0);
+                pattern.Add(first);
             }
-            var png = PngBuilder.Create(Colors.Count, 1, true);
-            foreach (var (i, col) in Colors.Index())
+            return GetRawVertices(new RawModel()
             {
-                png.SetPixel(new Pixel(col[0], col[1], col[2], (byte)(col[3] * 2 - 1), false), i, 0);
+                Vertices = [.. vertices],
+                Normals = [.. normals],
+                Pixels = [.. colors],
+                UVs = [.. uvs]
+            });
+        }
+
+        /// <summary>
+        /// Decode vertices for use with OpenTK or exporting as Wavefront OBJ
+        /// </summary>
+        /// <param name="inputModel">Full model stored inside a LayoutChunk</param>
+        /// <returns>Floats ready for rendering (Ux-Uy-Vx-Vy-Vz-Nx-Ny-Nz)</returns>
+        public float[] GetRawVertices(RawModel inputModel)
+        {
+            MemoryStream ms = new();
+
+            ms.Write(BitConverter.GetBytes(inputModel.VertexCount));
+            ms.Write(BitConverter.GetBytes(inputModel.NormalCount));
+            ms.Write(BitConverter.GetBytes(inputModel.ColorCount));
+            ms.Write(BitConverter.GetBytes(inputModel.UvCount));
+            foreach (var v in inputModel.Vertices)
+            {
+                ms.Write(v.X);
+                ms.Write(v.Y);
+                ms.Write(v.Z);
+                ms.Write(v.W);
             }
-            var ms = new MemoryStream();
-            png.Save(ms);
-            return ms.ToArray();
+            foreach (var n in inputModel.Normals)
+            {
+                ms.Write(n.X);
+                ms.Write(n.Y);
+                ms.Write(n.Z);
+                ms.Write(n.W);
+            }
+            foreach (var p in inputModel.Pixels)
+            {
+                ms.Write(p.R);
+                ms.Write(p.G);
+                ms.Write(p.B);
+                ms.Write(p.A);
+            }
+            foreach (var u in inputModel.UVs)
+            {
+                ms.Write(u.X);
+                ms.Write(u.Y);
+                ms.Write(u.Divider);
+                ms.WriteByte((byte)(u.DuplicationFlagB ? 0x01 : 0x0));
+                ms.WriteByte((byte)(u.DuplicationFlagA ? 0x80 : 0x0));
+            }
+
+            for (var i = 0; i < 0x18; i++)
+            {
+                ms.WriteByte(0);
+            }
+
+            var msArray = ms.ToArray();
+            ms.Close();
+
+            return AppendVerticies(0, msArray);
         }
 
         /// <summary>
@@ -618,9 +245,11 @@ public class Lp4(byte[] data, string fileName) : FormatBase
         /// </summary>
         /// <param name="offset">Physical location of the vertex data (including the first 0x10 bytes that have the length)</param>
         /// <param name="data">LP4 binary data</param>
-        public void AppendVerticies(int offset, byte[] data)
+        private float[] AppendVerticies(int offset, byte[] data)
         {
-            if ((offset >= data.Length) || (offset < 0)) return;
+            // yes, this is jank, but it works, so I don't touch it
+            var rawVertices = new List<float>();
+            if ((offset >= data.Length) || (offset < 0)) return [];
             var len = BitConverter.ToInt32(data, offset); // vertex count
             var nlen = BitConverter.ToInt32(data, offset + 4); // normal count
             var clen = BitConverter.ToInt32(data, offset + 8); // color count
@@ -634,15 +263,13 @@ public class Lp4(byte[] data, string fileName) : FormatBase
 
             var uvOffset = texOffset;
             var comp = -1;
-            var mask = 0x01;
-            var matchId = 0;
+            const int mask = 0x01;
+            const int matchId = 0;
             var modelBounds = offset + len * 0x10;
             var normalIdx = 0;
-            bool sw = false;
             var partIdx = StaticUtils.AlternateNormals ? 0 : 1;
             for (var j = offset + 0x10; j < offset + (Math.Max(len, uvlen)) * 0x10 - 0x10; j += 0x10)
             {
-                if ((j - offset - 0x10) % 0x30 != 0) IsOptimized = true; // if the model is not compressed, it'll jump forward by 0x30 every time
                 var x1 = BitConverter.ToSingle(data.Skip(j).Take(4).ToArray(), 0);
                 var y1 = BitConverter.ToSingle(data.Skip(j + 0x4).Take(4).ToArray(), 0);
                 var z1 = BitConverter.ToSingle(data.Skip(j + 0x8).Take(4).ToArray(), 0);
@@ -667,32 +294,32 @@ public class Lp4(byte[] data, string fileName) : FormatBase
                 }
 
                 var mul = partIdx % 2 == 0 ? 1 : -1;
-                if (colOffset < texOffset) { Colors.Add([data[colOffset], data[colOffset+1], data[colOffset+2], data[colOffset+3]]); }
-                RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset).Take(8).ToArray()));
-                RawVertices.Add(x1);
-                RawVertices.Add(y1);
-                RawVertices.Add(z1);
-                RawVertices.AddRange(DecodeNormals(
+                //if (colOffset < texOffset) { Colors.Add([data[colOffset], data[colOffset + 1], data[colOffset + 2], data[colOffset + 3]]); }
+                rawVertices.AddRange(DecodeCoords(data.Skip(uvOffset).Take(8).ToArray()));
+                rawVertices.Add(x1);
+                rawVertices.Add(y1);
+                rawVertices.Add(z1);
+                rawVertices.AddRange(DecodeNormals(
                     data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx + 0))).Take(8).ToArray(),
                     GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0), mul));
                 if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V1 {j:X}/{j + 4:X}/{j + 8:X}");
 
-                if (colOffset < texOffset) { Colors.Add([data[colOffset], data[colOffset+1], data[colOffset+2], data[colOffset+3]]); }
-                RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset + 8).Take(8).ToArray()));
-                RawVertices.Add(x2);
-                RawVertices.Add(y2);
-                RawVertices.Add(z2);
-                RawVertices.AddRange(DecodeNormals(
+                //if (colOffset < texOffset) { Colors.Add([data[colOffset], data[colOffset + 1], data[colOffset + 2], data[colOffset + 3]]); }
+                rawVertices.AddRange(DecodeCoords(data.Skip(uvOffset + 8).Take(8).ToArray()));
+                rawVertices.Add(x2);
+                rawVertices.Add(y2);
+                rawVertices.Add(z2);
+                rawVertices.AddRange(DecodeNormals(
                     data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx + 1))).Take(8).ToArray(),
                     GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0), mul));
                 if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V2 {j + 0x10:X}/{j + 0x14:X}/{j + 0x18:X}");
 
-                if (colOffset < texOffset) { Colors.Add([data[colOffset], data[colOffset+1], data[colOffset+2], data[colOffset+3]]); }
-                RawVertices.AddRange(DecodeCoords(data.Skip(uvOffset + 16).Take(8).ToArray()));
-                RawVertices.Add(x3);
-                RawVertices.Add(y3);
-                RawVertices.Add(z3);
-                RawVertices.AddRange(DecodeNormals(
+                //if (colOffset < texOffset) { Colors.Add([data[colOffset], data[colOffset + 1], data[colOffset + 2], data[colOffset + 3]]); }
+                rawVertices.AddRange(DecodeCoords(data.Skip(uvOffset + 16).Take(8).ToArray()));
+                rawVertices.Add(x3);
+                rawVertices.Add(y3);
+                rawVertices.Add(z3);
+                rawVertices.AddRange(DecodeNormals(
                     data.Skip(offset + len * 0x10 + 0x10 + (0x8 * (normalIdx + 2))).Take(8).ToArray(),
                     GetInt16(data.Skip(uvOffset + 4).Take(2).ToArray(), 0), mul));
                 if (Debugger.IsAttached) Console.WriteLine($"Debug: Vertex V3 {j + 0x20:X}/{j + 0x24:X}/{j + 0x28:X}");
@@ -710,8 +337,8 @@ public class Lp4(byte[] data, string fileName) : FormatBase
                 {
                     comp = pattern;
                 }
-
-                var pattern2 = GetUInt16(data.Skip(uvOffset + 24 + 6).Take(2).ToArray(), 0);
+                var patData = data.Skip(uvOffset + 24 + 6).Take(2).ToArray();
+                var pattern2 = GetUInt16(patData, 0);
 
                 partIdx++;
                 if ((pattern2 & comp) == comp)
@@ -742,48 +369,234 @@ public class Lp4(byte[] data, string fileName) : FormatBase
                 normalIdx += 1;
                 colOffset += 4;
             }
-
-            if (!HasEmbeddedTexture) return;
-            if (Colors.Count == 0) return;
-            var cIdx = 0;
-            for (var i = 0; i < RawVertices.Count; i += 8)
-            {
-                RawVertices[i] = cIdx / (float)Colors.Count;
-                cIdx++;
-            }
+            return [.. rawVertices];
         }
+
+
 
         /// <summary>
         /// Extract UV coordinates from the 8 bytes provided
         /// </summary>
         /// <param name="data">8 byte chunk containing the UV coordinate</param>
         /// <returns>X and Y coordinates</returns>
-        public float[] DecodeCoords(byte[] data)
+        public static float[] DecodeCoords(byte[] data)
         {
             // at +0x6h is the UV flags value, it describes how vertices should be parsed
             // explanation in Model.AppendVertices
             var div = BitConverter.ToInt16(data.Skip(4).Take(2).ToArray(), 0);
             var fx = BitConverter.ToInt16(data.Take(2).ToArray(), 0);
             var fy = BitConverter.ToInt16(data.Skip(2).Take(2).ToArray(), 0);
-            if (fx != 0 || fy != 0)
-            {
-                HasEmbeddedTexture = false;
-            }
-            return [(float)fx/div, -(float)fy/div]; // invert, because otherwise it's upside-down
+            return [(float)fx / div, -(float)fy / div]; // invert, because otherwise it's upside-down
         }
 
         /// <summary>
         /// Extract normal coordinates from the 8 bytes provided 
         /// </summary>
         /// <param name="data">8 byte chunk containing the normal coordinate</param>
+        /// <param name="div">Value divider</param>
+        /// <param name="mul">Value multiplier</param>
         /// <returns>X, Y and Z coordinates</returns>
         public static float[] DecodeNormals(byte[] data, short div, int mul)
         {
-            var x =  mul * BitConverter.ToInt16(data.Take(2).ToArray(), 0) / (float)div;
-            var y =  mul * BitConverter.ToInt16(data.Skip(2).Take(2).ToArray(), 0) / (float)div;
-            var z =  mul * BitConverter.ToInt16(data.Skip(4).Take(2).ToArray(), 0) / (float)div;
+            var x = mul * BitConverter.ToInt16(data.Take(2).ToArray(), 0) / (float)div;
+            var y = mul * BitConverter.ToInt16(data.Skip(2).Take(2).ToArray(), 0) / (float)div;
+            var z = mul * BitConverter.ToInt16(data.Skip(4).Take(2).ToArray(), 0) / (float)div;
             return [z, y, x];
         }
+
+        public float[] GetBoundingBox()
+        {
+            if (BoundingBox == null) return [];
+
+            // basically the points in the file define the top and bottom side of the rectangle let's call these 0 1 2 3 4 5 6 7,
+            // where 0 1 2 3 are the points of the first rectangle in a 3D space and 4 5 6 7 define the second rectangle
+            //
+            // with some very basic 3D geometry we can simply "connect the dots" to get the remaining triangles required to generate a full
+            // box shape
+            var staticIndices = new[]
+            {
+                0, 1, 2, 1, 2, 3, 4, 5, 6, 6, 7, 5, 2, 3, 6, 3, 7, 6, 0, 1, 5, 0, 5, 4, 2, 0, 4, 6, 4, 2, 1, 3, 7, 1, 5,
+                7
+            };
+            var boundingBox = staticIndices.Select(i => (float[])[BoundingBox[i].X, BoundingBox[i].Y, BoundingBox[i].Z]).ToList();
+
+            var floats = new List<float>();
+            foreach (var vtx in boundingBox)
+            {
+                floats.Add(0f);
+                floats.Add(0f);
+                floats.AddRange(vtx);
+                floats.Add(0f);
+                floats.Add(0f);
+                floats.Add(0f);
+            }
+
+            return floats.ToArray();
+        }
+
+        public struct CharacterAnimation
+        {
+            public float[] Values { get; set; }
+        }
+
+        public struct Header
+        {
+            /// <summary>
+            /// Seems to always be 2
+            /// </summary>
+            public int HeaderSize { get; set; }
+
+            /// <summary>
+            /// If false, no layout chunks are in the file
+            /// </summary>
+            public bool HasLayouts { get; set; }
+
+            /// <summary>
+            /// The number of timelines, which defines some other characteristics used elsewhere in the file
+            /// </summary>
+            public int TimelineCount { get; set; }
+
+            public int LayoutChunkPropertiesCount { get; set; }
+
+            [JsonIgnore]
+            public byte UnkFlamingo { get; set; }
+
+            /// <summary>
+            /// If false, no bounding box will be generated (mainly done for 2D animations)
+            /// </summary>
+            public bool HasBoundingBox { get; set; }
+
+            [JsonIgnore]
+            public short Padding { get; set; }
+
+            [JsonIgnore]
+            public float UnkLion { get; set; }
+
+            [JsonIgnore]
+            public long EndPadding { get; set; }
+        }
+
+        public struct Timeline
+        {
+            /// <summary>
+            /// Not really sure how this works yet
+            /// </summary>
+            public int FrameCountA { get; set; }
+
+            /// <summary>
+            /// Not always the same as FrameCountA
+            /// </summary>
+            public int FrameCountB { get; set; }
+
+            [JsonIgnore]
+            public int UnkBear { get; set; }
+
+            /// <summary>
+            /// If set to false, animations don't loop (useful for particles)
+            /// </summary>
+            public bool LoopingEnable { get; set; }
+        }
+
+        /// <summary>
+        /// Defines part of the data that contains 4 float values
+        /// </summary>
+        public struct Vec4
+        {
+            public float X { get; set; }
+
+            public float Y { get; set; }
+
+            public float Z { get; set; }
+
+            public float W { get; set; }
+        }
+        
+        public override string ToString()
+        {
+            var er = FormatHeader.HasBoundingBox ? "Yes" : "No";
+            var hl = FormatHeader.HasLayouts ? "Yes" : "No";
+            FilePath ??= "";
+            var o = $"""
+                    3D model data ({new FileInfo(FilePath).Name})
+                    
+                    Has bounding box: {er}
+                    Has layouts chunks: {hl}
+                    Timelines: {FormatHeader.TimelineCount}
+                    Layout chunk sections count: {FormatHeader.LayoutChunkPropertiesCount}
+                    
+                    """;
+            string[] cols = ["X", "Y", "Z"];
+            List<string[]> rows = [];
+            rows.AddRange(BoundingBox?.Select(vertex => (string[])[DotFloatString(vertex.X), DotFloatString(vertex.Y), DotFloatString(vertex.Z)]) ?? []);
+            if (FormatHeader.HasBoundingBox)
+            {
+                o += $"""
+
+                      Bounding box:
+                      {StaticUtils.GenerateTable(cols, rows, StaticUtils.SimpleOutput)}
+
+                      """;
+            }
+
+            rows.Clear();
+            //if (Type != FileType.StaticModel) return o;
+            if (!FormatHeader.HasLayouts) return o;
+
+            o += $"""
+
+                 Layout chunks:
+
+                 
+                 """;
+            foreach (var layout in LayoutChunks ?? [])
+            {
+                var hb = layout.LayoutChunkHeader.HasHitbox ? "Yes" : "No";
+                o += $"""
+                      
+                      Name: {layout.Name ?? "(null)"}
+                      
+                      Contains model: {hb}
+                      Joint indices: {layout.Indices?.Length ?? 0}
+                      
+                      """;
+                if (layout.Model != null)
+                {
+                    o += $"""
+                          Materials: {layout.ModelVertexProperties.Materials.Length}
+                          Vertices: {layout.Model.Value.VertexCount}
+                          Normals: {layout.Model.Value.NormalCount}
+                          Pixels: {layout.Model.Value.ColorCount}
+                          UVs: {layout.Model.Value.UvCount}
+
+                          """;
+                }
+
+                o += "\nProperties:\n";
+                cols = ["Keyframes", "Lighting", "Light animation", "Vertex animation", "Joints"];
+                rows.Clear();
+                for (var i = 0; i < FormatHeader.LayoutChunkPropertiesCount; i++)
+                {
+                    var prop = layout.ModelProperties;
+                    if (prop == null) continue;
+                    rows.Add([
+                        prop[i].KeyFrameCount.ToString(),
+                        prop[i].HasLightmap ? $"Yes ({prop[i].LightmapDataCount})": "No",
+                        prop[i].HasAlphaSequence ? $"Yes ({prop[i].AlphaSequence.Length} frames)" : "No", 
+                        prop[i].IsAnimated ? "Yes" : "No",
+                        prop[i].JointCount.ToString()
+                        ]);
+                }
+                o += StaticUtils.GenerateTable(cols, rows, StaticUtils.SimpleOutput);
+            }
+            return o;
+        }
+
     }
-    
+
+    [JsonSerializable(typeof(Lp4))]
+    [JsonSerializable(typeof(LayoutChunk))]
+    [JsonSourceGenerationOptions(WriteIndented = true, NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals)]
+    public partial class Lp4TestGenerationContext : JsonSerializerContext
+    {
+    }
 }

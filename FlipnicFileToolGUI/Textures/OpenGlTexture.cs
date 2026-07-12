@@ -1,41 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using FlipnicLib;
 using FlipnicLib.Formats;
 using OpenTK.Graphics.OpenGL;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 
 namespace FlipnicFileToolGUI.Textures
 {
     public sealed class OpenGlTexture : IDisposable
     {
-        private readonly int _handle;
+        private readonly int _handle = GL.GenTexture();
         private bool _disposedValue;
-        private static Random r = new();
 
-        public OpenGlTexture()
+        public static void LoadFromFile(object? texture)
         {
-            _handle = GL.GenTexture();
-        }
-
-        private void LoadFromImgData(Image<Rgba32> image)
-        {
-            
-        }
-
-        public void LoadFromFile(object? texture)
-        {
-            Image<Rgba32>? image = null;
+            Image? image = null;
             try
             {
                 image = texture switch
                 {
-                    Tim tx2 => Image.Load<Rgba32>(new BitmapTools { Icon = tx2 }.ToMemoryStream()),
-                    MemoryStream stream => Image.Load<Rgba32>(stream.ToArray()),
-                    byte[] ba => Image.Load<Rgba32>(ba),
+                    Tim tx2 => Image.FromStream(new BitmapTools { Icon = tx2 }.ToMemoryStream()),
+                    MemoryStream stream => Image.FromStream(stream),
+                    byte[] ba => Image.FromStream(new MemoryStream(ba)),
                     _ => image
                 };
             }
@@ -44,27 +31,23 @@ namespace FlipnicFileToolGUI.Textures
                 StaticUtils.DecodeColors("~-C\rError~--: Unable to load texture!\n");
             }
 
-            byte[] rndCol = [(byte)r.Next(0, 255), (byte)r.Next(0, 255), (byte)r.Next(0, 255)];
-            List<byte> pixels = [];
+            List<byte> pixels;
             if (image != null)
             {
 
-                //ImageSharp counts (0, 0) as top-left, OpenGL wants it to be bottom-left. fix.
-                image.Mutate(x => x.Flip(FlipMode.Vertical));
-
-                //Convert ImageSharp's format into a byte array, so we can use it with OpenGL.
+                //Convert System.Drawing format into a byte array, so we can use it with OpenGL.
+                var bmp = new Bitmap(image);
                 pixels = new List<byte>(4 * image.Width * image.Height);
-
-                for (var y = 0; y < image.Height; y++)
+                
+                //System.Drawing counts (0, 0) as top-left, OpenGL wants it to be bottom-left, so we read rows backwards
+                for (var y = image.Height - 1; y >= 0; y--)
                 {
-                    var row = image.Frames[0].PixelBuffer.DangerousGetRowSpan(y);
-
                     for (var x = 0; x < image.Width; x++)
                     {
-                        pixels.Add(row[x].R);
-                        pixels.Add(row[x].G);
-                        pixels.Add(row[x].B);
-                        pixels.Add(row[x].A);
+                        pixels.Add(bmp.GetPixel(x, y).R);
+                        pixels.Add(bmp.GetPixel(x, y).G);
+                        pixels.Add(bmp.GetPixel(x, y).B);
+                        pixels.Add(bmp.GetPixel(x, y).A);
                     }
                 }
             } else // no texture provided, so we'll just render a magenta/black checkerboard pattern
@@ -102,7 +85,7 @@ namespace FlipnicFileToolGUI.Textures
                 }
             }
 
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, (image != null) ? image.Width : 63, (image != null) ? image.Height : 63, 0, PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, image?.Width ?? 63, image?.Height ?? 63, 0, PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
         }
 

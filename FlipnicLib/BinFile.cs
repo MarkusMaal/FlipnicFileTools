@@ -6,17 +6,18 @@ namespace FlipnicLib;
 
 public class BinFile : FormatBase
 {
-    public BinFile() {}
     public List<VirtualFile> FsEntries { get; set; } = [];
-    
+
     /// <summary>
     /// Generate a table containing a list of all the files stored inside the .BIN file
     /// </summary>
     /// <param name="src">The source .BIN file stream</param>
-    public string ListBin(Stream src)
+    /// <param name="noDisplay">Only get filesystem entries, don't display anything</param>
+    public string ListBin(Stream src, bool noDisplay = false)
     {
         string[] colHeader = ["Path", "Offset", "Size", "TOC offset", "Large buffer"];
         var rows = GetFsEntriesNew(src);
+        if (noDisplay) return;
         foreach (var t in rows)
         {
             t[2] = GetFilesizeString(long.Parse(t[2]));
@@ -32,7 +33,6 @@ public class BinFile : FormatBase
     /// <returns>An array, where each entry contains virtual file path, offset and size</returns>
     public VirtualFile[] GetListBin(Stream src)
     {
-        string[] colHeader = ["Path", "Offset", "Size", "TOC offset"];
         var rows = GetFsEntriesNew(src);
         var fsEntries = rows.Select(row => new VirtualFile(row[0], Convert.ToInt64(row[1], 16), long.Parse(row[2]), Convert.ToInt64(row[3], 16), row[4] == "Y")).ToList();
         src.Close();
@@ -47,23 +47,23 @@ public class BinFile : FormatBase
         List<string[]> rows = [];
         var folders = new Dictionary<string, long>();
         var buffer = new byte[64];
-        var offset = 0;
         long loc = 0;
-        long end_of_toc = 9999;
+        long endOfToc = 9999;
         var intoc = true;
         var pointer = new List<byte> ();
         var insub = false;
         var folder = "";
-        long folder_loc = 0;
-        List<long> Offsets = [];
+        long folderLoc = 0;
+        List<long> offsets = [];
         StaticUtils.LiveLoadStatus = "Reading TOC data";
-        while ((offset = src.Read(buffer, 0, buffer.Length)) > 0)
+        while (src.Read(buffer, 0, buffer.Length) > 0)
         {
             string filename;
             var tOff = loc;
+            var perc = Math.Round(src.Position / (double)src.Length * 100.0);
             if (intoc)
             {
-                if (loc >= end_of_toc)
+                if (loc >= endOfToc)
                 {
                     intoc = false;
                     if (folders.Count == 0) break;
@@ -76,7 +76,7 @@ public class BinFile : FormatBase
                 switch (filename)
                 {
                     case "*Top Of CD Data":
-                        end_of_toc = byteoffset;
+                        endOfToc = byteoffset;
                         continue;
                     case "*End Of CD Data":
                         intoc = false;
@@ -93,8 +93,8 @@ public class BinFile : FormatBase
                         src.Seek(loc, SeekOrigin.Begin);
                         insub = true;
                         folder = kvp.Key;
-                        folder_loc = loc;
-                        StaticUtils.LiveLoadStatus = $"Processing folder {folder}";
+                        folderLoc = loc;
+                        StaticUtils.LiveLoadStatus = $"Processing folder {folder} ({perc}%)";
                         break;
                     }
                 }
@@ -104,16 +104,17 @@ public class BinFile : FormatBase
                     folders[filename] = byteoffset;
                 }
                 rows.Add([$"\\{filename}", $"0x{byteoffset:X}", $"0x{tOff+64:X}", "Y"]);
-                Offsets.Add(byteoffset);
+                offsets.Add(byteoffset);
             } else if (insub)
             {
+                tOff -= 0x40; // there is no "*Top Of" file for subdirs, so subtract 0x40 to get actual TOC offset 
                 var i = buffer.Length - 5;
                 while (buffer[i] == 0)
                     --i;
                 var name = buffer[..(i+1)];
                 var soff = buffer[60..];
                 filename = Encoding.ASCII.GetString(name);
-                var byteoffset = (long)(BitConverter.ToUInt32(soff, 0)) + folder_loc;
+                var byteoffset = BitConverter.ToUInt32(soff, 0) + folderLoc;
                 if (filename == "*End Of Mem Data")
                 {
                     insub = false;
@@ -123,8 +124,8 @@ public class BinFile : FormatBase
                         src.Position = loc;
                         insub = true;
                         folder = kvp.Key;
-                        folder_loc = loc;
-                        StaticUtils.LiveLoadStatus = $"Processing {folder}";
+                        folderLoc = loc;
+                        StaticUtils.LiveLoadStatus = $"Processing {folder} ({perc}%)";
                         break;
                     }
 
@@ -133,26 +134,29 @@ public class BinFile : FormatBase
                 }
 
                 rows.Add([$"\\{folder}{filename}", $"0x{byteoffset:X}", $"0x{tOff:X}", "N"]);
-                Offsets.Add(byteoffset);
+                offsets.Add(byteoffset);
             }
             loc += 64;
         }
 
 
-        Offsets.Add(src.Length);
-        List<long> Sizes = [];
-        for (var i = 1; i < Offsets.Count; i++)
+        offsets.Add(src.Length);
+        List<long> sizes = [];
+        for (var i = 1; i < offsets.Count; i++)
         {
-            Sizes.Add(Offsets[i] - Offsets[i - 1]);
+            sizes.Add(offsets[i] - offsets[i - 1]);
         }
 
 
         List<string[]> realRows = [];
-        for (var i = 0; i < Sizes.Count; i++)
+        for (var i = 0; i < sizes.Count; i++)
         {
-            FsEntries.Add(new VirtualFile(rows[i][0], Offsets[i], Sizes[i], Convert.ToInt64(rows[i][2], 16), rows[i][3] == "Y"));
+            StaticUtils.LiveLoadStatus = "Populating file entries... (" + Math.Round(i / (double)sizes.Count * 100.0) + "%)";
+            FsEntries.Add(new VirtualFile(rows[i][0], offsets[i], sizes[i], Convert.ToInt64(rows[i][2], 16), rows[i][3] == "Y"));
         }
-        realRows.AddRange(rows.Select((t, i) => (string[]) [t[0], t[1], Sizes[i].ToString(), t[2], t[3]]));
+
+        StaticUtils.LiveLoadStatus = "Processing...";
+        realRows.AddRange(rows.Select((t, i) => (string[]) [t[0], t[1], sizes[i].ToString(), t[2], t[3]]));
         return realRows;
     }
 
@@ -298,7 +302,7 @@ public class BinFile : FormatBase
             return;
         }
 
-        var sizeDelta = replacement!.Length - sizes[idx];
+        var sizeDelta = replacement.Length - sizes[idx];
         var replacementOffset = offsets[idx];
         var replacementSize = replacement.Length;
 
@@ -386,17 +390,18 @@ public class BinFile : FormatBase
                 Console.Write("\n");
             }
         }
-        Console.Write("\r     Interpreting TOC data...");
+
+        StaticUtils.LiveLoadStatus = "Interpreting TOC data...";
         var fsEntries = GetFsEntriesNew(source);
         source.Position = 0;
         using (var src = source)
         {
-            Console.Write("\r     Loading file to memory...".PadRight(StaticUtils.WindowWidth));
+            StaticUtils.LiveLoadStatus = "Loading file to memory...";
             for (var i = 0; i < fsEntries.Count; i++)
             {
-                var fs_entry = fsEntries[i];
-                src.Position = Convert.ToInt64(fs_entry[1], 16);
-                var fileNam = fs_entry[0].Replace("\\", "/");
+                var fsEntry = fsEntries[i];
+                src.Position = Convert.ToInt64(fsEntry[1], 16);
+                var fileNam = fsEntry[0].Replace("\\", "/");
                 var end = src.Length;
                 if (i < fsEntries.Count - 2)
                 {
@@ -405,19 +410,18 @@ public class BinFile : FormatBase
 
                 var size = end - src.Position;
                 var outFile = Path.Combine(destination, fileNam[1..]);
-                Console.Write(
-                    $"\r     Extracting {fileNam} ({GetFilesizeString(size)})".PadRight(StaticUtils.WindowWidth));
+                StaticUtils.LiveLoadStatus = $"Extracting {fileNam} ({GetFilesizeString(size)})";
                 if (fileNam.EndsWith('/')) continue;
                 if (size < 0) continue;
-                src.Position = Convert.ToInt64(fs_entry[1], 16);
+                src.Position = Convert.ToInt64(fsEntry[1], 16);
                 var bufSize = (int)((size % 0x800 != 0) ? size : 0x800);
                 if (i < fsEntries.Count - 2)
                 {
                     end = Convert.ToInt64(fsEntries[i + 1][1], 16);
                 }
-                if (!Directory.Exists(new FileInfo(outFile).Directory.FullName))
+                if (!Directory.Exists(new FileInfo(outFile).Directory!.FullName))
                 {
-                    Directory.CreateDirectory(new FileInfo(outFile).Directory.FullName);
+                    Directory.CreateDirectory(new FileInfo(outFile).Directory!.FullName);
                 }
 
                 using var fs = File.OpenWrite(Path.Combine(destination, fileNam[1..]));
@@ -426,12 +430,14 @@ public class BinFile : FormatBase
                     var buffer = new byte[bufSize];
                     src.ReadExactly(buffer, 0, buffer.Length);
                     fs.Write(buffer, 0, buffer.Length);
-                    if (j % 0x4000 == 0) StaticUtils.PrintLoader();
+                    if (j % 0x4000 == 0) StaticUtils.LiveLoadStatus = $"Extracting {fileNam} ({GetFilesizeString(size)})";
                 }
 
                 fs.Close();
             }
         }
+
+        StaticUtils.LiveLoadStatus = "";
         Console.WriteLine($"\r   Files have been extracted to: {destination}".PadRight(StaticUtils.WindowWidth));
 
     }

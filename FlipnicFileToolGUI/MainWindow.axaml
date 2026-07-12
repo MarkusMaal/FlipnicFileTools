@@ -2,7 +2,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="clr-namespace:FlipnicFileToolGUI.Controls"
         xmlns:ns="clr-namespace:FlipnicFileToolGUI"
         mc:Ignorable="d"
         d:DesignWidth="800" d:DesignHeight="800"
@@ -13,9 +12,12 @@
         xmlns:types="clr-namespace:FlipnicLib.Types;assembly=FlipnicLib"
         xmlns:viewModels="clr-namespace:FlipnicFileToolGUI.ViewModels"
         xmlns:controls="clr-namespace:FlipnicFileToolGUI.Controls"
+        xmlns:formats="clr-namespace:FlipnicLib.Formats;assembly=FlipnicLib"
         x:DataType="viewModels:MainWindowViewModel" x:Class="FlipnicFileToolGUI.MainWindow"
         Title="Flipnic file tool" Loaded="Window_Loaded" BackgroundStyle="Bubble"
-        IsMenuVisible="{OnPlatform True, macOS=False}">
+        Closing="Window_OnClosing"
+        IsMenuVisible="{OnPlatform True, macOS=False}"
+        x:CompileBindings="True">
     <sukiUi:SukiWindow.RightWindowTitleBarControls>
         <Label Name="FileTypeLabel" Content="Ready" VerticalContentAlignment="Center" VerticalAlignment="Center"></Label>
     </sukiUi:SukiWindow.RightWindowTitleBarControls>
@@ -24,19 +26,20 @@
     </sukiUi:SukiWindow.Hosts>
     <!-- Menu bar (macOS) -->
     <NativeMenu.Menu>
-        <NativeMenu>
+        <NativeMenu x:CompileBindings="False">
             <NativeMenuItem Header="File" IsVisible="true">
-                <NativeMenu>                    
+                <NativeMenu Opening="NativeFileMenuOpening">                    
                     <NativeMenuItem Header="Open" Gesture="Meta+O" Click="OpenNativeMenuItem_OnClick"/>
                     <NativeMenuItem IsVisible="{Binding CanOpenImhex}" Header="Open in ImHex" Click="OpenImHexNativeMenuItemClick"></NativeMenuItem>
                     <NativeMenuItemSeparator />
+                    <NativeMenuItem IsVisible="{Binding MultipleWindowsOpen}" Header="Close all other windows" Gesture="Meta+Alt+W" Click="CloseOthersNativeMenuItem_OnClick"></NativeMenuItem>
                     <NativeMenuItem Header="Close" Gesture="Meta+W" Click="CloseNativeMenuItem_Click" />
                 </NativeMenu>
             </NativeMenuItem>
             <NativeMenuItem Header="Options">
                 <NativeMenu>                    
                     <NativeMenuItem Header="Toggle dark theme" Click="ToggleDarkNative" />
-                    <NativeMenuItem Header="Use alternate method for decoding normal vectors" Click="AltNormalMethod_NativeClick" />
+                    <NativeMenuItem Header="Normal vectors decoding: Method A" Click="AltNormalMethod_NativeClick" />
                     <NativeMenuItemSeparator/>
                     <NativeMenuItem Header="Import JA.MSG" Click="OpenNativeMenuItem_OnClick"></NativeMenuItem>
                     <NativeMenuItem Header="Always use brute-force for LP4 decoding: No" Click="AlwaysUseBruteForceNativeMenuItem_Click" />
@@ -58,6 +61,7 @@
             <MenuItem Header="Open" Name="OpenMenuItem" Click="OpenMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Open in ImHex" Name="OpenImHexMenuItem" IsEnabled="False" Click="OpenImHexMenuItem_OnClick"></MenuItem>
             <Separator/>
+            <MenuItem Header="Close all other windows" Name="CloseOthersMenuItem" Click="CloseOthersMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Close window" Name="CloseMenuItem" Click="CloseMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Exit" Name="ExitMenuItem" Click="ExitMenuItem_OnClick"></MenuItem>
         </MenuItem>
@@ -77,8 +81,8 @@
         </MenuItem>
     </sukiUi:SukiWindow.MenuItems>
     <Grid>
-        <Grid Name="DockPanel1">
-            <sukiUi:SukiSideMenu IsSearchEnabled="False" IsMenuExpanded="False" Name="MainTabControl" SelectionMode="AlwaysSelected" SelectionChanged="MainTabControl_OnSelectionChanged">
+        <Grid Name="DockPanel1" x:CompileBindings="True">
+            <sukiUi:SukiSideMenu IsSearchEnabled="False" IsMenuExpanded="False" Name="MainTabControl" SelectionMode="AlwaysSelected" SelectionChanged="MainTabControl_OnSelectionChanged" x:CompileBindings="False">
                 <sukiUi:SukiSideMenu.Items>
                     <!-- Info tab -->
                     <sukiUi:SukiSideMenuItem Name="InfoTab" Header="Info">
@@ -101,11 +105,28 @@
                                   <Label Margin="5" Name="MoreInfoLabel">No info</Label>
                                   <Label Margin="5" Name="FPSLabel">No info</Label>
                               </StackPanel>
-                              <Button Grid.Row="0" IsVisible="True" Name="RestartWglButton" VerticalAlignment="Center" HorizontalAlignment="Center" Click="RestartWglButton_Click">Open with 3D graphics support</Button>
-                              <controls:CubeRenderingTkOpenGlControl Rotate="False" Grid.Row="0"  Focusable="True" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="GlControl" Loaded="GlControl_OnLoaded"></controls:CubeRenderingTkOpenGlControl>
+                              <OnPlatform>
+                                  <OnPlatform.Default>
+                                      <Button Grid.Row="0" IsVisible="True" Name="RestartWglButton" VerticalAlignment="Center" HorizontalAlignment="Center" Click="RestartWglButton_Click">Open 3D preview</Button>
+                                  </OnPlatform.Default>
+                                  <OnPlatform.macOS>
+                                      <Button Grid.Row="0" IsVisible="True" VerticalAlignment="Center" HorizontalAlignment="Center" IsEnabled="False">macOS is not supported for 3D model previews</Button>
+                                  </OnPlatform.macOS>
+                              </OnPlatform>
+                              <OnPlatform>
+                                  <OnPlatform.Default>
+                                    <controls:CubeRenderingTkOpenGlControl Rotate="False" Grid.Row="0"  Focusable="True" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="GlControl" Loaded="GlControl_OnLoaded"></controls:CubeRenderingTkOpenGlControl>
+                                  </OnPlatform.Default>
+                                  <OnPlatform.macOS>
+                                      
+                                  </OnPlatform.macOS>
+                              </OnPlatform>
                               <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0" Name="ModelBottomSection">
-                                  <Button Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>
-                                  <Button Margin="10" VerticalAlignment="Center" HorizontalAlignment="Left" Name="TpModelButton" Click="TpModelButton_OnClick">Teleport to model</Button>
+                                  <WrapPanel Orientation="Vertical" MaxHeight="120">
+                                      <Button Margin="5, 5, 5, 0" VerticalAlignment="Center" HorizontalAlignment="Left" Name="ExportJsonButton" Click="ExportModelButton_Click">Export JSON</Button>
+                                      <Button Margin="5, 5, 5, 0" VerticalAlignment="Center" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>
+                                      <Button Margin="5, 5, 5, 0" VerticalAlignment="Center" HorizontalAlignment="Left" Name="TpModelButton" Click="TpModelButton_OnClick">Teleport to model</Button>
+                                  </WrapPanel>
                                 <CheckBox Margin="5,10" Name="RotateModelCheck" IsCheckedChanged="RotateModelCheck_OnIsCheckedChanged">Spin</CheckBox>
                                   <ScrollViewer MaxHeight="100">
                                       <ListBox Margin="5" Name="Models" SelectionChanged="Models_OnSelectionChanged"></ListBox>
@@ -156,6 +177,7 @@
                                     <Label Name="PlaybackStateLabel">Stopped</Label>
                                     <StackPanel Orientation="Horizontal" Spacing="10">
                                         <Button Name="PlayButton" Content="Play" Click="PlayButton_OnClick"></Button>
+                                        <Button Name="StopButton" Content="Stop" Click="PlayButton_OnClick" IsEnabled="False"></Button>
                                         <Button Name="SaveSoundAsButton" Content="Save as.." Click="SaveSoundAsButton_OnClick"></Button>
                                     </StackPanel>
                                 </StackPanel>
@@ -172,7 +194,7 @@
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
                     <!-- Gimmicks tab -->
-                    <sukiUi:SukiSideMenuItem Name="StageGimmickTab" Header="Edit gimmicks" IsVisible="False">
+                    <sukiUi:SukiSideMenuItem Name="StageGimmickTab" Header="Edit gimmicks" IsVisible="False" DataContext="{Binding}" x:DataType="viewModels:MainWindowViewModel" x:CompileBindings="True">
                         <sukiUi:SukiSideMenuItem.Icon>
                             <controls:CircleDot ColorA="Gray" ColorB="Black" Source="Assets\TabIcons\gimmicks.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
@@ -185,20 +207,20 @@
                                         <Button Content="Export changes" Margin="5" Click="ExportGimmicksButton"></Button>
                                     </StackPanel>
                                 </Grid>
-                                <DataGrid Grid.Row="1" Name="GimmickGrid" ItemsSource="{Binding SelectedGimmick}"
+                                <DataGrid Grid.Row="1" Name="GimmickGrid" ItemsSource="{Binding SelectedGimmick}" DataContext="{Binding}" x:DataType="viewModels:MainWindowViewModel"
                                           CanUserResizeColumns="True">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Label" Binding="{Binding Label}" x:DataType="types:Gimmick"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Type" Binding="{Binding  Type}" x:DataType="types:Gimmick"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Label" Binding="{Binding Label}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Type" Binding="{Binding  Type}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
                                         <DataGridTextColumn Header="Model" Binding="{Binding  Lp4File}" x:DataType="types:Gimmick" IsReadOnly="True"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Sound effect" Binding="{Binding SoundEffect}" x:DataType="types:Gimmick"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Bounciness" Binding="{Binding Bounciness}" x:DataType="types:Gimmick"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Flipper strength" Binding="{Binding FlipperStrength}" x:DataType="types:Gimmick"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Knockback" Binding="{Binding Knockback}" x:DataType="types:Gimmick"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Analog range" Binding="{Binding AnalogRange}" x:DataType="types:Gimmick"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Button" Binding="{Binding Button}" x:DataType="types:Gimmick"></DataGridTextColumn>
-                                        <DataGridCheckBoxColumn Header="Invisible" Binding="{Binding Invisible}" x:DataType="types:Gimmick"></DataGridCheckBoxColumn>
-                                        <DataGridCheckBoxColumn Header="No spawn" Binding="{Binding  NoSpawn}" x:DataType="types:Gimmick"></DataGridCheckBoxColumn>
+                                        <DataGridTextColumn Header="Sound effect" Binding="{Binding SoundEffect}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Bounciness" Binding="{Binding Bounciness}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Flipper strength" Binding="{Binding FlipperStrength}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Knockback" Binding="{Binding Knockback}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Analog range" Binding="{Binding AnalogRange}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Button" Binding="{Binding Button}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridCheckBoxColumn Header="Invisible" Binding="{Binding Invisible}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridCheckBoxColumn>
+                                        <DataGridCheckBoxColumn Header="No spawn" Binding="{Binding  NoSpawn}" x:DataType="types:Gimmick" IsReadOnly="False"></DataGridCheckBoxColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </Grid>
@@ -224,7 +246,7 @@
                                           BorderThickness="1" BorderBrush="Gray" Name="SamplesGrid"
                                           CanUserResizeColumns="True"
                                           CanUserReorderColumns="True" SelectionChanged="SampleGridSelectionChanged"
-                                          CanUserSortColumns="True" SelectionMode="Single"
+                                          CanUserSortColumns="True" SelectionMode="Single" x:CompileBindings="True"
                                           IsReadOnly="True">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Id" Binding="{Binding Id}"></DataGridTextColumn>
@@ -242,7 +264,7 @@
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
                     <!-- Files tab -->
-                    <sukiUi:SukiSideMenuItem Name="FileListTab" Header="Files" IsVisible="False">
+                    <sukiUi:SukiSideMenuItem Name="FileListTab" Header="Files" IsVisible="False" x:CompileBindings="True">
                         <sukiUi:SukiSideMenuItem.Icon>
                             <controls:CircleDot ColorA="Lime" ColorB="DarkSlateGray" Source="Assets\TabIcons\files.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
@@ -409,14 +431,14 @@
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
                     <!-- Save file tab -->
-                    <sukiUi:SukiSideMenuItem Header="Save file" IsVisible="False" Name="SaveEditor">
+                    <sukiUi:SukiSideMenuItem Header="Save file" IsVisible="False" Name="SaveEditor" DataContext="{Binding}" x:CompileBindings="True">
                         <sukiUi:SukiSideMenuItem.Icon>
                             <controls:CircleDot ColorA="DodgerBlue" ColorB="DarkBlue" Source="Assets\TabIcons\save.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
                             <Grid RowDefinitions="30,30,*" Margin="10" DataContext="{Binding SaveData}">
                                 <Label>Ranking data</Label>
-                                <ComboBox Grid.Row="1" SelectedIndex="{Binding LeaderboardId}" SelectionChanged="ScoreGrid_SelectionChanged">
+                                <ComboBox Grid.Row="1" SelectedIndex="{Binding LeaderboardId}"  x:DataType="formats:FpnSave" SelectionChanged="ScoreGrid_SelectionChanged">
                                     <ComboBoxItem>Original game</ComboBoxItem>
                                     <ComboBoxItem>Biology A</ComboBoxItem>
                                     <ComboBoxItem>Biology B</ComboBoxItem>
@@ -436,15 +458,15 @@
                                 <DataGrid Grid.Row="2" ItemsSource="{Binding Rank}" Margin="0,0,0,10" GridLinesVisibility="All"
                                           BorderThickness="1" BorderBrush="Gray" Name="RankGrid"
                                           CanUserResizeColumns="True" SelectionMode="Single"
-                                          CanUserReorderColumns="True"
-                                          CanUserSortColumns="True" 
+                                          CanUserReorderColumns="True" DataContext="{Binding}"
+                                          CanUserSortColumns="True"  x:DataType="formats:FpnSave" 
                                           IsReadOnly="False">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Rank" x:DataType="types:Rank" Binding="{Binding Position}"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Initials" x:DataType="types:Rank" Binding="{Binding Initials}"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Score" x:DataType="types:Rank" Binding="{Binding Score}"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Combos" x:DataType="types:Rank" Binding="{Binding Combos}"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Difficulty" x:DataType="types:Rank" Binding="{Binding Difficulty}"/>
+                                        <DataGridTextColumn Header="Initials" x:DataType="types:Rank" Binding="{Binding Initials}" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Score" x:DataType="types:Rank" Binding="{Binding Score}" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Combos" x:DataType="types:Rank" Binding="{Binding Combos}" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Difficulty" x:DataType="types:Rank" Binding="{Binding Difficulty}" IsReadOnly="False"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </Grid>
@@ -455,9 +477,9 @@
         </Grid>
     
         
-        <Grid Name="Loader" Margin="50" RowDefinitions="40,Auto" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="False">
-            <TextBlock Grid.Row="0" FontSize="20" Name="LoadStatus" TextAlignment="Left" >Please wait...</TextBlock>
-            <ProgressBar Name="LoadProgress" Grid.Row="1" IsIndeterminate="True" Width="300"></ProgressBar>
+        <Grid Name="Loader" Margin="150" ColumnDefinitions="Auto,Auto" VerticalAlignment="Center" HorizontalAlignment="Left" IsVisible="False">
+            <sukiUi:CircleProgressBar Name="LoadProgress" Grid.Column="0" IsIndeterminate="True" Width="48" Height="48" Margin="0, 0, 20, 0" StrokeWidth="6"></sukiUi:CircleProgressBar>
+            <TextBlock MinWidth="300" VerticalAlignment="Center" Grid.Column="1" FontSize="20" Name="LoadStatus" TextAlignment="Left" >Please wait...</TextBlock>
         </Grid>
     </Grid>
 </sukiUi:SukiWindow>

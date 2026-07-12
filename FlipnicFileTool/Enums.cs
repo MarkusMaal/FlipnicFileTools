@@ -67,7 +67,12 @@ public abstract class Enums
         SstResize,
         ExtractPak,
         ListPak,
-        ReplacePak
+        ReplacePak,
+        ConvertFpc,
+        GenerateAnimation,
+        Playground,
+        ShowSstMissions,
+        ExportLp4Json
     }
     
     /// <summary>
@@ -120,7 +125,9 @@ public abstract class Enums
             "--show-fpc" => Modes.ShowFpc,
             "--show-sst-resources" => Modes.ListResources,
             "--convert-fpc-to-xml" => Modes.ConvertXml,
+            "--convert-xml-to-fpc" => Modes.ConvertFpc,
             "--show-sst-toc" => Modes.ShowSstToc,
+            "--show-sst-missions" => Modes.ShowSstMissions,
             "--show-messages" => Modes.ShowMessages,
             "--list-pss-streams" => Modes.ListPssStreams,
             "--extract-pss-streams" => Modes.ExtractPssStreams,
@@ -171,6 +178,9 @@ public abstract class Enums
             "--extract-pak" => Modes.ExtractPak,
             "--list-pak" => Modes.ListPak,
             "--replace-pak" => Modes.ReplacePak,
+            "--generate-animation" => Modes.GenerateAnimation,
+            "--playground" => Modes.Playground,
+            "--export-lp4-json" => Modes.ExportLp4Json,
             _ => mode
         };
         

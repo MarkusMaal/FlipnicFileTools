@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using FlipnicLib.Types;
 using Ps2IsoTools.UDF;
@@ -12,24 +13,31 @@ public class IsoUdf
     
     public IsoUdf(string path)
     {
-        using var reader = new UdfReader(path);
-        // Get list of all files
-        _volumeLabel = reader.VolumeLabel != "" ? reader.VolumeLabel : "Untitled";
-        var fullNames = reader.GetAllFileFullNames();
-
-        foreach (var name in fullNames)
+        try
         {
-            var fileRead = reader.GetFileByName(name);
-            if (fileRead == null) continue;
-            var fileStream = reader.GetFileStream(fileRead);
-            _records.Add(new UdfFileEntry
+            using var reader = new UdfReader(path);
+            // Get list of all files
+            _volumeLabel = reader.VolumeLabel != "" ? reader.VolumeLabel : "Untitled";
+            var fullNames = reader.GetAllFileFullNames();
+
+            foreach (var name in fullNames)
             {
-                File = fileRead,
-                Size = fileStream.Length,
-                Path = name,
-            });
+                var fileRead = reader.GetFileByName(name);
+                if (fileRead == null) continue;
+                var fileStream = reader.GetFileStream(fileRead);
+                _records.Add(new UdfFileEntry
+                {
+                    File = fileRead,
+                    Size = fileStream.Length,
+                    Path = name,
+                });
+            }
         }
-        
+        catch (Exception e) when (!Debugger.IsAttached)
+        {
+            StaticUtils.LiveLoadStatus = $"!!!{e.Message}\n{e.StackTrace}";
+        }
+
     }
 
     /// <summary>
@@ -39,13 +47,19 @@ public class IsoUdf
     /// <param name="outputDir">Full path to the output directory</param>
     public void ExtractFiles(string fileName, string outputDir)
     {
-        using var reader = new UdfReader(fileName);
-        foreach (var f in _records)
+        try {
+            using var reader = new UdfReader(fileName);
+            foreach (var f in _records)
+            {
+                StaticUtils.LiveLoadStatus = "Extracting " + f.Path + " (" + StaticUtils.GetFilesizeString(f.Size) + ")";
+                var dir = new FileInfo(Path.Combine(outputDir, f.Path.Replace("\\", "/"))).Directory!.FullName;
+                if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                reader.CopyFile(f.File, Path.Combine(outputDir, f.Path.Replace("\\", "/")));
+            }
+        }
+        catch (Exception e) when (!Debugger.IsAttached)
         {
-            StaticUtils.LiveLoadStatus = "Extracting " + f.Path + " (" + StaticUtils.GetFilesizeString(f.Size) + ")";
-            var dir = new FileInfo(Path.Combine(outputDir, f.Path.Replace("\\", "/"))).Directory!.FullName;
-            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
-            reader.CopyFile(f.File, Path.Combine(outputDir, f.Path.Replace("\\", "/")));
+            StaticUtils.LiveLoadStatus = $"!!!{e.Message}\n{e.StackTrace}";
         }
     }
 
@@ -55,7 +69,6 @@ public class IsoUdf
     /// <param name="replacementFile">The file you want to integrate into the ISO file</param>
     /// <param name="isoFile">The ISO file you want to modify</param>
     /// <param name="vfsName">VFS entry inside the ISO file - this is the file you want to replace</param>
-    /// <param name="rebuild">If true, let's re-build the ISO file entirely instead of just overwriting data (potentially destructive)</param>
     /// <returns>Was the replacement successful?</returns>
     public bool ReplaceFile(string replacementFile, string isoFile, string vfsName)
     {
@@ -75,6 +88,7 @@ public class IsoUdf
             }
 
             using BinaryWriter bw = new(editor.GetFileStream(f.File));
+            
             {
                 using var fs = File.OpenRead(replacementFile);
                 while (fs.Position < fs.Length)

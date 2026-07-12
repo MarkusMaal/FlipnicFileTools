@@ -2,11 +2,11 @@
 using FlipnicLib;
 using System;
 using System.Diagnostics;
-using System.Linq;
+using System.Globalization;
 
 namespace FlipnicFileToolGUI;
 
-class Program
+internal abstract class Program
 {
     
     private static string VersionString => StaticUtils.DotFloatString(StaticUtils.LibVersion) + (StaticUtils.IsBeta ? " BETA" : "");
@@ -21,7 +21,7 @@ class Program
          Disclaimer: {StaticUtils.DisclaimerText}
          """;
 
-    public static bool GpuAccel = !OperatingSystem.IsWindows();
+    public static bool GpuAccel;
     
     // Initialization code. Don't use any Avalonia, third-party APIs or any
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
@@ -31,10 +31,10 @@ class Program
     {
         try
         {
-            if (OperatingSystem.IsWindows())
-            {
-                GpuAccel = args.Contains("--gpu");
-            }
+            var culture = new CultureInfo("en-US");
+            CultureInfo.DefaultThreadCurrentCulture = culture;
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
+            GpuAccel = args.Contains("--gpu");
             BuildAvaloniaApp()
                 .StartWithClassicDesktopLifetime(args);
         }

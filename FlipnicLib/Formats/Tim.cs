@@ -4,11 +4,10 @@ namespace FlipnicLib.Formats;
 // specific to PlayStation 2 save icons
 public class Tim : FormatBase
 {
-    private byte[] bitmap;
-    private byte[] pallette;
+    private readonly byte[] _bitmap;
 
-    public int Width { get; private set; }
-    public int Height { get; private set; }
+    private int Width { get; set; }
+    private int Height { get; set; }
 
     private int CompressedSize { get; set; }
     private int DecompressedSize { get; set; }
@@ -18,24 +17,24 @@ public class Tim : FormatBase
         Width = 128;
         Height = 128;
         CompressedSize = data.Length;
-        bitmap = new byte[Width * Height * 4];
-        var IsCompressed = false;
-        var Length = BitConverter.ToInt32(data, 0);
-        if (Length == data.Length)
+        _bitmap = new byte[Width * Height * 4];
+        var isCompressed = false;
+        var length = BitConverter.ToInt32(data, 0);
+        if (length == data.Length)
         {
-            IsCompressed = true;
+            isCompressed = true;
         }
 
-        byte[] decompressed = [];
-        if (!IsCompressed)
+        byte[] decompressed;
+        if (!isCompressed)
         {
             decompressed = data;
         }
         else
         {
-            List<byte> RLEDecoded = new();
+            List<byte> rleDecoded = new();
             var i = 4;
-            while (i < Length)
+            while (i < length)
             {
                 var code = BitConverter.ToUInt16(data, i);
                 if (code < 0xFF00)
@@ -49,8 +48,8 @@ public class Tim : FormatBase
 
                     for (var c = 0; c < code; c++)
                     {
-                        RLEDecoded.Add(replicableData[0]);
-                        RLEDecoded.Add(replicableData[1]);
+                        rleDecoded.Add(replicableData[0]);
+                        rleDecoded.Add(replicableData[1]);
                     }
 
                     i += 4;
@@ -59,12 +58,12 @@ public class Tim : FormatBase
                 {
                     var blockSize = 0xFFFF - BitConverter.ToUInt16(data, i);
                     var coll = data.Skip(i + 2).Take((blockSize + 1) * 2);
-                    RLEDecoded.AddRange(coll);
+                    rleDecoded.AddRange(coll);
                     i += (blockSize * 2) + 4;
                 }
             }
 
-            decompressed = RLEDecoded.ToArray();
+            decompressed = rleDecoded.ToArray();
         }
         DecompressedSize = decompressed.Length;
 
@@ -80,18 +79,18 @@ public class Tim : FormatBase
                 var red = 8 * (pixelData & 0x1F);
                 var green = 8 * ((pixelData >> 5) & 0x1F);
                 var blue = 8 * (pixelData >> 10);
-                bitmap[bp] = (byte)blue;
-                bitmap[bp + 1] = (byte)green;
-                bitmap[bp + 2] = (byte)red;
-                bitmap[bp + 3] = alpha;
+                _bitmap[bp] = (byte)blue;
+                _bitmap[bp + 1] = (byte)green;
+                _bitmap[bp + 2] = (byte)red;
+                _bitmap[bp + 3] = alpha;
                 bp += 4;
             }
             catch
             {
-                bitmap[bp] = (byte)fallBack[0];
-                bitmap[bp + 1] = (byte)fallBack[1];
-                bitmap[bp + 2] = (byte)fallBack[2];
-                bitmap[bp + 3] = alpha;
+                _bitmap[bp] = (byte)fallBack[0];
+                _bitmap[bp + 1] = (byte)fallBack[1];
+                _bitmap[bp + 2] = (byte)fallBack[2];
+                _bitmap[bp + 3] = alpha;
                 bp += 4;
             }
         }
@@ -110,7 +109,7 @@ public class Tim : FormatBase
             for (var x = 0; x < Width; x++)
             {
                 var oneIdx = (x * 4) + y * Width * 4;
-                builder.SetPixel(new Pixel(bitmap[oneIdx + 2], bitmap[oneIdx + 1], bitmap[oneIdx], bitmap[oneIdx + 3], false), x, y);
+                builder.SetPixel(new Pixel(_bitmap[oneIdx + 2], _bitmap[oneIdx + 1], _bitmap[oneIdx], _bitmap[oneIdx + 3], false), x, y);
             }
         }
 

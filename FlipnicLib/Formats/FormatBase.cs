@@ -69,6 +69,12 @@ public class FormatBase
         {
             chars.Add((char)data[offset]);
             offset++;
+            if ((data.Length == 0x44) && (data[offset] == 0x00) && (offset < 0x20) && (GetInt32(data, 0x40) == 0))
+            {
+                chars.Add(',');
+                chars.Add(' ');
+                offset = 0x20;
+            }
             if (offset >= data.Length) break;
         }
         return new string(chars.ToArray());

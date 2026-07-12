@@ -22,8 +22,8 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 
 - [X] Decode default position/FOV
 - [X] Decode animation frames
-- [ ] Encode default position/FOV
-- [ ] Encode animation frames
+- [X] Encode default position/FOV
+- [X] Encode animation frames
 
 ## Trajectories (.FPD)
 
@@ -51,7 +51,7 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 - [ ] Flags: High priority
 - [ ] Breath waves
 - [ ] Velocity chunk
-- [ ] Embedded sequence (required for sound effects conversion)
+- [ ] Embedded sequence (required for sound effects conversion)
 - [X] Convert to SF2 (no sustain rate)
 
 ## Voicebank body (.BD)
@@ -67,7 +67,7 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 - [X] Normals
 - [X] Uncompressed texture
 - [X] RLE compressed texture
-- [ ] Aniamtion timelines
+- [ ] Aniamtion timelines
 
 ## Layouts (.LAY)
 
@@ -97,7 +97,7 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 - [X] Embedded materials
 - [X] Textured materials
 - [X] Joints
-- [ ] Model animation
+- [ ] Model animation
 - [X] Wavefront OBJ generation
 
 ## Music sequences (.MID)
@@ -107,14 +107,14 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 
 ## Menus (.MLB)
 
-- [X] Section filtering
-- [X] Positioning
+- [X] Section filtering
+- [X] Positioning
 - [X] Scaling
 - [X] Z-order
 - [ ] Blend
 - [X] Colors
-- [ ] Animation
-- [ ] Editor
+- [ ] Animation
+- [ ] Editor
 - [X] Convert to PNG
 
 ## Strings table (.MSG)
@@ -128,7 +128,7 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 
 - [X] List streams
 - [X] Extract streams
-- [ ] Create streams from .IPU/.INT
+- [X] Create streams from .IPU/.INT
 - [ ] Modify streams
 - [X] Convert to MP4
 
@@ -144,7 +144,7 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 
 ## Source Code Control files (.SCC)
 
-- [X] List project GUID
+- [X] List project GUID
 - [X] List file revisions
 - [X] List file IDs
 - [ ] Checksum verification
@@ -153,38 +153,38 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 ## Stage information file (.SST)
 
 - [X] String lists (\*N/STGNAME)
-  - [X] Decode
-  - [ ] Modify
+  - [X] Decode
+  - [ ] Modify
 - [X] Camera metadata (CAMD)
-  - [X] Decode
-  - [ ] Modify
+  - [X] Decode
+  - [ ] Modify
 - [ ] Area metadata (KUINF)
 - [X] Gimmick tables (GMK\*)
   - [X] Decode
   - [X] Modify
-- [ ] CAMKUD
+- [ ] CAMKUD
 - [X] Area codes (KUIDX)
-  - [X] Decode
-  - [ ] Modify
+  - [X] Decode
+  - [ ] Modify
 - [ ] Respawn metadata (REBIRTH)
 - [ ] SGKTBL
-- [ ] SGKIDX
-- [ ] SETBL
+- [ ] SGKIDX
+- [ ] SETBL
 - [ ] MTTBL
 - [ ] PTTBL
-- [ ] MTTBLDEF
+- [ ] MTTBLDEF
 - [ ] Draw distance and stage mirror (DRAWD)
 - [ ] EVTBL
-- [ ] EVTIDX
-- [X] Event system (EVENT)
-  - [X] Decode
-  - [ ] Modify
+- [ ] EVTIDX
+- [X] Event system (EVENT)
+  - [X] Decode
+  - [ ] Modify
 - [ ] Zero gravity stick-figure particles (FLIESFPB)
-- [ ] Stage info (STGINF)
+- [ ] Stage info (STGINF)
 - [ ] Default missions data (EVTINF)
-- [X] Default ranks (RECORD)
-  - [X] Decode
-  - [ ] Modify
+- [X] Default ranks (RECORD)
+  - [X] Decode
+  - [ ] Modify
 
 ## Texture files (.TM2)
 
@@ -196,5 +196,5 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 
 ## Vibration data (.VSD)
 
-- [X] Decode floats
+- [X] Decode floats
 - [ ] Modify values

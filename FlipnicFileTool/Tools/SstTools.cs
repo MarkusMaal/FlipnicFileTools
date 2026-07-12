@@ -29,6 +29,9 @@ public class SstTools
             case Enums.Modes.SstResize:
                 ResizeToc(File.Open(cfg.FileName, FileMode.Open, FileAccess.ReadWrite), cfg.VFile, cfg.Count);
                 break;
+            case Enums.Modes.ShowSstMissions:
+                Console.Write(new FpnSst(File.OpenRead(cfg.FileName)).GetEvtInf());
+                break;
         }
     }
 

@@ -9,8 +9,8 @@ public class VideoTools
     private string Output { get; set; }
     private string FFmpegPath { get; set; }
     
-    private static bool CropAlpha { get; set; } = false;
-    private static bool CropRgb { get; set; } = false;
+    private static bool CropAlpha { get; set; }
+    private static bool CropRgb { get; set; }
     
     private static int ScaleFactor { get; set; } = 1;
     
@@ -65,7 +65,7 @@ public class VideoTools
         Console.WriteLine("Counting frames...");
         ipuFile.Position = 0x10;
         var frames = 0;
-        var shiftRegister = new byte[4] { 0, 0, 0, 0 };
+        var shiftRegister = "\0\0\0\0"u8.ToArray();
         while (ipuFile.Position < ipuFile.Length)
         {
             shiftRegister[0] = shiftRegister[1];

@@ -7,25 +7,42 @@ using SonyVag = FlipnicLib.Formats.Vag.SonyVag;
 
 namespace FlipnicLib;
 
-public abstract class StaticUtils
+public class StaticUtils
 {
     public static string DisclaimerText =>
-        "This software is provided to you free of charge AS IS without a warranty. If you paid for this software, you should ask for a refund. The copyrights of original Flipnic game assets belong to Japan Studio of Sony Interactive Entertainment (a.k.a. SCEI) and these assets are not distributed with this software. This tool is designed for personal non-commercial use only.";
+        "This software is provided to you free of charge AS IS without a warranty. If you paid for this software, you should ask for a refund. The copyrights of original Flipnic game assets belong to Japan Studio of Sony Interactive Entertainment (a.k.a. SCEI) and these assets are not distributed with this software.";
     
-    private static char[] Loaders = ['/', '-', '\\', '|'];
-    public static int LoadIdx = 0;
+    private static readonly char[] Loaders = ['/', '-', '\\', '|'];
+    private static int LoadIdx;
 
     public static int[] AdsrMultipliers = [1200, 1200, 1400, 1200, 320];
 
-    public static float LibVersion = 2.3f;
-    public static bool IsBeta = true;
+    private static DateTime LastUpdate { get; set; } = DateTime.Now;
+
+    public static readonly float LibVersion = 2.4f;
+    public static readonly bool IsBeta = true;
     
-    public static bool LowMem { get; set; } = false;
+    public static bool LowMem { get; set; }
     
     public static bool SimpleOutput { get; set; }
     public static bool Pal { get; set; }
-    
-    public static string? LiveLoadStatus { get; set; }
+
+    /// <summary>
+    /// Allows you to specify a method to run when the value of "LiveLoadStatus" is changed, for example:<br/>
+    /// <br/>
+    /// StaticUtils.UpdateText += (v) => Console.WriteLine($"New value: {v}");
+    /// </summary>
+    public static event UpdateText? TextUpdate;
+    public delegate void UpdateText(string? text);
+    public static string? LiveLoadStatus
+    {
+        get;
+        set
+        {
+            field = value;
+            TextUpdate?.Invoke(value);
+        }
+    }
 
     public static int WindowWidth { get; set; }
 
@@ -35,36 +52,45 @@ public abstract class StaticUtils
 
     public static bool AltSf2Method { get; set; } = false;
 
-    public static bool IsModeSet { get; set; } = false;
+    public static bool IsModeSet { get; set; }
 
     public static short ReverbStrength { get; set; } = 70;
 
-    public static bool AlternateNormals { get; set; } = false;
+    public static bool AlternateNormals { get; set; }
 
     public static bool ForceNoColors { get; set; } = false;
     
-    public static bool ForceBruteForce { get; set; } = false;
+    public static bool ForceBruteForce { get; set; }
     
     /// <summary>
     /// Display an animated spinning line loader
     /// </summary>
     public static void PrintLoader()
     {
-        
         try
         {
             WindowWidth = Console.WindowWidth;
-            Console.Write($"\r   {Loaders[LoadIdx++ / 1000]}");
-            if (LoadIdx / 1000 >= Loaders.Length)
+            if (DateTime.Now - LastUpdate >= TimeSpan.FromMilliseconds(100))
             {
-                LoadIdx = 0;
+                LoadIdx++;
+                if (LoadIdx >= Loaders.Length) LoadIdx = 0;
+                LastUpdate = DateTime.Now;
             }
-        }
-        catch
+            Console.Write($"\r   {Loaders[LoadIdx]}");
+        } catch (IOException)
         {
-            LoadIdx = 0;
+            // no command window, just avoid printing the loader
         }
     }
+    
+    
+    private static string PadBoth(string str, int length)
+    {
+        var spaces = length - str.Length;
+        var padLeft = spaces / 2 + str.Length;
+        return str.PadLeft(padLeft).PadRight(length);
+    }
+    
     /// <summary>
     /// Generates an ASCII table with the data provided
     /// </summary>
@@ -91,16 +117,11 @@ public abstract class StaticUtils
         List<int> colSizes = [];
         for (var c = 0; c < columns.Length; c++)
         {
-            var max = 0;
-            if (rows.Count > 0)
-            {
-                max = rows.Select(row => row[c].Length).Max();
-            }
+            var max = rows.Max(row => row[c].Length);
             if (max < columns[c].Length) max = columns[c].Length;
             colSizes.Add(max);
         }
 
-        var cI = -1;
         foreach (var cS in colSizes)
         {
             for (var j = 0; j < cS + 2; j++)
@@ -110,12 +131,13 @@ public abstract class StaticUtils
             sep += "+";
         }
         o += $"{sep}\n| ";
-        cI = 0;
+        var cI = 0;
         foreach (var column in columns)
         {
-            o = o + column.PadRight(colSizes[cI]) + " | ";
+            o = o + PadBoth(column, colSizes[cI]) + " | ";
             cI++;
         }
+        o = o[..^1];
 
         o += "\n";
         o += $"{sep}\n";
@@ -138,7 +160,7 @@ public abstract class StaticUtils
                 line = line + s.PadRight(colSizes[cI]) + " | ";
                 cI++;
             }
-            o += line + "\n";
+            o += line[..^1] + "\n";
             if (LowMem)
             {
                 Console.Write(o);
@@ -196,6 +218,8 @@ public abstract class StaticUtils
     /// </summary>
     /// <param name="width">Width of the image</param>
     /// <param name="height">Height of the image</param>
+    /// <param name="black">First color used by the checkerboard (default: black)</param>
+    /// <param name="magenta">Second color used by the checkerboard (default: magenta)</param>
     public static Stream GenerateCheckerboardPng(int width, int height, Pixel? black = null, Pixel? magenta = null)
     {
         var output = new MemoryStream();
@@ -378,11 +402,11 @@ public abstract class StaticUtils
     /// <param name="encoded">The encoded text</param>
     public static void DecodeColors(string encoded)
     {
-        foreach (var _sect in encoded.Split('~'))
+        foreach (var sect2 in encoded.Split('~'))
         {
-            if (_sect.Length == 0) continue;
-            var sect = _sect.Replace("::::", "~")[2..];
-            var colorCode = _sect[..2].ToUpper();
+            if (sect2.Length == 0) continue;
+            var sect = sect2.Replace("::::", "~")[2..];
+            var colorCode = sect2[..2].ToUpper();
             HexStrToColor(colorCode);
             Console.Write(sect);
         }
@@ -406,8 +430,9 @@ public abstract class StaticUtils
     /// <param name="vertices">Array containing raw model data (each chunk is 7*sizeof(float), where first 2 items are XY UV coordinates, next 3 items are XYZ vertex coordinates and final 3 items are XYZ normal coordinates)</param>
     /// <param name="texture">Texture object (either Tim or Tim2 is accepted here)</param>
     /// <param name="ignoreNormals">Optional: If set to true, ensures that no normal vectors will get exported to the final OBJ file</param>
-    public static void ExportObj(string fileName, float[] vertices, object? texture, bool ignoreNormals = false)
+    public static void ExportObj(string fileName, float[] vertices, object? texture, bool ignoreNormals = false, float[]? diffuse = null)
     {
+        var culture = CultureInfo.InvariantCulture;
         // generate .png file
         var hasTexture = true;
         switch (texture)
@@ -427,19 +452,22 @@ public abstract class StaticUtils
         }
             
         // generate .mtl file
-        if (hasTexture)
+        if (hasTexture || (diffuse != null))
         {
             using var mtlwriter = new StreamWriter(fileName[..^4] + ".mtl");
             mtlwriter.WriteLine($"newmtl {new FileInfo(fileName).Name[..^4]}");
-            mtlwriter.WriteLine($"map_Kd {new FileInfo(fileName).Name[..^4]}.png");
+            if (hasTexture) mtlwriter.WriteLine($"map_Kd {new FileInfo(fileName).Name[..^4]}.png");
+            if (diffuse != null)
+            {
+                mtlwriter.WriteLine($"Kd {diffuse[0].ToString(culture)} {diffuse[1].ToString(culture)} {diffuse[2].ToString(culture)}");
+            }
             mtlwriter.Close();
             Console.WriteLine($"Saved as: {fileName[..^4]}.mtl");
         }
 
         var vertexCount = vertices.Length / 8;
         using var writer = new StreamWriter(fileName);
-        var culture = CultureInfo.InvariantCulture;
-        if (hasTexture)
+        if (hasTexture || diffuse != null)
         {
             writer.WriteLine($"mtllib {new FileInfo(fileName).Name[..^4]}.mtl");
             writer.WriteLine($"usemtl {new FileInfo(fileName).Name[..^4]}");

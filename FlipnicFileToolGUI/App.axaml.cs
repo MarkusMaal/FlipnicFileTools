@@ -1,5 +1,4 @@
 using System;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -66,6 +65,17 @@ public class App : Application
 
     private void NativeMenuItem_OnClick(object? sender, EventArgs e)
     {
+        // close all windows safely before force quitting
+        // this is necessary to make sure all settings are saved properly
+        var lifeTime = ((IClassicDesktopStyleApplicationLifetime?)Current?.ApplicationLifetime)!;
+        var lastCount = -1;
+        while (lifeTime.Windows.Count > 0)
+        {
+            var windows = lifeTime.Windows;
+            windows[0].Close();
+            if (windows.Count == lastCount) return; // something is preventing us from closing the app, so just stop and wait for the user to respond
+            lastCount = windows.Count;
+        }
         Environment.Exit(0);
     }
 
@@ -75,7 +85,19 @@ public class App : Application
         {
             DataContext = new MainWindowViewModel(),
         };
+        var activeLightMode = false;
+        var windows = ((IClassicDesktopStyleApplicationLifetime?)Current?.ApplicationLifetime)?.Windows;
+        foreach (var window in windows ?? [])
+        {
+            if (!window.IsActive) continue;
+            if (window is not MainWindow mainWindow) continue;
+            activeLightMode = mainWindow.InfoBox.IsLightTheme;
+            break;
+        }
         mw.Show();
+        mw.InfoBox.IsLightTheme = activeLightMode;
+        mw.EventBox.IsLightTheme = activeLightMode;
+
     }
 
     private void AboutNativeMenu_OnClick(object? sender, EventArgs e)
@@ -109,18 +131,28 @@ public class App : Application
 
     public static void Init(MainWindow mw)
     {
-        mw.GetViewModel().MenuElements = new ObservableCollection<MenuElementViewModel>(mw.GetViewModel().Menu);
-        mw.RestartWglButton.IsVisible = !Program.GpuAccel;
+        if (!OperatingSystem.IsMacOS())
+        {
+            mw.RestartWglButton.IsVisible = !Program.GpuAccel;
+        }
         mw.GlControl.IsVisible = Program.GpuAccel;
         mw.ModelInfoSection.IsVisible = Program.GpuAccel;
         mw.TpModelButton.IsVisible = Program.GpuAccel;
         mw.RotateModelCheck.IsVisible = Program.GpuAccel;
-        if (OperatingSystem.IsWindows() && Program.GpuAccel)
+        if (Program.GpuAccel)
         {
             mw.FileMenu1.IsEnabled = false;
             mw.OptionMenu1.IsEnabled = false;
             mw.InfoMenu1.IsEnabled = false;
             mw.IsMenuVisible = false;
+            mw.MainTabControl.SidebarToggleEnabled = false;
+            mw.MainTabControl.HeaderMinHeight = 0;
+            mw.ShowBottomBorder = false;
+            mw.ModelTab.Icon = null;
+            mw.IsTitleBarVisible = true;
+            mw.TitleBarVisibilityOnFullScreen = SukiWindow.TitleBarVisibilityMode.Hidden;
+            mw.WindowDecorations = WindowDecorations.Full;
+            mw.MainTabControl.Margin = new Thickness(-48, 0, 0, 0);
         }
         if (Design.IsDesignMode)
         {
@@ -149,10 +181,8 @@ public class App : Application
               Flipnic file tools
               ---------------------------------
               No file loaded, open a file by clicking File > Open
-              or press Ctrl+Alt+V to paste a file.
               
               """;
-        
         mw.ForceRefresh();
         var p = new Process();
         try
@@ -164,12 +194,10 @@ public class App : Application
             p.Start();
             p.WaitForExit();
             mw.OpenImHexMenuItem.IsVisible = p.ExitCode == 0;
-            mw.GetViewModel().CanOpenImhex = p.ExitCode == 0;
         }
         catch
         {
             mw.OpenImHexMenuItem.IsVisible = false;
-            mw.GetViewModel().CanOpenImhex = false;
         }
 
         p = new Process();
@@ -181,6 +209,8 @@ public class App : Application
         DetectFromOutput(p, mw.FFmpegBox , "FFmpeg", mw);
         mw.ReverbSlider.Value = StaticUtils.ReverbStrength;
         if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop) return;
+        
+        if (desktop.Windows.Count == 1) Preferences.LoadPreferences(mw);
         if (desktop.Args?.Length == 0) return;
         if (MainWindow.ErrorDisplayed || desktop.Args?[0] != "-e") return;
 

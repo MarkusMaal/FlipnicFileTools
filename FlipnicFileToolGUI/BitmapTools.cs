@@ -13,10 +13,10 @@ public class BitmapTools
     /// Converts TIM2 to a standard bitmap
     /// </summary>
     /// <returns>Bitmap object containing the converted image</returns>
-    public Bitmap ToBitmap()
+    public Bitmap? ToBitmap(bool quiet = false)
     {
         var ms =  new MemoryStream();
-        Image?.SavePng(ms);
+        Image?.SavePng(ms, quiet);
         ms.Position = 0;
         try
         {
@@ -44,7 +44,7 @@ public class BitmapTools
     /// Loads image to memory as bitmap data
     /// </summary>
     /// <returns>Memory stream containing the image data</returns>
-    public byte[] ToMemoryStream()
+    public Stream ToMemoryStream()
     {
         var ms = new MemoryStream();
         if (Icon != null)
@@ -56,6 +56,6 @@ public class BitmapTools
             Image?.SavePng(ms);
         }
         ms.Position = 0;
-        return ms.ToArray();
+        return ms;
     }
 }

@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using FlipnicLib;
 using FlipnicLib.Formats;
 using ImageMagick;

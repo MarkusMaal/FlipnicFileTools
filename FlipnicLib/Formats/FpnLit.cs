@@ -2,7 +2,7 @@ namespace FlipnicLib.Formats;
 
 public class FpnLit() : FormatBase
 {
-    private List<ColorIntensity> LightMaps { get; } = [];
+    public List<ColorIntensity> LightMaps { get; } = [];
     
     public FpnLit(Stream dataStream) : this()
     {
@@ -31,13 +31,26 @@ public class FpnLit() : FormatBase
                
                """ + StaticUtils.GenerateTable(colHeaders, rows, asCsv);
     }
+
+    public byte[] GetBytes()
+    {
+        List<byte> data = [255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        foreach (var lm in LightMaps)
+        {
+            data.AddRange(BitConverter.GetBytes(lm.Red));
+            data.AddRange(BitConverter.GetBytes(lm.Green));
+            data.AddRange(BitConverter.GetBytes(lm.Blue));
+            data.AddRange([0, 0, 0, 0]);
+        }
+        return data.ToArray();
+    }
     
     public override string ToString()
     {
         return ToString(false);
     }
 
-    private class ColorIntensity
+    public class ColorIntensity
     {
         public float Red { get; init; }
         public float Green { get; init; }

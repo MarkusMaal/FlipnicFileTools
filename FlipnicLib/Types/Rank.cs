@@ -54,7 +54,8 @@ public class Rank(FpnSave save, int idx, int gameMode)
         {
             "Easy" => FpnSave.Difficulty.Easy,
             "Normal" => FpnSave.Difficulty.Normal,
-            "Hard" => FpnSave.Difficulty.Hard
+            "Hard" => FpnSave.Difficulty.Hard,
+            _ => FpnSave.Difficulty.Null
         };
         SaveFile.SetScore(GameMode, idx, score, initials, combos, diff);
     }
