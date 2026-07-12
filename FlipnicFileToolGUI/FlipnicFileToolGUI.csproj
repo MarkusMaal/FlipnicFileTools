@@ -28,6 +28,7 @@
         <PackageReference Include="OpenTK.Graphics" Version="4.9.4" />
         <PackageReference Include="OpenTKAvalonia" Version="1.0.0" />
         <PackageReference Include="SukiUI" Version="7.0.1" />
+        <ProjectReference Include="..\FlipnicLib.Tests\FlipnicLib.Tests.csproj" />
 
         <ProjectReference Include="..\FlipnicLib\FlipnicLib.csproj" />
     </ItemGroup>

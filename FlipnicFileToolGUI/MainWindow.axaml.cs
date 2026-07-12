@@ -28,6 +28,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
+using FlipnicLib.Tests.Formats;
 
 namespace FlipnicFileToolGUI;
 
@@ -114,6 +115,10 @@ public sealed partial class MainWindow : SukiWindow
         AddHandler(DragDrop.DropEvent, WindowDropped);
         if (!Design.IsDesignMode) { return; }
         PreviewImage.Source = new Bitmap(StaticUtils.GenerateCheckerboardPng(320, 240));
+        ModelGrid.Background = new SolidColorBrush(Colors.Transparent);
+        InfoBox.Text = "This is where the information about currently opened file will be displayed";
+        EventBox.Text = "This is where the event script will be displayed";
+        CameraTool.CameraObject = new FpnFpc(new MemoryStream(FpnFpcTest.MockFpc));
         SukiTheme.GetInstance().SwitchBaseTheme();
         ApplyCustomTheme();
     }

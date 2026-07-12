@@ -9,7 +9,7 @@ namespace FlipnicLib.Tests.Formats;
 [TestSubject(typeof(FpnFpc))]
 public class FpnFpcTest
 {
-    private readonly byte[] _mockFpc =
+    public static readonly byte[] MockFpc =
     [
         0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x70, 0x41, 0x00, 0x00, 0xF0, 0x41, 0x00, 0x00, 0xA1, 0x42, 0x00, 0x00, 0xB4, 0x42, 0x00, 0x80, 0xC8, 0x42,
@@ -21,7 +21,7 @@ public class FpnFpcTest
     [TestMethod]
     public void FpcParser()
     {
-        var ms = new MemoryStream(_mockFpc);
+        var ms = new MemoryStream(MockFpc);
         var fpc = new FpnFpc(ms);
         Assert.HasCount(4, fpc.CamFrames);
         Assert.AreEqual(90f, fpc.Fov);
@@ -40,7 +40,7 @@ public class FpnFpcTest
     [TestMethod]
     public void FpcRoundTrip()
     {
-        var ms = new MemoryStream(_mockFpc);
+        var ms = new MemoryStream(MockFpc);
         var fpc = new FpnFpc(ms);
         Assert.IsNotNull(fpc);
         ms.Seek(0, SeekOrigin.Begin);
