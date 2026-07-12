@@ -17,7 +17,7 @@ public class BinFile : FormatBase
     {
         string[] colHeader = ["Path", "Offset", "Size", "TOC offset", "Large buffer"];
         var rows = GetFsEntriesNew(src);
-        if (noDisplay) return;
+        if (noDisplay) return "";
         foreach (var t in rows)
         {
             t[2] = GetFilesizeString(long.Parse(t[2]));

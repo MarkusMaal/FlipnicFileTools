@@ -515,7 +515,7 @@ namespace FlipnicLib.Formats
         {
             var er = FormatHeader.HasBoundingBox ? "Yes" : "No";
             var hl = FormatHeader.HasLayouts ? "Yes" : "No";
-            FilePath ??= "";
+            FilePath ??= "/";
             var o = $"""
                     3D model data ({new FileInfo(FilePath).Name})
                     

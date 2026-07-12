@@ -65,8 +65,7 @@ else
                         str = new FpnFpc(ms).ToString();
                         break;
                     case "LP4":
-                        var lp4 = new Lp4(data, file.Name);
-                        lp4.Read();
+                        var lp4 = new Lp4(new MemoryStream(data));
                         str = lp4.ToString();
                         break;
                     case ".HD":

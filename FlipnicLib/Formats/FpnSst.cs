@@ -129,7 +129,7 @@ public class FpnSst : FormatBase
     /// Display gimmick data as table string
     /// </summary>
     /// <param name="name">Name of the gimmick (from TOC, always starts with GMK)</param>
-    public void ShowGimmick(string name)
+    public string ShowGimmick(string name)
     {
         var tocEntry = TableOfContents[name];
         var gimmickData = _data.Skip(tocEntry.Offset).Take(tocEntry.EntrySize * tocEntry.Count).ToArray();
@@ -142,7 +142,7 @@ public class FpnSst : FormatBase
         string[] colHeaders = ["Label", "Type", "Button", "Sound effect", "Flip. strength", "Knockback", "Bounciness"];
         List<string[]> rows = [];
         rows.AddRange(gimmicks.Select(entry => (string[]) [entry.Label, entry.Type.ToString(), entry.Button.ToString(), entry.SoundEffect.ToString(), DotFloatString(entry.FlipperStrength), DotFloatString(entry.Knockback), DotFloatString(entry.Bounciness)]));
-        Console.Write(StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput));
+        return StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput);
     }
 
     /// <summary>
