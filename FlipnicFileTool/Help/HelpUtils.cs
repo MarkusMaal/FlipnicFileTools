@@ -203,9 +203,6 @@ public abstract class HelpUtils
                     new HelpLine("alternate-normals",
                         "Use a different method for decoding normal vectors (required for some files)", [], "",
                         false, "export-lp4-json,export-obj"),
-                    new HelpLine("force-brute-force",
-                        "Always use brute-force method for decoding LP4 files even when regular parser finishes successfully",
-                        [], "", false, "export-obj")
                 ]
             ),
             new HelpTopic(

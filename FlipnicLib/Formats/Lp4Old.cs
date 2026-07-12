@@ -128,11 +128,11 @@ public class Lp4Old(byte[] data, string fileName) : FormatBase
     {
         try
         {
-            if (StaticUtils.ForceBruteForce)
+            /*if (StaticUtils.ForceBruteForce)
             {
                 BruteForceMethod();
                 return;
-            }
+            }*/
             var hasBoundingBox = data[17] == 0x01;
             var additionalDataLength = GetInt32(data, 8); 
             var i = 0x20;

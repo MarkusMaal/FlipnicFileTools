@@ -135,9 +135,6 @@ public class Config
                 case "--alternate-normals":
                     StaticUtils.AlternateNormals = true;
                     break;
-                case "--force-brute-force":
-                    StaticUtils.ForceBruteForce = true;
-                    break;
                 case "--test":
                     Test = true;
                     break;

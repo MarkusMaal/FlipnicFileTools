@@ -6,7 +6,13 @@ public class FpnLit() : FormatBase
     
     public FpnLit(Stream dataStream) : this()
     {
-        dataStream.Seek(0x10, SeekOrigin.Begin);
+        var startBytes = new byte[0x10];
+        dataStream.ReadExactly(startBytes);
+        var byteProduct = startBytes[0] * startBytes[1] * (long)(startBytes[2] * startBytes[3]);
+        if (byteProduct != 4228250625L)
+        {
+            dataStream.Position = 0;
+        }
         while (dataStream.Position < dataStream.Length)
         {
             var data = new byte[0x10];

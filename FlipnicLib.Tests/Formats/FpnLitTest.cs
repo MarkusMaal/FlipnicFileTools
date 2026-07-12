@@ -31,8 +31,17 @@ public class FpnLitTest
     [TestMethod]
     public void LitRgb()
     {
-        var ms = new MemoryStream(_mockLit);
-        var lit = new FpnLit(ms);
+        RgbTest(new FpnLit(new MemoryStream(_mockLit)));
+    }
+
+    [TestMethod]
+    public void LitNoHeaderRgb()
+    {
+        RgbTest(new FpnLit(new MemoryStream(_mockLit.Skip(0x10).ToArray())));
+    }
+
+    private static void RgbTest(FpnLit lit)
+    {
         Assert.IsNotNull(lit);
         Assert.HasCount(1, lit.LightMaps);
         Assert.AreEqual(100f, lit.LightMaps[0].Red);

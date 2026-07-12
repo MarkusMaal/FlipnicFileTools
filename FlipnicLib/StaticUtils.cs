@@ -60,8 +60,6 @@ public class StaticUtils
 
     public static bool ForceNoColors { get; set; } = false;
     
-    public static bool ForceBruteForce { get; set; }
-    
     /// <summary>
     /// Display an animated spinning line loader
     /// </summary>

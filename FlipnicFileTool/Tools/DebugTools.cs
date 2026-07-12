@@ -34,7 +34,6 @@ public class DebugTools(Exception e)
                                        PAL: {StaticUtils.Pal}
                                        Window width: {StaticUtils.WindowWidth}
                                        Reverb strength: {StaticUtils.ReverbStrength}
-                                       Force brute-force: {StaticUtils.ForceBruteForce}
                                  
                                  Environment:
                                     FlipnicLib version: {StaticUtils.DotFloatString(StaticUtils.LibVersion)}
