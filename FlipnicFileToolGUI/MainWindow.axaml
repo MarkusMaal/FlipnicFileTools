@@ -434,7 +434,7 @@
                             <controls:CircleDot ColorA="DodgerBlue" ColorB="DarkBlue" Source="Assets\TabIcons\save.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
-                            <Grid RowDefinitions="30,30,*" Margin="10" DataContext="{Binding SaveData}">
+                            <Grid RowDefinitions="30,30,*" Margin="10" DataContext="{Binding SaveData}" x:DataType="viewModels:MainWindowViewModel">
                                 <Label>Ranking data</Label>
                                 <ComboBox Grid.Row="1" SelectedIndex="{Binding LeaderboardId}"  x:DataType="formats:FpnSave" SelectionChanged="ScoreGrid_SelectionChanged">
                                     <ComboBoxItem>Original game</ComboBoxItem>

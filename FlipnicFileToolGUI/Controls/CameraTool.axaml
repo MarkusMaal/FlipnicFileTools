@@ -10,24 +10,24 @@
              DataContext="{Binding RelativeSource={RelativeSource Self}}"
              x:CompileBindings="True">
     <Grid RowDefinitions="140, *">
-        <StackPanel DataContext="{Binding CameraObject}" Margin="10" Spacing="10" x:DataType="formats:FpnFpc">
+        <StackPanel DataContext="{Binding CameraObject}" Margin="10" Spacing="10" x:DataType="controls:CameraTool">
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <Label Content="Origin: " VerticalAlignment="Center"></Label>
-                <TextBox Text="{Binding OriginX, TargetNullValue=0}" MinWidth="60" ></TextBox>
-                <TextBox Text="{Binding OriginY, TargetNullValue=0}" MinWidth="60" ></TextBox>
-                <TextBox Text="{Binding OriginZ, TargetNullValue=0}" MinWidth="60" ></TextBox>
+                <TextBox Text="{Binding OriginX, TargetNullValue=0}" x:DataType="formats:FpnFpc" MinWidth="60" ></TextBox>
+                <TextBox Text="{Binding OriginY, TargetNullValue=0}" x:DataType="formats:FpnFpc" MinWidth="60" ></TextBox>
+                <TextBox Text="{Binding OriginZ, TargetNullValue=0}" x:DataType="formats:FpnFpc" MinWidth="60" ></TextBox>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <Label Content="Target: " VerticalAlignment="Center"></Label>
-                <TextBox Text="{Binding TargetX, TargetNullValue=0}" MinWidth="60" ></TextBox>
-                <TextBox Text="{Binding TargetY, TargetNullValue=0}" MinWidth="60" ></TextBox>
-                <TextBox Text="{Binding TargetZ, TargetNullValue=0}" MinWidth="60" ></TextBox>
+                <TextBox Text="{Binding TargetX, TargetNullValue=0}" x:DataType="formats:FpnFpc" MinWidth="60" ></TextBox>
+                <TextBox Text="{Binding TargetY, TargetNullValue=0}" x:DataType="formats:FpnFpc" MinWidth="60" ></TextBox>
+                <TextBox Text="{Binding TargetZ, TargetNullValue=0}" x:DataType="formats:FpnFpc" MinWidth="60" ></TextBox>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <Label Content="FOV: " VerticalAlignment="Center" MinWidth="58" ></Label>
-                <TextBox Text="{Binding Fov, TargetNullValue=0}" MinWidth="60" ></TextBox>
+                <TextBox Text="{Binding Fov, TargetNullValue=0}" x:DataType="formats:FpnFpc" MinWidth="60" ></TextBox>
                 <Label Content="Frames: " VerticalAlignment="Center"></Label>
-                <Label Content="{Binding NumFramesStr, TargetNullValue='0'}" VerticalAlignment="Center"></Label>
+                <Label Content="{Binding NumFramesStr, TargetNullValue='0'}" x:DataType="formats:FpnFpc" VerticalAlignment="Center"></Label>
             </StackPanel>
         </StackPanel>
         <WrapPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" ItemsAlignment="End" Margin="10" MaxWidth="300" ItemSpacing="10" LineSpacing="10">
