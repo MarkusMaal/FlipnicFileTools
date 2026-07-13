@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="320" d:DesignHeight="240"
-             x:Class="FlipnicFileToolGUI.Controls.CLIBox"  DataContext="{Binding RelativeSource={RelativeSource Self}}"
+             x:Class="FlipnicFileToolGUI.Controls.InfoBox"  DataContext="{Binding RelativeSource={RelativeSource Self}}"
              x:CompileBindings="False">
     <Grid>
         <ScrollViewer HorizontalScrollBarVisibility="Auto" Name="CliBox" IsVisible="{Binding !WrapText}">

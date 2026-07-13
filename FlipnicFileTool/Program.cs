@@ -143,7 +143,7 @@ internal static class Program
                     Console.WriteLine(elf);
                     break;
                 case Enums.Modes.ShowDummy:
-                    var df = new Dummy(File.OpenRead(Cfg.FileName!));
+                    var df = new Dummy(File.OpenRead(Cfg.FileName));
                     Console.WriteLine(df);
                     break;
                 case Enums.Modes.Playground:

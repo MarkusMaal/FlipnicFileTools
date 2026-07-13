@@ -2,8 +2,26 @@ using FlipnicLib.Formats;
 
 namespace FlipnicLib.Types;
 
-public class Gimmick(byte[] data) : FormatBase
+public class Gimmick : FormatBase
 {
+    public Gimmick()
+    {
+        
+    }
+    public Gimmick(byte[] data)
+    {
+        Label = GetString(data.Take(0x20).ToArray());
+        Type = (GimmickTypes)data[0x20];
+        SoundEffect = GetInt32(data, 0x5C);
+        Bounciness = GetFloat(data, 0x4C);
+        FlipperStrength = GetFloat(data, 0x74);
+        Knockback = GetFloat(data, 0x54);
+        AnalogRange = data[0x6D];
+        NoSpawn = data[0x28] > 0;
+        Invisible = data[0x2A] > 0;
+        Button = (ControllerButtons)data[0x6C];
+    }
+
     public enum GimmickTypes : byte {
         SoundTrigger,
         Floor,
@@ -66,23 +84,23 @@ public class Gimmick(byte[] data) : FormatBase
         MultihitTarget = 0xE9
     }
     
-    public string Label { get; set; } = GetString(data.Take(0x20).ToArray());
-    public GimmickTypes Type { get; set; } = (GimmickTypes)data[0x20];
+    public string Label { get; set; }
+    public GimmickTypes Type { get; set; }
 
-    public int SoundEffect { get; set; } = GetInt32(data, 0x5C);
+    public int SoundEffect { get; set; }
 
-    public float Bounciness { get; set; } = GetFloat(data, 0x4C);
+    public float Bounciness { get; set; }
 
-    public float FlipperStrength { get; set; } = GetFloat(data, 0x74);
-    public float Knockback { get; set; } = GetFloat(data, 0x54);
+    public float FlipperStrength { get; set; }
+    public float Knockback { get; set; }
 
-    public byte AnalogRange {get; set;} = data[0x6D];
+    public byte AnalogRange {get; set;}
 
-    public bool NoSpawn { get; set; } = data[0x28] > 0;
+    public bool NoSpawn { get; set; }
 
-    public bool Invisible { get; set; } = data[0x2A] > 0;
+    public bool Invisible { get; set; }
 
-    public ControllerButtons Button { get; set; } = (ControllerButtons)data[0x6C];
+    public ControllerButtons Button { get; set; }
     
     public string Lp4File
     {

@@ -45,7 +45,7 @@
         <DependentUpon>MenuMockup.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>
-      <Compile Update="Controls\CLIBox.axaml.cs">
+      <Compile Update="Controls\InfoBox.axaml.cs">
         <DependentUpon>CLIBox.axaml</DependentUpon>
         <SubType>Code</SubType>
       </Compile>

@@ -36,10 +36,10 @@ public class ModelTools
         Config cfg)
     {
         var fs = File.OpenRead(cfg.FileName);
-        var lp4test = new Lp4(fs);
+        var lp4Test = new Lp4(fs);
         fs.Close();
         var os = File.CreateText(cfg.Output);
-        os.Write(JsonSerializer.Serialize(lp4test, Lp4TestGenerationContext.Default.Lp4));
+        os.Write(JsonSerializer.Serialize(lp4Test, Lp4TestGenerationContext.Default.Lp4));
         os.Close();
         StaticUtils.DecodeColors($"~-ASuccess~--: File exported as {cfg.Output}");
     }

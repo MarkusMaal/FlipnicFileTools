@@ -13,6 +13,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using BigGustave;
+using FlipnicFileToolGUI.Handlers;
 using FlipnicFileToolGUI.ViewModels;
 using FlipnicLib;
 using FlipnicLib.Formats;
@@ -172,8 +173,8 @@ public static class FileHelpers
                             if (Program.GpuAccel) Thread.Sleep(1000);
                             Dispatcher.UIThread.Post(() =>
                             {
-                                mw.GlControl.ImportICO(ico);
-                                mw.Init3DStuff();
+                                mw.GlControl.ImportIco(ico);
+                                ModelTab.Init3DStuff(mw);
                                 mw.ModelTab.IsSelected = false;
                                 mw.ModelTab.IsVisible = true;
                                 mw.ImagePreviewTab.IsVisible = !Program.GpuAccel;
@@ -226,8 +227,8 @@ public static class FileHelpers
                             {
                                 var texture = StaticUtils.GenerateCheckerboardPng(16, 32,
                                     new Pixel(64, 51, 102, 180, false), new Pixel(0, 255, 0, 255, false));
-                                mw.GlControl.ImportFPD(fpd, texture);
-                                mw.Init3DStuff();
+                                mw.GlControl.ImportFpd(fpd, texture);
+                                ModelTab.Init3DStuff(mw);
                                 if (Debugger.IsAttached)
                                 {
                                     mw.ImagePreviewTab.IsVisible = true;
@@ -398,7 +399,8 @@ public static class FileHelpers
                                             { Image = tim2, }.ToBitmap(true)
                                         : mbCheckerboard;
                                     Dispatcher.UIThread.Post(() => mevm.Add(new MenuElementViewModel()
-                                        { Layer = key, MenuElement = ima, ImageSource = bmp }));
+                                        {
+                                            MenuElement = ima, ImageSource = bmp }));
                                     idx++;
                                 }
 
@@ -412,15 +414,15 @@ public static class FileHelpers
 
                             Dispatcher.UIThread.Post(() =>
                             {
-                                var idx = -32768;
+                                var i = -32768;
                                 var orderedMenus = new List<MenuElementViewModel>();
                                 while (true)
                                 {
-                                    var idx1 = idx;
-                                    var layer = mw.GetViewModel().Menu.Where(iter => iter.MenuElement.Dipth == idx1);
-                                    if (idx == 32768) break;
+                                    var idx1 = i;
+                                    var layer = mw.GetViewModel().Menu.Where(iter => iter.MenuElement?.Dipth == idx1);
+                                    if (i == 32768) break;
                                     orderedMenus.AddRange(layer);
-                                    idx++;
+                                    i++;
                                 }
 
                                 mw.MenuMockupTab.IsVisible = true;
@@ -441,7 +443,7 @@ public static class FileHelpers
                                 });
                                 if (Program.GpuAccel) Thread.Sleep(1000);
                                 StaticUtils.LiveLoadStatus = "Parsing LP4";
-                                mw.GlControl.ImportLP4(lp4);
+                                mw.GlControl.ImportLp4(lp4);
                             }
 
                             LoadAsString(lp4, "Flipnic model file", mw);
@@ -453,14 +455,14 @@ public static class FileHelpers
 
                             Dispatcher.UIThread.Post(() =>
                             {
-                                mw.Init3DStuff(lp4);
+                                ModelTab.Init3DStuff(mw, lp4);
                                 mw.ModelTab.IsSelected = false;
                                 mw.ModelTab.IsVisible = true;
                                 mw.ImagePreviewTab.IsVisible = !Program.GpuAccel;
                                 mw.InfoTab.IsVisible = !Program.GpuAccel;
                                 try
                                 {
-                                    var ms = new MemoryStream(lp4.CachedTexture);
+                                    var ms = new MemoryStream(lp4.CachedTexture ?? []);
                                     mw.PreviewImage.Source = new Bitmap(ms);
                                 }
                                 catch

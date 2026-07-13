@@ -35,7 +35,7 @@
                         <MenuItem Header="Save as..." Click="SaveAsMenuItem_OnClick"></MenuItem>
                     </ContextMenu>
                 </Grid.ContextMenu>
-                <ItemsControl ItemsSource="{Binding MenuElementSource}">
+                <ItemsControl ItemsSource="{Binding MenuElementSource}" Name="MockupDisplay">
 
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -45,16 +45,16 @@
 		                
                     <ItemsControl.ItemContainerTheme>
                         <ControlTheme x:DataType="viewModels:MenuElementViewModel" TargetType="ContentPresenter">
-                            <Setter Property="Canvas.Left" Value="{Binding MenuElement.PosX}" />
-                            <Setter Property="Canvas.Top" Value="{Binding MenuElement.PosY}" />
+                            <Setter Property="Canvas.Left" Value="{Binding MenuElement.PosX, FallbackValue=0}" />
+                            <Setter Property="Canvas.Top" Value="{Binding MenuElement.PosY, FallbackValue=0}" />
                         </ControlTheme>
                     </ItemsControl.ItemContainerTheme>
 
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="viewModels:MenuElementViewModel">
                             <Image Source="{Binding ImageSource}"
-                                   Width="{Binding MenuElement.Width}"
-                                   Height="{Binding MenuElement.Height}"
+                                   Width="{Binding MenuElement.Width, FallbackValue=0}"
+                                   Height="{Binding MenuElement.Height, FallbackValue=0}"
                                    IsVisible="{Binding IsVisible}"
                                    Stretch="Fill"
                                    VerticalAlignment="Top"

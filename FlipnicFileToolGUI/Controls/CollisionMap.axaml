@@ -18,7 +18,7 @@
                      BorderThickness="1" BorderBrush="Gray" Name="GroundList">
             </ListBox>
         </Grid>
-        <Grid Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Margin="5,10" Grid.RowDefinitions="30,*">
+        <Grid Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Margin="5,10" RowDefinitions="30,*">
             <Label>Convert:</Label>
             <WrapPanel Grid.Row="1"  ItemSpacing="5" LineSpacing="10">
                 <Button Name="WtoButton" Content="Wall to OBJ" Click="ExportClick" IsEnabled="False"></Button>

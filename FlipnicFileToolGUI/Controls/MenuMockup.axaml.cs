@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using FlipnicFileToolGUI.Helpers;
 using FlipnicFileToolGUI.ViewModels;
@@ -26,10 +27,14 @@ public partial class MenuMockup : UserControl
             {
                 ImageSource = new Bitmap(StaticUtils.GenerateCheckerboardPng(320, 240)),
                 IsVisible = true,
-                Layer = "Example " + i,
                 MenuElement = new MenuElement(new byte[0x60], "Dummy " + i)
             });
         }
+
+        MockupDisplay.Background = new ImageBrush(new Bitmap(StaticUtils.GenerateCheckerboardPng(320, 240)))
+        {
+            Stretch = Stretch.Fill
+        };
         MenuElementSource = new ObservableCollection<MenuElementViewModel>(menuEls);
     }
     public ObservableCollection<MenuElementViewModel> MenuElementSource
@@ -61,7 +66,7 @@ public partial class MenuMockup : UserControl
         var chk = false;
         foreach (var menuElement in MenuElementSource)
         {
-            if (menuElement.MenuElement.ToString() == (cb?.Content?.ToString() ?? ""))
+            if (menuElement.MenuElement?.ToString() == (cb?.Content?.ToString() ?? ""))
             {
                 menuElement.IsVisible = cb?.IsChecked ?? false;
                 chk = menuElement.IsVisible;
@@ -75,22 +80,28 @@ public partial class MenuMockup : UserControl
 
     private async void SaveAsMenuItem_OnClick(object? sender, RoutedEventArgs e)
     {
-        var file = await FileHelpers.SaveFile(this, [Filters.PngFile]);
-        if (file is null) return;
+        try
+        {
+            var file = await FileHelpers.SaveFile(this, [Filters.PngFile]);
+            if (file is null) return;
         
-        var scTarget = (Grid?)((MenuItem?)sender)?.Parent?.Parent?.Parent;
-        if (scTarget is null) return;
-        scTarget.Width = 640;
-        scTarget.Height = 480;
-        var pixelSize = new PixelSize(640, 480);
-        var size = new Size(640, 480);
+            var scTarget = (Grid?)((MenuItem?)sender)?.Parent?.Parent?.Parent;
+            if (scTarget is null) return;
+            scTarget.Width = 640;
+            scTarget.Height = 480;
+            var pixelSize = new PixelSize(640, 480);
+            var size = new Size(640, 480);
 
-        using RenderTargetBitmap bitmap = new(pixelSize);
-        scTarget.Measure(size);
-        scTarget.Arrange(new Rect(size));
-        bitmap.Render(scTarget);
-        bitmap.Save(Uri.UnescapeDataString(file));
-        ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
-
+            using RenderTargetBitmap bitmap = new(pixelSize);
+            scTarget.Measure(size);
+            scTarget.Arrange(new Rect(size));
+            bitmap.Render(scTarget);
+            bitmap.Save(Uri.UnescapeDataString(file), PngBitmapEncoderOptions.Default);
+            ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "Error: " + ex.Message, NotificationType.Error);
+        }
     }
 }

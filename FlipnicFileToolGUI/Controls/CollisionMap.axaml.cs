@@ -25,20 +25,27 @@ public partial class CollisionMap : UserControl
 
     private async void ExportClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is not Button button) return;
-        var label = button.Name switch // find out what button the user pressed
+        try
         {
-            "WtoButton" => WallList.SelectedItems?[0]?.ToString() ?? "",
-            "GtoButton" => GroundList.SelectedItems?[0]?.ToString() ?? "",
-            "EtoButton" => "ALL",
-            _ => ""
-        };
-        if (label == "") return; // nobody here
-        var file = await FileHelpers.SaveFile(this, [Filters.ObjFile], "Save as wavefront OBJ");
-        if (file == null) return; // user didn't pick a destination
-        var objData = ColObject.GenerateObj(label);
-        await File.WriteAllTextAsync(Uri.UnescapeDataString(file), objData);
-        ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
+            if (sender is not Button button) return;
+            var label = button.Name switch // find out what button the user pressed
+            {
+                "WtoButton" => WallList.SelectedItems?[0]?.ToString() ?? "",
+                "GtoButton" => GroundList.SelectedItems?[0]?.ToString() ?? "",
+                "EtoButton" => "ALL",
+                _ => ""
+            };
+            if (label == "") return; // nobody here
+            var file = await FileHelpers.SaveFile(this, [Filters.ObjFile], "Save as wavefront OBJ");
+            if (file == null) return; // user didn't pick a destination
+            var objData = ColObject.GenerateObj(label);
+            await File.WriteAllTextAsync(Uri.UnescapeDataString(file), objData);
+            ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "Error: " + ex.Message, NotificationType.Error);
+        }
     }
 
     private void LbSelectChanged(object? sender, SelectionChangedEventArgs e)

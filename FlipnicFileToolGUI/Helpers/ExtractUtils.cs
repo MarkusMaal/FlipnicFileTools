@@ -12,10 +12,10 @@ using NetCoreAudio;
 
 namespace FlipnicFileToolGUI.Helpers;
 
-public class ExtractUtils
+public abstract class ExtractUtils
 {
     
-    private static Player player = new();
+    private static Player _player = new();
     
     /// <summary>
     /// Extract VAG sample from a BD file and convert it to WAV
@@ -24,40 +24,47 @@ public class ExtractUtils
     /// <param name="mw">Main window instance</param>
     public static async void ExtractSample(Button button, MainWindow mw)
     {
-        var filePath = Path.GetTempPath() + "/temp.wav";
-        if ((button.Content?.ToString() ?? "") != "Play")
+        try
         {
-            var file = await FileHelpers.SaveFile(mw, [Filters.WavFile]);
-            if (file is null) return;
-            filePath = file;
-        }
+            var filePath = Path.GetTempPath() + "/temp.wav";
+            if ((button.Content?.ToString() ?? "") != "Play")
+            {
+                var file = await FileHelpers.SaveFile(mw, [Filters.WavFile]);
+                if (file is null) return;
+                filePath = file;
+            }
 
-        var ms = new MemoryStream();
-        //var loopStart = mw.GetViewModel().Samples[mw.SamplesGrid.SelectedIndex].LoopStart;
-        //var loopEnd = mw.GetViewModel().Samples[mw.SamplesGrid.SelectedIndex].LoopEnd;
-        if (button.Content is "Extract sample" or "Play")
-        {
-            ms.Write(mw.GetViewModel().Samples![mw.SamplesGrid.SelectedIndex].Data.ToArray());
-        }
-        ms.Position = 0;
-        var decodedData = SonyVag.Decode(ms.ToArray());
-        ms = new MemoryStream();
-        ms.Write(decodedData);
-        // Mono, Signed 16-bit, 32000Hz
-        var riff = new Riff(32000)
-        {
-            NumChannels = 1,
-            BitsPerSample = 16,
-            data = ms.ToArray(),
+            var ms = new MemoryStream();
+            //var loopStart = mw.GetViewModel().Samples[mw.SamplesGrid.SelectedIndex].LoopStart;
+            //var loopEnd = mw.GetViewModel().Samples[mw.SamplesGrid.SelectedIndex].LoopEnd;
+            if (button.Content is "Extract sample" or "Play")
+            {
+                ms.Write(mw.GetViewModel().Samples![mw.SamplesGrid.SelectedIndex].Data?.ToArray());
+            }
+            ms.Position = 0;
+            var decodedData = SonyVag.Decode(ms.ToArray());
+            ms = new MemoryStream();
+            ms.Write(decodedData);
+            // Mono, Signed 16-bit, 32000Hz
+            var riff = new Riff(32000)
+            {
+                NumChannels = 1,
+                BitsPerSample = 16,
+                data = ms.ToArray(),
             
-        };
+            };
 
-        ms.Position = 0;
-        ms.Write(riff.GetBytes());
-        var fs = new FileStream(Uri.UnescapeDataString(filePath), FileMode.Create, FileAccess.Write);
-        fs.Write(ms.ToArray(), 0, (int)ms.Length);
-        fs.Close();
-        JustPlay(mw);
+            ms.Position = 0;
+            ms.Write(riff.GetBytes());
+            var fs = new FileStream(Uri.UnescapeDataString(filePath), FileMode.Create, FileAccess.Write);
+            fs.Write(ms.ToArray(), 0, (int)ms.Length);
+            fs.Close();
+            JustPlay(mw);
+        }
+        catch
+        {
+            // ignored
+        }
     }
     
     /// <summary>
@@ -82,9 +89,9 @@ public class ExtractUtils
     /// </summary>
     public static void Stop(MainWindow mw)
     {
-        if (player.Playing)
+        if (_player.Playing)
         {
-            player.Stop();
+            _player.Stop();
         }
         Clean(mw);
 
@@ -105,7 +112,7 @@ public class ExtractUtils
         mw.PlaybackStateLabel.Content = "Cleaning";
         while (FileHelpers.IsFileLocked(new FileInfo(outPath))) { Thread.Sleep(100); } // prevent race errors
         File.Delete(outPath);
-        player = new Player();
+        _player = new Player();
     }
 
     /// <summary>
@@ -115,13 +122,13 @@ public class ExtractUtils
     private static void JustPlay(MainWindow mw)
     {
         if (Design.IsDesignMode) return;
-        player.Play(Path.GetTempPath() + "/temp.wav");
+        _player.Play(Path.GetTempPath() + "/temp.wav");
         Dispatcher.UIThread.Post(() => {
             mw.PlaySampleButton.IsEnabled = false;
             mw.PlaybackStateLabel.Content = "Now playing";
             mw.StopButton.IsEnabled = true;
         });
-        player.PlaybackFinished += (_, _) =>
+        _player.PlaybackFinished += (_, _) =>
         {
             Dispatcher.UIThread.Post(() =>
             {
@@ -137,63 +144,70 @@ public class ExtractUtils
     /// <param name="mw">Main window instance</param>
     public static async void ExtractAll(MainWindow mw)
     {
-        var outputDir = await FileHelpers.SelectFolder(mw);
-        if (outputDir is null) return;
-        mw.LoadProgress.IsIndeterminate = false;
-        MainWindow.ProgressMax = 1;
-        new Thread(() =>
+        try
         {
-            while (MainWindow.ProgressMax != 0)
+            var outputDir = await FileHelpers.SelectFolder(mw);
+            if (outputDir is null) return;
+            mw.LoadProgress.IsIndeterminate = false;
+            MainWindow.ProgressMax = 1;
+            new Thread(() =>
             {
-                Thread.Sleep(100);
-                Dispatcher.UIThread.Post(() =>
+                while (MainWindow.ProgressMax != 0)
                 {
-
-                    if (!mw.FileName!.ToUpper().EndsWith(".ISO"))
+                    Thread.Sleep(100);
+                    Dispatcher.UIThread.Post(() =>
                     {
-                        mw.LoadProgress.Value = MainWindow.Progress/(double)MainWindow.ProgressMax * 28.0;
-                    }
-                });
-            }
-        }).Start();
-        new Thread(() =>
-        {
-            if (mw.FileName!.ToUpper().EndsWith(".ISO"))
+
+                        if (!mw.FileName!.ToUpper().EndsWith(".ISO"))
+                        {
+                            mw.LoadProgress.Value = MainWindow.Progress/(double)MainWindow.ProgressMax * 28.0;
+                        }
+                    });
+                }
+            }).Start();
+            new Thread(() =>
             {
+                if (mw.FileName!.ToUpper().EndsWith(".ISO"))
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        mw.LoadProgress.IsIndeterminate = true;
+                    });
+                    new IsoUdf(mw.FileName).ExtractFiles(mw.FileName, outputDir);
+                    MainWindow.ProgressMax = 0;
+                }
+                else
+                {
+                    foreach (var vf in mw.Fs!.FsEntries)
+                    {
+                        if (vf.Path[1..].Contains('\\') && !Directory.Exists(outputDir + vf.Path.Split('\\')[1]))
+                        {
+                            Directory.CreateDirectory(outputDir + vf.Path.Split('\\')[1]);
+                        }
+
+                        if (vf.Path.EndsWith('\\')) continue;
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            StaticUtils.LiveLoadStatus = $"Extracting {vf.Path} ({StaticUtils.GetFilesizeString(vf.Length)})";
+                            MainWindow.Progress = 0;
+                            MainWindow.ProgressMax = 1;
+                        });
+                        SaveFile(vf, outputDir + vf.Path.Replace("\\", "/"), mw);
+                    }
+                }
                 Dispatcher.UIThread.Post(() =>
                 {
                     mw.LoadProgress.IsIndeterminate = true;
+                    MainWindow.ProgressMax = 0;
+                    MainWindow.Progress = 0;
                 });
-                new IsoUdf(mw.FileName).ExtractFiles(mw.FileName, outputDir);
-                MainWindow.ProgressMax = 0;
-            }
-            else
-            {
-                foreach (var vf in mw.Fs!.FsEntries)
-                {
-                    if (vf.Path[1..].Contains('\\') && !Directory.Exists(outputDir + vf.Path.Split('\\')[1]))
-                    {
-                        Directory.CreateDirectory(outputDir + vf.Path.Split('\\')[1]);
-                    }
-
-                    if (vf.Path.EndsWith('\\')) continue;
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        StaticUtils.LiveLoadStatus = $"Extracting {vf.Path} ({StaticUtils.GetFilesizeString(vf.Length)})";
-                        MainWindow.Progress = 0;
-                        MainWindow.ProgressMax = 1;
-                    });
-                    SaveFile(vf, outputDir + vf.Path.Replace("\\", "/"), mw);
-                }
-            }
-            Dispatcher.UIThread.Post(() =>
-            {
-                mw.LoadProgress.IsIndeterminate = true;
-                MainWindow.ProgressMax = 0;
-                MainWindow.Progress = 0;
-            });
-            StaticUtils.LiveLoadStatus = "";
-        }).Start();
+                StaticUtils.LiveLoadStatus = "";
+            }).Start();
+        }
+        catch (Exception e)
+        {
+            StaticUtils.LiveLoadStatus = $"!!!{e.Message}";
+        }
     }
 
 
@@ -203,7 +217,7 @@ public class ExtractUtils
     /// <param name="vf">VirtualFile object providing some information about the file</param>
     /// <param name="file">The file name as string</param>
     /// <param name="mw">Main window instance</param>
-    internal static void SaveFile(VirtualFile vf, string file, MainWindow mw)
+    private static void SaveFile(VirtualFile vf, string file, MainWindow mw)
     {
 
         try
@@ -245,34 +259,41 @@ public class ExtractUtils
     /// <param name="mw">Main window instance</param>
     public static async void Extract(MainWindow mw)
     {
-        var file = await FileHelpers.SaveFile(mw, []);
-        if (file == null) return;
-        var vf = mw.FilesGrid.SelectedItem as VirtualFile;
-        mw.LoadProgress.IsIndeterminate = false;
-        StaticUtils.LiveLoadStatus = $"Extracting {vf!.Path} ({StaticUtils.GetFilesizeString(vf.Length)})";
-        MainWindow.ProgressMax = 1;
-        new Thread(() =>
+        try
         {
-            Thread.Sleep(100);
-            while (MainWindow.ProgressMax != 0)
+            var file = await FileHelpers.SaveFile(mw, []);
+            if (file == null) return;
+            var vf = mw.FilesGrid.SelectedItem as VirtualFile;
+            mw.LoadProgress.IsIndeterminate = false;
+            StaticUtils.LiveLoadStatus = $"Extracting {vf!.Path} ({StaticUtils.GetFilesizeString(vf.Length)})";
+            MainWindow.ProgressMax = 1;
+            new Thread(() =>
             {
                 Thread.Sleep(100);
+                while (MainWindow.ProgressMax != 0)
+                {
+                    Thread.Sleep(100);
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        mw.LoadProgress.Value = MainWindow.Progress/(double)MainWindow.ProgressMax * 28.0;
+                    });
+                }
+            }).Start();
+            new Thread(() =>
+            {
+                SaveFile(vf, Uri.UnescapeDataString(file), mw);
                 Dispatcher.UIThread.Post(() =>
                 {
-                    mw.LoadProgress.Value = MainWindow.Progress/(double)MainWindow.ProgressMax * 28.0;
+                    mw.LoadProgress.IsIndeterminate = true;
+                    MainWindow.ProgressMax = 0;
+                    MainWindow.Progress = 0;
                 });
-            }
-        }).Start();
-        new Thread(() =>
+                StaticUtils.LiveLoadStatus = "";
+            }).Start();
+        }
+        catch (Exception e)
         {
-            SaveFile(vf, Uri.UnescapeDataString(file), mw);
-            Dispatcher.UIThread.Post(() =>
-            {
-                mw.LoadProgress.IsIndeterminate = true;
-                MainWindow.ProgressMax = 0;
-                MainWindow.Progress = 0;
-            });
-            StaticUtils.LiveLoadStatus = "";
-        }).Start();
+            StaticUtils.LiveLoadStatus = $"!!!{e.Message}";
+        }
     }
 }

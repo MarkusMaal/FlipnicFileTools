@@ -88,7 +88,7 @@
                             <controls:CircleDot ColorA="DeepSkyBlue" ColorB="DarkBlue" Source="Assets\TabIcons\info.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
-                            <controls:CLIBox Name="InfoBox" x:DataType="controls:CLIBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" WrapText="True" />
+                            <controls:InfoBox Name="InfoBox" x:DataType="controls:InfoBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" WrapText="True" />
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
                     <!-- Models tab -->
@@ -188,7 +188,7 @@
                             <controls:CircleDot ColorA="Red" ColorB="#210" Source="Assets\TabIcons\script.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
-                            <controls:CLIBox Name="EventBox" x:DataType="controls:CLIBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" />
+                            <controls:InfoBox Name="EventBox" x:DataType="controls:InfoBox" IsLightTheme="{Binding $parent[ns:MainWindow].IsLightTheme}" />
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
                     <!-- Gimmicks tab -->
@@ -436,7 +436,7 @@
                         <sukiUi:SukiSideMenuItem.PageContent>
                             <Grid RowDefinitions="30,30,*" Margin="10" DataContext="{Binding SaveData}" x:DataType="viewModels:MainWindowViewModel">
                                 <Label>Ranking data</Label>
-                                <ComboBox Grid.Row="1" SelectedIndex="{Binding LeaderboardId}"  x:DataType="formats:FpnSave" SelectionChanged="ScoreGrid_SelectionChanged">
+                                <ComboBox Name="RankingCombobox" Grid.Row="1" SelectedIndex="{Binding LeaderboardId}"  x:DataType="formats:FpnSave" SelectionChanged="ScoreGrid_SelectionChanged">
                                     <ComboBoxItem>Original game</ComboBoxItem>
                                     <ComboBoxItem>Biology A</ComboBoxItem>
                                     <ComboBoxItem>Biology B</ComboBoxItem>

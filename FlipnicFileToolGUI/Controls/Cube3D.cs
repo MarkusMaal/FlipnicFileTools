@@ -35,23 +35,23 @@ namespace FlipnicFileToolGUI.Controls
         private float _fov = 45;
         private double _pitch = -40;
         private double _yaw = 90f;
-        private float ModelRotationDegrees = 0f;
+        private float _modelRotationDegrees;
         private bool _isDragging;
         private Point _lastPos;
 
         private const float Speed = 0.015f;
         private object? _texture;
-        private bool CycleUV;
-        private int _debounce = 0;
+        private bool _cycleUv;
+        private int _debounce;
         
-        public new bool Rotate
+        public bool Rotate
         {
             get => GetValue(RotateProperty);
             set
             {
                 if (!value)
                 {
-                    ModelRotationDegrees = 0f;
+                    _modelRotationDegrees = 0f;
                 }
                 SetValue(RotateProperty, value);
             }
@@ -65,14 +65,14 @@ namespace FlipnicFileToolGUI.Controls
 
         private float[] _vertices = [];
         private readonly uint[] _indices =
-        {
+        [
             0, 1, 3, // first triangle
-            1, 2, 3, // second triangle
-        };
+            1, 2, 3 // second triangle
+        ];
 
-        public bool ReloadModel = false;
+        public bool ReloadModel;
         
-        public Lp4 OpenContainer { get; set; }
+        public Lp4? OpenContainer { get; private set; }
 
         public CubeRenderingTkOpenGlControl()
         {
@@ -87,7 +87,7 @@ namespace FlipnicFileToolGUI.Controls
             StaticUtils.ExportObj(fileName, _vertices, _texture);
         }
 
-        public void ImportLP4(Lp4 lp4)
+        public void ImportLp4(Lp4 lp4)
         {
             _texture = null;
             if (lp4.CachedTexture != null)
@@ -109,7 +109,7 @@ namespace FlipnicFileToolGUI.Controls
                 GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
                 GL.GenBuffer();
-                CycleUV = false;
+                _cycleUv = false;
                 GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject); 
             });
         }
@@ -134,7 +134,7 @@ namespace FlipnicFileToolGUI.Controls
             {
                 var texStr = new MemoryStream();
                 var texFile = Path.Combine(new FileInfo(lp4.FilePath).Directory?.FullName ?? "",
-                    lp4.SelectedModel.ModelVertexProperties.Materials.FirstOrDefault().TextureFile.ToUpper());
+                    lp4.SelectedModel?.ModelVertexProperties.Materials.FirstOrDefault().TextureFile.ToUpper() ?? "");
                 if (File.Exists(texFile))
                 {
                     new Tim2(File.ReadAllBytes(texFile))
@@ -163,10 +163,10 @@ namespace FlipnicFileToolGUI.Controls
             {
                 try
                 {
-                    _vertices = lp4.GetRawVertices(lp4.SelectedModel.Model.Value);
+                    _vertices = lp4.GetRawVertices(lp4.SelectedModel.Model!.Value);
                     for (var i = 0; i < _vertices.Length; i += 8)
                     {
-                        _vertices[i + 2] *= lp4.SelectedModel.ModelProperties[0].ModelSkewing[0].X;
+                        _vertices[i + 2] *= lp4.SelectedModel.ModelProperties![0].ModelSkewing[0].X;
                         _vertices[i + 3] *= lp4.SelectedModel.ModelProperties[0].ModelSkewing[1].Y;
                         _vertices[i + 4] *= lp4.SelectedModel.ModelProperties[0].ModelSkewing[2].Z;
                         _vertices[i + 2] += lp4.SelectedModel.ModelProperties[0].ModelOffset.X;
@@ -186,7 +186,7 @@ namespace FlipnicFileToolGUI.Controls
 
         }
 
-        public void ImportFPD(FpnFpd pathTrace, object? texture)
+        public void ImportFpd(FpnFpd pathTrace, object? texture)
         {
             _texture = texture;
             OpenTkInit();
@@ -197,12 +197,12 @@ namespace FlipnicFileToolGUI.Controls
             if (!Program.GpuAccel) return;
             GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            CycleUV = true;
+            _cycleUv = true;
             GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
         }
         
-        public void ImportICO(SaveIcon saveIcon)
+        public void ImportIco(SaveIcon saveIcon)
         {
             _texture = saveIcon.Texture;
             List<float> vertices = new();
@@ -223,7 +223,7 @@ namespace FlipnicFileToolGUI.Controls
             OpenTkInit();
             GL.ClearColor(0.6f, 0.6f, 1f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            CycleUV = false;
+            _cycleUv = false;
             GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
         }
@@ -316,7 +316,7 @@ namespace FlipnicFileToolGUI.Controls
             _vertexBufferObject = GL.GenBuffer();
 
 
-            //Set bg colour
+            //Set bg color
             GL.ClearColor(0.25f, 0.2f, 0.4f, 0.5f);
 
             //Bind to the VAO
@@ -326,7 +326,7 @@ namespace FlipnicFileToolGUI.Controls
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
 
             //Copy triangle vertices to the buffer
-            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * (OperatingSystem.IsMacOS() ? 1 : 1) * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * 1 * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
 
 
             //Configure structure of the vertices
@@ -394,7 +394,7 @@ namespace FlipnicFileToolGUI.Controls
             //Clean up shaders and textures
             _shader?.Dispose();
             GL.UseProgram(0);
-            _brickTexture.Dispose();
+            _brickTexture?.Dispose();
         }
 
         private void DoUpdate()
@@ -434,7 +434,7 @@ namespace FlipnicFileToolGUI.Controls
 
             if (KeyboardState.IsKeyDown(Key.U))
             {
-                CycleUV = !CycleUV;
+                _cycleUv = !_cycleUv;
                 _debounce = 10;
             }
             if (KeyboardState.IsKeyDown(Key.X))
@@ -512,16 +512,16 @@ namespace FlipnicFileToolGUI.Controls
             _shader.Use();
             _shader.SetInt("texture0", 2);
             ReloadModel = false;
-            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * (OperatingSystem.IsMacOS() ? 1 : 1) * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * 1 * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
         }
         
         private void DoRender()
         {
             //Bind shaders and textures
             _shader!.Use();
-            _brickTexture.Use(TextureUnit.Texture2);
+            _brickTexture?.Use(TextureUnit.Texture2);
             if (ReloadModel) ReloadModelNow();
-            if (CycleUV)
+            if (_cycleUv)
             {
                 for (var i = 0; i < _vertices.Length; i+=8)
                 {
@@ -552,15 +552,15 @@ namespace FlipnicFileToolGUI.Controls
                 }
                 
                 GL.BufferData(BufferTarget.ArrayBuffer,
-                    _vertices.Length * (OperatingSystem.IsMacOS() ? 1 : 1) * sizeof(float), _vertices,
+                    _vertices.Length * 1 * sizeof(float), _vertices,
                     BufferUsageHint.StaticDraw);
             }
 
-            //3d projection matricesSwdw
-            var model = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(ModelRotationDegrees));
+            //3d projection matrices
+            var model = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_modelRotationDegrees));
             var view = Matrix4.LookAt(_cameraPosition, _cameraPosition + _cameraFront, _up);
             var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(_fov), (float)(Bounds.Width / Bounds.Height), 0.1f, 100.0f);
-            if (Rotate) ModelRotationDegrees++;
+            if (Rotate) _modelRotationDegrees++;
             _shader.SetMatrix4("model", model);
             _shader.SetMatrix4("view", view);
             _shader.SetMatrix4("projection", projection);
@@ -646,8 +646,8 @@ namespace FlipnicFileToolGUI.Controls
             _cameraFront.Z = -(float)Math.Cos(MathHelper.DegreesToRadians(_pitch)) * (float)Math.Sin(MathHelper.DegreesToRadians(_yaw));
             _cameraFront = Vector3.Normalize(_cameraFront);
         }
-        public new static readonly StyledProperty<bool> RotateProperty = AvaloniaProperty.Register<CubeRenderingTkOpenGlControl, bool>(nameof(Rotate));
-        public new static readonly StyledProperty<bool> FsControlProperty = AvaloniaProperty.Register<CubeRenderingTkOpenGlControl, bool>(nameof(FsControl));
+        public static readonly StyledProperty<bool> RotateProperty = AvaloniaProperty.Register<CubeRenderingTkOpenGlControl, bool>(nameof(Rotate));
+        private static readonly StyledProperty<bool> FsControlProperty = AvaloniaProperty.Register<CubeRenderingTkOpenGlControl, bool>(nameof(FsControl));
 
         public void Teleport()
         {
@@ -659,10 +659,10 @@ namespace FlipnicFileToolGUI.Controls
         }
 
         // a workaround mentioned by Avalonia developers
-        public PixelSize GetPixelSize()
+        private PixelSize GetPixelSize()
         {
-            var scaling = TopLevel.GetTopLevel(this).RenderScaling;
-            return new PixelSize(Math.Max(1, (int)(Bounds.Width * scaling)), Math.Max(1, (int)(Bounds.Height * scaling)));
+            var scaling = TopLevel.GetTopLevel(this)?.RenderScaling;
+            return scaling == null ? new PixelSize(0, 0) : new PixelSize(Math.Max(1, (int)(Bounds.Width * scaling)), Math.Max(1, (int)(Bounds.Height * scaling)));
         }
     }
 }

@@ -87,7 +87,7 @@ public abstract class Preferences
         {
             new Thread(() =>
             {
-                Thread.Sleep(200); // idk why it's necessary, but light mode won't apply if we don't include this delay
+                Thread.Sleep(200); // IDK why it's necessary, but light mode won't apply if we don't include this delay
                 while (!mw.IsLoaded) Thread.Sleep(100); // just in case
                 Dispatcher.UIThread.Post(() =>
                 {
@@ -95,7 +95,7 @@ public abstract class Preferences
 
                     if (!Program.GpuAccel) return;
                     SukiTheme.GetInstance().ChangeBaseTheme(ThemeVariant.Light);
-                    mw.ApplyCustomTheme();
+                    MainWindow.ApplyCustomTheme();
                 });
             }).Start();
 

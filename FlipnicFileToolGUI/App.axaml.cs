@@ -63,7 +63,7 @@ public class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    private void NativeMenuItem_OnClick(object? sender, EventArgs e)
+    private void NativeMenuItem_OnClick(object? sender, EventArgs e) // Exit (Cmd+Q)
     {
         // close all windows safely before force quitting
         // this is necessary to make sure all settings are saved properly
@@ -79,7 +79,7 @@ public class App : Application
         Environment.Exit(0);
     }
 
-    private void NewWindowMenuItem_OnClick(object? sender, EventArgs e)
+    private void NewWindowMenuItem_OnClick(object? sender, EventArgs e) // New window (native)
     {
         var mw = new MainWindow
         {
@@ -100,7 +100,7 @@ public class App : Application
 
     }
 
-    private void AboutNativeMenu_OnClick(object? sender, EventArgs e)
+    private void AboutNativeMenu_OnClick(object? sender, EventArgs e) // About (native)
     {
         // don't tell Apple
         var windows = ((IClassicDesktopStyleApplicationLifetime?)Current?.ApplicationLifetime)?.Windows;

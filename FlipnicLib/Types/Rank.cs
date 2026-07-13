@@ -2,8 +2,21 @@ using FlipnicLib.Formats;
 
 namespace FlipnicLib.Types;
 
-public class Rank(FpnSave save, int idx, int gameMode)
+public class Rank
 {
+    private readonly int _idx;
+
+    public Rank()
+    {
+        
+    }
+
+    public Rank(FpnSave save, int idx, int gameMode)
+    {
+        _idx = idx;
+        GameMode = gameMode;
+        SaveFile = save;
+    }
 
     private enum UpdatedValueType
     {
@@ -13,37 +26,37 @@ public class Rank(FpnSave save, int idx, int gameMode)
         Difficulty
     }
     
-    public int Position => int.Parse(SaveFile.GetScore(GameMode * 5 + idx)[0]);
+    public int Position => int.Parse(SaveFile.GetScore(GameMode * 5 + _idx)[0]);
 
     public string Initials
     {
-        get => SaveFile.GetScore(GameMode * 5 + idx)[1];
+        get => SaveFile.GetScore(GameMode * 5 + _idx)[1];
         set => WriteChanges(UpdatedValueType.Initials, value);
     }
 
     public long Score
     {
-        get => long.Parse(SaveFile.GetScore(GameMode * 5 + idx)[2]);
+        get => long.Parse(SaveFile.GetScore(GameMode * 5 + _idx)[2]);
         set => WriteChanges(UpdatedValueType.Score, value);
     }
 
     public int Combos
     {
-        get => int.Parse(SaveFile.GetScore(GameMode * 5 + idx)[3]);
+        get => int.Parse(SaveFile.GetScore(GameMode * 5 + _idx)[3]);
         set => WriteChanges(UpdatedValueType.Combos, value);
     }
 
     public string Difficulty
     {
-        get => SaveFile.GetScore(GameMode * 5 + idx)[5];
+        get => SaveFile.GetScore(GameMode * 5 + _idx)[5];
         set => WriteChanges(UpdatedValueType.Difficulty, value);
     }
 
-    public string Offset => SaveFile.GetScore(GameMode * 5 + idx)[4];
+    public string Offset => SaveFile.GetScore(GameMode * 5 + _idx)[4];
 
-    private int GameMode { get; } = gameMode;
+    private int GameMode { get; }
 
-    private FpnSave SaveFile { get; init; } = save;
+    private FpnSave SaveFile { get; init; }
 
     private void WriteChanges(UpdatedValueType updatedType, object newValue)
     {
@@ -57,6 +70,6 @@ public class Rank(FpnSave save, int idx, int gameMode)
             "Hard" => FpnSave.Difficulty.Hard,
             _ => FpnSave.Difficulty.Null
         };
-        SaveFile.SetScore(GameMode, idx, score, initials, combos, diff);
+        SaveFile.SetScore(GameMode, _idx, score, initials, combos, diff);
     }
 }

@@ -16,6 +16,26 @@ public class FpnCol : FormatBase
     
     public FpnCol(string filename) : this(File.OpenRead(filename)) {}
 
+    public FpnCol(bool generateMockData)
+    {
+        if (!generateMockData) return;
+        HasDefaultValue = false;
+        GroundCount = 1;
+        WallCount = 1;
+        Grounds.Add(new ObjectDefinition()
+        {
+            CollFirst = [],
+            CollMain = [],
+            Label = "SAMPLE_GRD"
+        });
+        Walls.Add(new ObjectDefinition()
+        {
+            CollFirst = [],
+            CollMain = [],
+            Label = "SAMPLE_WAL"
+        });
+    }
+
 
     public FpnCol(Stream stream)
     {

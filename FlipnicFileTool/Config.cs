@@ -19,68 +19,68 @@ public class Config
     /// <summary>
     /// Output filename
     /// </summary>
-    public string Output { get; set; } = ".";
+    public string Output { get; private set; } = ".";
     
     /// <summary>
     /// Secondary input filename
     /// </summary>
-    public string SecondaryFileName { get; set; } = "";
+    public string SecondaryFileName { get; private set; } = "";
 
     /// <summary>
     /// Mode of operation for the app
     /// </summary>
-    public Enums.Modes Mode { get; set; } = Enums.Modes.NoAction;
+    public Enums.Modes Mode { get; private set; } = Enums.Modes.NoAction;
     
     /// <summary>
     /// Path to FFmpeg executable
     /// </summary>
-    public string FFmpegPath { get; set; } = "ffmpeg";
+    public string FFmpegPath { get; private set; } = "ffmpeg";
     
     /// <summary>
     /// Section name of a .MLB file
     /// </summary>
-    public string MlbSect { get; set; } = "";
+    public string MlbSect { get; private set; } = "";
     
     /// <summary>
     /// Path to a .MID file (when doing soundfont conversions)
     /// </summary>
-    public string MidiFile { get; set; } = "";
+    public string MidiFile { get; private set; } = "";
     
     /// <summary>
     /// Path to a .BD file (when doing soundfont conversions)
     /// </summary>
-    public string BdFile { get; set; } = "";
+    public string BdFile { get; private set; } = "";
     
     /// <summary>
     /// Name of a virtual file inside a .BIN/.ISO container
     /// </summary>
-    public string VFile { get; set; } = "";
+    public string VFile { get; private set; } = "";
     
     /// <summary>
     /// Remove Alpha information from low-res FMVs (conversion)
     /// </summary>
-    public bool CropAlpha { get; set; }
+    public bool CropAlpha { get; private set; }
     
     
     /// <summary>
     /// Remove RGB information from low-res FMVs (conversion)
     /// </summary>
-    public bool CropRgb { get; set; }
+    public bool CropRgb { get; private set; }
     
     /// <summary>
     /// How many times to scale up the resolution (FMV conversion)
     /// </summary>
-    public int ScaleFactor { get; set; } = 1;
+    public int ScaleFactor { get; private set; } = 1;
     
     /// <summary>
     /// Enable testing mode
     /// </summary>
-    public bool Test { get; set; }
+    public bool Test { get; private set; }
     
     /// <summary>
     /// Do we create a .WAV file in addition to the .SF2 file?
     /// </summary>
-    public bool SynthesizeWav { get; set; }
+    public bool SynthesizeWav { get; private set; }
 
     /// <summary>
     /// Attempts to "fake" sustain rate by messing with the output decay rate and sustain level values.<br/>
@@ -88,22 +88,22 @@ public class Config
     /// decay. However, since SF2 doesn't support sustain rate natively, in some edge cases, it can<br/>
     /// lead to notes fading out too early.
     /// </summary>
-    public bool SimulateSustainRate { get; set; }
+    public bool SimulateSustainRate { get; private set; }
 
     /// <summary>
     /// If enabled, uses progressive scan settings for generating PSS files
     /// </summary>
-    public bool Progressive { get; set; }
+    public bool Progressive { get; private set; }
     
     /// <summary>
     /// Audio stream to use for .PSS merge
     /// </summary>
-    public string? IntFile { get; set; }
+    public string? IntFile { get; private set; }
 
     /// <summary>
     /// Count value
     /// </summary>
-    public int Count { get; set; }
+    public int Count { get; private set; }
 
     /// <summary>
     /// Set configuration based on the args specified by the user

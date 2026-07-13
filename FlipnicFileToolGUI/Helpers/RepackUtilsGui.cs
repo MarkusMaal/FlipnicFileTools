@@ -59,7 +59,7 @@ public abstract class RepackUtilsGui
                     rootDirSize = binFiles.First(bf => bf.Path == $"\\{rootDirName}").Length;
                 }
 
-                mw.DialogManager.CreateDialog()
+                await mw.DialogManager.CreateDialog()
                     .WithTitle("CAUTION")
                     .WithContent("It appears the replacement file is bigger than the original file. We will need to update other file records and increase the size of the .BIN file. This should only be done if you know exactly what you're doing. Are you sure you want to continue?")
                     .WithActionButton("Yes", _ =>
@@ -122,7 +122,7 @@ public abstract class RepackUtilsGui
                         }).Start();
                     }, true)
                     .OfType(NotificationType.Warning)
-                    .TryShow();
+                    .TryShowAsync();
                 return;
             }
             RepackUtils.RepackFileUnsafe(offset, File.OpenRead(replacement), mw.FileName, size, vf.Path[1..].Contains('\\') && !vf.Path[1..].EndsWith('\\') ? 1 : 2048);

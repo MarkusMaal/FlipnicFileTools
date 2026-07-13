@@ -34,7 +34,7 @@ namespace FlipnicLib.Formats
         public List<LayoutChunk>? LayoutChunks { get; set; }
         
         [JsonIgnore]
-        public LayoutChunk SelectedModel { get; set; }
+        public LayoutChunk? SelectedModel { get; set; }
         
         [JsonIgnore]
         public byte[]? CachedTexture { get; set; }

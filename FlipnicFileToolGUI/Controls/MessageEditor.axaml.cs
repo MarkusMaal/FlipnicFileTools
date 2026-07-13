@@ -45,10 +45,17 @@ public partial class MessageEditor : UserControl
 
     private async void ExportTxtButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        var file = await FileHelpers.SaveFile(this, [Filters.TxtFile], "Save text file");
-        if (file == null) return;
-        await File.WriteAllTextAsync(Uri.UnescapeDataString(file), string.Join("\n", MsgObject.Messages));
-        ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
+        try
+        {
+            var file = await FileHelpers.SaveFile(this, [Filters.TxtFile], "Save text file");
+            if (file == null) return;
+            await File.WriteAllTextAsync(Uri.UnescapeDataString(file), string.Join("\n", MsgObject.Messages));
+            ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "Error: " + ex.Message, NotificationType.Error);
+        }
     }
 
     private void MessageList_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -86,9 +93,16 @@ public partial class MessageEditor : UserControl
 
     private async void ExportMsgButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        var file = await FileHelpers.SaveFile(this, [Filters.FpnMsg], "Save message table");
-        if (file == null) return;
-        await File.WriteAllBytesAsync(Uri.UnescapeDataString(file), MsgObject.GetData());
-        ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
+        try
+        {
+            var file = await FileHelpers.SaveFile(this, [Filters.FpnMsg], "Save message table");
+            if (file == null) return;
+            await File.WriteAllBytesAsync(Uri.UnescapeDataString(file), MsgObject.GetData());
+            ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "Error: " + ex.Message, NotificationType.Error);
+        }
     }
 }

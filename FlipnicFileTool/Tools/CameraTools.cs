@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Xml.Linq;
 using FlipnicLib;
 using FlipnicLib.Formats;
