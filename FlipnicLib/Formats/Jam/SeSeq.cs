@@ -1,4 +1,10 @@
-﻿using Syroot.BinaryData;
+﻿using FlipnicLib.Formats.Midi;
+using MidiSharp;
+using MidiSharp.Events.Meta;
+using MidiSharp.Events.Meta.Text;
+using MidiSharp.Events.Voice;
+using MidiSharp.Events.Voice.Note;
+using Syroot.BinaryData;
 
 namespace FlipnicLib.Formats.Jam;
 
@@ -65,6 +71,77 @@ public class SeSeq
         ]));
         o += StaticUtils.GenerateTable(colHeaders, rows, asCsv);
         return o;
+    }
+
+    public void ToMidi(string outputName)
+    {
+        var midi = new Midi.Midi();
+        var msg = new List<SqMessage>();
+        var midiSeq = new MidiSequence(Format.Zero, 720);
+        midiSeq.Tracks.AddNewTrack();
+        var suffix = StaticUtils.IsBeta ? " BETA" : "";
+        var noExtName = Path.GetFileNameWithoutExtension(outputName);
+        midiSeq.Tracks.Last().Events.Add(new SequenceTrackNameTextMetaMidiEvent(0, noExtName.Split('.')[0] + " (SFX Sequence " + noExtName.Split('.')[1] + ")"));
+        midiSeq.Tracks.Last().Events.Add(new CopyrightTextMetaMidiEvent(0, "Sony Computer Entertainment Inc."));
+        midiSeq.Tracks.Last().Events.Add(new InstrumentTextMetaMidiEvent(0, noExtName.Split('.')[0] + ".HD"));
+        midiSeq.Tracks.Last().Events.Add(new InstrumentTextMetaMidiEvent(0, noExtName.Split('.')[0] + ".BD"));
+        midiSeq.Tracks.Last().Events.Add(new TextMetaMidiEvent(0, $"Flipnic file tools {StaticUtils.DotFloatString(StaticUtils.LibVersion)}{suffix}"));
+        var channels = new List<int>();
+        foreach (var seMsg in Messages)
+        {
+            switch (seMsg.Event)
+            {
+                case SeNotePressureEvent @event:
+                    msg.Add(new SqMessage
+                    {
+                        Delta =  seMsg.Delta,
+                        Event = new SqNoteOnEvent
+                        {
+                            Note = (Note)@event.Note,
+                            ProgramID = @event.Channel,
+                            Velocity = 0x7F,
+                        },
+                        Status = seMsg.Status
+                    });
+                    if (!channels.Contains(@event.Channel))
+                    {
+                        channels.Add(@event.Channel);
+                        midiSeq.Tracks.Last().Events.Add(new ProgramChangeVoiceMidiEvent(seMsg.Delta, @event.Channel, @event.Channel));
+                    }
+                    midiSeq.Tracks.Last().Events.Add(new OnNoteVoiceMidiEvent(seMsg.Delta, @event.Channel, @event.Note, 0x7F));
+                    break;
+                case SeControllerEvent:
+                    msg.Add(new SqMessage
+                    {
+                        Status = 0xFF,
+                        Event = new SqMetaEvent
+                        {
+                            Length = 0,
+                            ProgramID = 0,
+                            Type = 0x2F,
+                        }
+                    });
+                    break;
+            }
+        }
+        for (var i = (byte)0; i < 16; i++)
+        {
+            for (var j = (byte)0; j < 0x7F; j++)
+            {
+                midiSeq.Tracks.Last().Events.Add(new OffNoteVoiceMidiEvent(2, i, j, 0x7F));
+            }
+        }
+        midiSeq.Tracks.Last().Events.Add(new EndOfTrackMetaMidiEvent(0));
+
+        var oStream = File.OpenWrite(outputName);
+        midiSeq.Save(oStream);
+        oStream.Close();
+
+        midi.Track = new MTrk
+        {
+            Messages = msg,
+            TicksPerBeat = 480
+        };
     }
 }
 
@@ -226,5 +303,6 @@ public class SeMetaEvent : ISeEvent
 
 public interface ISeEvent
 {
+
     public void Read(BinaryStream bs);
 }

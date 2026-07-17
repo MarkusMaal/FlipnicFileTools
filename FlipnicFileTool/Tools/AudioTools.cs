@@ -34,6 +34,10 @@ public class AudioTools
                 Converter.InstrumentToSoundFont2(cfg.MidiFile != "" ? cfg.MidiFile : (FileName[..^3] + ".MID"), FileName,
                     cfg.BdFile != "" ? cfg.BdFile : (FileName[..^2] + "BD"), Output, cfg.SynthesizeWav, cfg.SimulateSustainRate);
                 break;
+            case Enums.Modes.ConvertSfxSf2:
+                Converter.SfxBankToSoundFont2(FileName,
+                    cfg.BdFile != "" ? cfg.BdFile : (FileName[..^2] + "BD"), Output, cfg.SynthesizeWav, cfg.SimulateSustainRate);
+                break;
             case Enums.Modes.ConvertInt:
             case Enums.Modes.ConvertSvag:
                 StaticUtils.ConvertAudio(Output, FileName, cfg.Mode == Enums.Modes.ConvertSvag);

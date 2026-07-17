@@ -7,6 +7,7 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Threading;
 using FlipnicLib;
 using FlipnicLib.Formats.Jam;
+using Syroot.BinaryData;
 
 namespace FlipnicFileToolGUI.Helpers;
 
@@ -138,8 +139,22 @@ public static class Converters
                 StaticUtils.LiveLoadStatus = "Converting JAM to SF2";
                 var extension = Path.GetExtension(mw.FileName);
                 var fileName = new FileInfo(mw.FileName!).Name.Replace(extension!, "");
-                Converter.InstrumentToSoundFont2(midiFile,
-                    mw.FileName!, bdFile, Path.Combine(outFile ?? "", fileName) + ".SF2", createWav, fakeSustainR);
+                var testJam = new JamHeader();
+                var testStream = File.OpenRead(mw.FileName!);
+                var bs = new BinaryStream(testStream);
+                testJam.Read(bs);
+                testStream.Close();
+                bs.Close();
+                if (testJam.ProgramChunks.Count > 0)
+                {
+                    Converter.InstrumentToSoundFont2(midiFile,
+                        mw.FileName!, bdFile, Path.Combine(outFile ?? "", fileName) + ".SF2", createWav, fakeSustainR);
+                }
+                else if (testJam.SeProgramChunks.Count > 0)
+                {
+                    Converter.SfxBankToSoundFont2(mw.FileName!,
+                        bdFile, Path.Combine(outFile ?? "", fileName) + ".SF2", createWav, fakeSustainR);
+                }
             }
             catch (Exception ex) when (!Debugger.IsAttached)
             {

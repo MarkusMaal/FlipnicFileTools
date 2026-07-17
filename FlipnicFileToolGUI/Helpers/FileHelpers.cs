@@ -308,10 +308,10 @@ public static class FileHelpers
                             LoadAsString(jh, "JAM header", mw);
                             Dispatcher.UIThread.Post(() =>
                             {
-                                mw.ConvertTab.IsVisible = jh.ProgramChunks.Count > 0;
+                                mw.ConvertTab.IsVisible = jh.ProgramChunks.Count > 0 || jh.SeProgramChunks.Count > 0;
                                 mw.FfmpegBrowserGrid.IsVisible = false;
                                 mw.BdBrowserGrid.IsVisible = true;
-                                mw.MidiBrowserGrid.IsVisible = true;
+                                mw.MidiBrowserGrid.IsVisible = jh.SeProgramChunks.Count == 0;
                                 mw.PalToggle.IsVisible = false;
                                 mw.EnvelopeToggle.IsVisible = true;
                                 mw.ConvertSf2Button.IsVisible = true;
@@ -319,7 +319,7 @@ public static class FileHelpers
                                 mw.ConvertMovButton.IsVisible = false;
                                 mw.DemuxButton.IsVisible = false;
                                 mw.AdsrPanel.IsVisible = true;
-                                mw.WavToggle.IsVisible = true;
+                                mw.WavToggle.IsVisible = jh.SeProgramChunks.Count == 0;
                                 mw.FakeSustainRateToggle.IsVisible = true;
 
                                 var fileDirectory = new FileInfo(mw.FileName!).Directory?.FullName ?? "";

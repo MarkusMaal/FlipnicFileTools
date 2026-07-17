@@ -75,6 +75,7 @@ internal static class Program
                 case Enums.Modes.ExtractSamples:
                 case Enums.Modes.ShowMidi:
                 case Enums.Modes.ConvertSf2:
+                case Enums.Modes.ConvertSfxSf2:
                 case Enums.Modes.ConvertInt:
                 case Enums.Modes.ConvertSvag:
                     _ = new AudioTools(Cfg);

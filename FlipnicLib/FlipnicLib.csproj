@@ -11,6 +11,7 @@
     <ItemGroup>
       <PackageReference Include="BigGustave" Version="1.0.6" />
       <PackageReference Include="MeltySynth" Version="2.4.1" />
+      <PackageReference Include="MidiSharp" Version="0.9.6516.2348" />
       <PackageReference Include="NAudio.WaveFormRenderer" Version="2.0.0" />
       <PackageReference Include="Ps2IsoTools" Version="1.1.2" />
       <PackageReference Include="Syroot.BinaryData" Version="5.2.2" />

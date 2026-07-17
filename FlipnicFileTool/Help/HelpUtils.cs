@@ -122,6 +122,8 @@ public abstract class HelpUtils
                     new HelpLine("show-hd*", "List programs in the .HD file", ["input"], "*.HD", true),
                     new HelpLine("convert-sf2", "Allows you to convert soundbank to .SF2 (specify .HD file as input)",
                         ["input", "output"], "*.HD,*.SF2", true),
+                    new HelpLine("convert-sfx-sf2", "Allows you to convert sound effect voicebank to .SF2 (specify .HD file, which doesn't have a corresponding .MID file, as input)",
+                        ["input", "output"], "*.HD,*.SF2", true),
                     new HelpLine("no-envelopes", "Doesn't export envelopes (attack, decay, sustain, release)", [], "",
                         false, "convert-sf2"),
                     new HelpLine("synthesize-wav",

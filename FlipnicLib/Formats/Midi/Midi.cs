@@ -4,14 +4,28 @@ using Syroot.BinaryData;
 
 namespace FlipnicLib.Formats.Midi;
 
-public class Midi(string fileName)
+public class Midi
 {
+    public static int FName = 0;
+    private readonly string? _fileName;
+
+    public Midi(string fileName)
+    {
+        _fileName = fileName;
+        FileName = fileName;
+    }
+
+    public Midi()
+    {
+        
+    }
+
     public MTrk Track { get; set; }
-    private string? FileName { get; } = fileName;
+    private string? FileName { get; }
 
     public void Read()
     {
-        Read(File.OpenRead(fileName));
+        Read(File.OpenRead(_fileName));
     }
     public void Read(Stream stream)
     {

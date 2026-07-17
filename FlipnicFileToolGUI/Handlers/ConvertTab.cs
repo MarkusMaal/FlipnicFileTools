@@ -49,7 +49,7 @@ public abstract class ConvertTab
 
     public static void MidiBdChanged(MainWindow mw)
     {
-        mw.ConvertSf2Button.IsEnabled = File.Exists(mw.BdBox.Text) && File.Exists(mw.MidiBox.Text) && Directory.Exists(mw.FileBox.Text);
+        mw.ConvertSf2Button.IsEnabled = File.Exists(mw.BdBox.Text) && (!mw.MidiBrowserGrid.IsVisible || File.Exists(mw.MidiBox.Text)) && Directory.Exists(mw.FileBox.Text);
     }
 
     public static async void BrowseMidiBd(MainWindow mw, bool bdB)
