@@ -105,6 +105,8 @@ public sealed partial class MainWindow : SukiWindow
     
     // Tab -> Texture
     private void SaveImgAsBtn_OnClick(object? sender, RoutedEventArgs e) => TextureTab.ExportImage(this); // Save as..
+
+    private void TextureImageConfigChanged(object? sender, RoutedEventArgs e) => TextureTab.SetupImage(this, sender); // Radio buttons
     
     // Tab -> Sound
     private void PlayButton_OnClick(object? sender, RoutedEventArgs e) // Play/Stop

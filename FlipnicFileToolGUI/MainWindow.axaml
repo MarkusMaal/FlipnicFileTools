@@ -5,8 +5,8 @@
         xmlns:ns="clr-namespace:FlipnicFileToolGUI"
         mc:Ignorable="d"
         d:DesignWidth="800" d:DesignHeight="800"
-        Width="740" Height="512"
-        MinHeight="512" MinWidth="740"
+        Width="760" Height="540"
+        MinHeight="512" MinWidth="760"
         Icon="Assets\F.PNG" Name="SukiWin"
         xmlns:sukiUi="clr-namespace:SukiUI.Controls;assembly=SukiUI"
         xmlns:types="clr-namespace:FlipnicLib.Types;assembly=FlipnicLib"
@@ -159,7 +159,25 @@
                         <sukiUi:SukiSideMenuItem.PageContent>
                             <Grid RowDefinitions="*,Auto">
                                 <Image Name="PreviewImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" RenderOptions.BitmapInterpolationMode="None"></Image>
-                                <Button Name="SaveImgAsBtn" Grid.Row="1" Margin="10" Content="Save as.." Click="SaveImgAsBtn_OnClick" />
+                                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="20">
+                                    <Button Name="SaveImgAsBtn" Margin="10" Content="Save as.." Click="SaveImgAsBtn_OnClick" />
+                                    <StackPanel Orientation="Vertical">
+                                        <Label>Scale filtering:</Label>
+                                        <WrapPanel ItemSpacing="10">
+                                            <RadioButton IsChecked="True" IsCheckedChanged="TextureImageConfigChanged">Pixelated</RadioButton>
+                                            <RadioButton IsCheckedChanged="TextureImageConfigChanged">Linear</RadioButton>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Vertical">
+                                        <Label>Size mode:</Label>
+                                        <WrapPanel ItemSpacing="10">
+                                            <RadioButton IsCheckedChanged="TextureImageConfigChanged">Stretch</RadioButton>
+                                            <RadioButton IsChecked="True" IsCheckedChanged="TextureImageConfigChanged">Fit</RadioButton>
+                                            <RadioButton IsCheckedChanged="TextureImageConfigChanged">Fill</RadioButton>
+                                            <RadioButton IsCheckedChanged="TextureImageConfigChanged">Original size</RadioButton>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </StackPanel>
                             </Grid>
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
@@ -230,7 +248,7 @@
                             <controls:CircleDot ColorA="DeepPink" ColorB="DarkViolet" Source="Assets\TabIcons\mockup.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
-                            <controls:MenuMockup Name="MenuMockup" Width="640" Height="480"></controls:MenuMockup>
+                            <controls:MenuMockup Name="MenuMockup" Width="640" Height="480" ViewboxStretch="Uniform"></controls:MenuMockup>
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
                     <!-- Samples tab -->

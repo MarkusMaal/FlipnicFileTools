@@ -1,5 +1,7 @@
 using System;
+using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using FlipnicFileToolGUI.Helpers;
 
@@ -19,6 +21,33 @@ public abstract class TextureTab
         catch (Exception e)
         {
             mw.ShowDialog("Flipnic file tools", "Error: " + e.Message, NotificationType.Error);
+        }
+    }
+
+    public static void SetupImage(MainWindow mw, object? sender)
+    {
+        if (sender is not RadioButton rb) return;
+        if (!(rb.IsChecked ?? false)) return;
+        switch (rb.Content)
+        {
+            case "Stretch":
+                mw.PreviewImage.Stretch = Stretch.Fill;
+                break;
+            case "Fit":
+                mw.PreviewImage.Stretch = Stretch.Uniform;
+                break;
+            case "Fill":
+                mw.PreviewImage.Stretch = Stretch.UniformToFill;
+                break;
+            case "Original size":
+                mw.PreviewImage.Stretch = Stretch.None;
+                break;
+            case "Linear":
+                RenderOptions.SetBitmapInterpolationMode(mw.PreviewImage, BitmapInterpolationMode.HighQuality);
+                break;
+            case "Pixelated":
+                RenderOptions.SetBitmapInterpolationMode(mw.PreviewImage, BitmapInterpolationMode.None);
+                break;
         }
     }
 }

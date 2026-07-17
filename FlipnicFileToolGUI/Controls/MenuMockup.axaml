@@ -7,65 +7,96 @@
              mc:Ignorable="d" d:DesignWidth="512" d:DesignHeight="512"
              DataContext="{Binding RelativeSource={RelativeSource Self}}"
              x:Class="FlipnicFileToolGUI.Controls.MenuMockup" x:DataType="controls:MenuMockup"
-             x:CompileBindings="True">
-    <Grid ColumnDefinitions="400,*">
-        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-            <StackPanel Spacing="10" Margin="10">
-                <TextBlock Margin="0 5">Textures:</TextBlock>
-                <ItemsControl ItemsSource="{Binding MenuElementSource}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Spacing="10" Orientation="Vertical" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="viewModels:MenuElementViewModel">
-                            <CheckBox Content="{Binding MenuElement}" 
-                                      Click="ToggleButton_OnIsCheckedChanged" IsChecked="{Binding IsVisible}">
-                            </CheckBox>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
-        </ScrollViewer>
-        <Viewbox Grid.Column="1" DataContext="{Binding}">
-            <Grid MinWidth="{Binding Width}" MinHeight="{Binding Height}" x:DataType="controls:MenuMockup">
-                <Grid.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem Header="Save as..." Click="SaveAsMenuItem_OnClick"></MenuItem>
-                    </ContextMenu>
-                </Grid.ContextMenu>
-                <ItemsControl ItemsSource="{Binding MenuElementSource}" Name="MockupDisplay">
+             x:CompileBindings="True"
+             Name="ControlParent">
+    <Grid ColumnDefinitions="*,Auto,*">
+        <Grid Grid.Column="0" RowDefinitions="*,Auto" Name="TexturePane">
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <StackPanel Spacing="10" Margin="10">
+                    <TextBlock Margin="0 5">Textures:</TextBlock>
+                    <ItemsControl ItemsSource="{Binding MenuElementSource}" Name="TextureToggles">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Spacing="10" Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="viewModels:MenuElementViewModel">
+                                <CheckBox Content="{Binding MenuElement}" 
+                                          Click="ToggleButton_OnIsCheckedChanged" IsChecked="{Binding IsVisible}">
+                                </CheckBox>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+            <WrapPanel Grid.Row="1" Margin="5, 10, 5, 5" ItemSpacing="5" LineSpacing="5">
+                <Button Click="InvertSelection">Invert selection</Button>
+                <Button Click="NextSection">Next section</Button>
+            </WrapPanel>
+        </Grid>
+        <GridSplitter Grid.Column="1" MinWidth="10" ResizeDirection="Columns" Margin="0, 0, 10,0" />
+        <Grid Grid.Column="2" RowDefinitions="*,80">
+            <Viewbox Grid.Row="0" DataContext="{Binding}" Stretch="{Binding $parent[controls:MenuMockup].ViewboxStretch}">
+                <Grid MinWidth="{Binding Width}" MinHeight="{Binding Height}" x:DataType="controls:MenuMockup">
+                    <Grid.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Save as..." Click="SaveAsMenuItem_OnClick"></MenuItem>
+                        </ContextMenu>
+                    </Grid.ContextMenu>
+                    <ItemsControl ItemsSource="{Binding MenuElementSource}" Name="MockupDisplay">
 
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <Canvas />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-		                
-                    <ItemsControl.ItemContainerTheme>
-                        <ControlTheme x:DataType="viewModels:MenuElementViewModel" TargetType="ContentPresenter">
-                            <Setter Property="Canvas.Left" Value="{Binding MenuElement.PosX, FallbackValue=0}" />
-                            <Setter Property="Canvas.Top" Value="{Binding MenuElement.PosY, FallbackValue=0}" />
-                        </ControlTheme>
-                    </ItemsControl.ItemContainerTheme>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+		                    
+                        <ItemsControl.ItemContainerTheme>
+                            <ControlTheme x:DataType="viewModels:MenuElementViewModel" TargetType="ContentPresenter">
+                                <Setter Property="Canvas.Left" Value="{Binding MenuElement.PosX, FallbackValue=0}" />
+                                <Setter Property="Canvas.Top" Value="{Binding MenuElement.PosY, FallbackValue=0}" />
+                            </ControlTheme>
+                        </ItemsControl.ItemContainerTheme>
 
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="viewModels:MenuElementViewModel">
-                            <Image Source="{Binding ImageSource}"
-                                   Width="{Binding MenuElement.Width, FallbackValue=0}"
-                                   Height="{Binding MenuElement.Height, FallbackValue=0}"
-                                   IsVisible="{Binding IsVisible}"
-                                   Stretch="Fill"
-                                   VerticalAlignment="Top"
-                                   HorizontalAlignment="Left"
-                                   RenderOptions.BitmapInterpolationMode="None">
-                            </Image>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-
-                </ItemsControl>
-            </Grid>
-        </Viewbox>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="viewModels:MenuElementViewModel">
+                                <Image Source="{Binding ImageSource}"
+                                       Width="{Binding MenuElement.Width, FallbackValue=0}"
+                                       Height="{Binding MenuElement.Height, FallbackValue=0}"
+                                       IsVisible="{Binding IsVisible}"
+                                       Stretch="Fill"
+                                       VerticalAlignment="Top"
+                                       HorizontalAlignment="Left"
+                                       DataContextChanged="DataContextChange"
+                                       RenderOptions.BitmapInterpolationMode="None" >
+                                </Image>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Viewbox>
+            
+            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Disabled">
+                <StackPanel Orientation="Horizontal" Spacing="20" Margin="0,10, 10, 10" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Vertical" Spacing="10">
+                        <TextBlock>Scale filtering:</TextBlock>
+                        <WrapPanel ItemSpacing="10">
+                            <RadioButton IsChecked="True" IsCheckedChanged="RadioChecksChanged" Name="PixelatedRadioButton">Pixelated</RadioButton>
+                            <RadioButton IsCheckedChanged="RadioChecksChanged">Linear</RadioButton>
+                        </WrapPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical" Spacing="10">
+                        <TextBlock>Size mode:</TextBlock>
+                        <WrapPanel ItemSpacing="10">
+                            <RadioButton IsCheckedChanged="RadioChecksChanged">Stretch</RadioButton>
+                            <RadioButton IsCheckedChanged="RadioChecksChanged" IsChecked="True">Fit</RadioButton>
+                            <RadioButton IsCheckedChanged="RadioChecksChanged">Fill</RadioButton>
+                            <RadioButton IsCheckedChanged="RadioChecksChanged">Original size</RadioButton>
+                        </WrapPanel>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
     </Grid>
 </UserControl>
