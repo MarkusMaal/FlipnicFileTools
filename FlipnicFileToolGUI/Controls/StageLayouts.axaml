@@ -7,7 +7,7 @@
              x:Class="FlipnicFileToolGUI.Controls.StageLayouts">
     <Grid RowDefinitions="*,50">
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right"  Margin="5,0">
-            <Button VerticalAlignment="Center" Name="ExportChangesButton" Click="ExportChangesButton_OnClick">Export changes</Button>
+            <Button Classes="Flat Accent" VerticalAlignment="Center" Name="ExportChangesButton" Click="ExportChangesButton_OnClick">Export changes</Button>
         </StackPanel>
         <DataGrid Grid.Row="0" GridLinesVisibility="All" ItemsSource="{Binding LayoutSource}"
                   BorderThickness="1" BorderBrush="Gray" Name="StageLayoutGrid"

@@ -14,8 +14,8 @@
         <StackPanel Grid.Column="1" Spacing="10" Margin="10" DataContext="{Binding}" x:DataType="controls:MessageEditor">
             <Label Content="Table"></Label>
             <WrapPanel ItemSpacing="10" LineSpacing="10">
-                <Button Content="Export TXT" Name="ExportTxtButton" Click="ExportTxtButton_OnClick" />
-                <Button Content="Export MSG" Name="ExportMsgButton" Click="ExportMsgButton_OnClick" />
+                <Button Classes="Flat" Content="Export TXT" Name="ExportTxtButton" Click="ExportTxtButton_OnClick" />
+                <Button Classes="Flat" Content="Export MSG" Name="ExportMsgButton" Click="ExportMsgButton_OnClick" />
             </WrapPanel>
             <Label Content="Selection"></Label>
             <TextBox Name="SelectedItemTextBox" IsEnabled="{Binding ItemSelected}" Text="{Binding Text}" KeyUp="SelectedItemTextBox_OnKeyUp"></TextBox>

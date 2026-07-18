@@ -28,6 +28,9 @@ public abstract class TextureTab
     {
         if (sender is not RadioButton rb) return;
         if (!(rb.IsChecked ?? false)) return;
+        if (rb.Content == null) return;
+        mw.PixelatedRadioButton.IsEnabled = (string)rb.Content != "Original size";
+        mw.LinearRadioButton.IsEnabled = mw.PixelatedRadioButton.IsEnabled;
         switch (rb.Content)
         {
             case "Stretch":

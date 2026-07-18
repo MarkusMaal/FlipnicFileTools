@@ -13,7 +13,7 @@
         <Grid Grid.Column="0" RowDefinitions="*,Auto" Name="TexturePane">
             <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                 <StackPanel Spacing="10" Margin="10">
-                    <TextBlock Margin="0 5">Textures:</TextBlock>
+                    <TextBlock Margin="0 5">Textures</TextBlock>
                     <ItemsControl ItemsSource="{Binding MenuElementSource}" Name="TextureToggles">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -30,20 +30,18 @@
                     </ItemsControl>
                 </StackPanel>
             </ScrollViewer>
-            <WrapPanel Grid.Row="1" Margin="5, 10, 5, 5" ItemSpacing="5" LineSpacing="5">
-                <Button Click="InvertSelection">Invert selection</Button>
-                <Button Click="NextSection">Next section</Button>
-            </WrapPanel>
+            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto">
+                <StackPanel Margin="5, 10, 5, 5" Spacing="5" Orientation="Horizontal">
+                    <Button Classes="Flat" Click="InvertSelection">Invert selection</Button>
+                    <Button Classes="Flat" Click="NextSection">Next section</Button>
+                </StackPanel>
+            </ScrollViewer>
         </Grid>
         <GridSplitter Grid.Column="1" MinWidth="10" ResizeDirection="Columns" Margin="0, 0, 10,0" />
-        <Grid Grid.Column="2" RowDefinitions="*,80">
-            <Viewbox Grid.Row="0" DataContext="{Binding}" Stretch="{Binding $parent[controls:MenuMockup].ViewboxStretch}">
+        <Grid Grid.Column="2" RowDefinitions="Auto,*,80">
+            <TextBlock Grid.Row="0" Text="Preview" Margin="0, 15"></TextBlock>
+            <Viewbox Name="PreviewBox" Grid.Row="1" DataContext="{Binding}" Stretch="{Binding $parent[controls:MenuMockup].ViewboxStretch}">
                 <Grid MinWidth="{Binding Width}" MinHeight="{Binding Height}" x:DataType="controls:MenuMockup">
-                    <Grid.ContextMenu>
-                        <ContextMenu>
-                            <MenuItem Header="Save as..." Click="SaveAsMenuItem_OnClick"></MenuItem>
-                        </ContextMenu>
-                    </Grid.ContextMenu>
                     <ItemsControl ItemsSource="{Binding MenuElementSource}" Name="MockupDisplay">
 
                         <ItemsControl.ItemsPanel>
@@ -77,16 +75,19 @@
                 </Grid>
             </Viewbox>
             
-            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Disabled">
+            <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Disabled">
                 <StackPanel Orientation="Horizontal" Spacing="20" Margin="0,10, 10, 10" HorizontalAlignment="Center">
-                    <StackPanel Orientation="Vertical" Spacing="10">
+                    <Grid VerticalAlignment="Center" Margin="0, 6, 0, -6">
+                        <Button Click="SaveAsMenuItem_OnClick" Classes="Flat">Save as...</Button>
+                    </Grid>
+                    <StackPanel Orientation="Vertical" Spacing="10" VerticalAlignment="Center">
                         <TextBlock>Scale filtering:</TextBlock>
                         <WrapPanel ItemSpacing="10">
                             <RadioButton IsChecked="True" IsCheckedChanged="RadioChecksChanged" Name="PixelatedRadioButton">Pixelated</RadioButton>
-                            <RadioButton IsCheckedChanged="RadioChecksChanged">Linear</RadioButton>
+                            <RadioButton IsCheckedChanged="RadioChecksChanged" Name="LinearRadioButton">Linear</RadioButton>
                         </WrapPanel>
                     </StackPanel>
-                    <StackPanel Orientation="Vertical" Spacing="10">
+                    <StackPanel Orientation="Vertical" Spacing="10" VerticalAlignment="Center">
                         <TextBlock>Size mode:</TextBlock>
                         <WrapPanel ItemSpacing="10">
                             <RadioButton IsCheckedChanged="RadioChecksChanged">Stretch</RadioButton>

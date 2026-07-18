@@ -31,9 +31,9 @@
             </StackPanel>
         </StackPanel>
         <WrapPanel Orientation="Horizontal" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" ItemsAlignment="End" Margin="10" MaxWidth="300" ItemSpacing="10" LineSpacing="10">
-            <Button Content="Export FPC" Click="Button_OnClick"/>
-            <Button Content="Export TXT" Click="Button_OnClick"/>
-            <Button Content="Export XML" Click="Button_OnClick"/>
+            <Button Classes="Flat" Content="Export FPC" Click="Button_OnClick"/>
+            <Button Classes="Flat" Content="Export TXT" Click="Button_OnClick"/>
+            <Button Classes="Flat" Content="Export XML" Click="Button_OnClick"/>
         </WrapPanel>
         <DataGrid Grid.Row="1" Margin="0,0,0,10" GridLinesVisibility="All" ItemsSource="{Binding $parent[controls:CameraTool].CameraObject.CamFrames}" x:DataType="controls:CameraTool"
                   BorderThickness="1" BorderBrush="Gray" Name="CameraGrid"

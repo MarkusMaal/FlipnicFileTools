@@ -104,8 +104,10 @@ public partial class MenuMockup : UserControl
             var file = await FileHelpers.SaveFile(this, [Filters.PngFile]);
             if (file is null) return;
         
-            var scTarget = (Grid?)((MenuItem?)sender)?.Parent?.Parent?.Parent;
+            var scTarget = PreviewBox;
             if (scTarget is null) return;
+            var backupW = scTarget.Width;
+            var backupH = scTarget.Height;
             scTarget.Width = 640;
             scTarget.Height = 480;
             var pixelSize = new PixelSize(640, 480);
@@ -116,6 +118,8 @@ public partial class MenuMockup : UserControl
             scTarget.Arrange(new Rect(size));
             bitmap.Render(scTarget);
             bitmap.Save(Uri.UnescapeDataString(file), PngBitmapEncoderOptions.Default);
+            scTarget.Width = backupW;
+            scTarget.Height = backupH;
             ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
         }
         catch (Exception ex)
@@ -138,6 +142,9 @@ public partial class MenuMockup : UserControl
     {
         if (sender is not RadioButton rb) return;
         if (!(rb.IsChecked ?? false)) return;
+        if (rb.Content == null) return;
+        LinearRadioButton.IsEnabled = (string)(rb.Content ?? "") != "Original size";
+        PixelatedRadioButton.IsEnabled = LinearRadioButton.IsEnabled;
         switch (rb.Content)
         {
             case "Linear":

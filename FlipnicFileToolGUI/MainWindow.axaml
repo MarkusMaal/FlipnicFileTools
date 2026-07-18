@@ -15,7 +15,7 @@
         xmlns:formats="clr-namespace:FlipnicLib.Formats;assembly=FlipnicLib"
         x:DataType="viewModels:MainWindowViewModel" x:Class="FlipnicFileToolGUI.MainWindow"
         Title="Flipnic file tool" Loaded="Window_Loaded" BackgroundStyle="Bubble"
-        Closing="Window_OnClosing"
+        Closing="Window_OnClosing"  
         IsMenuVisible="{OnPlatform True, macOS=False}"
         x:CompileBindings="True">
     <sukiUi:SukiWindow.RightWindowTitleBarControls>
@@ -105,10 +105,10 @@
                               </StackPanel>
                               <OnPlatform>
                                   <OnPlatform.Default>
-                                      <Button Grid.Row="0" IsVisible="True" Name="RestartWglButton" VerticalAlignment="Center" HorizontalAlignment="Center" Click="RestartWglButton_Click">Open 3D preview</Button>
+                                      <Button Grid.Row="0" Classes="Flat Accent" IsVisible="True" Name="RestartWglButton" VerticalAlignment="Center" HorizontalAlignment="Center" Click="RestartWglButton_Click">Open 3D preview</Button>
                                   </OnPlatform.Default>
                                   <OnPlatform.macOS>
-                                      <Button Grid.Row="0" IsVisible="True" VerticalAlignment="Center" HorizontalAlignment="Center" IsEnabled="False">macOS is not supported for 3D model previews</Button>
+                                      <Button Grid.Row="0" Classes="Flat Accent" IsVisible="True" VerticalAlignment="Center" HorizontalAlignment="Center" IsEnabled="False">macOS is not supported for 3D model previews</Button>
                                   </OnPlatform.macOS>
                               </OnPlatform>
                               <OnPlatform>
@@ -121,9 +121,9 @@
                               </OnPlatform>
                               <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0" Name="ModelBottomSection">
                                   <WrapPanel Orientation="Vertical" MaxHeight="120">
-                                      <Button Margin="5, 5, 5, 0" VerticalAlignment="Center" HorizontalAlignment="Left" Name="ExportJsonButton" Click="ExportModelButton_Click">Export JSON</Button>
-                                      <Button Margin="5, 5, 5, 0" VerticalAlignment="Center" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>
-                                      <Button Margin="5, 5, 5, 0" VerticalAlignment="Center" HorizontalAlignment="Left" Name="TpModelButton" Click="TpModelButton_OnClick">Teleport to model</Button>
+                                      <Button Classes="Flat" Margin="5, 5, 5, 0" VerticalAlignment="Center" HorizontalAlignment="Left" Name="ExportJsonButton" Click="ExportModelButton_Click">Export JSON</Button>
+                                      <Button Classes="Flat" Margin="5, 5, 5, 0" VerticalAlignment="Center" HorizontalAlignment="Left" Name="ExportModelButton" Click="ExportModelButton_Click">Export model</Button>
+                                      <Button Classes="Flat" Margin="5, 5, 5, 0" VerticalAlignment="Center" HorizontalAlignment="Left" Name="TpModelButton" Click="TpModelButton_OnClick">Teleport to model</Button>
                                   </WrapPanel>
                                 <CheckBox Margin="5,10" Name="RotateModelCheck" IsCheckedChanged="RotateModelCheck_OnIsCheckedChanged">Spin</CheckBox>
                                   <ScrollViewer MaxHeight="100">
@@ -160,12 +160,12 @@
                             <Grid RowDefinitions="*,Auto">
                                 <Image Name="PreviewImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" RenderOptions.BitmapInterpolationMode="None"></Image>
                                 <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="20">
-                                    <Button Name="SaveImgAsBtn" Margin="10" Content="Save as.." Click="SaveImgAsBtn_OnClick" />
+                                    <Button Classes="Flat" Name="SaveImgAsBtn" Margin="10" Content="Save as.." Click="SaveImgAsBtn_OnClick" />
                                     <StackPanel Orientation="Vertical">
                                         <Label>Scale filtering:</Label>
                                         <WrapPanel ItemSpacing="10">
-                                            <RadioButton IsChecked="True" IsCheckedChanged="TextureImageConfigChanged">Pixelated</RadioButton>
-                                            <RadioButton IsCheckedChanged="TextureImageConfigChanged">Linear</RadioButton>
+                                            <RadioButton IsChecked="True" IsCheckedChanged="TextureImageConfigChanged" Name="PixelatedRadioButton">Pixelated</RadioButton>
+                                            <RadioButton IsCheckedChanged="TextureImageConfigChanged" Name="LinearRadioButton">Linear</RadioButton>
                                         </WrapPanel>
                                     </StackPanel>
                                     <StackPanel Orientation="Vertical">
@@ -192,9 +192,9 @@
                                     <Label Name="AudioFilename">Filename: N/A</Label>
                                     <Label Name="PlaybackStateLabel">Stopped</Label>
                                     <StackPanel Orientation="Horizontal" Spacing="10">
-                                        <Button Name="PlayButton" Content="Play" Click="PlayButton_OnClick"></Button>
-                                        <Button Name="StopButton" Content="Stop" Click="PlayButton_OnClick" IsEnabled="False"></Button>
-                                        <Button Name="SaveSoundAsButton" Content="Save as.." Click="SaveSoundAsButton_OnClick"></Button>
+                                        <Button Classes="Flat" Name="PlayButton" Content="Play" Click="PlayButton_OnClick"></Button>
+                                        <Button Classes="Flat" Name="StopButton" Content="Stop" Click="PlayButton_OnClick" IsEnabled="False"></Button>
+                                        <Button Classes="Flat Accent" Name="SaveSoundAsButton" Content="Save as.." Click="SaveSoundAsButton_OnClick"></Button>
                                     </StackPanel>
                                 </StackPanel>
                             </sukiUi:GlassCard>
@@ -219,8 +219,8 @@
                                 <Grid Grid.Row="0" Grid.ColumnDefinitions="*,Auto">
                                     <ComboBox Grid.Row="0" Name="GimmickCombobox" SelectionChanged="GimmickCombobox_OnSelectionChanged"></ComboBox>
                                     <StackPanel Orientation="Horizontal" Grid.Column="1">
-                                        <Button Content="Locate layout file" Margin="5" Click="LocateLayoutButton_Clicked"></Button>
-                                        <Button Content="Export changes" Margin="5" Click="ExportGimmicksButton"></Button>
+                                        <Button Classes="Flat" Content="Locate layout file" Margin="5" Click="LocateLayoutButton_Clicked"></Button>
+                                        <Button Classes="Flat Accent" Content="Export changes" Margin="5" Click="ExportGimmicksButton"></Button>
                                     </StackPanel>
                                 </Grid>
                                 <DataGrid Grid.Row="1" Name="GimmickGrid" ItemsSource="{Binding SelectedGimmick}" DataContext="{Binding}" x:DataType="viewModels:MainWindowViewModel"
@@ -272,9 +272,9 @@
                                     </DataGrid.Columns>
                                 </DataGrid>
                                 <StackPanel Name="SamplesActionsButtons" Orientation="Horizontal" Grid.Row="1" Spacing="8" Margin="0,0,0,10">
-                                    <Button Name="ExtractLoopButton" IsVisible="False" Click="ExtractSampleButton_OnClick">Extract looping</Button>
-                                    <Button Name="ExtractSampleButton" Click="ExtractSampleButton_OnClick">Extract sample</Button>
-                                    <Button Name="PlaySampleButton" Click="ExtractSampleButton_OnClick">Play</Button>
+                                    <Button Classes="Flat" Name="ExtractLoopButton" IsVisible="False" Click="ExtractSampleButton_OnClick">Extract looping</Button>
+                                    <Button Classes="Flat" Name="ExtractSampleButton" Click="ExtractSampleButton_OnClick">Extract sample</Button>
+                                    <Button Classes="Flat Accent" Name="PlaySampleButton" Click="ExtractSampleButton_OnClick">Play</Button>
                                 </StackPanel>
                             </Grid>
                         </sukiUi:SukiSideMenuItem.PageContent>
@@ -300,10 +300,10 @@
                                     </DataGrid.Columns>
                                 </DataGrid>
                                 <StackPanel Name="FileActionButtons" Orientation="Horizontal" Grid.Row="1" Spacing="8" Margin="0,0,0,10">
-                                    <Button Name="OpenButton" IsEnabled="False" Click="OpenButton_OnClick">Open</Button>
-                                    <Button Name="ExtractButton" IsEnabled="False" Click="ExtractButton_OnClick">Extract</Button>
-                                    <Button Name="ReplaceButton" IsEnabled="False" Click="ReplaceButton_OnClick">Replace</Button>
-                                    <Button Name="ExtractAllButton" Click="ExtractAllButton_OnClick">Extract all</Button>
+                                    <Button Classes="Flat" Name="OpenButton" IsEnabled="False" Click="OpenButton_OnClick">Open</Button>
+                                    <Button Classes="Flat" Name="ExtractButton" IsEnabled="False" Click="ExtractButton_OnClick">Extract</Button>
+                                    <Button Classes="Flat" Name="ReplaceButton" IsEnabled="False" Click="ReplaceButton_OnClick">Replace</Button>
+                                    <Button Classes="Flat Accent" Name="ExtractAllButton" Click="ExtractAllButton_OnClick">Extract all</Button>
                                 </StackPanel>
                             </Grid>
                         </sukiUi:SukiSideMenuItem.PageContent>
@@ -338,7 +338,7 @@
                                         <Grid Name="FfmpegBrowserGrid" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
                                             <Label Grid.Column="0" VerticalAlignment="Center">FFmpeg path:</Label>
                                             <TextBox Name="FFmpegBox" Grid.Column="1" TextChanged="FFmpegBox_OnTextChanged" />
-                                            <Button Name="BrowseButtonFfmpeg" Click="BrowseButtonFfmpeg_OnClick" Grid.Column="2" Content="Browse…"></Button>
+                                            <Button Classes="Flat" Name="BrowseButtonFfmpeg" Click="BrowseButtonFfmpeg_OnClick" Grid.Column="2" Content="Browse…"></Button>
                                         </Grid>
                                       <Grid Name="MidiBrowserGrid" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
                                         <Label Grid.Column="0" VerticalAlignment="Center">MIDI file:</Label>
@@ -347,7 +347,7 @@
                                             <Label>A MIDI file is required to determine which channel each program should correspond to</Label>
                                           </ToolTip.Tip>
                                         </TextBox>
-                                        <Button Name="BrowseButtonMidi" Click="BrowseButtonBdMidi_OnClick" Grid.Column="2" Content="Browse…"></Button>
+                                        <Button Classes="Flat" Name="BrowseButtonMidi" Click="BrowseButtonBdMidi_OnClick" Grid.Column="2" Content="Browse…"></Button>
                                       </Grid>
                                       <Grid Name="BdBrowserGrid" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
                                         <Label Grid.Column="0" VerticalAlignment="Center">JAM body file (.BD):</Label>
@@ -356,12 +356,12 @@
                                             <Label>The .BD fie contains samples and it should be paired with a corresponding .HD file</Label>
                                           </ToolTip.Tip>
                                         </TextBox>
-                                        <Button Name="BrowseButtonBd" Click="BrowseButtonBdMidi_OnClick" Grid.Column="2" Content="Browse…"></Button>
+                                        <Button Classes="Flat" Name="BrowseButtonBd" Click="BrowseButtonBdMidi_OnClick" Grid.Column="2" Content="Browse…"></Button>
                                       </Grid>
                                         <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
                                             <Label Grid.Column="0" VerticalAlignment="Center">Save to:</Label>
                                             <TextBox Name="FileBox" Grid.Column="1" TextChanged="FFmpegBox_OnTextChanged" />
-                                            <Button Name="BrowsButtonPath" Click="BrowsButtonPath_OnClick" Grid.Column="2" Content="Browse…"></Button>
+                                            <Button Classes="Flat" Name="BrowsButtonPath" Click="BrowsButtonPath_OnClick" Grid.Column="2" Content="Browse…"></Button>
                                         </Grid>
                                         <StackPanel Orientation="Horizontal" Spacing="10">
                                             <CheckBox Name="PalToggle" Margin="0,2, 0,-8" IsChecked="False" Content="Use PAL instead of NTSC">
@@ -437,10 +437,10 @@
                                         </Expander>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
-                                        <Button Click="DemuxButton_OnClick" Name="DemuxButton">Demux</Button>
-                                        <Button Click="ConvertMovAacButton_OnClick" Name="ConvertMovAacButton" IsEnabled="False">Convert to MPEG4</Button>
-                                        <Button Click="ConvertMovButton_OnClick" Name="ConvertMovButton" IsEnabled="False">Convert to .M2V</Button>
-                                        <Button Click="ConvertSf2Button_OnClick" Name="ConvertSf2Button" IsEnabled="False">Convert to .SF2</Button>
+                                        <Button Classes="Flat Accent" Click="DemuxButton_OnClick" Name="DemuxButton">Demux</Button>
+                                        <Button Classes="Flat Accent" Click="ConvertMovAacButton_OnClick" Name="ConvertMovAacButton" IsEnabled="False">Convert to MPEG4</Button>
+                                        <Button Classes="Flat Accent" Click="ConvertMovButton_OnClick" Name="ConvertMovButton" IsEnabled="False">Convert to .M2V</Button>
+                                        <Button Classes="Flat Accent" Click="ConvertSf2Button_OnClick" Name="ConvertSf2Button" IsEnabled="False">Convert to .SF2</Button>
                                     </StackPanel>
                                 </StackPanel>
                             </sukiUi:GlassCard>
@@ -494,7 +494,7 @@
     
         
         <Grid Name="Loader" Margin="150" ColumnDefinitions="Auto,Auto" VerticalAlignment="Center" HorizontalAlignment="Left" IsVisible="False">
-            <sukiUi:CircleProgressBar Name="LoadProgress" Grid.Column="0" IsIndeterminate="True" Width="48" Height="48" Margin="0, 0, 20, 0" StrokeWidth="6"></sukiUi:CircleProgressBar>
+            <sukiUi:CircleProgressBar Classes="Accent" Name="LoadProgress" Grid.Column="0" IsIndeterminate="True" Width="48" Height="48" Margin="0, 0, 20, 0" StrokeWidth="6"></sukiUi:CircleProgressBar>
             <TextBlock MinWidth="300" VerticalAlignment="Center" Grid.Column="1" FontSize="20" Name="LoadStatus" TextAlignment="Left" >Please wait...</TextBlock>
         </Grid>
     </Grid>

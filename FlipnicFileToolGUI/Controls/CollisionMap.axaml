@@ -21,9 +21,9 @@
         <Grid Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Margin="5,10" RowDefinitions="30,*">
             <Label>Convert:</Label>
             <WrapPanel Grid.Row="1"  ItemSpacing="5" LineSpacing="10">
-                <Button Name="WtoButton" Content="Wall to OBJ" Click="ExportClick" IsEnabled="False"></Button>
-                <Button Name="GtoButton" Content="Ground to OBJ" Click="ExportClick" IsEnabled="False"></Button> <!-- GTO go brrr :) -->
-                <Button Name="EtoButton" Content="Everything to OBJ" Click="ExportClick"></Button>
+                <Button Classes="Flat" Name="WtoButton" Content="Wall to OBJ" Click="ExportClick" IsEnabled="False"></Button>
+                <Button Classes="Flat" Name="GtoButton" Content="Ground to OBJ" Click="ExportClick" IsEnabled="False"></Button> <!-- GTO go brrr :) -->
+                <Button Classes="Flat Accent" Name="EtoButton" Content="Everything to OBJ" Click="ExportClick"></Button>
             </WrapPanel>
         </Grid>
     </Grid>

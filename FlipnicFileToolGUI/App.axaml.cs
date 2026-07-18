@@ -22,7 +22,7 @@ namespace FlipnicFileToolGUI;
 
 public class App : Application
 {
-    private static readonly SukiColorTheme AppTheme = new("AppTheme", Colors.BlueViolet, Colors.DeepPink);
+    private static readonly SukiColorTheme AppTheme = new("AppTheme", Colors.DarkMagenta, Colors.DeepPink);
     private static readonly SukiColorTheme SecTheme = new("Secondary theme", Colors.MidnightBlue, Colors.Purple);
     public override void Initialize()
     {
@@ -131,6 +131,7 @@ public class App : Application
 
     public static void Init(MainWindow mw)
     {
+        if (!Design.IsDesignMode) StaticUtils.LiveLoadStatus = "Initializing...";
         if (!OperatingSystem.IsMacOS())
         {
             mw.RestartWglButton.IsVisible = !Program.GpuAccel;
@@ -184,30 +185,40 @@ public class App : Application
               
               """;
         mw.ForceRefresh();
-        var p = new Process();
-        try
+        new Thread(() =>
         {
+            var p = new Process();
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = true;
             p.StartInfo.FileName = "imhex";
             p.StartInfo.Arguments = "--version";
             p.Start();
             p.WaitForExit();
-            mw.OpenImHexMenuItem.IsVisible = p.ExitCode == 0;
-        }
-        catch
-        {
-            mw.OpenImHexMenuItem.IsVisible = false;
-        }
+            Dispatcher.UIThread.Post(() =>
+            {
+                try
+                {
+                    mw.OpenImHexMenuItem.IsVisible = p.ExitCode == 0;
+                }
+                catch (InvalidOperationException)
+                {
+                    mw.OpenImHexMenuItem.IsVisible = false;                        
+                }
+            });
 
-        p = new Process();
-        p.StartInfo.UseShellExecute = false;
-        p.StartInfo.RedirectStandardOutput = true;
-        p.StartInfo.FileName = OperatingSystem.IsWindows() ? "where" : "which";
-        p.StartInfo.Arguments = "ffmpeg";
-        p.Start();
-        DetectFromOutput(p, mw.FFmpegBox , "FFmpeg", mw);
-        mw.ReverbSlider.Value = StaticUtils.ReverbStrength;
+            p = new Process();
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.StartInfo.FileName = OperatingSystem.IsWindows() ? "where" : "which";
+            p.StartInfo.Arguments = "ffmpeg";
+            p.Start();
+            DetectFromOutput(p, mw.FFmpegBox , "FFmpeg", mw);
+            Dispatcher.UIThread.Post(() =>
+            {
+                mw.ReverbSlider.Value = StaticUtils.ReverbStrength; 
+            });
+            if (!Design.IsDesignMode) StaticUtils.LiveLoadStatus = "";
+        }).Start();
         if (Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop) return;
         
         if (desktop.Windows.Count == 1) Preferences.LoadPreferences(mw);
@@ -231,14 +242,17 @@ public class App : Application
     {
         var output = p.StandardOutput.ReadToEnd();
         p.WaitForExit();
-        if (p.ExitCode != 0)
+        Dispatcher.UIThread.Post(() =>
         {
-            mw.InfoBox.Text += $"\n{friendlyName} is not installed";
-            return;
-        }
-        if (output.Contains(';')) output = output.Split(';')[0];
-        if (output.Contains('\n')) output = output.Replace("\r\n", "\n").Split('\n')[0];
-        if (textBox != null) textBox.Text = output;
-        mw.InfoBox.Text += $"\n{friendlyName} auto-detected at: {output}";
+            if (p.ExitCode != 0)
+            {
+                mw.InfoBox.Text += $"\n{friendlyName} is not installed";
+                return;
+            }
+            if (output.Contains(';')) output = output.Split(';')[0];
+            if (output.Contains('\n')) output = output.Replace("\r\n", "\n").Split('\n')[0];
+            if (textBox != null) textBox.Text = output;
+            mw.InfoBox.Text += $"\n{friendlyName} auto-detected at: {output}"; 
+        });
     }
 }
