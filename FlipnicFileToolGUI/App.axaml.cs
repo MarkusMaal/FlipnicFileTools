@@ -192,12 +192,12 @@ public class App : Application
             p.StartInfo.RedirectStandardOutput = true;
             p.StartInfo.FileName = "imhex";
             p.StartInfo.Arguments = "--version";
-            p.Start();
-            p.WaitForExit();
             Dispatcher.UIThread.Post(() =>
             {
                 try
                 {
+                    p.Start();
+                    p.WaitForExit();
                     mw.OpenImHexMenuItem.IsVisible = p.ExitCode == 0;
                 }
                 catch (InvalidOperationException)
