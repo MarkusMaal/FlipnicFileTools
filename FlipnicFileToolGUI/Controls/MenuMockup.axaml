@@ -40,7 +40,7 @@
         <GridSplitter Grid.Column="1" MinWidth="10" ResizeDirection="Columns" Margin="0, 0, 10,0" />
         <Grid Grid.Column="2" RowDefinitions="Auto,*,80">
             <TextBlock Grid.Row="0" Text="Preview" Margin="0, 15"></TextBlock>
-            <Viewbox Name="PreviewBox" Grid.Row="1" DataContext="{Binding}" Stretch="{Binding $parent[controls:MenuMockup].ViewboxStretch}">
+            <Viewbox IsHitTestVisible="False" Name="PreviewBox" Grid.Row="1" DataContext="{Binding}" Stretch="{Binding $parent[controls:MenuMockup].ViewboxStretch}">
                 <Grid MinWidth="{Binding Width}" MinHeight="{Binding Height}" x:DataType="controls:MenuMockup">
                     <ItemsControl ItemsSource="{Binding MenuElementSource}" Name="MockupDisplay">
 
@@ -76,27 +76,27 @@
             </Viewbox>
             
             <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Disabled">
-                <StackPanel Orientation="Horizontal" Spacing="20" Margin="0,10, 10, 10" HorizontalAlignment="Center">
-                    <Grid VerticalAlignment="Center" Margin="0, 6, 0, -6">
+                <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="20" Margin="0,10, 10, 10" HorizontalAlignment="Center">
+                    <Grid Grid.Column="0" VerticalAlignment="Center" Margin="0, 6, 0, -6">
                         <Button Click="SaveAsMenuItem_OnClick" Classes="Flat">Save as...</Button>
                     </Grid>
-                    <StackPanel Orientation="Vertical" Spacing="10" VerticalAlignment="Center">
-                        <TextBlock>Scale filtering:</TextBlock>
-                        <WrapPanel ItemSpacing="10">
+                    <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="10" VerticalAlignment="Center">
+                        <TextBlock Grid.Row="0">Scale filtering:</TextBlock>
+                        <WrapPanel Grid.Row="1" ItemSpacing="10">
                             <RadioButton IsChecked="True" IsCheckedChanged="RadioChecksChanged" Name="PixelatedRadioButton">Pixelated</RadioButton>
                             <RadioButton IsCheckedChanged="RadioChecksChanged" Name="LinearRadioButton">Linear</RadioButton>
                         </WrapPanel>
-                    </StackPanel>
-                    <StackPanel Orientation="Vertical" Spacing="10" VerticalAlignment="Center">
-                        <TextBlock>Size mode:</TextBlock>
-                        <WrapPanel ItemSpacing="10">
+                    </Grid>
+                    <Grid Grid.Column="2" RowDefinitions="Auto,Auto" RowSpacing="10" VerticalAlignment="Center">
+                        <TextBlock Grid.Row="0">Size mode:</TextBlock>
+                        <WrapPanel Grid.Row="1" ItemSpacing="10">
                             <RadioButton IsCheckedChanged="RadioChecksChanged">Stretch</RadioButton>
                             <RadioButton IsCheckedChanged="RadioChecksChanged" IsChecked="True">Fit</RadioButton>
                             <RadioButton IsCheckedChanged="RadioChecksChanged">Fill</RadioButton>
                             <RadioButton IsCheckedChanged="RadioChecksChanged">Original size</RadioButton>
                         </WrapPanel>
-                    </StackPanel>
-                </StackPanel>
+                    </Grid>
+                </Grid>
             </ScrollViewer>
         </Grid>
     </Grid>

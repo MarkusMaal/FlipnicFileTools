@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -76,6 +77,15 @@ public abstract class MenuHandlers
             {
                 StaticUtils.MsgFile = file;
                 return;
+            }
+            if (!Preferences.RecentFiles.Any(p => p == file))
+            {
+                Preferences.RecentFiles.Add(file);
+                if (Preferences.RecentFiles.Count > 5)
+                {
+                    Preferences.RecentFiles.RemoveAt(0);
+                }
+                mw.ReloadRecentMenu();
             }
             mw.FileName = file;
             FileHelpers.LoadFromData(new FileStream(file, FileMode.Open, FileAccess.Read), file[^3..], mw);

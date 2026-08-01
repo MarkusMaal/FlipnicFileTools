@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Xml.Linq;
@@ -17,6 +19,8 @@ namespace FlipnicFileToolGUI;
 public abstract class Preferences
 {
     private static readonly string SavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "flipnic-file-tools.xml");
+
+    public static readonly List<string> RecentFiles = [];
     
     public static void SavePreferences(bool lightTheme, string? msgFile)
     {
@@ -25,9 +29,15 @@ public abstract class Preferences
         var root = new XElement("FlipnicFileTools");
         root.SetAttributeValue("Version", StaticUtils.LibVersion);
         root.SetAttributeValue("Beta", StaticUtils.IsBeta);
-        root.SetAttributeValue("Check", CalcSum(lightTheme, msgFile));
         root.Add(new XElement("IsLightTheme", lightTheme));
         root.Add(new XElement("MsgFile", msgFile));
+        var recents = new XElement("RecentFiles");
+        foreach (var recent in RecentFiles)
+        {
+            recents.Add(new XElement("File", recent));
+        }
+        root.SetAttributeValue("Check", CalcSum(lightTheme, msgFile, RecentFiles.ToArray()));
+        root.Add(recents);
         saveData.Add(root);
         if (Debugger.IsAttached) Console.WriteLine("Save preferences to: " + SavePath);
         try
@@ -40,13 +50,13 @@ public abstract class Preferences
         }
     }
 
-    private static string CalcSum(bool lightTheme, string? msgFile)
+    private static string CalcSum(bool lightTheme, string? msgFile, string[] recents)
     {
         var mainSum = (Crc32
-            .Calculate(Encoding.UTF8.GetBytes(lightTheme + msgFile)) ^ 0xFFFFFFFF)
+            .Calculate(Encoding.UTF8.GetBytes(string.Join("-", recents) + lightTheme + msgFile)) ^ 0xFFFFFFFF)
             .ToString("X");
         var backupSum = (Crc32
-                .Calculate(Encoding.UTF8.GetBytes(mainSum + lightTheme + msgFile)) ^ 0xFFFFFFFF)
+                .Calculate(Encoding.UTF8.GetBytes(mainSum + string.Join("", recents) + lightTheme + msgFile)) ^ 0xFFFFFFFF)
             .ToString("X");
         return backupSum + mainSum;
     }
@@ -62,6 +72,14 @@ public abstract class Preferences
             return;
         }
         var xml = XDocument.Load(Path.Combine(SavePath));
+        if (xml.Root!.Attribute("Version") == null || xml.Root!.Attribute("Beta") == null || xml.Root!.Attribute("Check") == null)
+        {
+            if (mw.FileName == null)
+            {
+                mw.InfoBox.Text += "\nWarning: Invalid XML markup, settings have been reset!";
+            }
+            return;
+        }
         if (float.Parse(xml.Root!.Attribute("Version")!.Value, CultureInfo.GetCultureInfo("en-US")) >
             StaticUtils.LibVersion || bool.Parse(xml.Root!.Attribute("Beta")?.Value!) != StaticUtils.IsBeta)
         {
@@ -73,7 +91,9 @@ public abstract class Preferences
         }
         var testLight = xml.Root!.Element("IsLightTheme")!.Value == "true";
         var testMsg = xml.Root!.Element("MsgFile")!.Value;
-        var realCrc = CalcSum(testLight, testMsg);
+        // for backwards compatibility with config files from previous versions
+        var recents = xml.Root.Element("RecentFiles") != null ? xml.Root!.Element("RecentFiles")!.Elements().Select(p => p.Value).ToArray() : [];
+        var realCrc = CalcSum(testLight, testMsg, recents);
         var readCrc = xml.Root!.Attribute("Check")!.Value;
         if (realCrc != readCrc)
         {
@@ -83,6 +103,8 @@ public abstract class Preferences
             }
             return;
         }
+        RecentFiles.Clear();
+        RecentFiles.AddRange(recents.Where(p => File.Exists(p)));
         if ((xml.Root!.Element("IsLightTheme")!.Value) == "true")
         {
             new Thread(() =>

@@ -25,6 +25,15 @@ public abstract class DragDropHandlers
         if (pathAbsolutePath == null) return;
         var fullPath = Uri.UnescapeDataString(pathAbsolutePath);
         mw.FileName = fullPath;
+        if (!Preferences.RecentFiles.Any(p => p == fullPath))
+        {
+            Preferences.RecentFiles.Add(fullPath);
+            if (Preferences.RecentFiles.Count > 5)
+            {
+                Preferences.RecentFiles.RemoveAt(0);
+            }
+            mw.ReloadRecentMenu();
+        }
         FileHelpers.LoadFromData(new FileStream(fullPath, FileMode.Open, FileAccess.Read), fullPath[^3..], mw);
     }
 }

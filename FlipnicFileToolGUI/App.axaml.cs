@@ -55,6 +55,15 @@ public class App : Application
                         return;
                     } 
                     mw.FileName = desktop.Args[0];
+                    if (!Preferences.RecentFiles.Any(p => p == mw.FileName))
+                    {
+                        Preferences.RecentFiles.Add(mw.FileName);
+                        if (Preferences.RecentFiles.Count > 5)
+                        {
+                            Preferences.RecentFiles.RemoveAt(0);
+                        }
+                        mw.ReloadRecentMenu();
+                    }
                     Dispatcher.UIThread.Post(() => FileHelpers.LoadFromData(File.OpenRead(desktop.Args[0]), Path.GetExtension(desktop.Args[0])[1..], mw));
                 }).Start();
             }

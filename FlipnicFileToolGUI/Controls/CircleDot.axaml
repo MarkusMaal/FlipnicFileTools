@@ -8,6 +8,9 @@
              x:CompileBindings="False">
         <Grid>
             <Ellipse Opacity="0.75">
+                <Ellipse.CacheMode>
+                    <BitmapCache RenderAtScale="1" />
+                </Ellipse.CacheMode>
                 <Ellipse.Fill>
                     <LinearGradientBrush>
                         <LinearGradientBrush.GradientStops>
@@ -19,6 +22,9 @@
             </Ellipse>
             
             <Image Margin="3" Source="{Binding Source}" HorizontalAlignment="Center" VerticalAlignment="Center" Width="16" RenderOptions.BitmapInterpolationMode="HighQuality" Stretch="UniformToFill">
+                <Image.CacheMode>
+                    <BitmapCache RenderAtScale="4" />
+                </Image.CacheMode>
             </Image>
         </Grid>
 </UserControl>

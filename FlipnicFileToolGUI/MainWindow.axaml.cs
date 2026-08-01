@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -303,7 +304,32 @@ public sealed partial class MainWindow : SukiWindow
     {
         App.Init(this);
         if (Program.GpuAccel) Preferences.LoadPreferences(this);
+        ReloadRecentMenu();
     }
+
+    public void ReloadRecentMenu()
+    {
+        if (!OperatingSystem.IsMacOS())
+        {
+            RecentMenuItem.Items.Clear();
+            if (Preferences.RecentFiles.Count > 0)
+            {
+                RecentMenuItem.IsVisible = true;
+                Preferences.RecentFiles.ForEach(p => RecentMenuItem.Items.Add(new FileInfo(p).Name));
+                RecentMenuItem.Click += (sender, e) =>
+                {
+                    if (sender is not MenuItem mi2 || RecentMenuItem.SelectedIndex == -1) return;
+                    var cF = Preferences.RecentFiles[RecentMenuItem.SelectedIndex];
+                    FileName = cF;
+                    FileHelpers.LoadFromData(new FileStream(FileName, FileMode.Open, FileAccess.Read), FileName[^3..], this);
+                };
+            }
+        } else
+        {
+            // TODO
+        }
+    }
+
 
     public void ShowDialog(string title, string content, NotificationType type)
     {
