@@ -48,9 +48,37 @@ public class FpnSave : FormatBase
     public void Save(string filename)
     {
         using var fos = new FileStream(filename, FileMode.Create, FileAccess.Write);
-        foreach (var b in _dataList) {
-            fos.WriteByte(b);
+        // create the basic SST structure from scratch
+        fos.Write("FpnSst00"u8);
+        fos.Write(BitConverter.GetBytes((uint)1));
+        fos.Write(BitConverter.GetBytes((uint)0x20));
+        fos.Write("RECORD\0\0"u8);
+        fos.Write(BitConverter.GetBytes((ushort)(_gameModes.Length * 5))); // 5 entries per game mode
+        fos.Write(BitConverter.GetBytes((ushort)0x34));
+        fos.Write(BitConverter.GetBytes((uint)0x20));
+        var bck = LeaderboardId;
+        for (var i = 0; i < _gameModes.Length; i++)
+        {
+            LeaderboardId = i;
+            foreach (var rank in Rank) // the get value for Rank depends on LeaderboardId
+            {
+                var dUint = rank.Difficulty switch
+                {
+                    "Easy" => 0,
+                    "Normal" => 1,
+                    "Hard" => 2,
+                    _ => 0xFF
+                };
+                fos.Write(BitConverter.GetBytes((ulong)rank.Score));
+                fos.Write(BitConverter.GetBytes((uint)dUint));
+                fos.Write(BitConverter.GetBytes((uint)rank.Combos));
+                fos.Write(Encoding.ASCII.GetBytes(rank.Name));
+                var padding = 0x20 - rank.Name.Length;
+                fos.Position += padding;
+                fos.Write(BitConverter.GetBytes((uint)0x00)); // write zeroes for the password check part (no idea how it works)
+            }
         }
+        LeaderboardId = bck;
         fos.Close();
     }
 

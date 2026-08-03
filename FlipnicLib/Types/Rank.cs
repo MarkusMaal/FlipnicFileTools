@@ -20,7 +20,7 @@ public class Rank
 
     private enum UpdatedValueType
     {
-        Initials,
+        Name,
         Score,
         Combos,
         Difficulty
@@ -28,10 +28,10 @@ public class Rank
     
     public int Position => int.Parse(SaveFile.GetScore(GameMode * 5 + _idx)[0]);
 
-    public string Initials
+    public string Name
     {
         get => SaveFile.GetScore(GameMode * 5 + _idx)[1];
-        set => WriteChanges(UpdatedValueType.Initials, value);
+        set => WriteChanges(UpdatedValueType.Name, value);
     }
 
     public long Score
@@ -61,13 +61,13 @@ public class Rank
     private void WriteChanges(UpdatedValueType updatedType, object newValue)
     {
         var combos = (int)(updatedType == UpdatedValueType.Combos ? newValue : Combos);
-        var initials = (string)(updatedType == UpdatedValueType.Initials ? newValue : Initials);
+        var initials = (string)(updatedType == UpdatedValueType.Name ? newValue : Name);
         var score = (long)((updatedType == UpdatedValueType.Score) ? newValue : Score);
-        var diff = (updatedType == UpdatedValueType.Difficulty ? newValue : Difficulty) switch
+        var diff = ((updatedType == UpdatedValueType.Difficulty ? newValue : Difficulty).ToString() ?? "").ToLower() switch
         {
-            "Easy" => FpnSave.Difficulty.Easy,
-            "Normal" => FpnSave.Difficulty.Normal,
-            "Hard" => FpnSave.Difficulty.Hard,
+            "easy" => FpnSave.Difficulty.Easy,
+            "normal" => FpnSave.Difficulty.Normal,
+            "hard" => FpnSave.Difficulty.Hard,
             _ => FpnSave.Difficulty.Null
         };
         SaveFile.SetScore(GameMode, _idx, score, initials, combos, diff);

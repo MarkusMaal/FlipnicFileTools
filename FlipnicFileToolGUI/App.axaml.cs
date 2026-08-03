@@ -24,6 +24,7 @@ public class App : Application
 {
     private static readonly SukiColorTheme AppTheme = new("AppTheme", Colors.DarkMagenta, Colors.DeepPink);
     private static readonly SukiColorTheme SecTheme = new("Secondary theme", Colors.MidnightBlue, Colors.Purple);
+    private static bool _firstLaunch = true;
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -196,32 +197,25 @@ public class App : Application
         mw.ForceRefresh();
         new Thread(() =>
         {
-            var p = new Process();
-            p.StartInfo.UseShellExecute = false;
-            p.StartInfo.RedirectStandardOutput = true;
-            p.StartInfo.FileName = "imhex";
-            p.StartInfo.Arguments = "--version";
+            var hasImHex = false;
+            var ffmpegPath = "";
+            var splitChr = OperatingSystem.IsWindows() ? ";" : ":";
+            foreach (var env in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(splitChr))
+            {
+                if (File.Exists(Path.Join(env, "imhex" + (OperatingSystem.IsWindows() ? ".exe" : ""))))
+                {
+                    hasImHex = true;
+                }
+                if (File.Exists(Path.Join(env, "ffmpeg" + (OperatingSystem.IsWindows() ? ".exe" : ""))))
+                {
+                    ffmpegPath = Path.Join(env, "ffmpeg" + (OperatingSystem.IsWindows() ? ".exe" : ""));
+                }
+            }
             Dispatcher.UIThread.Post(() =>
             {
-                try
-                {
-                    p.Start();
-                    p.WaitForExit();
-                    mw.OpenImHexMenuItem.IsVisible = p.ExitCode == 0;
-                }
-                catch (InvalidOperationException)
-                {
-                    mw.OpenImHexMenuItem.IsVisible = false;                        
-                }
+                mw.OpenImHexMenuItem.IsEnabled = hasImHex;
             });
-
-            p = new Process();
-            p.StartInfo.UseShellExecute = false;
-            p.StartInfo.RedirectStandardOutput = true;
-            p.StartInfo.FileName = OperatingSystem.IsWindows() ? "where" : "which";
-            p.StartInfo.Arguments = "ffmpeg";
-            p.Start();
-            DetectFromOutput(p, mw.FFmpegBox , "FFmpeg", mw);
+            DetectFromOutput(ffmpegPath, mw.FFmpegBox , "FFmpeg", mw);
             Dispatcher.UIThread.Post(() =>
             {
                 mw.ReverbSlider.Value = StaticUtils.ReverbStrength; 
@@ -247,13 +241,11 @@ public class App : Application
         MainWindow.ErrorDisplayed = true;
     }
 
-    private static void DetectFromOutput(Process p, TextBox? textBox, string friendlyName, MainWindow mw)
+    private static void DetectFromOutput(string output, TextBox? textBox, string friendlyName, MainWindow mw)
     {
-        var output = p.StandardOutput.ReadToEnd();
-        p.WaitForExit();
         Dispatcher.UIThread.Post(() =>
         {
-            if (p.ExitCode != 0)
+            if (!File.Exists(output))
             {
                 mw.InfoBox.Text += $"\n{friendlyName} is not installed";
                 return;
@@ -261,7 +253,9 @@ public class App : Application
             if (output.Contains(';')) output = output.Split(';')[0];
             if (output.Contains('\n')) output = output.Replace("\r\n", "\n").Split('\n')[0];
             if (textBox != null) textBox.Text = output;
-            mw.InfoBox.Text += $"\n{friendlyName} auto-detected at: {output}"; 
+            if (!_firstLaunch) return;
+            mw.InfoBox.Text += $"\n{friendlyName} auto-detected at: {output}";
+            _firstLaunch = false;
         });
     }
 }

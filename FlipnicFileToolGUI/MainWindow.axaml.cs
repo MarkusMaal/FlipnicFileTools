@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -10,6 +9,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using FlipnicFileToolGUI.Controls;
 using FlipnicFileToolGUI.Handlers;
 using FlipnicFileToolGUI.Helpers;
@@ -185,6 +185,28 @@ public sealed partial class MainWindow : SukiWindow
 
     // Tab -> Save data
     private void ScoreGrid_SelectionChanged(object? sender, SelectionChangedEventArgs e) => RankGrid.ItemsSource = GetViewModel().SaveData.Rank;
+
+    private async void ExportRecordSst_Click(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var saveFile = await StorageProvider.SaveFilePickerAsync(
+                new FilePickerSaveOptions
+                {
+                    Title = "Select destination file",
+                    FileTypeChoices = [Filters.FpnSst]
+                });
+
+            if (saveFile == null) return;
+            var fileName = Uri.UnescapeDataString(saveFile.Path.AbsolutePath);
+            GetViewModel().SaveData.Save(fileName);
+            ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            ShowDialog("Flipnic file tools", $"Save failed!\n\nDetails: {ex.Message}", NotificationType.Error);
+        }
+    }
     
     // Menus -> File
     private void NewWindowMenuItem_OnClick(object? sender, RoutedEventArgs e) // New

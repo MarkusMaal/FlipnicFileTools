@@ -454,9 +454,9 @@
                             <controls:CircleDot ColorA="DodgerBlue" ColorB="DarkBlue" Source="Assets\TabIcons\save.png"></controls:CircleDot>
                         </sukiUi:SukiSideMenuItem.Icon>
                         <sukiUi:SukiSideMenuItem.PageContent>
-                            <Grid RowDefinitions="30,30,*" Margin="10" DataContext="{Binding SaveData}" x:DataType="viewModels:MainWindowViewModel">
-                                <Label>Ranking data</Label>
-                                <ComboBox Name="RankingCombobox" Grid.Row="1" SelectedIndex="{Binding LeaderboardId}"  x:DataType="formats:FpnSave" SelectionChanged="ScoreGrid_SelectionChanged">
+                            <Grid RowDefinitions="30,40,*,Auto" ColumnDefinitions="*,Auto" ColumnSpacing="5" Margin="10" DataContext="{Binding SaveData}" x:DataType="viewModels:MainWindowViewModel">
+                                <Label Grid.Column="0" Grid.ColumnSpan="2">Ranking data</Label>
+                                <ComboBox Grid.Column="0" Name="RankingCombobox" Grid.Row="1" SelectedIndex="{Binding LeaderboardId}"  x:DataType="formats:FpnSave" SelectionChanged="ScoreGrid_SelectionChanged">
                                     <ComboBoxItem>Original game</ComboBoxItem>
                                     <ComboBoxItem>Biology A</ComboBoxItem>
                                     <ComboBoxItem>Biology B</ComboBoxItem>
@@ -473,7 +473,8 @@
                                     <ComboBoxItem>Optics B (Time Attack)</ComboBoxItem>
                                     <ComboBoxItem>Geometry A (Time Attack)</ComboBoxItem>
                                 </ComboBox>
-                                <DataGrid Grid.Row="2" ItemsSource="{Binding Rank}" Margin="0,0,0,10" GridLinesVisibility="All"
+                                <Button Grid.Row="1" Grid.Column="1" Classes="Flat" Margin="0,3,0,2" Click="ExportRecordSst_Click">Export SST</Button>
+                                <DataGrid Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2" ItemsSource="{Binding Rank}" Margin="0,0,0,10" GridLinesVisibility="All"
                                           BorderThickness="1" BorderBrush="Gray" Name="RankGrid"
                                           CanUserResizeColumns="True" SelectionMode="Single"
                                           CanUserReorderColumns="True" DataContext="{Binding}"
@@ -481,12 +482,13 @@
                                           IsReadOnly="False">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Rank" x:DataType="types:Rank" Binding="{Binding Position}"></DataGridTextColumn>
-                                        <DataGridTextColumn Header="Initials" x:DataType="types:Rank" Binding="{Binding Initials}" IsReadOnly="False"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="Name" x:DataType="types:Rank" Binding="{Binding Name}" IsReadOnly="False"></DataGridTextColumn>
                                         <DataGridTextColumn Header="Score" x:DataType="types:Rank" Binding="{Binding Score}" IsReadOnly="False"></DataGridTextColumn>
                                         <DataGridTextColumn Header="Combos" x:DataType="types:Rank" Binding="{Binding Combos}" IsReadOnly="False"></DataGridTextColumn>
                                         <DataGridTextColumn Header="Difficulty" x:DataType="types:Rank" Binding="{Binding Difficulty}" IsReadOnly="False"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
+                                <TextBlock TextWrapping="Wrap" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"><Run Foreground="Red">WARNING</Run>: Editing ranking data will cause the scores to be considered as "hacked" when using the password system (<Run FontWeight="Bold">SELECT</Run> on the ranks menu).</TextBlock>
                             </Grid>
                         </sukiUi:SukiSideMenuItem.PageContent>
                     </sukiUi:SukiSideMenuItem>
