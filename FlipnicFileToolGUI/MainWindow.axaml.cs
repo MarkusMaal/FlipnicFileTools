@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -303,6 +304,23 @@ public sealed partial class MainWindow : SukiWindow
     {
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime al) return;
         CloseOthersMenuItem.IsVisible = al.Windows.Count > 1;
+        // update recents submenu (macOS only)
+        if (sender is not NativeMenu nm) return;
+        if (nm.Items.First(p => ((NativeMenuItem)p).Header == "Recent") is not NativeMenuItem nmi) return;
+        nmi.IsVisible = Preferences.RecentFiles.Count > 0;
+        for (var idx = 0; idx < Preferences.RecentFiles.Count; idx++)
+        {
+            ((NativeMenuItem)nmi.Menu!.Items[idx]).Header = new FileInfo(Preferences.RecentFiles[idx]).Name;
+            if (((NativeMenuItem)nmi.Menu!.Items[idx]).IsVisible) continue;
+            ((NativeMenuItem)nmi.Menu!.Items[idx]).IsVisible = true;
+            var idx1 = idx;
+            ((NativeMenuItem)nmi.Menu!.Items[idx]).Click += (_, _) =>
+            {
+                FileName = Preferences.RecentFiles[idx1];
+                FileHelpers.LoadFromData(new FileStream(FileName, FileMode.Open, FileAccess.Read),
+                    FileName[^3..], this);
+            };
+        }
     }
 
     // Miscellaneous
@@ -331,25 +349,18 @@ public sealed partial class MainWindow : SukiWindow
 
     public void ReloadRecentMenu()
     {
-        if (!OperatingSystem.IsMacOS())
+        if (OperatingSystem.IsMacOS()) return;
+        RecentMenuItem.Items.Clear();
+        if (Preferences.RecentFiles.Count <= 0) return;
+        RecentMenuItem.IsVisible = true;
+        Preferences.RecentFiles.ForEach(p => RecentMenuItem.Items.Add(new FileInfo(p).Name));
+        RecentMenuItem.Click += (sender, e) =>
         {
-            RecentMenuItem.Items.Clear();
-            if (Preferences.RecentFiles.Count > 0)
-            {
-                RecentMenuItem.IsVisible = true;
-                Preferences.RecentFiles.ForEach(p => RecentMenuItem.Items.Add(new FileInfo(p).Name));
-                RecentMenuItem.Click += (sender, e) =>
-                {
-                    if (sender is not MenuItem mi2 || RecentMenuItem.SelectedIndex == -1) return;
-                    var cF = Preferences.RecentFiles[RecentMenuItem.SelectedIndex];
-                    FileName = cF;
-                    FileHelpers.LoadFromData(new FileStream(FileName, FileMode.Open, FileAccess.Read), FileName[^3..], this);
-                };
-            }
-        } else
-        {
-            // TODO
-        }
+            if (sender is not MenuItem mi2 || RecentMenuItem.SelectedIndex == -1) return;
+            var cF = Preferences.RecentFiles[RecentMenuItem.SelectedIndex];
+            FileName = cF;
+            FileHelpers.LoadFromData(new FileStream(FileName, FileMode.Open, FileAccess.Read), FileName[^3..], this);
+        };
     }
 
 

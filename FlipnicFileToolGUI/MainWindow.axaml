@@ -31,7 +31,16 @@
                 <NativeMenu Opening="NativeFileMenuOpening">                    
                     <NativeMenuItem Header="Open" Gesture="Meta+O" Click="OpenNativeMenuItem_OnClick"/>
                     <NativeMenuItem IsVisible="{Binding CanOpenImhex}" Header="Open in ImHex" Click="OpenImHexNativeMenuItemClick"></NativeMenuItem>
-                    <NativeMenuItem IsVisible="False" Header="Recent"></NativeMenuItem>
+                    <NativeMenuItem Header="Recent">
+                        <!-- it doesn't really matter what the header for these menu items is, what matters is the number of them is equal to the max number of recents -->
+                        <NativeMenu>
+                            <NativeMenuItem Header="1" IsVisible="False"></NativeMenuItem>
+                            <NativeMenuItem Header="2" IsVisible="False"></NativeMenuItem>
+                            <NativeMenuItem Header="3" IsVisible="False"></NativeMenuItem>
+                            <NativeMenuItem Header="4" IsVisible="False"></NativeMenuItem>
+                            <NativeMenuItem Header="5" IsVisible="False"></NativeMenuItem>
+                        </NativeMenu>
+                    </NativeMenuItem>
                     <NativeMenuItemSeparator />
                     <NativeMenuItem IsVisible="{Binding MultipleWindowsOpen}" Header="Close all other windows" Gesture="Meta+Alt+W" Click="CloseOthersNativeMenuItem_OnClick"></NativeMenuItem>
                     <NativeMenuItem Header="Close" Gesture="Meta+W" Click="CloseNativeMenuItem_Click" />
