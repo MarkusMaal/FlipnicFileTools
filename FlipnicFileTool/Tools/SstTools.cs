@@ -12,28 +12,33 @@ public class SstTools
         switch (cfg.Mode)
         {
             case Enums.Modes.ListResources:
-                Console.Write(new FpnSst(File.OpenRead(cfg.FileName)).GenerateMagicNumbers());
+                Console.Write(OpenSst(cfg).GenerateMagicNumbers());
                 break;
             case Enums.Modes.ShowSstToc:
-                Console.Write(new FpnSst(File.OpenRead(cfg.FileName)).ListEntries());
+                Console.Write(OpenSst(cfg).ListEntries());
                 break;
             case Enums.Modes.ShowPseudoCode:
-                Console.Write(new FpnSst(File.OpenRead(cfg.FileName)).GeneratePseudoCode());
+                Console.Write(OpenSst(cfg).GeneratePseudoCode());
                 break;
             case Enums.Modes.ShowGimmick:
-                new FpnSst(File.OpenRead(cfg.FileName)).ShowGimmick(cfg.SecondaryFileName);
+                OpenSst(cfg).ShowGimmick(cfg.SecondaryFileName);
                 break;
             case Enums.Modes.ShowCameras:
-                Console.Write(new FpnSst(File.OpenRead(cfg.FileName)).GetCamData(StaticUtils.SimpleOutput));
+                Console.Write(OpenSst(cfg).GetCamData(StaticUtils.SimpleOutput));
                 break;
             case Enums.Modes.SstResize:
                 ResizeToc(File.Open(cfg.FileName, FileMode.Open, FileAccess.ReadWrite), cfg.VFile, cfg.Count);
                 break;
             case Enums.Modes.ShowSstMissions:
-                Console.Write(new FpnSst(File.OpenRead(cfg.FileName)).GetEvtInf());
+                Console.Write(OpenSst(cfg).GetEvtInf());
+                break;
+            case Enums.Modes.ShowSstRespawns:
+                Console.Write(OpenSst(cfg).GetRespawns());
                 break;
         }
     }
+
+    private static FpnSst OpenSst(Config cfg) => new(File.OpenRead(cfg.FileName));
 
     private void ResizeToc(Stream stream, string label, int newSize)
     {

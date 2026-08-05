@@ -83,6 +83,30 @@ public class FpnSst : FormatBase
         return (StaticUtils.SimpleOutput ? "" : "Missions:\n") + StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput) + (!useJaMsg ? "Note: Using placeholders for mission names, please import JA.MSG and reload to display actual names!\n" : "");
     }
 
+    public string GetRespawns()
+    {
+        if (!TableOfContents.TryGetValue("REBIRTH", out _)) return "";
+        string[] colHeaders = ["ID", "Area code", "Gimmick"];
+        List<string[]> rows = [];
+        var rebirthEntry = TableOfContents["REBIRTH"];
+        var allGimmicks = GetGimmicks();
+        for (var i = 0; i < rebirthEntry.Count; i++)
+        {
+            var absOffset = rebirthEntry.Offset + i * rebirthEntry.EntrySize;
+            var fullEntry = _data.Skip(absOffset).Take(rebirthEntry.EntrySize).ToArray();
+            var id = BitConverter.ToUInt16(fullEntry.Take(2).ToArray());
+            var areaId = BitConverter.ToUInt16(fullEntry.Skip(2).Take(2).ToArray());
+            var gimmickId = BitConverter.ToUInt16(fullEntry.Skip(4).Take(2).ToArray());
+            var areaStr = GetStringById("KUIDX", areaId);
+            var gimmick = allGimmicks[areaStr.Replace("KU_", "GMK")][gimmickId];
+            var gimmickName = gimmick.Label;
+            var gimmickType = gimmick.Type.ToString();
+            rows.Add([$"0x{id:X2}", areaStr, $"{gimmickName} ({gimmickType})"]);
+        }
+        return (StaticUtils.SimpleOutput ? "" : "Respawns:\n") +
+               StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput);
+    }
+
     /// <summary>
     /// Get a resource name from the ID specified
     /// </summary>

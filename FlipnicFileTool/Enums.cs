@@ -73,7 +73,8 @@ public abstract class Enums
         GenerateAnimation,
         Playground,
         ShowSstMissions,
-        ExportLp4Json
+        ExportLp4Json,
+        ShowSstRespawns
     }
     
     /// <summary>
@@ -173,6 +174,7 @@ public abstract class Enums
             "--show-ftl" => Modes.ShowFtl,
             "--show-elf" => Modes.ShowElf,
             "--show-dummy" => Modes.ShowDummy,
+            "--show-sst-respawns" => Modes.ShowSstRespawns,
             "--export-box-obj" => Modes.ExportBbox,
             "--generate-pss" => Modes.GeneratePss,
             "--ipu-duct-tape" => Modes.IpuFix,

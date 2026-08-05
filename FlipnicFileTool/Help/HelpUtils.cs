@@ -297,6 +297,8 @@ public abstract class HelpUtils
                     new HelpLine("show-sst-toc*", "Display table of contents of the SST file", ["input"], "*.SST", true),
                     new HelpLine("show-sst-missions", "Allows you to display missions stored inside a FNECMN.SST file",
                         ["input"], "*.SST", true),
+                    new HelpLine("show-sst-respawns", "Allows you to display respawn points stored inside a stage file",
+                        ["input"], "*.SST", true),
                     new HelpLine("show-cameras", "Display camera metadata stored inside the SST file", ["input"],
                         "*.SST", true),
                     new HelpLine("show-gimmick [name]", "Display a gimmick (name from TOC)", ["input"], "*.SST,[*]", true),

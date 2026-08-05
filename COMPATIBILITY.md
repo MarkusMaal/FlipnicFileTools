@@ -167,7 +167,9 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 - [X] Area codes (KUIDX)
   - [X] Decode
   - [ ] Modify
-- [ ] Respawn metadata (REBIRTH)
+- [X] Respawn metadata (REBIRTH)
+  - [X] Decode
+  - [ ] Modify
 - [ ] SGKTBL
 - [ ] SGKIDX
 - [ ] SETBL
