@@ -170,7 +170,9 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 - [X] Respawn metadata (REBIRTH)
   - [X] Decode
   - [ ] Modify
-- [ ] SGKTBL
+- [X] SGKTBL
+  - [X] Decode
+  - [ ] Modify
 - [ ] SGKIDX
 - [ ] SETBL
 - [ ] MTTBL

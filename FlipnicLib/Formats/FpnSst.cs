@@ -96,6 +96,26 @@ public class FpnSst : FormatBase
                 
                 """;
     }
+
+    public string GetControllableObjects()
+    {
+        if (!TableOfContents.TryGetValue("SGKTBL", out _)) return "";
+        string[] colHeaders = ["Area code", "Gimmick"];
+        List<string[]> rows = [];
+        var ballSavingEntry = TableOfContents["SGKTBL"];
+        var allGimmicks = GetGimmicks();
+        for (var i = 0; i < ballSavingEntry.Count; i++)
+        {
+            var absOffset = ballSavingEntry.Offset + i * ballSavingEntry.EntrySize;
+            var fullEntry = _data.Skip(absOffset).Take(ballSavingEntry.EntrySize).ToArray();
+            var areaName = GetStringById("KUIDX", GetUInt16(fullEntry, 0));
+            var gimmick = allGimmicks[areaName.Replace("KU_", "GMK")][GetInt16(fullEntry, 2)];
+            rows.Add([areaName,
+                      $"{gimmick.Label} ({gimmick.Type})"]);
+        }
+        return (StaticUtils.SimpleOutput ? "" : "Pinball devices:\n") +
+               StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput);
+    }
     
     public string GetRespawns()
     {

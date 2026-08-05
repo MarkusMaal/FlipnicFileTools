@@ -38,6 +38,9 @@ public class SstTools
             case Enums.Modes.ShowDrawDistance:
                 Console.Write(OpenSst(cfg).GetDrawDistance());
                 break;
+            case Enums.Modes.ShowControllableGimmicks:
+                Console.Write(OpenSst(cfg).GetControllableObjects());
+                break;
         }
     }
 

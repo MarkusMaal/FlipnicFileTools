@@ -75,7 +75,8 @@ public abstract class Enums
         ShowSstMissions,
         ExportLp4Json,
         ShowSstRespawns,
-        ShowDrawDistance
+        ShowDrawDistance,
+        ShowControllableGimmicks
     }
     
     /// <summary>
@@ -133,6 +134,7 @@ public abstract class Enums
             "--show-sst-missions" => Modes.ShowSstMissions,
             "--show-messages" => Modes.ShowMessages,
             "--show-draw-distance" => Modes.ShowDrawDistance,
+            "--show-controllable-objects" => Modes.ShowControllableGimmicks,
             "--list-pss-streams" => Modes.ListPssStreams,
             "--extract-pss-streams" => Modes.ExtractPssStreams,
             "--list-files" => Modes.ListBin,
