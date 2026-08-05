@@ -83,6 +83,20 @@ public class FpnSst : FormatBase
         return (StaticUtils.SimpleOutput ? "" : "Missions:\n") + StaticUtils.GenerateTable(colHeaders, rows, StaticUtils.SimpleOutput) + (!useJaMsg ? "Note: Using placeholders for mission names, please import JA.MSG and reload to display actual names!\n" : "");
     }
 
+    public string GetDrawDistance()
+    {
+        if (!TableOfContents.TryGetValue("DRAWD", out _)) return "";
+        var drawdEntry = TableOfContents["DRAWD"];
+        var allData = _data.Skip(drawdEntry.Offset).Take(8).ToArray();
+        var drawDistance = GetFloat(allData, 0);
+        var isMirror = allData[4] != 0 ? "Yes" : "No";
+        return $"""
+                Draw distance: {drawDistance}
+                Mirror stage: {isMirror}
+                
+                """;
+    }
+    
     public string GetRespawns()
     {
         if (!TableOfContents.TryGetValue("REBIRTH", out _)) return "";

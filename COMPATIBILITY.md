@@ -176,7 +176,9 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 - [ ] MTTBL
 - [ ] PTTBL
 - [ ] MTTBLDEF
-- [ ] Draw distance and stage mirror (DRAWD)
+- [X] Draw distance and stage mirror (DRAWD)
+  - [X] Decode
+  - [ ] Modify
 - [ ] EVTBL
 - [ ] EVTIDX
 - [X] Event system (EVENT)

@@ -301,6 +301,8 @@ public abstract class HelpUtils
                         ["input"], "*.SST", true),
                     new HelpLine("show-cameras", "Display camera metadata stored inside the SST file", ["input"],
                         "*.SST", true),
+                    new HelpLine("show-draw-distance", "Allows you to display the draw distance and mirror attribute for the stage",
+                        ["input"], "*.SST", true),
                     new HelpLine("show-gimmick [name]", "Display a gimmick (name from TOC)", ["input"], "*.SST,[*]", true),
                     new HelpLine("get-pseudo-code",
                         "Transform stage event into something that's somewhat human-readable", ["input"], "*.SST", true),

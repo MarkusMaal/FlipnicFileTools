@@ -35,6 +35,9 @@ public class SstTools
             case Enums.Modes.ShowSstRespawns:
                 Console.Write(OpenSst(cfg).GetRespawns());
                 break;
+            case Enums.Modes.ShowDrawDistance:
+                Console.Write(OpenSst(cfg).GetDrawDistance());
+                break;
         }
     }
 

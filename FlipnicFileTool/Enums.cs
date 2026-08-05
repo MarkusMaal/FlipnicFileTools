@@ -74,7 +74,8 @@ public abstract class Enums
         Playground,
         ShowSstMissions,
         ExportLp4Json,
-        ShowSstRespawns
+        ShowSstRespawns,
+        ShowDrawDistance
     }
     
     /// <summary>
@@ -131,6 +132,7 @@ public abstract class Enums
             "--show-sst-toc" => Modes.ShowSstToc,
             "--show-sst-missions" => Modes.ShowSstMissions,
             "--show-messages" => Modes.ShowMessages,
+            "--show-draw-distance" => Modes.ShowDrawDistance,
             "--list-pss-streams" => Modes.ListPssStreams,
             "--extract-pss-streams" => Modes.ExtractPssStreams,
             "--list-files" => Modes.ListBin,
