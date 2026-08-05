@@ -51,7 +51,7 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 - [ ] Flags: High priority
 - [ ] Breath waves
 - [ ] Velocity chunk
-- [ ] Embedded sequence (required for sound effects conversion)
+- [X] Embedded sequence (required for sound effects conversion)
 - [X] Convert to SF2 (no sustain rate)
 
 ## Voicebank body (.BD)
@@ -84,11 +84,10 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 
 ## 3D models (.LP4)
 
-- [ ] Timelines
+- [X] Timelines
 - [X] Bounding box
-- [ ] Lightmaps
-- [ ] Hitbox
-- [ ] Sprite animation
+- [X] Lightmaps
+- [X] Hitbox
 - [X] Labels
 - [X] Decompression
 - [X] Vertex decoding
@@ -181,10 +180,10 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
   - [ ] Modify
 - [ ] Zero gravity stick-figure particles (FLIESFPB)
 - [ ] Stage info (STGINF)
-- [ ] Default missions data (EVTINF)
+- [X] Default missions data (EVTINF)
 - [X] Default ranks (RECORD)
   - [X] Decode
-  - [ ] Modify
+  - [X] Modify
 
 ## Texture files (.TM2)
 
