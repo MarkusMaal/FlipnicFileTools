@@ -93,10 +93,12 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 - [X] Vertex decoding
 - [X] UVs
 - [X] Normals
-- [X] Embedded materials
+- [ ] Embedded materials
 - [X] Textured materials
 - [X] Joints
 - [ ] Model animation
+- [ ] Skews
+- [ ] Combine multiple layouts
 - [X] Wavefront OBJ generation
 
 ## Music sequences (.MID)
