@@ -22,7 +22,7 @@ namespace FlipnicFileToolGUI;
 
 public class App : Application
 {
-    private static readonly SukiColorTheme AppTheme = new("AppTheme", Colors.DarkMagenta, Colors.DeepPink);
+    private static readonly SukiColorTheme AppTheme = new("AppTheme", Colors.RoyalBlue, Colors.DeepPink);
     private static readonly SukiColorTheme SecTheme = new("Secondary theme", Colors.MidnightBlue, Colors.Purple);
     private static bool _firstLaunch = true;
     public override void Initialize()

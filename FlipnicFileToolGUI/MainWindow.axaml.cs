@@ -14,6 +14,7 @@ using Avalonia.Platform.Storage;
 using FlipnicFileToolGUI.Controls;
 using FlipnicFileToolGUI.Handlers;
 using FlipnicFileToolGUI.Helpers;
+using FlipnicFileToolGUI.Shaders;
 using FlipnicFileToolGUI.ViewModels;
 using FlipnicLib;
 using SukiUI;
@@ -46,6 +47,7 @@ public sealed partial class MainWindow : SukiWindow
     // Constructor
     public MainWindow()
     {
+        BackgroundShaderCode = SukiUiShader.Background;
         InitializeComponent();
         if (((IClassicDesktopStyleApplicationLifetime?)Application.Current?.ApplicationLifetime)?.Windows.Count == 0)
         {
