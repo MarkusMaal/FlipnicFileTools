@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
 using Avalonia.Threading;
 using FlipnicLib;
 using FlipnicLib.Formats.Vag;
@@ -194,6 +195,9 @@ public abstract class ExtractUtils
                         });
                         SaveFile(vf, outputDir + vf.Path.Replace("\\", "/"), mw);
                     }
+
+                    StaticUtils.LiveLoadStatus = "";
+                    Dispatcher.UIThread.Post(() => mw.ShowDialog("Flipnic file tools", "Files extracted successfully", NotificationType.Success));
                 }
                 Dispatcher.UIThread.Post(() =>
                 {

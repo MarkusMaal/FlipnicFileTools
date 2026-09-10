@@ -5,7 +5,7 @@ namespace FlipnicLib;
 public abstract class RepackUtils
 {
     /// <summary>
-    /// Replace a file in VFS without changing the TOC. Labelled unsafe, because no checks for file size are performed
+    /// Replace a file in VFS without changing the TOC. Labeled unsafe, because no checks for file size are performed
     /// </summary>
     /// <param name="offset">Offset of the file (found in TOC)</param>
     /// <param name="sourceStream">Replacement file stream</param>
