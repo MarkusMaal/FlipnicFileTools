@@ -341,9 +341,10 @@ public class BinFile : FormatBase
     /// </summary>
     /// <param name="source">The input .BIN file stream</param>
     /// <param name="destination">Full path to the folder to extract the files to</param>
-    public void ExtractBin(Stream source, string destination)
+    /// <param name="overwrite">Whether or not to ask for confirmation when the destination directory already exists</param>
+    public void ExtractBin(Stream source, string destination, bool overwrite = false)
     {
-        if (Directory.Exists(destination))
+        if (!overwrite &&Directory.Exists(destination))
         {
             Console.Write("Specified folder already exists. Overwrite? [Y/N] ");
             var result = Console.ReadKey().Key;
@@ -351,7 +352,7 @@ public class BinFile : FormatBase
             if (result is ConsoleKey.Y or ConsoleKey.N) Console.Write("\n");
             if (result == ConsoleKey.N) return;
         }
-        else
+        if (!Directory.Exists(destination))
         {
             Directory.CreateDirectory(destination);
         }

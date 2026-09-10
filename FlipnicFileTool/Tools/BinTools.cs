@@ -30,6 +30,7 @@ public class BinTools
             case Enums.Modes.GenerateBin:
                 try
                 {
+                    if (File.Exists(cfg.Output)) File.Delete(cfg.Output);
                     BinFile.GenerateBin(cfg.FileName, File.OpenWrite(cfg.Output));
                     StaticUtils.DecodeColors($"~-ASuccess\a~--\a: File saved as \"{cfg.Output}\"");
                     Console.WriteLine();

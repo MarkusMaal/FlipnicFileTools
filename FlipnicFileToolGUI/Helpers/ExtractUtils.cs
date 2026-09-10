@@ -150,6 +150,8 @@ public abstract class ExtractUtils
             var outputDir = await FileHelpers.SelectFolder(mw);
             if (outputDir is null) return;
             mw.LoadProgress.IsIndeterminate = false;
+            var backup = mw.FileTypeLabel.Content;
+            mw.FileTypeLabel.Content = "Please wait...";
             MainWindow.ProgressMax = 1;
             new Thread(() =>
             {
@@ -179,29 +181,16 @@ public abstract class ExtractUtils
                 }
                 else
                 {
-                    foreach (var vf in mw.Fs!.FsEntries)
-                    {
-                        if (vf.Path[1..].Contains('\\') && !Directory.Exists(outputDir + vf.Path.Split('\\')[1]))
-                        {
-                            Directory.CreateDirectory(outputDir + vf.Path.Split('\\')[1]);
-                        }
-
-                        if (vf.Path.EndsWith('\\')) continue;
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            StaticUtils.LiveLoadStatus = $"Extracting {vf.Path} ({StaticUtils.GetFilesizeString(vf.Length)})";
-                            MainWindow.Progress = 0;
-                            MainWindow.ProgressMax = 1;
-                        });
-                        SaveFile(vf, outputDir + vf.Path.Replace("\\", "/"), mw);
-                    }
-
+                    var iS = File.OpenRead(mw.FileName);
+                    new BinFile().ExtractBin(iS, outputDir, true);
+                    iS.Close();
                     StaticUtils.LiveLoadStatus = "";
                     Dispatcher.UIThread.Post(() => mw.ShowDialog("Flipnic file tools", "Files extracted successfully", NotificationType.Success));
                 }
                 Dispatcher.UIThread.Post(() =>
                 {
                     mw.LoadProgress.IsIndeterminate = true;
+                    mw.FileTypeLabel.Content = backup;
                     MainWindow.ProgressMax = 0;
                     MainWindow.Progress = 0;
                 });
