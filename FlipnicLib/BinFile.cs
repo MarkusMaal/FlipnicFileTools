@@ -471,11 +471,12 @@ public class BinFile : FormatBase
         var metaFile = File.OpenText(Path.Join(source, "metadata.json"));
         var metaJson = metaFile.ReadToEnd();
         var meta = JsonSerializer.Deserialize(metaJson, DirInfoGenerationContext.Default.DirInfo);
-
+        if (meta == null) return;
         var tocEnd = 0x80 + (uint)meta.Entries.Length * 0x40; // subdirectories and delimiters
         tocEnd = meta.Entries.Aggregate(tocEnd, (current, lb) => current + 0x40 * (uint)lb.LargeBuffers.Length); // large buffer hacks
-        var allFiles = Directory.EnumerateFiles(source, "*.*", SearchOption.TopDirectoryOnly);
-        tocEnd += allFiles.Where(f => f != "metadata.json").Aggregate(tocEnd, (current, f) => current + 0x40); // top level files
+        var allFilesEnumerable = Directory.EnumerateFiles(source, "*.*", SearchOption.TopDirectoryOnly);
+        var allFilesArray = allFilesEnumerable as string[] ?? [.. allFilesEnumerable];
+        tocEnd += allFilesArray.Where(f => f != "metadata.json").Aggregate(tocEnd, (current, f) => current + 0x40); // top level files
 
         while (tocEnd % 0x800 != 0)
         {
@@ -491,6 +492,8 @@ public class BinFile : FormatBase
 
         var tocOffset = 0x40;
         var fileOffset = tocEnd;
+        var watchout = "";
+        if (destination is FileStream ffs) watchout = ffs.Name; // so that we don't write the BIN file we are currently writing inside the BIN file we are writing (l o g i c)
         // write subdirectories
         foreach (var entry in meta?.Entries ?? [])
         {
@@ -501,11 +504,7 @@ public class BinFile : FormatBase
             }.GetBytes());
             tocOffset += 0x40;
             destination.Position = fileOffset;
-            if (destination.Position % 0x800 != 0)
-            {
-                _ = "";
-            }
-            var genDir = GenerateFolder(Path.Join(source, entry.Directory.Replace("\\", "")), entry.LargeBuffers);
+            var genDir = GenerateFolder(Path.Join(source, entry.Directory.Replace("\\", "")), entry.LargeBuffers, watchout);
             StaticUtils.LiveLoadStatus = $"Packing {entry.Directory}";
             destination.Write(genDir);
             fileOffset += (uint)genDir.Length;
@@ -529,8 +528,9 @@ public class BinFile : FormatBase
         }
         
         // write top level files
-        foreach (var fullFile in allFiles)
+        foreach (var fullFile in allFilesArray)
         {
+            if (fullFile == watchout) continue;
             var file = new FileInfo(fullFile).Name;
             if (file == "metadata.json") continue;
             destination.Position = tocOffset;
@@ -581,7 +581,7 @@ public class BinFile : FormatBase
         inFile.Close();
     }
 
-    private static byte[] GenerateFolder(string source, string[] exclusions)
+    private static byte[] GenerateFolder(string source, string[] exclusions, string watchout)
     {
         var ms = new MemoryStream();
         uint tocOffset = 0;
@@ -590,6 +590,7 @@ public class BinFile : FormatBase
         var parent = new DirectoryInfo(source).Name;
         foreach (var fullPath in Directory.EnumerateFiles(source))
         {
+            if (fullPath == watchout) continue;
             var f = new FileInfo(fullPath).Name;
             var skip = false;
             foreach (var excl in exclusions)

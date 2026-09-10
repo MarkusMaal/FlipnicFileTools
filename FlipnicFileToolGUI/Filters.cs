@@ -144,6 +144,13 @@ public abstract class Filters
         AppleUniformTypeIdentifiers = ["public.json"]
     };
 
+    public static FilePickerFileType MetaDataJsonFile { get; } = new("Metadata file (metadata.json)")
+    {
+        Patterns = ["metadata.json"],
+        MimeTypes = ["application/json"],
+        AppleUniformTypeIdentifiers = ["public.json"]
+    };
+
     public static FilePickerFileType CsvFile { get; } = new("Comma Separated Values (.CSV)")
     {
         Patterns = ["*.CSV"],

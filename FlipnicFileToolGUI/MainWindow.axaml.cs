@@ -273,6 +273,11 @@ public sealed partial class MainWindow : SukiWindow
 
     internal void AltNormalMethod_Click(object? sender, RoutedEventArgs? e) => MenuHandlers.AltNormalMethodToggle(this, sender); // Normal vectors decoding method
     
+
+    private void GenerateBin_OnClick(object? sender, RoutedEventArgs e) => MenuHandlers.GenerateBin(this); // Generate bin file
+
+    private void GenerateBinNative_OnClick(object? sender, EventArgs e) => MenuHandlers.GenerateBin(this); // Generate bin file (native)
+    
     // Menus -> Info
 
     private void DocsMenu1_OnClick(object? sender, RoutedEventArgs? e) => MenuHandlers.OpenUrl("https://github.com/MarkusMaal/FlipnicFileTools/blob/master/GUIREADME.md", this); // Tutorial

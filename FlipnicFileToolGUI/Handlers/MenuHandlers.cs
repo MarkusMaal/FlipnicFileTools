@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -9,6 +10,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Notifications;
+using Avalonia.Threading;
 using FlipnicFileToolGUI.Helpers;
 using FlipnicLib;
 using SukiUI;
@@ -247,6 +249,46 @@ public abstract class MenuHandlers
                 window.Close();
                 break;
             }
+        }
+    }
+
+    public static async void GenerateBin(MainWindow mw)
+    {
+        try
+        {
+            var file = await FileHelpers.OpenFile(mw, 
+                [
+                    Filters.MetaDataJsonFile,
+                ], "Open metadata file");
+            if (file == null) return;
+            var fI = new FileInfo(file);
+            
+            var destinationFile = await FileHelpers.SaveFile(mw, 
+            [
+                Filters.BinFile,
+            ], "Destination BIN file");
+
+            if (destinationFile == null) return;
+
+            var backup = mw.FileTypeLabel.Content;
+            mw.FileTypeLabel.Content = "Please wait...";
+            new Thread(() =>
+            {
+                StaticUtils.LiveLoadStatus = "Generating BIN file";
+                BinFile.GenerateBin(fI.Directory?.FullName!, File.OpenWrite(destinationFile));
+                StaticUtils.LiveLoadStatus = "";
+                Dispatcher.UIThread.Post(() =>
+                {
+                    mw.FileTypeLabel.Content = backup;
+                    mw.ShowDialog("Flipnic file tools", "BIN file generated successfully",
+                        NotificationType.Success);
+                });
+            }).Start();
+            
+        }
+        catch (Exception e)
+        {
+            StaticUtils.LiveLoadStatus = "!!!" + e.Message;
         }
     }
 }

@@ -51,6 +51,7 @@
                     <NativeMenuItem Header="Toggle dark theme" Click="ToggleDarkNative" />
                     <NativeMenuItem Header="Normal vectors decoding: Method A" Click="AltNormalMethod_NativeClick" />
                     <NativeMenuItemSeparator/>
+                    <NativeMenuItem Header="Generate BIN file" Click="GenerateBinNative_OnClick"></NativeMenuItem>
                     <NativeMenuItem Header="Import JA.MSG" Click="OpenNativeMenuItem_OnClick"></NativeMenuItem>
                 </NativeMenu>
             </NativeMenuItem>
@@ -79,7 +80,8 @@
             <MenuItem Header="Toggle dark theme" Click="PalMenuItem_OnClick"></MenuItem>
             <MenuItem Header="Normal vectors decoding: Method A" Click="AltNormalMethod_Click"></MenuItem>
             <Separator/>
-          <MenuItem Header="Import JA.MSG" Click="OpenMenuItem_OnClick"></MenuItem>
+            <MenuItem Header="Generate BIN file" Click="GenerateBin_OnClick"></MenuItem>
+            <MenuItem Header="Import JA.MSG" Click="OpenMenuItem_OnClick"></MenuItem>
         </MenuItem>
         <MenuItem Header="Info" Name="InfoMenu1">
             <MenuItem Name="DocsMenu1" Header="Tutorial" Click="DocsMenu1_OnClick"></MenuItem>
