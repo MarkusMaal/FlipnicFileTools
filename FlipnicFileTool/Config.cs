@@ -230,11 +230,11 @@ public class Config
     /// <returns>Exit code, if -1 then there were no errors found and execution can continue</returns>
     public int DetectAndDisplayErrors(string[] args)
     {
-        Enums.Modes[] exceptions = [Enums.Modes.ShowHelp, Enums.Modes.Playground];
+        Enums.Modes[] exceptions = [Enums.Modes.ShowHelp, Enums.Modes.Playground, Enums.Modes.GenerateBin];
         
         if (args.Length == 1 && !File.Exists(args[0]) && exceptions.All(p => p != Mode))
         {
-            StaticUtils.DecodeColors("~-CError~--: Input file does not exist!");
+            StaticUtils.DecodeColors("~-CError~--\a: Input file does not exist!");
             Console.WriteLine();
             return 2;
         }
@@ -250,7 +250,7 @@ public class Config
             if (result != "ok")
             {
                 StaticUtils.DecodeColors(
-                    $"~-CError~--: {result}");
+                    $"~-CError~--\a: {result}");
                 Console.WriteLine();
                 return 4;
             }
@@ -259,26 +259,27 @@ public class Config
         if (FileName == "" && exceptions.All(p => p != Mode))
         {
             StaticUtils.DecodeColors(
-                "~-CError~--: Must specify input filename in this case! To see command line usage, append the ~-F--help~-- flag.");
+                "~-CError~--\a: Must specify input filename in this case! To see command line usage, append the ~-F--help~-- flag.");
             Console.WriteLine();
             return 1;
         }
 
         if (!File.Exists(FileName) && exceptions.All(p => p != Mode))
         {
-            StaticUtils.DecodeColors("~-CError~--: Input file does not exist!");
+            StaticUtils.DecodeColors("~-CError~--\a: Input file does not exist!");
             Console.WriteLine();
             return 2;
         }
-        
+
+        if (Mode == Enums.Modes.GenerateBin) return -1;
         if (FileNameArr.Any(f => f == "" || !File.Exists(f)))
         {
-            StaticUtils.DecodeColors("~-4Error~--: One or more specified input files do not exist!");
+            StaticUtils.DecodeColors("~-4Error~--\a: One or more specified input files do not exist!");
             return 400;
         }
 
         if (exceptions.Any(p => p == Mode) || !new FileInfo(FileName).IsReadOnly || Output == "") return -1;
-        StaticUtils.DecodeColors("~-CError~--: Read-only file system");
+        StaticUtils.DecodeColors("~-CError~--\a: Read-only file system");
         Console.WriteLine();
         return 3;
 

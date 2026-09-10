@@ -26,16 +26,16 @@ internal static class Program
             switch (Cfg.Mode)
             {
                 case Enums.Modes.NotImplemented:
-                    StaticUtils.DecodeColors("~-CError~--: This file format cannot be parsed by this version of Flipnic File Tools. Support will be added in a future version.");
+                    StaticUtils.DecodeColors("~-CError~--\a: This file format cannot be parsed by this version of Flipnic File Tools. Support will be added in a future version.");
                     Console.WriteLine();
                     return 9;
                 case Enums.Modes.ConflictingModes:
-                    StaticUtils.DecodeColors("~-CError~--: Conflicting arguments detected. Please check syntax!");
+                    StaticUtils.DecodeColors("~-CError~--\a: Conflicting arguments detected. Please check syntax!");
                     Console.WriteLine();
                     return 4;
                 case Enums.Modes.NoAction:
                     StaticUtils.DecodeColors(
-                        "~-CError~--: Syntax is incorrect. To see command line usage, append the ~-F--help~-- flag.");
+                        "~-CError~--\a: Syntax is incorrect. To see command line usage, append the ~-F--help~-- flag.");
                     Console.WriteLine();
                     return 5;
                 case Enums.Modes.ShowIco:
@@ -71,6 +71,7 @@ internal static class Program
                 case Enums.Modes.ExtractPak:
                 case Enums.Modes.ListPak:
                 case Enums.Modes.ReplacePak:
+                case Enums.Modes.GenerateBin:
                     _ = new BinTools(Cfg);
                     break;
                 case Enums.Modes.ShowHd:

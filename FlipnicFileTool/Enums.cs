@@ -76,7 +76,8 @@ public abstract class Enums
         ExportLp4Json,
         ShowSstRespawns,
         ShowDrawDistance,
-        ShowControllableGimmicks
+        ShowControllableGimmicks,
+        GenerateBin
     }
     
     /// <summary>
@@ -189,6 +190,7 @@ public abstract class Enums
             "--generate-animation" => Modes.GenerateAnimation,
             "--playground" => Modes.Playground,
             "--export-lp4-json" => Modes.ExportLp4Json,
+            "--generate-bin" => Modes.GenerateBin,
             _ => mode
         };
         

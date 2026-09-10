@@ -27,6 +27,19 @@ public class BinTools
             case Enums.Modes.ReplacePak:
                 new BinFile().ListPak(File.Open(cfg.Output, FileMode.Open, FileAccess.ReadWrite), true, cfg.VFile, File.OpenRead(cfg.FileName));
                 break;
+            case Enums.Modes.GenerateBin:
+                try
+                {
+                    BinFile.GenerateBin(cfg.FileName, File.OpenWrite(cfg.Output));
+                    StaticUtils.DecodeColors($"~-ASuccess\a~--\a: File saved as \"{cfg.Output}\"");
+                    Console.WriteLine();
+                }
+                catch (FileNotFoundException ex)
+                {
+                    StaticUtils.DecodeColors($"~-CError~--\a: {ex.Message}");
+                    Console.WriteLine();
+                }
+                break;
         }
     }
 
@@ -101,7 +114,7 @@ public class BinTools
 
         if ((vfOffset == -1L) || (vfSize == -1L))
         {
-            StaticUtils.DecodeColors("~-CError~--: The specified virtual file was not found");
+            StaticUtils.DecodeColors("~-CError~--\a: The specified virtual file was not found");
             Console.WriteLine();
             return;
         }
@@ -136,7 +149,7 @@ public class BinTools
         }
         Console.Write("\rRepacking...".PadRight(Console.WindowWidth, ' '));
         RepackUtils.RepackFileUnsafe(vfOffset, File.OpenRead(filename), outFile, vfSize, largeBuffer ? 2048 : 1);
-        StaticUtils.DecodeColors("~-A\rSuccess~--: The file has been replaced!");
+        StaticUtils.DecodeColors("~-A\rSuccess\a~--: The file has been replaced!");
         Console.WriteLine();
     }
 }

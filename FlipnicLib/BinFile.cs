@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using FlipnicLib.Formats;
 using FlipnicLib.Types;
 
@@ -243,7 +244,7 @@ public class BinFile : FormatBase
             }
             catch (EndOfStreamException)
             {
-                StaticUtils.DecodeColors( "~-CError~--: End of stream reached while traversing table of contents!");
+                StaticUtils.DecodeColors( "~-CError~--\a: End of stream reached while traversing table of contents!");
                 Console.WriteLine();
                 return;
             }
@@ -266,7 +267,7 @@ public class BinFile : FormatBase
 
         if (walks == 32768)
         {
-            StaticUtils.DecodeColors( "~-CError~--: Cannot find the end pointer, the PAK file may be corrupt or incompatible!");
+            StaticUtils.DecodeColors( "~-CError~--\a: Cannot find the end pointer, the PAK file may be corrupt or incompatible!");
             Console.WriteLine();
             return;
         }
@@ -280,7 +281,7 @@ public class BinFile : FormatBase
 
         if (!source.CanWrite)
         {
-            StaticUtils.DecodeColors( "~-CError~--: Cannot write to this file");
+            StaticUtils.DecodeColors( "~-CError~--\a: Cannot write to this file");
             Console.WriteLine();
             return;
         }
@@ -297,7 +298,7 @@ public class BinFile : FormatBase
 
         if (idx == -1)
         {
-            StaticUtils.DecodeColors( $"~-CError~--: The specified virtual file ({replacementName}) does not exist!");
+            StaticUtils.DecodeColors( $"~-CError~--\a: The specified virtual file ({replacementName}) does not exist!");
             Console.WriteLine();
             return;
         }
@@ -366,7 +367,7 @@ public class BinFile : FormatBase
         
         // can't show the filename when we are writing to a memory stream
         if (source is not FileStream fStr) return;
-        StaticUtils.DecodeColors("~-ASuccess~--: Changes have been written to " + fStr.Name);
+        StaticUtils.DecodeColors("~-ASuccess\a~--: Changes have been written to " + fStr.Name);
         Console.WriteLine();
     }
     
@@ -390,6 +391,13 @@ public class BinFile : FormatBase
                 Console.Write("\n");
             }
         }
+        else
+        {
+            Directory.CreateDirectory(destination);
+        }
+        var infoFile = Path.Join(destination, "metadata.json");
+        var infoStream = File.CreateText(infoFile);
+        var infoData = new DirInfo();
 
         StaticUtils.LiveLoadStatus = "Interpreting TOC data...";
         var fsEntries = GetFsEntriesNew(source);
@@ -411,7 +419,11 @@ public class BinFile : FormatBase
                 var size = end - src.Position;
                 var outFile = Path.Combine(destination, fileNam[1..]);
                 StaticUtils.LiveLoadStatus = $"Extracting {fileNam} ({GetFilesizeString(size)})";
-                if (fileNam.EndsWith('/')) continue;
+                if (fileNam.EndsWith('/'))
+                {
+                    infoData.AppendEntry(fsEntry[0][1..]);
+                    continue;
+                }
                 if (size < 0) continue;
                 src.Position = Convert.ToInt64(fsEntry[1], 16);
                 var bufSize = (int)((size % 0x800 != 0) ? size : 0x800);
@@ -425,6 +437,10 @@ public class BinFile : FormatBase
                 }
 
                 using var fs = File.OpenWrite(Path.Combine(destination, fileNam[1..]));
+                if (fsEntry[4] == "Y" && fileNam[1..].Contains('/'))
+                {
+                    infoData.AppendLb(fsEntry[0][1..]);
+                } 
                 for (var j = 0; j < size; j += bufSize)
                 {
                     var buffer = new byte[bufSize];
@@ -436,9 +452,204 @@ public class BinFile : FormatBase
                 fs.Close();
             }
         }
+        
+        infoStream.Write(JsonSerializer.Serialize(infoData, DirInfoGenerationContext.Default.DirInfo));
+        infoStream.Close();
 
         StaticUtils.LiveLoadStatus = "";
         Console.WriteLine($"\r   Files have been extracted to: {destination}".PadRight(StaticUtils.WindowWidth));
 
+    }
+
+    public static void GenerateBin(string source, Stream destination)
+    {
+        if (!File.Exists(Path.Join(source, "metadata.json")))
+        {
+            throw new FileNotFoundException("\"metadata.json\" doesn't exist! If you extracted the BIN file with an older version of Flipnic File Tools, re-extract it with this version.");
+        }
+        StaticUtils.LiveLoadStatus = "Reading metadata.json...";
+        var metaFile = File.OpenText(Path.Join(source, "metadata.json"));
+        var metaJson = metaFile.ReadToEnd();
+        var meta = JsonSerializer.Deserialize(metaJson, DirInfoGenerationContext.Default.DirInfo);
+
+        var tocEnd = 0x80 + (uint)meta.Entries.Length * 0x40; // subdirectories and delimiters
+        tocEnd = meta.Entries.Aggregate(tocEnd, (current, lb) => current + 0x40 * (uint)lb.LargeBuffers.Length); // large buffer hacks
+        var allFiles = Directory.EnumerateFiles(source, "*.*", SearchOption.TopDirectoryOnly);
+        tocEnd += allFiles.Where(f => f != "metadata.json").Aggregate(tocEnd, (current, f) => current + 0x40); // top level files
+
+        while (tocEnd % 0x800 != 0)
+        {
+            tocEnd++;
+        }
+        
+        // identify end of TOC
+        destination.Write(new TocEntry
+        {
+            FileName = "*Top Of CD Data".ToCharArray(),
+            Offset = tocEnd / 0x800
+        }.GetBytes());
+
+        var tocOffset = 0x40;
+        var fileOffset = tocEnd;
+        
+        // write subdirectories
+        foreach (var entry in meta?.Entries ?? [])
+        {
+            destination.Write(new TocEntry
+            {
+                FileName = entry.Directory.ToCharArray(),
+                Offset = fileOffset / 0x800,
+            }.GetBytes());
+            tocOffset += 0x40;
+            destination.Position = fileOffset;
+            if (destination.Position % 0x800 != 0)
+            {
+                _ = "";
+            }
+            var genDir = GenerateFolder(Path.Join(source, entry.Directory.Replace("\\", "")), entry.LargeBuffers);
+            StaticUtils.LiveLoadStatus = $"Packing {entry.Directory}";
+            destination.Write(genDir);
+            genDir = [];
+            fileOffset += (uint)genDir.Length;
+            while (fileOffset % 0x800 != 0) fileOffset++;
+            destination.Position = tocOffset;
+            foreach (var lb in entry.LargeBuffers)
+            {
+                destination.Write(new TocEntry
+                {
+                    FileName = (entry.Directory + lb).ToCharArray(),
+                    Offset = fileOffset / 0x800
+                }.GetBytes());
+                tocOffset += 0x40;
+                destination.Position = fileOffset;
+                var aFile = new FileInfo(Path.Join(source, entry.Directory.Replace("\\", ""), lb));
+                ReadFileToStream(aFile.FullName, destination);
+                fileOffset += (uint)aFile.Length;
+                while (fileOffset % 0x800 != 0) fileOffset++;
+                destination.Position = tocOffset;
+            }
+        }
+        
+        // write top level files
+        foreach (var fullFile in allFiles)
+        {
+            var file = new FileInfo(fullFile).Name;
+            if (file == "metadata.json") continue;
+            destination.Position = tocOffset;
+            destination.Write(new TocEntry
+            {
+                FileName = file.ToCharArray(),
+                Offset = fileOffset / 0x800,
+            }.GetBytes());
+            tocOffset += 0x40;
+            destination.Position = fileOffset;
+            var aFile = new FileInfo(Path.Join(source, file));
+            ReadFileToStream(aFile.FullName, destination);
+            fileOffset += (uint)(aFile.Length);
+            while (fileOffset % 0x800 != 0) fileOffset++;
+        }
+        destination.Position = tocOffset;
+        
+        // write end offset
+        destination.Write(new TocEntry
+        {
+            FileName = "*End Of CD Data".ToCharArray(),
+            Offset = fileOffset / 0x800
+        }.GetBytes());
+        StaticUtils.LiveLoadStatus = "Padding";
+        while (destination.Length % 0x800 != 0)
+        {
+            destination.SetLength(destination.Length + 1);
+        }
+        destination.Close();
+        StaticUtils.LiveLoadStatus = "";
+    }
+
+    private static void ReadFileToStream(string fullName, Stream destination)
+    {
+        var file = new FileInfo(fullName).Name;
+        var inFile = File.OpenRead(fullName);
+        var buffer = new byte[0x800];
+        for (var i = 0; i < inFile.Length; i+=0x800)
+        {
+            StaticUtils.LiveLoadStatus = $"Packing {file}";
+            if (i + 0x800 > inFile.Length)
+            {
+                buffer = new byte[inFile.Length - i];
+            }
+            inFile.ReadExactly(buffer, 0, buffer.Length);
+            destination.Write(buffer);
+        }
+        inFile.Close();
+    }
+
+    private static byte[] GenerateFolder(string source, string[] exclusions)
+    {
+        var ms = new MemoryStream();
+        uint tocOffset = 0;
+        var tocLength = 0x40 * (uint)Directory.EnumerateFiles(source).ToArray().Length - (uint)(0x40 * exclusions.Length) + 0x40;
+        var offset = tocLength;
+        var parent = new DirectoryInfo(source).Name;
+        foreach (var fullPath in Directory.EnumerateFiles(source))
+        {
+            var f = new FileInfo(fullPath).Name;
+            var skip = false;
+            foreach (var excl in exclusions)
+            {
+                if (f == excl) skip = true;
+            }
+
+            if (skip) continue;
+            var fullSourceFile = new FileInfo(Path.Join(source, f));
+            ms.Write(new TocEntry
+            {
+                FileName = f.ToCharArray(),
+                Offset = offset
+            }.GetBytes());
+            tocOffset += 0x40;
+            ms.Position = offset;
+            var fs = File.OpenRead(fullSourceFile.FullName);
+            for (var i = 0; i < fs.Length; i++)
+            {
+                if (i % 0x1000 == 0) StaticUtils.LiveLoadStatus = $"Generating {parent}\\{f}";
+                ms.WriteByte((byte)fs.ReadByte());
+            }
+
+            fs.Close();
+            ms.Position = tocOffset;
+            offset += (uint)fullSourceFile.Length; 
+        }
+        ms.Write(new TocEntry
+        {
+            FileName = "*End Of Mem Data".ToCharArray(),
+            Offset = offset
+        }.GetBytes());
+        StaticUtils.LiveLoadStatus = $"Packing {parent}\\";
+        ms.Position = 0;
+        var outArray = ms.ToArray();
+        ms.Close();
+        return outArray;
+    }
+
+    private struct TocEntry
+    {
+        public char[] FileName { get; set; }
+        public uint Offset { get; set; }
+
+        public byte[] GetBytes()
+        {
+            var data = new byte[0x40];
+            foreach (var (i, c) in FileName.Index())
+            {
+                data[i] = (byte)c;
+            }
+
+            var offset = BitConverter.GetBytes(Offset);
+            data[0x3C] = offset[0];
+            data[0x3D] = offset[1];
+            data[0x3E] = offset[2];
+            data[0x3F] = offset[3];
+            return data;
+        }
     }
 }

@@ -26,7 +26,7 @@ public class CameraTools
                 var files = cfg.FileNameArr;
                 if (files.Count < 2)
                 {
-                    StaticUtils.DecodeColors("~-CError~--: You must specify at least 2 input files!");
+                    StaticUtils.DecodeColors("~-CError~--\a: You must specify at least 2 input files!");
                     break;
                 }
                 InterpolateFrames(files[0], files[1], cfg.Output, cfg.Count);
@@ -37,7 +37,7 @@ public class CameraTools
 
     private static void SuccessMsg(string output)
     {
-        StaticUtils.DecodeColors("~-ASuccess~--: File saved as " + output);
+        StaticUtils.DecodeColors("~-ASuccess\a~--\a: File saved as " + output);
         Console.WriteLine();
     }
 

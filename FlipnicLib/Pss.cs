@@ -388,7 +388,7 @@ public class Pss(string fileName) : FormatBase
         output.Write([255, 255, 255, 255]); // unknown value, writing 0xFFFFFFFF as a placeholder (will cause a soft-lock when reaching the end of the video)
         output.Close();
         Console.WriteLine();
-        StaticUtils.DecodeColors( $"~-ASuccess~--: File saved as {output.Name}");
+        StaticUtils.DecodeColors( $"~-ASuccess\a~--: File saved as {output.Name}");
         Console.WriteLine();
     }
     

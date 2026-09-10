@@ -41,7 +41,7 @@ public class ModelTools
         var os = File.CreateText(cfg.Output);
         os.Write(JsonSerializer.Serialize(lp4Test, Lp4TestGenerationContext.Default.Lp4));
         os.Close();
-        StaticUtils.DecodeColors($"~-ASuccess~--: File exported as {cfg.Output}");
+        StaticUtils.DecodeColors($"~-ASuccess\a~--: File exported as {cfg.Output}");
     }
 
     /// <summary>
@@ -67,12 +67,12 @@ public class ModelTools
             var objData = new FpnCol(input).GenerateObj(label);
             File.WriteAllText(output, objData);
 
-            StaticUtils.DecodeColors($"~-ASuccess~--: File exported as {output}");
+            StaticUtils.DecodeColors($"~-ASuccess\a~--: File exported as {output}");
             Console.WriteLine();
         }
         catch (Exception e) when (!Debugger.IsAttached)
         {
-            StaticUtils.DecodeColors($"~-CError~--: {e.Message}");
+            StaticUtils.DecodeColors($"~-CError~--\a: {e.Message}");
         }
     }
 

@@ -28,7 +28,7 @@ namespace FlipnicFileToolGUI.Textures
             }
             catch
             {
-                StaticUtils.DecodeColors("~-C\rError~--: Unable to load texture!\n");
+                StaticUtils.DecodeColors("~-C\rError~--\a: Unable to load texture!\n");
             }
 
             List<byte> pixels;

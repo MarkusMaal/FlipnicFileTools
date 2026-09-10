@@ -63,6 +63,9 @@ public abstract class HelpUtils
                     new HelpLine("replace-file [vfile]",
                         "Allows you to replace a single file inside a .BIN container (input = replacement file, output = BIN file, vfile = BIN file record name)",
                         ["input", "output"], "*,*.BIN,[*]", true),
+                    new HelpLine("generate-bin",
+                        "Allows you to create a BIN file from a folder (input = folder, output = BIN file)",
+                        ["input", "output"], "*/,*.BIN", true),
                 ]
             ),
             new HelpTopic(

@@ -160,13 +160,13 @@ public class Lp4Old(byte[] data, string fileName) : FormatBase
                     
                     if (animationJoints > 65536)
                     {
-                        StaticUtils.DecodeColors("~-CError~--: Animation joint count was too large, continuing would cause hangs! Parser was halted!\n");
+                        StaticUtils.DecodeColors("~-CError~--\a: Animation joint count was too large, continuing would cause hangs! Parser was halted!\n");
                         BruteForceMethod();
                         return;
                     }
                     if (keyframeCount > 65536)
                     {
-                        StaticUtils.DecodeColors("~-CError~--: Keyframe count was too large, continuing would cause hangs! Parser was halted!\n");
+                        StaticUtils.DecodeColors("~-CError~--\a: Keyframe count was too large, continuing would cause hangs! Parser was halted!\n");
                         BruteForceMethod();
                         return;
                     }
@@ -240,7 +240,7 @@ public class Lp4Old(byte[] data, string fileName) : FormatBase
                 var animIndices = GetInt32(data, i + 0x1C);
                 if (animIndices > 65536)
                 {
-                    StaticUtils.DecodeColors("~-CError~--: Animation indices count was too large, continuing would cause hangs! Parser was halted!\n");
+                    StaticUtils.DecodeColors("~-CError~--\a: Animation indices count was too large, continuing would cause hangs! Parser was halted!\n");
                     BruteForceMethod();
                     return;
                 }
@@ -292,7 +292,7 @@ public class Lp4Old(byte[] data, string fileName) : FormatBase
 
             if (SelectedModel?.RawVertices.Count != 0)
             {
-                StaticUtils.DecodeColors("~-ASuccess~--: Successfully decoded the LP4 file!");
+                StaticUtils.DecodeColors("~-ASuccess\a~--: Successfully decoded the LP4 file!");
                 Console.WriteLine();
                 return;
             }
@@ -398,7 +398,7 @@ public class Lp4Old(byte[] data, string fileName) : FormatBase
 
                 if (tm.RawVertices.Count > 0)
                 {
-                    StaticUtils.DecodeColors($"~-ASuccess~--: Detected valid model data at offset 0x{i:X}\n");
+                    StaticUtils.DecodeColors($"~-ASuccess\a~--: Detected valid model data at offset 0x{i:X}\n");
 
                     for (var j = 0x0; j < 0x500; j++)
                     {
@@ -424,7 +424,7 @@ public class Lp4Old(byte[] data, string fileName) : FormatBase
             }
             catch
             {
-                StaticUtils.DecodeColors($"~-CError~--: Attempt to read from offset 0x{i:X} threw an error\n");
+                StaticUtils.DecodeColors($"~-CError~--\a: Attempt to read from offset 0x{i:X} threw an error\n");
             }
         }
 
@@ -470,7 +470,7 @@ public class Lp4Old(byte[] data, string fileName) : FormatBase
         }
         catch (Exception ex) when (!Debugger.IsAttached)
         {
-            StaticUtils.DecodeColors($"~-CError~--: LP4.Read method exception — {ex.Message}\n");
+            StaticUtils.DecodeColors($"~-CError~--\a: LP4.Read method exception — {ex.Message}\n");
         }
     }
 

@@ -81,6 +81,7 @@ public abstract class Validator
                             case "*":
                                 continue;
                             case "*/" when !Directory.Exists(depArg):
+                                if (args.Contains("--extract-files")) continue;
                                 return $"Directory {depArg} does not exist";
                             case "*/":
                                 continue;

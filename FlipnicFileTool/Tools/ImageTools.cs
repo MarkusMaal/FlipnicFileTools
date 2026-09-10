@@ -99,12 +99,12 @@ public class ImageTools
         }
         catch (UnauthorizedAccessException)
         {
-            StaticUtils.DecodeColors("~-CError~--: Read-only file system");
+            StaticUtils.DecodeColors("~-CError~--\a: Read-only file system");
             Console.WriteLine();
             return;
         }
 
-        StaticUtils.DecodeColors($"~-ASuccess~--: File saved as {Output}");
+        StaticUtils.DecodeColors($"~-ASuccess\a~--: File saved as {Output}");
         Console.WriteLine();
         
     }
