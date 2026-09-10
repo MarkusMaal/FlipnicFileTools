@@ -6,6 +6,7 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 
 - [X] List file(s)
 - [X] Extract file(s)
+- [X] Generate file(s)
 - [X] Replace file(s)
 - [ ] Add file(s)
 - [ ] Remove file(s)

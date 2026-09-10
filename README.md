@@ -26,6 +26,7 @@ Jump to section:
 * [Command line syntax](#command-line-syntax)
 * [Disc images (*.ISO)](#disc-images-iso)
 * [Blob files (*.BIN)](#blob-files-bin)
+  * [Generation](#generation) 
 * [Movies (*.PSS)](#movies-pss)
     * [Creating custom FMVs from video files](#creating-custom-fmvs-from-video-files)
 * [Sound files (*.INT / *.SVAG)](#sound-files-int--svag)
@@ -121,6 +122,42 @@ Outputs:
 Extract files: `FlipnicFileTool --extract-files --input RES.BIN --output ./RES`
 
 Repack a file: `FlipnicFileTool --replace-file RETRO1\RETRO1.SST --input RETRO1.SST --output RES.BIN`  (CAUTION: this operation WILL overwrite existing data)
+
+### Generation
+
+Generating a BIN file from a folder: `FlipnicFileTool --generate-bin --input RES --output RES_GENERATED.BIN`
+
+For a successful generation, you need a metadata.json file, which is generated automatically when extracting a BIN file. Should you want to create one yourself, here's a base template:
+
+```json
+{
+  "Entries": []
+}
+```
+
+The purpose of this file is to tell the generator which subfolders to include and which files in those subfolders should be at the very end. This is required for FONT.BIN and RES.BIN generation.
+
+Each entry object has a Directory attribute and LargeBuffers attribute. Directory defines a subdirectory to include. LargeBuffers is a list of files that should be included at the end (large buffer area).
+
+Here's an example of an entry object:
+
+```json
+{
+    "Directory": "BOSS1\\",
+    "LargeBuffers": [
+      "BOSS_1.BD",
+      "LOAD_0.BD",
+      "SE_BOSS1.BD"
+    ]
+}
+```
+
+During the generation process you may see some warnings. Here's a short explanation of what they mean:
+
+* "Directory which is specified by metadata.json doesn't exist" - The previously explained metadata.json file contains a directory to include, but it doesn't actually exist. If this occurs, the generator moves on without adding that subdirectory.
+* "File which is specified by metadata.json doesn't exist" - Same as the other one, except it's for the LargeBuffers entry. Similar to the previous warning, if it occurs, that file gets skipped.
+* "File is over 512kiB, which may cause crashes" - A file that was added to large buffer area and appended at the end of a subdirectory is over 512kiB. Replace the file mentioned with a smaller one to avoid crash issues.
+* "File may have unwanted end padding" - This means that at the end of file there are a bunch of zeroes, which looks like padding. This can cause artifacting/glitches with fonts. Note that this warning may be a false positive, but it doesn't hurt to check.
 
 ## Movies (*.PSS)
 
