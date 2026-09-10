@@ -581,7 +581,7 @@ public class BinFile : FormatBase
             tocOffset += 0x40;
             ms.Position = offset;
             var fs = File.OpenRead(fullSourceFile.FullName);
-            if (fs.Length % 0x800 == 0)
+            if (fs.Length > 0x30 && fs.Length % 0x800 == 0)
             {
                 fs.Position = fs.Length - 0x31;
                 var testByte = 0;
