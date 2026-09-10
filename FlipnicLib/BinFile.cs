@@ -491,7 +491,6 @@ public class BinFile : FormatBase
 
         var tocOffset = 0x40;
         var fileOffset = tocEnd;
-        
         // write subdirectories
         foreach (var entry in meta?.Entries ?? [])
         {
@@ -509,7 +508,6 @@ public class BinFile : FormatBase
             var genDir = GenerateFolder(Path.Join(source, entry.Directory.Replace("\\", "")), entry.LargeBuffers);
             StaticUtils.LiveLoadStatus = $"Packing {entry.Directory}";
             destination.Write(genDir);
-            genDir = [];
             fileOffset += (uint)genDir.Length;
             while (fileOffset % 0x800 != 0) fileOffset++;
             destination.Position = tocOffset;
