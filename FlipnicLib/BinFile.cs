@@ -88,7 +88,7 @@ public class BinFile : FormatBase
         foreach (var (i, (entry, subEntries)) in tocEntries.Index().Skip(1))
         {
             var byteOffset = entry.Offset * 0x800;
-            long tOff = i * 0x40;
+            long tOff = (i-1) * 0x40;
             long size;
             if (!entry.FileName.StartsWith("*End Of CD Data"))
             {
@@ -102,7 +102,7 @@ public class BinFile : FormatBase
             foreach (var (j, subEntry) in subEntries.Index())
             {
                 byteOffset = entry.Offset * 0x800 + subEntry.Offset;
-                tOff = entry.Offset * 0x800 + i * 0x40;
+                tOff = entry.Offset * 0x800 + j * 0x40;
                 if (!subEntry.FileName.StartsWith("*End Of Mem Data"))
                 {
                     size = (subEntries.ToArray()[j + 1].Offset - subEntry.Offset);
@@ -111,7 +111,7 @@ public class BinFile : FormatBase
                 {
                     continue;
                 }
-                rows.Add([$@"\{new string(entry.FileName)}{new string(subEntry.FileName)}", $"0x{byteOffset:X}", $"{size}" , $"0x{tOff+64:X}", "N"]);
+                rows.Add([$@"\{new string(entry.FileName)}{new string(subEntry.FileName)}", $"0x{byteOffset:X}", $"{size}" , $"0x{tOff:X}", "N"]);
             }
         }
         

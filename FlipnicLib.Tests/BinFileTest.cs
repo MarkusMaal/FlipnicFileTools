@@ -92,27 +92,22 @@ public class BinFileTest
         Assert.AreEqual(8192, ls[2].Offset);
         Assert.AreEqual(0xC0, ls[2].TocOffset);
         
-        Assert.AreEqual(@"\*End Of CD Data", ls[3].Path);
-        Assert.IsTrue(ls[3].LargeBuffer);
-        Assert.AreEqual(524288, ls[3].Offset);
-        Assert.AreEqual(0x100, ls[3].TocOffset);
+        Assert.AreEqual(@"\SUBDIR\SUBTEST.TXT", ls[3].Path);
+        Assert.AreEqual(32, ls[3].Length);
+        Assert.IsFalse(ls[3].LargeBuffer);
+        Assert.AreEqual(8448, ls[3].Offset);
+        Assert.AreEqual(0x2000, ls[3].TocOffset);
         
-        Assert.AreEqual(@"\SUBDIR\SUBTEST.TXT", ls[4].Path);
-        Assert.AreEqual(32, ls[4].Length);
+        Assert.AreEqual(@"\SUBDIR\SUBTEST2.TXT", ls[4].Path);
+        Assert.AreEqual(2, ls[4].Length);
         Assert.IsFalse(ls[4].LargeBuffer);
-        Assert.AreEqual(8448, ls[4].Offset);
-        Assert.AreEqual(0x2000, ls[4].TocOffset);
+        Assert.AreEqual(8480, ls[4].Offset);
+        Assert.AreEqual(0x2040, ls[4].TocOffset);
         
-        Assert.AreEqual(@"\SUBDIR\SUBTEST2.TXT", ls[5].Path);
-        Assert.AreEqual(2, ls[5].Length);
+        Assert.AreEqual(@"\SUBDIR\ABCDEF.DAT", ls[5].Path);
+        Assert.AreEqual(515806, ls[5].Length);
         Assert.IsFalse(ls[5].LargeBuffer);
-        Assert.AreEqual(8480, ls[5].Offset);
-        Assert.AreEqual(0x2040, ls[5].TocOffset);
-        
-        Assert.AreEqual(@"\SUBDIR\ABCDEF.DAT", ls[6].Path);
-        Assert.AreEqual(515806, ls[6].Length);
-        Assert.IsFalse(ls[6].LargeBuffer);
-        Assert.AreEqual(8482, ls[6].Offset);
-        Assert.AreEqual(0x2080, ls[6].TocOffset);
+        Assert.AreEqual(8482, ls[5].Offset);
+        Assert.AreEqual(0x2080, ls[5].TocOffset);
     }
 }
