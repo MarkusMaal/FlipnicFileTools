@@ -598,10 +598,21 @@ public class BinFile : FormatBase
                     Console.WriteLine();
                 }
             }
-            for (var i = 0; i < fs.Length; i++)
+
+            if (StaticUtils.LowMem)
             {
-                if (i % 0x1000 == 0) StaticUtils.LiveLoadStatus = $"Generating {parent}\\{f}";
-                ms.WriteByte((byte)fs.ReadByte());
+                for (var i = 0; i < fs.Length; i++)
+                {
+                    if (i % 0x1000 == 0) StaticUtils.LiveLoadStatus = $"Generating {parent}\\{f}";
+                    ms.WriteByte((byte)fs.ReadByte());
+                }
+            }
+            else
+            {
+                StaticUtils.LiveLoadStatus = $"Generating {parent}\\{f}";
+                var buffer = new byte[fs.Length];
+                fs.ReadExactly(buffer, 0, buffer.Length);
+                ms.Write(buffer);
             }
 
             fs.Close();
