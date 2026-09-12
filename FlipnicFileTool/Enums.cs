@@ -77,7 +77,9 @@ public abstract class Enums
         ShowSstRespawns,
         ShowDrawDistance,
         ShowControllableGimmicks,
-        GenerateBin
+        GenerateBin,
+        SpliceSst,
+        GenerateSst
     }
     
     /// <summary>
@@ -191,6 +193,8 @@ public abstract class Enums
             "--playground" => Modes.Playground,
             "--export-lp4-json" => Modes.ExportLp4Json,
             "--generate-bin" => Modes.GenerateBin,
+            "--generate-sst" => Modes.GenerateSst,
+            "--splice-sst" => Modes.SpliceSst,
             _ => mode
         };
         

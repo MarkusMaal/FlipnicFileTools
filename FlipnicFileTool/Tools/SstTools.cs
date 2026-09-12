@@ -41,6 +41,16 @@ public class SstTools
             case Enums.Modes.ShowControllableGimmicks:
                 Console.Write(OpenSst(cfg).GetControllableObjects());
                 break;
+            case Enums.Modes.SpliceSst:
+                if (!Directory.Exists(cfg.Output)) Directory.CreateDirectory(cfg.Output);
+                OpenSst(cfg).SpliceSst(cfg.Output);
+                Console.WriteLine("Finished!");
+                break;
+            case Enums.Modes.GenerateSst:
+                var fs = new FileStream(cfg.Output, FileMode.Create, FileAccess.Write);
+                FpnSst.GenerateSst(cfg.FileName, fs);
+                Console.WriteLine("Finished!");
+                break;
         }
     }
 

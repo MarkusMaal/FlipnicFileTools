@@ -312,7 +312,11 @@ public abstract class HelpUtils
                     new HelpLine("get-pseudo-code",
                         "Transform stage event into something that's somewhat human-readable", ["input"], "*.SST", true),
                     new HelpLine("change-count [name],[count]",
-                        "Allows you to resize a specific section of the .SST file", ["input"], "*.SST,[*],[uint32]", true)
+                        "Allows you to resize a specific section of the .SST file", ["input"], "*.SST,[*],[uint32]", true),
+                    new HelpLine("splice-sst",
+                        "Allows you to separate all sections of the SST file into separate files", ["input", "output"], "*.SST,*/", true),
+                    new HelpLine("generate-sst",
+                        "Allows you to generate SST file from separated files", ["input", "output"], "*/,*.SST", true),
                 ]
             ),
             new HelpTopic(

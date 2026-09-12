@@ -117,7 +117,7 @@ public abstract class Validator
                             case "*":
                                 break;
                             default:
-                                if (Path.GetExtension(subValue) != flagFilters[i][1..])
+                                if (!string.Equals(Path.GetExtension(subValue), flagFilters[i][1..], StringComparison.CurrentCultureIgnoreCase))
                                     return
                                         $"Parameter {i + 1} of {l.Flag} must have the extension {flagFilters[i]}";
                                 break;

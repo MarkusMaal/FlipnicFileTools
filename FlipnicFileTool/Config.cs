@@ -264,7 +264,7 @@ public class Config
             return 1;
         }
 
-        if (!File.Exists(FileName) && exceptions.All(p => p != Mode))
+        if (!File.Exists(FileName) && !Directory.Exists(FileName) && exceptions.All(p => p != Mode))
         {
             StaticUtils.DecodeColors("~-CError~--\a: Input file does not exist!");
             Console.WriteLine();
@@ -272,7 +272,7 @@ public class Config
         }
 
         if (Mode == Enums.Modes.GenerateBin) return -1;
-        if (FileNameArr.Any(f => f == "" || !File.Exists(f)))
+        if (FileNameArr.Any(f => f == "" || (!File.Exists(f) && !Directory.Exists(f))))
         {
             StaticUtils.DecodeColors("~-4Error~--\a: One or more specified input files do not exist!");
             return 400;

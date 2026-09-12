@@ -17,6 +17,66 @@ public class FpnSst : FormatBase
         GenerateToc(GetInt32(_data, 0x0C));
     }
 
+    public void SpliceSst(string destination)
+    {
+        foreach (var (i, key) in TableOfContents.Keys.Index())
+        {
+            var size = TableOfContents[key].Count * TableOfContents[key].EntrySize;
+            var oS = File.OpenWrite(Path.Join(destination, i + "." + key + "." + TableOfContents[key].EntrySize + ".DAT"));
+            var buf = _data.Skip(TableOfContents[key].Offset).Take(size).ToArray();
+            oS.Write(buf, 0, buf.Length);
+            oS.Close();
+        }
+    }
+
+    public static void GenerateSst(string source, Stream output)
+    {
+        var dI = new DirectoryInfo(source);
+        var files = dI.EnumerateFiles("*.DAT").OrderBy(s => int.Parse(s.Name.Split('.')[0])).ToArray();
+        var tocEndOffset = files.Length * 0x10 + 0x10;
+        var offset = tocEndOffset;
+        Dictionary<string, TocEntry> tableOfContents = new();
+        foreach (var f in files)
+        {
+            var nameSplit = f.Name.Split('.').Skip(1).ToArray();
+            var sect = nameSplit[0];
+            var entrySize = short.Parse(nameSplit[1]);
+            if (f.Length % entrySize != 0) throw new FormatException("Input file was in the incorrect format.");
+            var count = (short)(f.Length / entrySize);
+            tableOfContents[sect] = new TocEntry()
+            {
+                Count = count,
+                EntrySize = entrySize,
+                Offset = offset
+            };
+            offset += entrySize * count;
+            while (offset % 0x10 != 0) offset++;
+        }
+        output.Write("FpnSst00"u8);
+        output.Write(BitConverter.GetBytes(tableOfContents.Count));
+        output.Write(BitConverter.GetBytes(tocEndOffset));
+        foreach (var (key, entry) in tableOfContents)
+        {
+            output.Write(Encoding.ASCII.GetBytes(key));
+            for (var i = 0; i < 8 - key.Length; i++) output.WriteByte(0);
+            output.Write(BitConverter.GetBytes(entry.Count));
+            output.Write(BitConverter.GetBytes(entry.EntrySize));
+            output.Write(BitConverter.GetBytes(entry.Offset));
+        }
+
+        foreach (var (i, (key, entry)) in tableOfContents.Index())
+        {
+            output.Position = entry.Offset;
+            var inputFile = File.OpenRead(Path.Join(source, $"{i}.{key}.{entry.EntrySize}.DAT"));
+            var buffer = new byte[inputFile.Length];
+            inputFile.ReadExactly(buffer, 0, buffer.Length);
+            inputFile.Close();
+            output.Write(buffer);
+        }
+
+        output.Close();
+    }
+    
     /// <summary>
     /// Get the list of resources references by the SST file
     /// </summary>

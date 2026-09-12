@@ -53,6 +53,8 @@ internal static class Program
                 case Enums.Modes.ShowSstRespawns:
                 case Enums.Modes.ShowDrawDistance:
                 case Enums.Modes.ShowControllableGimmicks:
+                case Enums.Modes.GenerateSst:
+                case Enums.Modes.SpliceSst:
                     _ = new SstTools(Cfg);
                     break;
                 case Enums.Modes.ShowFpc:
