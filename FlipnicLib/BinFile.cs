@@ -599,6 +599,12 @@ public class BinFile : FormatBase
                 }
             }
 
+            var extraPad = 0x10 - fs.Length % 0x10;
+            if (extraPad != 0x10)
+            {
+                StaticUtils.DecodeColors($"~-EWarning~--: Size of {parent}\\{f} in bytes is not divisble by 16, adding {extraPad} bytes of extra padding");
+                Console.WriteLine();
+            }
             if (StaticUtils.LowMem)
             {
                 for (var i = 0; i < fs.Length; i++)
@@ -617,7 +623,8 @@ public class BinFile : FormatBase
 
             fs.Close();
             ms.Position = tocOffset;
-            offset += (uint)fullSourceFile.Length; 
+            offset += (uint)fullSourceFile.Length;
+            if (extraPad != 0x10) offset = (uint)(offset + extraPad);
         }
         ms.Write(new TocEntry
         {

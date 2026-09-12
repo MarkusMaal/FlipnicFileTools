@@ -158,6 +158,7 @@ During the generation process you may see some warnings. Here's a short explanat
 * "File which is specified by metadata.json doesn't exist" - Same as the other one, except it's for the LargeBuffers entry. Similar to the previous warning, if it occurs, that file gets skipped.
 * "File is over 512kiB, which may cause crashes" - A file that was added to large buffer area and appended at the end of a subdirectory is over 512kiB. Replace the file mentioned with a smaller one to avoid crash issues.
 * "File may have unwanted end padding" - This means that at the end of file there are a bunch of zeroes, which looks like padding. This can cause artifacting/glitches with fonts. Note that this warning may be a false positive, but it doesn't hurt to check.
+* "Size of file in bytes is not divisible by 16, adding X bytes of extra padding" - Flipnic will glitch out badly if you try to access files at an offset that is not divisible by 16. This warning is just letting you know how many extra zeroes will be added to compensate for this. 
 
 ## Movies (*.PSS)
 
