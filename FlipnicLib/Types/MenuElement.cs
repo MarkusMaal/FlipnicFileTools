@@ -18,6 +18,12 @@ public class MenuElement(byte[] data, string sectionLabel) : FormatBase
     public int Dipth { get; set; } = GetInt32(data, 0x54);
     public int Blend { get; set; } = GetInt32(data, 0x58);
     public int Index { get; set; } = GetInt32(data, 0x5C);
+
+    // required for MLB generation purposes
+    public ushort UnkShort { get; set; } = GetUInt16(data, 0x52);
+    public byte UnkByte { get; set; } = data[0x50];
+
+    public string Group => sectionLabel;
         
     public override string ToString()
     {

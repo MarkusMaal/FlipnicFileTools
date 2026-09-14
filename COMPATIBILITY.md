@@ -116,7 +116,7 @@ Detailed overview of what specifics of all file formats are supported in Flipnic
 - [ ] Blend
 - [X] Colors
 - [ ] Animation
-- [ ] Editor
+- [X] Editor
 - [X] Convert to PNG
 
 ## Strings table (.MSG)

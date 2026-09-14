@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using Avalonia;
@@ -14,6 +15,7 @@ using Avalonia.VisualTree;
 using FlipnicFileToolGUI.Helpers;
 using FlipnicFileToolGUI.ViewModels;
 using FlipnicLib;
+using FlipnicLib.Formats;
 using FlipnicLib.Types;
 
 namespace FlipnicFileToolGUI.Controls;
@@ -101,30 +103,59 @@ public partial class MenuMockup : UserControl
     {
         try
         {
-            var file = await FileHelpers.SaveFile(this, [Filters.PngFile]);
+            if (TopLevel.GetTopLevel(this) is not MainWindow mw) return;
+            RefreshButton_OnClick(sender, e);
+            var file = await FileHelpers.SaveFile(this, [Filters.PngFile, Filters.FpnMlb]);
             if (file is null) return;
-        
-            var scTarget = PreviewBox;
-            if (scTarget is null) return;
-            var backupW = scTarget.Width;
-            var backupH = scTarget.Height;
-            scTarget.Width = 640;
-            scTarget.Height = 480;
-            var pixelSize = new PixelSize(640, 480);
-            var size = new Size(640, 480);
+            var fileName = Uri.UnescapeDataString(file);
+            if (Path.GetExtension(fileName).Equals(".png", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var scTarget = PreviewBox;
+                if (scTarget is null) return;
+                var backupW = scTarget.Width;
+                var backupH = scTarget.Height;
+                scTarget.Width = 640;
+                scTarget.Height = 480;
+                var pixelSize = new PixelSize(640, 480);
+                var size = new Size(640, 480);
 
-            using RenderTargetBitmap bitmap = new(pixelSize);
-            scTarget.Measure(size);
-            scTarget.Arrange(new Rect(size));
-            bitmap.Render(scTarget);
-            bitmap.Save(Uri.UnescapeDataString(file), PngBitmapEncoderOptions.Default);
-            scTarget.Width = backupW;
-            scTarget.Height = backupH;
-            ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
+                using RenderTargetBitmap bitmap = new(pixelSize);
+                scTarget.Measure(size);
+                scTarget.Arrange(new Rect(size));
+                bitmap.Render(scTarget);
+                bitmap.Save(fileName, PngBitmapEncoderOptions.Default);
+                scTarget.Width = backupW;
+                scTarget.Height = backupH;
+            }
+            else
+            {
+                if (mw.FileName == null) throw new Exception("File not open");
+                if (!File.Exists(mw.FileName)) throw new FileNotFoundException("File does not exist. Make sure you extracted the files from a container before attempting MLB export");
+                var originalStream = File.OpenRead(mw.FileName);
+                var mlbData = new byte[originalStream.Length];
+                await originalStream.ReadExactlyAsync(mlbData, 0, mlbData.Length);
+                originalStream.Close();
+                var mlb = new FpnMlb(mlbData);
+                foreach (var mGroup in mlb.Sections)
+                {
+                    foreach (var (idx, mElement) in mGroup.Value.Index())
+                    {
+                        var matchingElement = MenuElementSource.FirstOrDefault(p => p.MenuElement?.Index == mElement.Index && p.MenuElement.Group == mGroup.Key);
+                        if (matchingElement?.MenuElement == null) continue;
+                        mlb.Sections[mGroup.Key][idx] = matchingElement.MenuElement;
+                    }
+                }
+
+                var outputStream = new FileStream(fileName, FileMode.Create, FileAccess.Write);
+                outputStream.Write(mlb.GetBytes());
+            }
+
+            mw.ShowDialog("Flipnic file tools", "File was saved successfully!", NotificationType.Success);
         }
         catch (Exception ex)
         {
-            ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "Error: " + ex.Message, NotificationType.Error);
+            if (TopLevel.GetTopLevel(this) is not MainWindow mw) return;
+            mw.ShowDialog("Flipnic file tools", "Error: " + ex.Message, NotificationType.Error);
         }
     }
 
@@ -179,7 +210,7 @@ public partial class MenuMockup : UserControl
         foreach (var m in TextureToggles.Presenter?.GetVisualChildren().First().GetVisualChildren() ?? [])
         {
             if (!m.GetVisualChildren().Any()) continue;
-            if (m.GetVisualChildren().First() is not CheckBox cb) continue;
+            if (m.GetVisualChildren().First().GetVisualChildren().First() is not CheckBox cb) continue;
             cb.IsChecked = !cb.IsChecked;
             checkBox = cb;
         }
@@ -195,7 +226,7 @@ public partial class MenuMockup : UserControl
         foreach (var (i, m) in (TextureToggles.Presenter?.GetVisualChildren().First().GetVisualChildren() ?? []).Index())
         {
             if (!m.GetVisualChildren().Any()) continue;
-            if (m.GetVisualChildren().First() is not CheckBox cb) continue;
+            if (m.GetVisualChildren().First().GetVisualChildren().First() is not CheckBox cb) continue;
             if (cb.IsChecked != true) continue;
             startIdx = i;
             break;
@@ -204,7 +235,7 @@ public partial class MenuMockup : UserControl
         foreach (var m in TextureToggles.Presenter?.GetVisualChildren().First().GetVisualChildren().Skip(startIdx) ?? [])
         {
             if (!m.GetVisualChildren().Any()) continue;
-            if (m.GetVisualChildren().First() is not CheckBox cb) continue;
+            if (m.GetVisualChildren().First().GetVisualChildren().First() is not CheckBox cb) continue;
             var label = (cb.Content?.ToString() ?? "").Split(" | ")[0];
             switch (targetSection)
             {
@@ -226,5 +257,11 @@ public partial class MenuMockup : UserControl
             checkBox = cb;
         }
         ToggleButton_OnIsCheckedChanged(checkBox, e);
+    }
+
+    private void RefreshButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        DataContext = null;
+        DataContext = this;
     }
 }

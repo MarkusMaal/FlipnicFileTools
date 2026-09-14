@@ -53,10 +53,9 @@ public class FpnMlb : FormatBase
                 ms.Write(BitConverter.GetBytes(elem.PosY));
                 ms.Write(BitConverter.GetBytes(elem.Width));
                 ms.Write(BitConverter.GetBytes(elem.Height));
-                ms.WriteByte(1);
+                ms.WriteByte(elem.UnkByte);
                 ms.WriteByte((byte)(elem.BgItem ? 1 : 0));
-                ms.WriteByte(1);
-                ms.WriteByte(0);
+                ms.Write(BitConverter.GetBytes(elem.UnkShort));
                 ms.Write(BitConverter.GetBytes(elem.Dipth));
                 ms.Write(BitConverter.GetBytes(elem.Blend));
                 ms.Write(BitConverter.GetBytes(elem.Index));
