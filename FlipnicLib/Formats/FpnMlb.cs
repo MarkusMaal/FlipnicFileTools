@@ -6,6 +6,8 @@ namespace FlipnicLib.Formats;
 public class FpnMlb : FormatBase
 {
     public Dictionary<string, MenuElement[]> Sections { get; set; } = [];
+
+    private Dictionary<string, uint> UnkSectionData { get; set; } = [];
     
     public FpnMlb(byte[] data)
     {
@@ -15,6 +17,7 @@ public class FpnMlb : FormatBase
         while (idx < sectionCount)
         {
             var sectionLabel = GetString(data.Skip(offset).Take(0x20).ToArray());
+            var unkSectionData = GetUInt32(data, offset+0x20);
             var elementCount = GetInt32(data, offset+0x24);
             List<MenuElement> elements = [];
             for (var i = 0; i < elementCount; i++)
@@ -22,6 +25,7 @@ public class FpnMlb : FormatBase
                 elements.Add(new MenuElement(data.Skip(offset+0x30+(i*0x60)).Take(0x60).ToArray(), sectionLabel));
             }
             Sections.Add(sectionLabel, elements.ToArray());
+            UnkSectionData.Add(sectionLabel, unkSectionData);
             offset += 0x30 + elementCount * 0x60;
             idx++;
         }
@@ -41,7 +45,7 @@ public class FpnMlb : FormatBase
             ms.Write(Encoding.ASCII.GetBytes(section.Key));
             ms.Seek(limTex, SeekOrigin.Begin);
 
-            for (var i = 0; i < 4; i++) ms.WriteByte(1);
+            ms.Write(BitConverter.GetBytes(UnkSectionData[section.Key]));
             for (var i = 0; i < 3; i++) ms.Write(BitConverter.GetBytes(section.Value.Length));
 
             foreach (var elem in section.Value)
