@@ -79,7 +79,8 @@ public abstract class Enums
         ShowControllableGimmicks,
         GenerateBin,
         SpliceSst,
-        GenerateSst
+        GenerateSst,
+        ShowSymbols
     }
     
     /// <summary>
@@ -195,6 +196,7 @@ public abstract class Enums
             "--generate-bin" => Modes.GenerateBin,
             "--generate-sst" => Modes.GenerateSst,
             "--splice-sst" => Modes.SpliceSst,
+            "--show-symbols" => Modes.ShowSymbols,
             _ => mode
         };
         

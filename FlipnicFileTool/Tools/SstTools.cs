@@ -51,6 +51,21 @@ public class SstTools
                 FpnSst.GenerateSst(cfg.FileName, fs);
                 Console.WriteLine("Finished!");
                 break;
+            case Enums.Modes.ShowSymbols:
+                var sym = OpenSst(cfg).GetSymbols();
+                if (sym.Length == 0)
+                {
+                    Console.WriteLine("This SST file does not contain event symbols");
+                    break;
+                }
+                if (StaticUtils.SimpleOutput)
+                {
+                    Console.WriteLine(string.Join('\n', sym));
+                    break;
+                }
+                Console.Write("Symbols:\n\n - ");
+                Console.WriteLine(string.Join("\n - ", sym));
+                break;
         }
     }
 

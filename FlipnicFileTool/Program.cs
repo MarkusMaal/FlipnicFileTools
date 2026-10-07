@@ -55,6 +55,7 @@ internal static class Program
                 case Enums.Modes.ShowControllableGimmicks:
                 case Enums.Modes.GenerateSst:
                 case Enums.Modes.SpliceSst:
+                case Enums.Modes.ShowSymbols:
                     _ = new SstTools(Cfg);
                     break;
                 case Enums.Modes.ShowFpc:

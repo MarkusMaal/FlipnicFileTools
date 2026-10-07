@@ -2,33 +2,91 @@
 
 namespace FlipnicLib.Types;
 
-public class Event(byte[] data) : FormatBase
+public class Event : FormatBase
 {
     
     /// <summary>
     /// May call a function
     /// </summary>
-    private string Label { get; set; } = GetString(data.Skip(4).Take(0x1C).ToArray());
+    private string Label { get; set; }
 
     /// <summary>
     /// Defines event type
     /// </summary>
-    private int EventMagic { get; set; } = GetInt32(data, 0);
+    private int EventMagic { get; set; }
 
     /// <summary>
     /// Arguments for specific function if Label is not empty
     /// </summary>
-    private int[] FuncArgs { get; set; } = [GetInt32(data, 0x20), GetInt32(data, 0x24),
-        GetInt32(data, 0x28), GetInt32(data, 0x2C)];
+    private int[] FuncArgs { get; set; }
+
+    public string? UsedSymbol { get; set; } = null;
 
     /// <summary>
     /// Arguments for the event (if event magic is not 0)
     /// </summary>
-    private int[] EventArgs { get; set; } =
+    private int[] EventArgs { get; set; }
+
+    /// <summary>
+    /// Symbols are used to run built-in game functions with specified parameters
+    /// </summary>
+    private readonly string[] _symbols =
     [
-        GetInt32(data, 0x30), GetInt32(data, 0x34),
-        GetInt32(data, 0x38), GetInt32(data, 0x3C)
+        "AIR_HOCKEY_MAN",
+        "AREA74_MAN",
+        "BAGATELLE_MAN",
+        "BASKETBALL_MAN",
+        "BINGO",
+        "CAST_EVENT",
+        "FONT_EVENT",
+        "COIN_CONBO", // this is not a typo, do not correct
+        "CONTROLLER",
+        "EXP_COUNTER",
+        "TOTAL_BUMPER",
+        "TOTAL_LANE",
+        "TOTAL_GIMMICK",
+        "TOTAL_COIN",
+        "LOCAL_BUMPER",
+        "TIMER_EVENT",
+        "CRAB_SET_PARAM",
+        "FLIES_SET_PARAM",
+        "FLIES",
+        "SPECIAL_DOMO",
+        "INST_SET_PARAM",
+        "GAME_EVENT",
+        "MULTI_BALL",
+        "SMALL_MULTI",
+        "BOWL_MULTI",
+        "COMET_MULTI_BALL",
+        "JACKPOT",
+        "MONKEY_BANANA",
+        "SIGNAL_STOP",
+        "GIMMICK_STOP",
+        "POINT_OF_NR_BOOT",
+        "POINT_OF_NR",
+        "PON_MAN",
+        "QUIZ_SHOW",
+        "SLOT_EVENT",
+        "SMART_BALL",
+        "SOCCER_MAN",
+        "PLAY_PATH_BUMPER",
+        "TEST_TUBE_BMP",
+        "LABEL_BUMPER",
+        "VOICE_EVENT"
     ];
+
+    public Event(byte[] data)
+    {
+        Label = GetString([.. data.Skip(4).Take(0x1C)]);
+        EventMagic = GetInt32(data, 0);
+        FuncArgs = [GetInt32(data, 0x20), GetInt32(data, 0x24),
+            GetInt32(data, 0x28), GetInt32(data, 0x2C)];
+        EventArgs = [
+            GetInt32(data, 0x30), GetInt32(data, 0x34),
+            GetInt32(data, 0x38), GetInt32(data, 0x3C)
+        ];
+        UsedSymbol = !string.IsNullOrEmpty(Label) && _symbols.Contains(Label) ? Label : null;
+    }
 
     // generate a comment for the user describing what the function should do
     private static string GenerateComment(string label)
@@ -170,20 +228,19 @@ public class Event(byte[] data) : FormatBase
                     if (EventMagic == 9)
                     {
                         o +=
-                            $"\nfunc {Label} (UnkValue0: {FuncArgs[1]}, MaxBalls: {FuncArgs[2]}, UnkValue2: {FuncArgs[3]}, UnkValue3: {EventArgs[0]}) @ 0x" +
-                            offsetStr + "\n";
+                            $"\tSYMBOL::{Label} (UnkValue0: {FuncArgs[1]}, MaxBalls: {FuncArgs[2]}, UnkValue2: {FuncArgs[3]}, UnkValue3: {EventArgs[0]});\n";
                     }
                     break;
                 case "TIMER_EVENT":
                     if (FuncArgs[1] == 1)
                     {
-                        o += $"\n\t{Label} (Flag: {FuncArgs[1]}, FrameCount: {FuncArgs[2]}, GracePeriodFrameCount: {FuncArgs[3]}, Font: {sst.GetStringById("FNTN", EventArgs[0])}, AnimFont: {sst.GetStringById("FNTN", EventArgs[1])})";
+                        o += $"\tSYMBOL::{Label} (Flag: {FuncArgs[1]}, FrameCount: {FuncArgs[2]}, GracePeriodFrameCount: {FuncArgs[3]}, Font: {sst.GetStringById("FNTN", EventArgs[0])}, AnimFont: {sst.GetStringById("FNTN", EventArgs[1])});";
                     }
                     break;
                 case "SMART_BALL":
                     if (EventMagic == 9)
                     {
-                        o += $"\nfunc {Label} (AreaId1: {sst.GetStringById("KUIDX", FuncArgs[2])}, AreaId2: {sst.GetStringById("KUIDX", FuncArgs[3])}, Balls: {EventArgs[0]}, BuzzerSoundId: {(EventArgs[1] >> 16) & 0xFF }, ???: {EventArgs[2]}, ???: {EventArgs[3]}) @ 0x" + offsetStr + "\n";
+                        o += $"\tSYMBOL::{Label} (AreaId1: {sst.GetStringById("KUIDX", FuncArgs[2])}, AreaId2: {sst.GetStringById("KUIDX", FuncArgs[3])}, Balls: {EventArgs[0]}, BuzzerSoundId: {(EventArgs[1] >> 16) & 0xFF }, ???: {EventArgs[2]}, ???: {EventArgs[3]});\n";
                     }
                     break;
                 case "GAME_EVENT":
@@ -206,10 +263,10 @@ public class Event(byte[] data) : FormatBase
 
                             break;
                     }
-                    o += $"\nfunc {Label} ({args}) @ 0x" + offsetStr + "\n";
+                    o += $"\tSYMBOL::{Label} ({args});\n";
                     return o;
                 case "FONT_EVENT":
-                    o += $"\nfunc {Label} (Font: {sst.GetStringById("FNTN",  FuncArgs[2])}, Message: {GetMessageById(msg, FuncArgs[3])}, Duration: {EventArgs[0]}, Entrance: {EventArgs[1]}, Exit: {EventArgs[2]})".PadRight((int)(StaticUtils.WindowWidth / 1.25), ' ') + " @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n";
+                    o += $"\tSYMBOL::{Label} (Font: {sst.GetStringById("FNTN",  FuncArgs[2])}, Message: {GetMessageById(msg, FuncArgs[3])}, Duration: {EventArgs[0]}, Entrance: {EventArgs[1]}, Exit: {EventArgs[2]})".PadRight((int)(StaticUtils.WindowWidth / 1.25), ' ') + ";\n";
                     return o;
                 case "FONT":
                     o += $"\nfunc {Label} (Font: {sst.GetStringById("FNTN",  FuncArgs[2])}, Message: {GetMessageById(msg, FuncArgs[3])}, SecondaryFont: {sst.GetStringById("FNTN", EventArgs[0])}, SecondaryMessage: {GetMessageById(msg, EventArgs[1])}, ???: {EventArgs[2]}, ???: {EventArgs[3]})".PadRight((int)(StaticUtils.WindowWidth / 1.25), ' ') + " @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n";
@@ -226,7 +283,7 @@ public class Event(byte[] data) : FormatBase
             o += (EventEnums.EventType)EventMagic switch
             { 
                 EventEnums.EventType.GameEvent when FuncArgs[1] == 1 => $"\n:{Label}\n",
-                EventEnums.EventType.Setter => $"\nfunc {Label} (value={FuncArgs[1]})\n",
+                EventEnums.EventType.Setter => _symbols.Contains(Label) ? $"\tSYMBOL::{Label} (value={FuncArgs[1]});\n" : $"\nfunc {Label} (value={FuncArgs[1]})\n",
                 EventEnums.EventType.Breq => $"\ngoto {Label} when (value == {FuncArgs[1]})",
                 _ => $"\nfunc {Label} ({string.Join(", ", allArgs)}) @ 0x" + offset.ToString("X").PadLeft(4, '0') + "\n"
             };

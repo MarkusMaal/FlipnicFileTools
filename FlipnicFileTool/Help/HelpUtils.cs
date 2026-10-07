@@ -311,6 +311,8 @@ public abstract class HelpUtils
                     new HelpLine("show-gimmick [name]", "Display a gimmick (name from TOC)", ["input"], "*.SST,[*]", true),
                     new HelpLine("get-pseudo-code",
                         "Transform stage event into something that's somewhat human-readable", ["input"], "*.SST", true),
+                    new HelpLine("show-symbols", "Displays a list of event symbols used by this SST file",
+                        ["input"], "*.SST", true),
                     new HelpLine("change-count [name],[count]",
                         "Allows you to resize a specific section of the .SST file", ["input"], "*.SST,[*],[uint32]", true),
                     new HelpLine("splice-sst",

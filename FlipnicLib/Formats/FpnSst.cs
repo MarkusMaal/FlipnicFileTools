@@ -370,6 +370,24 @@ public class FpnSst : FormatBase
         return o;
     }
 
+    public string[] GetSymbols()
+    {
+        if (!TableOfContents.TryGetValue("EVENT", out var content))
+        {
+            return [];
+        }
+        var sOffset = content.Offset;
+        var eSize = content.EntrySize;
+        var eCount = content.Count;
+        var symbols = new List<string>();
+        for (var i = sOffset; i < sOffset + eSize * eCount; i += eSize)
+        {
+            var evt = new Event([.. _data.Skip(i).Take(eSize)]);
+            if (evt.UsedSymbol != null && (symbols.Count == 0 || symbols.All(p => p != evt.UsedSymbol))) symbols.Add(evt.UsedSymbol);
+        }
+        return [.. symbols];
+    }
+
     /// <summary>
     /// Check if the SST file has the RECORD entry in TOC
     /// </summary>
