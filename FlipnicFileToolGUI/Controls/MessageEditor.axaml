@@ -17,8 +17,21 @@
                 <Button Classes="Flat" Content="Export TXT" Name="ExportTxtButton" Click="ExportTxtButton_OnClick" />
                 <Button Classes="Flat" Content="Export MSG" Name="ExportMsgButton" Click="ExportMsgButton_OnClick" />
             </WrapPanel>
-            <Label Content="Selection"></Label>
+            <WrapPanel Orientation="Horizontal" ItemSpacing="10">
+                <Label Name="SelIdxLabel" Content="Selection"></Label>
+            </WrapPanel>
             <TextBox Name="SelectedItemTextBox" IsEnabled="{Binding ItemSelected}" Text="{Binding Text}" KeyUp="SelectedItemTextBox_OnKeyUp"></TextBox>
+            <WrapPanel Orientation="Horizontal" ItemSpacing="10">
+                <Button Click="ChangeButton_OnClick" IsEnabled="{Binding ItemSelected}" Classes="Flat" Content="Change"></Button>
+                <Button Classes="Flat" Content="&#x2191;" IsEnabled="{Binding ItemSelected}" Click="UpButton_OnClick"></Button>
+                <Button Classes="Flat" Content="&#x2193;" IsEnabled="{Binding ItemSelected}" Click="DownButton_OnClick"></Button>
+                <Button Click="RemoveButton_OnClick" IsEnabled="{Binding ItemSelected}" Classes="Flat Accent" Content="Remove"></Button>
+            </WrapPanel>
+            <Label Content="Insert"></Label>
+            <TextBox KeyUp="InsertMsgTextBox_OnKeyUp" Name="InsertMsgTextBox"/>
+            <WrapPanel ItemSpacing="10" LineSpacing="10">
+                <Button Classes="Flat" Content="Add" Click="InsertButton_OnClick"></Button>
+            </WrapPanel>
         </StackPanel>
     </Grid>
 </UserControl>

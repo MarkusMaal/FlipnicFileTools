@@ -1,11 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.LogicalTree;
 using FlipnicFileToolGUI.Helpers;
 using FlipnicLib.Formats;
 
@@ -64,25 +65,23 @@ public partial class MessageEditor : UserControl
         ItemSelected = lb.SelectedItems?.Count > 0;
         if (!ItemSelected) return;
         Text = lb.SelectedItems?[0]?.ToString() ?? "";
+        SelIdxLabel.Content = $"Selection (ID: 0x{lb.SelectedIndex:X2})";
     }
 
     private void SelectedItemTextBox_OnKeyUp(object? sender, KeyEventArgs e)
     {
         if (e.Key != Key.Enter) return;
-        if (sender is not TextBox tb) return;
-        var idx = -1;
-        ListBox? l = null;
-        foreach (var c in tb.GetLogicalParent()?.GetLogicalParent()?.GetLogicalChildren() ?? [])
-        {
-            if (c is not ListBox lb) continue;
-            idx = lb.SelectedIndex;
-            l = lb;
-            break;
-        }
+        if (sender is not TextBox) return;
+        UpdateItem();
+    }
 
+    private void UpdateItem()
+    {
+        var idx = MessageList.SelectedIndex;
+        var l = MessageList;
         var newObj = MsgObject;
         var arr = newObj.Messages;
-        arr[idx] = tb.Text ?? "";
+        arr[idx] = SelectedItemTextBox.Text ?? "";
         newObj.Messages = arr;
         MsgObject = newObj;
         if (l == null) return;
@@ -104,5 +103,65 @@ public partial class MessageEditor : UserControl
         {
             ((MainWindow?)TopLevel.GetTopLevel(this))?.ShowDialog("Flipnic file tools", "Error: " + ex.Message, NotificationType.Error);
         }
+    }
+    
+
+    private void InsertButton_OnClick(object? sender, RoutedEventArgs? e)
+    {
+        var backup = MessageList.SelectedIndex;
+        MsgObject.Messages = [.. MsgObject.Messages, InsertMsgTextBox.Text ?? ""];
+        InsertMsgTextBox.Text = "";
+        DataContext = null;
+        DataContext = this;
+        if (backup < MsgObject.Messages.Length) MessageList.SelectedIndex = backup;
+    }
+
+    private void RemoveButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var backup = MessageList.SelectedIndex;
+        MsgObject.Messages = [.. MsgObject.Messages.Where((_, i) => i != MessageList.SelectedIndex)];
+        DataContext = null;
+        DataContext = this;
+        if (backup < MsgObject.Messages.Length) MessageList.SelectedIndex = backup;
+    }
+
+    private void ChangeButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        UpdateItem();
+    }
+
+    private void InsertMsgTextBox_OnKeyUp(object? sender, KeyEventArgs e)
+    {
+        if (sender is not TextBox) return;
+        if (e.Key != Key.Enter) return;
+        InsertButton_OnClick(sender, null);
+    }
+
+    private void UpButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var current = MessageList.SelectedIndex;
+        if (current-1 < 0) return;
+        var newMsg = new List<string>(MsgObject.Messages);
+        (newMsg[current], newMsg[current - 1]) = (newMsg[current - 1], newMsg[current]);
+        MsgObject.Messages = [.. newMsg];
+        DataContext = null;
+        DataContext = this;
+        var newIdx = current - 1;
+        if (newIdx < 0) newIdx = 0;
+        MessageList.SelectedIndex = newIdx;
+    }
+
+    private void DownButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var current = MessageList.SelectedIndex;
+        if (current+1 >= MsgObject.Messages.Length) return;
+        var newMsg = new List<string>(MsgObject.Messages);
+        (newMsg[current], newMsg[current + 1]) = (newMsg[current + 1], newMsg[current]);
+        MsgObject.Messages = [.. newMsg];
+        DataContext = null;
+        DataContext = this;
+        var newIdx = current + 1;
+        if (newIdx >= MsgObject.Messages.Length) newIdx = MsgObject.Messages.Length - 1;
+        MessageList.SelectedIndex = newIdx;
     }
 }
