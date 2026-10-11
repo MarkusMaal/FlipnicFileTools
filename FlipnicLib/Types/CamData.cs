@@ -5,6 +5,7 @@ namespace FlipnicLib.Types;
 public class CamData : FormatBase
 {
     public int CameraId { get; }
+    public int[] UnkData { get; }
     public string CameraName { get; }
     public bool AnchorToTarget { get; }
     private bool LockXAxis  { get; }
@@ -17,6 +18,8 @@ public class CamData : FormatBase
     public CamData(byte[] data, FpnSst stage)
     {
         CameraId = GetInt32(data, 0); // seems to refer to KUIDX
+        UnkData = [GetInt32(data, 4), GetInt32(data, 8), GetInt32(data, 0xC), GetInt32(data, 0x10)];
+        
         CameraName = stage.GetStringById("CAMN", GetInt32(data, 0x1C));
         // how "smooth" the camera moves towards the target
         //

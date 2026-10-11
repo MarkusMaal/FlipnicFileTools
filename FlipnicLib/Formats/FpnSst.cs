@@ -17,6 +17,17 @@ public class FpnSst : FormatBase
         GenerateToc(GetInt32(_data, 0x0C));
     }
 
+    public List<byte[]> GetSectionEntries(string name)
+    {
+        var entry = TableOfContents[name];
+        List<byte[]> output = [];
+        for (var i = entry.Offset; i < entry.Offset + entry.Count * entry.EntrySize; i += entry.EntrySize)
+        {
+            output.Add([.. _data.Skip(i).Take(entry.EntrySize)]);
+        }
+        return output;
+    }
+
     public void SpliceSst(string destination)
     {
         foreach (var (i, key) in TableOfContents.Keys.Index())
