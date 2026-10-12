@@ -1,4 +1,5 @@
-﻿using FlipnicLib.Formats;
+﻿using System.Globalization;
+using FlipnicLib.Formats;
 
 namespace FlipnicScriptCompiler;
 
@@ -7,6 +8,9 @@ internal abstract class Program
     private static bool _simple;
     private static int Main(string[] args)
     {
+        var culture = new CultureInfo("en-US");
+        CultureInfo.DefaultThreadCurrentCulture = culture;
+        CultureInfo.DefaultThreadCurrentUICulture = culture;
         if (args.Length == 0)
         {
             FlipnicLib.StaticUtils.DecodeColors("~-CError~--: No arguments provided. Please add --help param to check usage.");
@@ -47,7 +51,22 @@ internal abstract class Program
                 fs.Close();
                 FlipnicLib.StaticUtils.DecodeColors("~-ASuccess~--: File saved");
                 break;
+            case "--compile":
+                var cmp = new Compiler();
+                var iLines = File.ReadAllLines(args[1]);
+                var os = new FileStream(args[2], FileMode.Create, FileAccess.Write);
+                var (res, line) = cmp.CompileAsStream(iLines, os);
+                FlipnicLib.StaticUtils.DecodeColors(res == "Operation completed successfully"
+                    ? "~-ASuccess~--: File saved"
+                    : $"~-CError~--: {res.ToString()} at line {line}");
+
+                break;
+            default:
+                FlipnicLib.StaticUtils.DecodeColors($"~-CError~--: Unknown parameter \"{args[0]}\"");
+                break;
         }
+
+        Console.WriteLine();
         return 0;
     }
 }

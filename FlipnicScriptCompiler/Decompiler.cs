@@ -40,6 +40,7 @@ public class Decompiler(FpnSst sst)
                 case "PATHN":
                 case "KUIDX":
                 case "BOSSN":
+                case "STGNAME":
                     foreach (var s in section.Select(sB => Encoding.UTF8.GetString(sB)))
                         output.Write(Encoding.UTF8.GetBytes(s + "\n"));
                     break;
@@ -49,12 +50,16 @@ public class Decompiler(FpnSst sst)
                     {
                         var s1 = Encoding.UTF8.GetString(s.Take(0x20).ToArray());
                         var s2 = Encoding.UTF8.GetString(s.Skip(0x20).ToArray());
-                        output.Write(Encoding.UTF8.GetBytes(s1 + "," + s2 + "\n"));
+                        output.Write(key == "VABN"
+                            ? Encoding.UTF8.GetBytes(s1 + "," + s2 + "," +
+                                                     BitConverter.ToInt32([.. s.Skip(0x40).Take(0x4)]) + "\n")
+                            : Encoding.UTF8.GetBytes(s1 + "," + s2 + "\n"));
                     }
                     break;
                 case "SEQN":
                 case "EFFN":
                 case "FNTN":
+                case "STGINF":
                     foreach (var s in section)
                     {
                         var s1 = Encoding.UTF8.GetString(s.Take(0x20).ToArray());
@@ -67,7 +72,7 @@ public class Decompiler(FpnSst sst)
                         {
                             idx = BitConverter.ToInt64([.. s.Skip(0x20)]);
                         }
-                        output.Write(Encoding.UTF8.GetBytes(s1 + "," + idx + "\n"));
+                        output.Write(Encoding.UTF8.GetBytes(s1 + "," + idx + (s.Length != 0x24 ? "L" : "") + "\n"));
                     }
                     break;
                 case "BALLD":
@@ -225,9 +230,39 @@ public class Decompiler(FpnSst sst)
                     foreach (var s in section)
                         output.Write(Encoding.UTF8.GetBytes($"base_64({Convert.ToBase64String(s)})\n"));
                     break;
+                case "EVTINF":
+                    foreach (var s in section)
+                    {
+                        var stgIdx = BitConverter.ToInt32([.. s.Take(4)]);
+                        var msgIdx = BitConverter.ToInt32([.. s.Skip(8).Take(4)]);
+                        output.Write(Encoding.UTF8.GetBytes($"{stgIdx},{s[4]},{s[6]},{s[7]},{msgIdx}\n"));
+                    }
+                    break;
+                case "RECORD":
+                    foreach (var s in section)
+                    {
+                        var score = BitConverter.ToInt64([.. s.Take(8)]);
+                        var diff = BitConverter.ToInt32([.. s.Skip(8).Take(4)]);
+                        var combos = BitConverter.ToInt32([.. s.Skip(12).Take(4)]);
+                        var initials = GetString([.. s.Skip(16).Take(32)]);
+                        var unk = BitConverter.ToInt32([.. s.Skip(0x30).Take(4)]);
+                        output.Write(Encoding.UTF8.GetBytes($"{score},{diff},{combos},{initials},{unk}\n"));
+                    }
+                    break;
             }
             output.Write("\n"u8);
         } 
+    }
+
+    public static string GetString(byte[] data)
+    {
+        var sb = new StringBuilder();
+        foreach (var b in data)
+        {
+            if (b == 0x00) break;
+            sb.Append((char)b);
+        }
+        return sb.ToString();
     }
 
     private static string DecompileEvent(Event @event, FpnSst sst)
