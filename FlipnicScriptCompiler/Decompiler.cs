@@ -262,23 +262,23 @@ public class Decompiler(FpnSst sst)
     {
         return @event.Magic switch
         {
-            0 => "func " + @event.Label + "{\n",
+            0 => "func " + @event.Label + " {\n",
             8 => "}\n",
             _ => @event switch
             {
-                { Magic: 1, Arg1: 0 } => "\tstop()\n",
-                { Magic: 2, Arg1: 0 } => "\tgoto " + @event.Label + "\n",
-                { Magic: 5, Arg1: 0 } => "\tendif\n",
-                { Magic: 3, Arg1: 1 } => "\tif (" + @event.Label + "[" + @event.Arg3 + "] == 0x" +
+                { Magic: 1, Arg1: 0, Arg2 : 0, Arg3 : 0, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0 } => "\tstop()\n",
+                { Magic: 2, Arg1: 0, Arg2 : 0, Arg3 : 0, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0 } => "\tgoto " + @event.Label + "\n",
+                { Magic: 5, Arg1: 0, Arg2 : 0, Arg3 : 0, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0 } => "\tendif\n",
+                { Magic: 3, Arg1: 1, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0  } => "\tif (" + @event.Label + "[" + @event.Arg3 + "] == 0x" +
                                          @event.Arg2.ToString("X2") + ")\n",
-                { Magic: 3, Arg1: 2 } => "\tif (" + @event.Label + "[" + @event.Arg3 + "] == 0x" +
+                { Magic: 3, Arg1: 2, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0  } => "\tif2 (" + @event.Label + "[" + @event.Arg3 + "] == 0x" +
                                          @event.Arg2.ToString("X2") + ")\n",
-                { Magic: 7, Arg1: 0 } => ":" + @event.Label + "\n",
-                { Magic: 0xE, Arg1: 0 } => "\tplay_video(\"" + sst.GetStringById("IPUN", @event.Arg2) + "\", " +
-                                           (@event.Arg3 > 0 ? "RANDOMIZER::ENABLED" : "RANDOMIZER::DISABLED") + ", " +
-                                           @event.Arg4 + ")\n",
-                { Magic: 9, Arg1: 1 } => "\t" + DecodeSymbol(@event, sst) + "\n",
-                { Magic: 9, Arg1: 3 } => "\t" + @event.Label + "[" + @event.Arg3 + "] = " + @event.Arg2 + "\n",
+                { Magic: 7, Arg1: 0, Arg2 : 0, Arg3 : 0, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0 } => ":" + @event.Label + "\n",
+                { Magic: 0xE, Arg1: 0 } => "\tplay_video(" + @event.Arg2 + ", " +
+                                                      (@event.Arg3 > 0 ? "RANDOMIZER::ENABLED" : "RANDOMIZER::DISABLED") + ", " +
+                                                      @event.Arg4 + ")\n",
+                { Magic: 9, Arg1: 1 } => "\t" + DecodeSymbol(@event) + "\n",
+                { Magic: 9, Arg1: 3, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0 } => "\t" + @event.Label + "[" + @event.Arg3 + "] = " + @event.Arg2 + "\n",
                 _ => "\top_0x" + @event.Magic.ToString("X2") + (@event.Label == "" ? "" : "_" + @event.Label) + "(" +
                      StripEnd(@event.Arg1 + "," + @event.Arg2 + "," + @event.Arg3 + "," + @event.Arg4 + "," +
                               @event.Arg5 + "," + @event.Arg6 + "," + @event.Arg7) + ")\n"
@@ -286,18 +286,10 @@ public class Decompiler(FpnSst sst)
         };
     }
     
-    private static string DecodeSymbol(Event @event,  FpnSst sst)
+    private static string DecodeSymbol(Event @event)
     {
-        return @event.Label.TrimEnd('\0') switch
-        {
-            
-            "GAME_EVENT" => EncodeSymbolTokens(@event.Label, "[" + @event.Arg2 + "," + @event.Arg3 + "], [" + @event.Arg4 + "," +
-                            @event.Arg5 + "], [" + @event.Arg6 + "," + @event.Arg7 + "]"),
-            "FONT_EVENT" => EncodeSymbolTokens(@event.Label, "(\"" + sst.GetStringById("FNTN", @event.Arg2) + "\",MSG[" + @event.Arg3 +
-                                                             "]," + @event.Arg4 + "," + @event.Arg5 + "," + @event.Arg6 + ")"),
-            _ => EncodeSymbolTokens(@event.Label, StripEnd(@event.Arg2 + "," + @event.Arg3 + "," + @event.Arg4 + "," +
-                                                            @event.Arg5 + "," + @event.Arg6 + "," + @event.Arg7))
-        };
+        return EncodeSymbolTokens(@event.Label, StripEnd(@event.Arg2 + "," + @event.Arg3 + "," + @event.Arg4 + "," +
+                                                         @event.Arg5 + "," + @event.Arg6 + "," + @event.Arg7));
     }
 
     private static string EncodeSymbolTokens(string label, string args)

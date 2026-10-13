@@ -258,6 +258,9 @@ public class Compiler
                         .. BitConverter.GetBytes(int.Parse(lSplit[9])),
                     ];
                     break;
+                case "EVENT":
+                    buffer = Event.Parse(l);
+                    break;
                 default:
                     Console.WriteLine($"Unknown section \"{sect}\", skipping");
                     continue;
