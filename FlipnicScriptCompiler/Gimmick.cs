@@ -9,6 +9,8 @@ public class Gimmick : FormatBase
     private FlipnicLib.Types.Gimmick.GimmickTypes Type { get; } // 0x20
     private byte[] Flags { get; } // 0x28
     private short[] UnkShorts  { get; } // 0x2C
+    
+    private float UnkFloat  { get; } // 0x3C
     private float[] UnkFloats { get; } // 0x4C
     private int SoundEffect { get; } // 0x5C
     private short[] UnkShorts2 { get; } // 0x60
@@ -22,12 +24,13 @@ public class Gimmick : FormatBase
         Label = GetString(data);
         Type = (FlipnicLib.Types.Gimmick.GimmickTypes)data[0x20];
         Flags = [.. data.Skip(0x21).Take(0xB)];
-        UnkShorts = new short[4];
+        UnkFloat = GetFloat(data, 0x3C);
+        UnkShorts = new short[6];
         UnkShorts2 = new short[6];
         UnkFloats = new float[4];
         UnkBytes = new byte[2];
         LastFloats = new float[4];
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 6; i++)
             UnkShorts[i] = GetInt16(data, 0x2C + i * 2);
         for (var i = 0; i < 4; i++)
             UnkFloats[i] = GetFloat(data, 0x4C + i * 4);
@@ -48,8 +51,9 @@ public class Gimmick : FormatBase
         Type = Enum.Parse<FlipnicLib.Types.Gimmick.GimmickTypes>(lSplit[1]);
         SoundEffect = int.Parse(lSplit[2]);
         Button = Enum.Parse<ControllerButtons>(lSplit[3]);
+        AnalogRange = byte.Parse(lSplit[4]);
         Flags = new byte[0xB];
-        UnkShorts = new short[4];
+        UnkShorts = new short[6];
         UnkShorts2 = new short[6];
         UnkFloats = new float[4];
         UnkBytes = new byte[2];
@@ -92,12 +96,14 @@ public class Gimmick : FormatBase
             LastFloats[j] = float.Parse(lSplit[i-1]);
             i++;
         }
+
+        UnkFloat = float.Parse(lSplit[i]);
     }
 
     public override string ToString()
     {
         return
-            $"{Label},{Type},{SoundEffect},{Button},{AnalogRange},{string.Join(',', Flags)},{string.Join(',', UnkShorts)},{string.Join(',', UnkShorts2)},{string.Join(',', UnkFloats)},{string.Join(',', UnkBytes)},{string.Join(',', LastFloats)}";
+            $"{Label},{Type},{SoundEffect},{Button},{AnalogRange},{string.Join(',', Flags)},{string.Join(',', UnkShorts)},{string.Join(',', UnkShorts2)},{string.Join(',', UnkFloats)},{string.Join(',', UnkBytes)},{string.Join(',', LastFloats)},{UnkFloat}";
     }
 
     public byte[] ToBytes()
@@ -113,6 +119,8 @@ public class Gimmick : FormatBase
         foreach (var s in UnkShorts)
             ms.Write(BitConverter.GetBytes(s));
 
+        ms.Position = 0x3C;
+        ms.Write(BitConverter.GetBytes(UnkFloat));
         ms.Position = 0x4C;
         foreach (var f in UnkFloats)
             ms.Write(BitConverter.GetBytes(f));

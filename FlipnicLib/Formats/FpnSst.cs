@@ -438,7 +438,7 @@ public class FpnSst : FormatBase
     {
         for (var i = 0x10; i < end; i+=0x10)
         {
-            var name = GetStringAt(_data, i);
+            var name = GetStringAt(_data, i).Replace('_', '+');
             while (TableOfContents.ContainsKey(name))
             {
                 name += "_";

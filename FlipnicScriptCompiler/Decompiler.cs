@@ -49,6 +49,7 @@ public class Decompiler(FpnSst sst)
                 case "EFFN":
                 case "FNTN":
                 case "STGINF":
+                case "BOSS_REF":
                     foreach (var s in section)
                     {
                         var s1 = GetString([.. s.Take(0x20)]);
@@ -71,6 +72,7 @@ public class Decompiler(FpnSst sst)
                     }
                     break;
                 case "LNEWARP":
+                case "LNEWARP_":
                 case "KUOFS":
                     foreach (var s in section)
                     {
@@ -158,6 +160,18 @@ public class Decompiler(FpnSst sst)
                         output.Write(Encoding.UTF8.GetBytes($"{camera},{l1},{l2},{s1},{s2},{u1},{u2},{u3},{u4},{u5}\n"));
                     }
                     break;
+                case "PLIGHT":
+                case "WALLD":
+                    foreach (var s in section)
+                    {
+                        List<float> floats = [];
+                        for (var i = 0; i < s.Length; i+=4)
+                        {
+                            floats.Add(BitConverter.ToSingle([.. s.Skip(i).Take(4)]));
+                        }
+                        output.Write(Encoding.UTF8.GetBytes(string.Join(",", floats) + "\n"));
+                    }
+                    break;
                 case "CAMKUD":
                     foreach (var s in section)
                     {
@@ -168,7 +182,7 @@ public class Decompiler(FpnSst sst)
                         byte b = 0x00;
                         var i = 0x9;
                         List<byte> areaBytes = [];
-                        while (b != 0xFF && i < section.Count)
+                        while (b != 0xFF && i < s.Length)
                         {
                             areaBytes.Add(b);
                             b = s[i];
@@ -178,6 +192,8 @@ public class Decompiler(FpnSst sst)
                     }
                     break;
                 case "REBIRTH":
+                case "REBIRTH_":
+                case "REBIRTH+":
                     foreach (var s in section)
                         output.Write(Encoding.UTF8.GetBytes($"{BitConverter.ToInt16([.. s.Take(2)])},{BitConverter.ToInt16([.. s.Skip(2).Take(2)])},{BitConverter.ToInt16([.. s.Skip(4).Take(2)])}\n"));
                     break;
@@ -207,7 +223,7 @@ public class Decompiler(FpnSst sst)
                 case "DRAWD":
                     foreach (var s in section)
                     {
-                        output.Write(Encoding.UTF8.GetBytes($"{BitConverter.ToSingle([.. s.Take(4)])},{s[0x5]}\n"));
+                        output.Write(Encoding.UTF8.GetBytes($"{BitConverter.ToSingle([.. s.Take(4)])},{s[0x4]}\n"));
                     }
                     break;
                 case "EVTIDX":
@@ -242,6 +258,41 @@ public class Decompiler(FpnSst sst)
                         output.Write(Encoding.UTF8.GetBytes($"{score},{diff},{combos},{initials},{unk}\n"));
                     }
                     break;
+                case "BOSS_TEX":
+                    foreach (var s in section)
+                    {
+                        var textureFile = GetString([.. s.Take(0x20)]);
+                        int[] ints =
+                        [
+                            BitConverter.ToInt32([.. s.Skip(0x20).Take(4)]),
+                            BitConverter.ToInt32([.. s.Skip(0x24).Take(4)])
+                        ];
+                        float[] floats =
+                        [
+                            BitConverter.ToSingle([.. s.Skip(0x28).Take(4)]),
+                            BitConverter.ToSingle([.. s.Skip(0x2C).Take(4)])
+                        ];
+                        output.Write(Encoding.UTF8.GetBytes($"{textureFile},{string.Join(',', ints)},{string.Join(',', floats)}\n"));
+                    }
+                    break;
+                case "BOSS_CAS":
+                    foreach (var s in section)
+                    {
+                        var modelFile = GetString([.. s.Take(0x30)]);
+                        List<int> ints = [];
+                        for (var i = 0; i < 15; i++)
+                        {
+                            ints.Add(BitConverter.ToInt32([.. s.Skip(0x30 + i * 4).Take(4)]));
+                        }
+
+                        List<float> floats = [];
+                        for (var i = 0; i < 15; i++)
+                        {
+                            floats.Add(BitConverter.ToSingle([.. s.Skip(0x6C + i * 4).Take(4)]));
+                        }
+                        output.Write(Encoding.UTF8.GetBytes($"{modelFile},{string.Join(',', ints)},{string.Join(',', floats)}\n"));
+                    }
+                    break;
             }
             output.Write("\n"u8);
         } 
@@ -262,11 +313,11 @@ public class Decompiler(FpnSst sst)
     {
         return @event.Magic switch
         {
-            0 => "func " + @event.Label + " {\n",
             8 => "}\n",
             _ => @event switch
             {
-                { Magic: 1, Arg1: 0, Arg2 : 0, Arg3 : 0, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0 } => "\tstop()\n",
+                { Magic: 0, Arg1: 0,  Arg2 : 0, Arg3 : 0, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0 } => "func " + @event.Label + " {\n",
+                { Magic: 1, Arg1: 0, Arg2 : 0, Arg3 : 0, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0, Label: "" } => "\tstop()\n",
                 { Magic: 2, Arg1: 0, Arg2 : 0, Arg3 : 0, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0 } => "\tgoto " + @event.Label + "\n",
                 { Magic: 5, Arg1: 0, Arg2 : 0, Arg3 : 0, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0 } => "\tendif\n",
                 { Magic: 3, Arg1: 1, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0  } => "\tif (" + @event.Label + "[" + @event.Arg3 + "] == 0x" +
@@ -296,6 +347,7 @@ public class Decompiler(FpnSst sst)
     {
         return $"trigger_{label}({args})";
     }
+
 
     private static string StripEnd(string args)
     {

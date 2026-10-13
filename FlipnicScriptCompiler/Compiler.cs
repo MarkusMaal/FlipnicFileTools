@@ -69,6 +69,7 @@ public class Compiler
                 case "EFFN":
                 case "FNTN":
                 case "STGINF":
+                case "BOSS_REF":
                     lSplit = l.Split(',');
                     buffer = new byte[lSplit[1].EndsWith('L') ? 0x28 : 0x24];
                     foreach (var (j, b) in Encoding.UTF8.GetBytes(lSplit[0]).Index())
@@ -83,6 +84,7 @@ public class Compiler
                         buffer[j] = fl[j];
                     break;
                 case "LNEWARP":
+                case "LNEWARP_":
                 case "KUOFS":
                     lSplit = l.Split(',');
                     buffer = new byte[8];
@@ -210,6 +212,8 @@ public class Compiler
                     buffer = [.. lB];
                     break;
                 case "REBIRTH":
+                case "REBIRTH_":
+                case "REBIRTH+":
                     lSplit = l.Split(',');
                     var s1 = BitConverter.GetBytes(short.Parse(lSplit[0]));
                     var s2 = BitConverter.GetBytes(short.Parse(lSplit[1]));
@@ -223,6 +227,7 @@ public class Compiler
                     buffer = [s1[0], s1[1], s2[0], s2[1]];
                     break;
                 case "SGKIDX":
+                case "EVTIDX":
                     buffer = BitConverter.GetBytes(int.Parse(l));
                     break;
                 case "FLIESFPB":
@@ -261,6 +266,37 @@ public class Compiler
                 case "EVENT":
                     buffer = Event.Parse(l);
                     break;
+                case "WALLD":
+                case "PLIGHT":
+                    lSplit = l.Split(',');
+                    lB = [];
+                    foreach (var split in lSplit)
+                        lB.AddRange(BitConverter.GetBytes(float.Parse(split)));
+                    buffer = [.. lB];
+                    break;
+                case "BOSS_TEX":
+                    lSplit = l.Split(',');
+                    buffer =
+                    [
+                        .. PadString(lSplit[0], 0x20),
+                        .. BitConverter.GetBytes(int.Parse(lSplit[1])),
+                        .. BitConverter.GetBytes(int.Parse(lSplit[2])),
+                        .. BitConverter.GetBytes(float.Parse(lSplit[3])),
+                        .. BitConverter.GetBytes(float.Parse(lSplit[4])),
+                    ];
+                    break;
+                case "BOSS_CAS":
+                    lSplit = l.Split(',');
+                    lB =
+                    [
+                        .. PadString(lSplit[0], 0x30)
+                    ];
+                    foreach (var s in lSplit.Skip(1).Take(15))
+                        lB.AddRange(BitConverter.GetBytes(int.Parse(s)));
+                    foreach (var s in lSplit.Skip(16).Take(15))
+                        lB.AddRange(BitConverter.GetBytes(float.Parse(s)));
+                    buffer = [.. lB];
+                    break;
                 default:
                     Console.WriteLine($"Unknown section \"{sect}\", skipping");
                     continue;
@@ -282,25 +318,7 @@ endSwitch:
             if (output.Position % 0x10 != 0)
             {
                 output.Position += 0x2;
-                output.Write(BitConverter.GetBytes((short)(preKey switch
-                {
-                    "SGKTBL" or "SGKIDX" or "MTTBLDEF" or "EVTIDX" => 0x4,
-                    "LNEWARP" or "KUOFS" or "REBIRTH" or "DRAWD" => 0x8,
-                    "EVTINF" => 0xC,
-                    "SETBL" or "MTTBL"  or "PTTBL" or "EVTBL" => 0x10,
-                    "SKYN" or "CAMN" or "LIGHTN" or "PATHN" or "BALLD" or "CAMKUD" or "BOSSN" or "STGNAME" => 0x20,
-                    "SEQN" or "STGINF" => 0x24,
-                    "CAMLD" or "EFFN" or "FNTN" => 0x28,
-                    "CAMD" => 0x30,
-                    "RECORD" => 0x34,
-                    "BALLN" or "INTN" or "EVENT" => 0x40,
-                    "VABN" => 0x44,
-                    "KUINF" => 0x50,
-                    "IPUN" => 0x54,
-                    "CAMID" => 0x70,
-                    "FLIESFPB" => 0xDA0,
-                    _ => 0x80
-                })));
+                output.Write(BitConverter.GetBytes(GetDefaultSize(preKey)));
                 output.Write(BitConverter.GetBytes(offset));
             }
 
@@ -309,21 +327,22 @@ endSwitch:
             var buffer = new byte[0x8];
             foreach (var (i, c) in key.ToCharArray().Index())
             {
-                buffer[i] = Encoding.UTF8.GetBytes(c.ToString())[0];
+                if ((i == key.Length - 1) && (c == '_')) break;
+                buffer[i] = Encoding.UTF8.GetBytes(c.ToString().Replace('+', '_'))[0];
             }
 
             output.Write(buffer);
-            if (!sstSection.TryGetValue(key, out var value)) continue;
-            if (!sstSizes.TryGetValue(key, out var size)) continue;
+            if (!sstSection.TryGetValue(key, out var value)) value = [];
+            var size = sstSizes.GetValueOrDefault(key, GetDefaultSize(preKey));
             output.Write(BitConverter.GetBytes((short)value.Count));
             output.Write(BitConverter.GetBytes((short)size));
             output.Write(BitConverter.GetBytes(offset));
             var cPos = output.Position;
             output.Position = offset;
-            foreach (var s in sstSection[key])
+            foreach (var s in value)
                 output.Write(s);
             output.Position = cPos;
-            offset += sstSection[key].Count * sstSizes[key];
+            offset += value.Count * size;
             while (offset % 0x10 != 0)
                 offset++;
         }
@@ -333,7 +352,31 @@ endSwitch:
         return ("Operation completed successfully", input.Length);
     }
 
-    private byte GenerateCamDByte(string anchor, string xyz)
+    private short GetDefaultSize(string key)
+    {
+        return key switch
+        {
+            "SGKTBL" or "SGKIDX" or "MTTBLDEF" or "EVTIDX" => 0x4,
+            "LNEWARP" or "LNEWARP_" or "KUOFS" or "REBIRTH" or "DRAWD" or "WALLD" => 0x8,
+            "EVTINF" => 0xC,
+            "SETBL" or "MTTBL" or "PTTBL" or "EVTBL" => 0x10,
+            "SKYN" or "CAMN" or "LIGHTN" or "PATHN" or "BALLD" or "CAMKUD" or "BOSSN" or "STGNAME" => 0x20,
+            "SEQN" or "STGINF" or "BOSS_REF" => 0x24,
+            "CAMLD" or "EFFN" or "FNTN" => 0x28,
+            "CAMD" or "PLIGHT" or "BOSS_TEX" => 0x30,
+            "RECORD" => 0x34,
+            "BALLN" or "INTN" or "EVENT"  => 0x40,
+            "VABN" => 0x44,
+            "KUINF" => 0x50,
+            "IPUN" => 0x54,
+            "CAMID" => 0x70,
+            "BOSS_CAS" => 0xA8,
+            "FLIESFPB" => 0xDA0,
+            _ => 0x80
+        };
+    }
+
+    private static byte GenerateCamDByte(string anchor, string xyz)
     {
         byte sum = 0;
         sum += (byte)(anchor == "Anchor" ? (byte)Math.Pow(2, 3) : 0);
@@ -343,7 +386,7 @@ endSwitch:
         return sum;
     }
     
-    private byte[] PadString(string s, int size)
+    private static byte[] PadString(string s, int size)
     {
         var data = Encoding.UTF8.GetBytes(s);
         while (data.Length < size)
