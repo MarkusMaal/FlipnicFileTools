@@ -15,25 +15,13 @@ public class Decompiler(FpnSst sst)
             output.Write(Encoding.UTF8.GetBytes("#" + key + "\n"));
             if (key.StartsWith("GMK"))
             {
-                foreach (var s in section)
+                foreach (var gmk in section.Select(s => new Gimmick(s)))
                 {
-                    var gmk = new Gimmick(s);
-                    var gl = gmk.Label;
-                    var gt = gmk.Type;
-                    var ns = gmk.NoSpawn;
-                    var inv = gmk.Invisible;
-                    var bnc = gmk.Bounciness;
-                    var unkP = gmk.FlipperStrength;
-                    var knockback = gmk.Knockback;
-                    var sfx = gmk.SoundEffect;
-                    var anR = gmk.AnalogRange;
-                    var btn = gmk.Button;
-                    output.Write(Encoding.UTF8.GetBytes($"{gl},{gt},{ns},{inv},{bnc},{unkP},{knockback},{sfx},{anR},{btn}\n"));
+                    output.Write(Encoding.UTF8.GetBytes($"{gmk}\n"));
                 }
             }
             switch (key)
             {
-                case "BALLN":
                 case "SKYN":
                 case "CAMN":
                 case "LIGHTN":
@@ -41,15 +29,16 @@ public class Decompiler(FpnSst sst)
                 case "KUIDX":
                 case "BOSSN":
                 case "STGNAME":
-                    foreach (var s in section.Select(sB => Encoding.UTF8.GetString(sB)))
+                    foreach (var s in section.Select(GetString))
                         output.Write(Encoding.UTF8.GetBytes(s + "\n"));
                     break;
+                case "BALLN":
                 case "VABN":
                 case "INTN":
                     foreach (var s in section)
                     {
-                        var s1 = Encoding.UTF8.GetString(s.Take(0x20).ToArray());
-                        var s2 = Encoding.UTF8.GetString(s.Skip(0x20).ToArray());
+                        var s1 = GetString([.. s.Take(0x20)]);
+                        var s2 = GetString([.. s.Skip(0x20)]);
                         output.Write(key == "VABN"
                             ? Encoding.UTF8.GetBytes(s1 + "," + s2 + "," +
                                                      BitConverter.ToInt32([.. s.Skip(0x40).Take(0x4)]) + "\n")
@@ -62,7 +51,7 @@ public class Decompiler(FpnSst sst)
                 case "STGINF":
                     foreach (var s in section)
                     {
-                        var s1 = Encoding.UTF8.GetString(s.Take(0x20).ToArray());
+                        var s1 = GetString([.. s.Take(0x20)]);
                         long idx;
                         if (s.Length == 0x24)
                         {
@@ -105,23 +94,26 @@ public class Decompiler(FpnSst sst)
                                 Encoding.UTF8.GetBytes(BitConverter.ToSingle([.. s.Skip(0x20 + (i * 4)).Take(4)]) + ","));
                         }
 
-                        for (var i = 0; i < 0x3; i++)
+                        for (var i = 0; i < 0x6; i++)
                         {
                             output.Write(
-                                Encoding.UTF8.GetBytes(BitConverter.ToSingle([.. s.Skip(0x30 + (i * 4)).Take(4)]) + ","));
+                                Encoding.UTF8.GetBytes(BitConverter.ToInt16([.. s.Skip(0x30 + (i * 2)).Take(2)]) + ","));
                         }
+
+                        List<string> byteStrs = [];
                         for (var i = 0; i < 0x14; i++)
                         {
-                            output.WriteByte(s[0x3C + i]);
+                            byteStrs.Add(s[0x3C + i].ToString());
                         }
+                        output.Write(Encoding.UTF8.GetBytes(string.Join(',', byteStrs)));
                         output.Write("\n"u8);
                     }
                     break;
                 case "IPUN":
                     foreach (var s in section)
                     {
-                        var fmvName = Encoding.UTF8.GetString(s.Take(0x20).ToArray());
-                        var overlay = Encoding.UTF8.GetString(s.Skip(0x20).Take(0x20).ToArray());
+                        var fmvName = GetString([.. s.Take(0x20)]);
+                        var overlay = GetString([.. s.Skip(0x20).Take(0x20)]);
                         var type = BitConverter.ToInt32([.. s.Skip(0x40).Take(4)]);
                         var typeS = type switch
                         {
@@ -145,6 +137,7 @@ public class Decompiler(FpnSst sst)
                         line += "," + (camD.AnchorToTarget ? "Anchor" : "NoAnchor");
                         line += "," + camD.GetAxisString();
                         line += "," + camD.CameraName;
+                        line += "," + camD.UnkInt;
                         line += "," + camD.GetStiffnessXyz();
                         output.Write(Encoding.UTF8.GetBytes(line + "\n"));
                     }
@@ -195,7 +188,7 @@ public class Decompiler(FpnSst sst)
                 case "SETBL":
                     foreach (var s in section)
                     {
-                        for (var i = 0; i < 4; i++)
+                        for (var i = 0; i < 8; i++)
                         {
                             output.Write(Encoding.UTF8.GetBytes($"{s[i]},"));
                         }
@@ -267,46 +260,49 @@ public class Decompiler(FpnSst sst)
 
     private static string DecompileEvent(Event @event, FpnSst sst)
     {
-        switch (@event.Magic)
+        return @event.Magic switch
         {
-            case 0:
-                return "func " + @event.Label + "{\n";
-            case 8:
-                return "}\n";
-            default:
+            0 => "func " + @event.Label + "{\n",
+            8 => "}\n",
+            _ => @event switch
             {
-                return @event switch
-                {
-                    { Magic: 1, Arg1: 0 } => "\tstop();\n",
-                    { Magic: 2, Arg1: 0 } => "\tgoto " + @event.Label + ";\n",
-                    { Magic: 5, Arg1: 0 } => "\tendif;\n",
-                    { Magic: 3, Arg1: 1 } => "\tif (" + @event.Label + "[" + @event.Arg3 + "] == 0x" + @event.Arg2.ToString("X2") + ")\n",
-                    { Magic: 3, Arg1: 2 } => "\tif (" + @event.Label + "[" + @event.Arg3 + "] == 0x" + @event.Arg2.ToString("X2") + ")\n",
-                    { Magic: 7, Arg1: 0 } => ":" + @event.Label + "\n",
-                    { Magic: 0xE, Arg1: 0 } => "\tplay_video(\"" + sst.GetStringById("IPUN", @event.Arg2) + "\", " + (@event.Arg3 > 0 ? "RANDOMIZER::ENABLED" : "RANDOMIZER::DISABLED") + ", " + @event.Arg4 + ");\n",
-                    { Magic: 9, Arg1: 1 } => "\t" + DecodeSymbol(@event, sst) + ";\n",
-                    { Magic: 9, Arg1: 3 } => "\t" + @event.Label + "[" + @event.Arg3 + "] = " + @event.Arg2 + ";\n",
-                    _ => "\top_0x" + @event.Magic.ToString("X2") + (@event.Label == "" ? "" : "_" + @event.Label) +
-                         "(" + StripEnd(@event.Arg1 + "," + @event.Arg2 + "," + @event.Arg3 + "," + @event.Arg4 + "," +
-                         @event.Arg5 + "," + @event.Arg6 + "," + @event.Arg7) + ");\n"
-                };
+                { Magic: 1, Arg1: 0 } => "\tstop()\n",
+                { Magic: 2, Arg1: 0 } => "\tgoto " + @event.Label + "\n",
+                { Magic: 5, Arg1: 0 } => "\tendif\n",
+                { Magic: 3, Arg1: 1 } => "\tif (" + @event.Label + "[" + @event.Arg3 + "] == 0x" +
+                                         @event.Arg2.ToString("X2") + ")\n",
+                { Magic: 3, Arg1: 2 } => "\tif (" + @event.Label + "[" + @event.Arg3 + "] == 0x" +
+                                         @event.Arg2.ToString("X2") + ")\n",
+                { Magic: 7, Arg1: 0 } => ":" + @event.Label + "\n",
+                { Magic: 0xE, Arg1: 0 } => "\tplay_video(\"" + sst.GetStringById("IPUN", @event.Arg2) + "\", " +
+                                           (@event.Arg3 > 0 ? "RANDOMIZER::ENABLED" : "RANDOMIZER::DISABLED") + ", " +
+                                           @event.Arg4 + ")\n",
+                { Magic: 9, Arg1: 1 } => "\t" + DecodeSymbol(@event, sst) + "\n",
+                { Magic: 9, Arg1: 3 } => "\t" + @event.Label + "[" + @event.Arg3 + "] = " + @event.Arg2 + "\n",
+                _ => "\top_0x" + @event.Magic.ToString("X2") + (@event.Label == "" ? "" : "_" + @event.Label) + "(" +
+                     StripEnd(@event.Arg1 + "," + @event.Arg2 + "," + @event.Arg3 + "," + @event.Arg4 + "," +
+                              @event.Arg5 + "," + @event.Arg6 + "," + @event.Arg7) + ")\n"
             }
-        }
-
-        return "";
+        };
     }
     
     private static string DecodeSymbol(Event @event,  FpnSst sst)
     {
         return @event.Label.TrimEnd('\0') switch
         {
-            "GAME_EVENT" => "trigger_GAME_EVENT([" + @event.Arg2 + "," + @event.Arg3 + "], [" + @event.Arg4 + "," +
-                            @event.Arg5 + "], [" + @event.Arg6 + "," + @event.Arg7 + "])",
-            "FONT_EVENT" => "trigger_FONT_EVENT(\"" + sst.GetStringById("FNTN", @event.Arg2) + "\",MSG[" + @event.Arg3 +
-                            "]," + @event.Arg4 + "," + @event.Arg5 + "," + @event.Arg6 + ")",
-            _ => "trigger_" + @event.Label + "(" + StripEnd(@event.Arg2 + "," + @event.Arg3 + "," + @event.Arg4 + "," +
-                                                            @event.Arg5 + "," + @event.Arg6 + "," + @event.Arg7) + ")"
+            
+            "GAME_EVENT" => EncodeSymbolTokens(@event.Label, "[" + @event.Arg2 + "," + @event.Arg3 + "], [" + @event.Arg4 + "," +
+                            @event.Arg5 + "], [" + @event.Arg6 + "," + @event.Arg7 + "]"),
+            "FONT_EVENT" => EncodeSymbolTokens(@event.Label, "(\"" + sst.GetStringById("FNTN", @event.Arg2) + "\",MSG[" + @event.Arg3 +
+                                                             "]," + @event.Arg4 + "," + @event.Arg5 + "," + @event.Arg6 + ")"),
+            _ => EncodeSymbolTokens(@event.Label, StripEnd(@event.Arg2 + "," + @event.Arg3 + "," + @event.Arg4 + "," +
+                                                            @event.Arg5 + "," + @event.Arg6 + "," + @event.Arg7))
         };
+    }
+
+    private static string EncodeSymbolTokens(string label, string args)
+    {
+        return $"trigger_{label}({args})";
     }
 
     private static string StripEnd(string args)

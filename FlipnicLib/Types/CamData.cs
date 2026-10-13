@@ -14,6 +14,7 @@ public class CamData : FormatBase
     private float StiffnessX { get; }
     private float StiffnessY { get; }
     private float StiffnessZ { get; }
+    public int UnkInt { get; }
 
     public CamData(byte[] data, FpnSst stage)
     {
@@ -21,6 +22,7 @@ public class CamData : FormatBase
         UnkData = [GetInt32(data, 4), GetInt32(data, 8), GetInt32(data, 0xC), GetInt32(data, 0x10)];
         
         CameraName = stage.GetStringById("CAMN", GetInt32(data, 0x1C));
+        UnkInt = GetInt32(data, 0x20);
         // how "smooth" the camera moves towards the target
         //
         // the higher the value, the smoother the movement looks
