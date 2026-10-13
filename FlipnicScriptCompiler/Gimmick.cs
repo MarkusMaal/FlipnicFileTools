@@ -97,7 +97,14 @@ public class Gimmick : FormatBase
             i++;
         }
 
-        UnkFloat = float.Parse(lSplit[i]);
+        try
+        {
+            UnkFloat = float.Parse(lSplit[i]);
+        }
+        catch
+        {
+            UnkFloat = 0f;
+        }
     }
 
     public override string ToString()
