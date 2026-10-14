@@ -12,16 +12,20 @@ clean: $(BUILD_FILES)
 build: $(DEPENDS)
 	$(DOTNET) build FlipnicFileToolGUI
 	$(DOTNET) build FlipnicFileTool
+	$(DOTNET) build FlipnicScriptCompiler
 
 restore: $(DEPENDS)
 	$(DOTNET) restore FlipnicFileToolGUI
 	$(DOTNET) restore FlipnicFileTool
+	$(DOTNET) restore FlipnicScriptCompiler
 
 publish: ./build_native.ps1 $(DEPENDS)
 	@echo "Building CLI"
 	$(DOTNET) publish FlipnicFileTool $(BUILD_FLAGS)
 	@echo "Building GUI"
 	$(DOTNET) publish FlipnicFileToolGUI $(BUILD_FLAGS)
+	@echo "Building script compiler"
+	$(DOTNET) publish FlipnicScriptCompiler $(BUILD_FLAGS)
 	@echo "Finished!"
 
 
@@ -39,3 +43,6 @@ run: $(DEPENDS)
 
 run-cli: $(DEPENDS)
 	$(DOTNET) run --project FlipnicFileTool
+
+run-compiler: $(DEPENDS)
+	$(DOTNET) run --project FlipnicScriptCompiler
