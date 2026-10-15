@@ -32,10 +32,20 @@ public readonly struct Event(byte[] data)
         else if (cleanLine.StartsWith("func"))
         {
             var label = cleanLine.Split(' ')[1];
+            int[] args = [];
             if (label.Contains('('))
+            {
                 label = label.Split('(')[0];
+                if (!line.Contains("()"))
+                    args = [.. cleanLine.Split('(')[1].Split(')')[0].Split(',').Select(int.Parse)];
+            }
             ms.Position = 0x04;
             ms.Write(Encoding.UTF8.GetBytes(label));
+            ms.Position = 0x24;
+            foreach (var arg in args)
+            {
+                ms.Write(BitConverter.GetBytes(arg));
+            }
         } else if (cleanLine.StartsWith("goto"))
         {
             var label = "";

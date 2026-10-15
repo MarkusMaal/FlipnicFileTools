@@ -316,7 +316,8 @@ public class Decompiler(FpnSst sst)
             8 => "}\n",
             _ => @event switch
             {
-                { Magic: 0, Arg1: 0,  Arg2 : 0, Arg3 : 0, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0 } => "func " + @event.Label + " {\n",
+                { Magic: 0 } => "func " + @event.Label + "(" + StripEnd(@event.Arg1 + "," + @event.Arg2 + "," + @event.Arg3 + "," + @event.Arg4 + "," +
+                                                                  @event.Arg5 + "," + @event.Arg6 + "," + @event.Arg7) + ") {\n",
                 { Magic: 1, Arg1: 0, Arg2 : 0, Arg3 : 0, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0, Label: "" } => "\tstop()\n",
                 { Magic: 2, Arg1: 0, Arg2 : 0, Arg3 : 0, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0 } => "\tgoto " + @event.Label + "\n",
                 { Magic: 5, Arg1: 0, Arg2 : 0, Arg3 : 0, Arg4 : 0, Arg5 : 0, Arg6 : 0, Arg7 : 0 } => "\tendif\n",
@@ -356,6 +357,6 @@ public class Decompiler(FpnSst sst)
             args = args[..^2];
         }
 
-        return args;
+        return args == "0" ? "" : args;
     }
 }

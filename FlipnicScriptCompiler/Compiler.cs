@@ -5,8 +5,24 @@ namespace FlipnicScriptCompiler;
 public class Compiler
 {
 
-    private Dictionary<string, List<byte[]>> sstSection = new(); 
-    private Dictionary<string, int> sstSizes = new();
+    private readonly Dictionary<string, List<byte[]>> _sstSection = new(); 
+    private readonly Dictionary<string, int> _sstSizes = new();
+
+    private enum DataTypes
+    {
+        Float,
+        Byte,
+        Int,
+        Short,
+        Long,
+        String,
+        WString,
+        SFmvType,
+        SFadeInType,
+        SFadeOutType,
+        Dummy,
+        Padding
+    }
     
     public (string res, int line) CompileAsStream(string[] input, Stream output)
     {
@@ -18,7 +34,7 @@ public class Compiler
             if (l.StartsWith('#'))
             {
                 sect = l[1..];
-                sstSection[sect] = [];
+                _sstSection[sect] = [];
                 Console.WriteLine($"Parsing {sect}");
                 continue;
             }
@@ -32,7 +48,8 @@ public class Compiler
                 buffer = gmk.ToBytes();
                 goto endSwitch;
             }
-            
+
+            string[] lSplit;
             switch (sect)
             {
                 case "SKYN":
@@ -42,28 +59,14 @@ public class Compiler
                 case "KUIDX":
                 case "BOSSN":
                 case "STGNAME":
-                    if (sect == "BALLN")
-                    {
-                        buffer = new byte[0x40];
-                    }
-                    foreach (var (j, b) in Encoding.UTF8.GetBytes(l).Take(0x20).Index())
-                        buffer[j] = b;
+                    buffer = CsvToBytes(l, sect == "BALLN" ? [(DataTypes.String, 0x20), (DataTypes.String, 0x20)] : [(DataTypes.String, 0x20)], sect);
                     break;
                 case "BALLN":
                 case "VABN":
                 case "INTN":
-                    var lSplit = l.Split(',');
-                    buffer = new byte[lSplit.Length > 2 ? 0x44 : 0x40];
-                    foreach (var (j, b) in Encoding.UTF8.GetBytes(lSplit[0]).Index())
-                        buffer[j] = b;
-                    foreach (var (j, b) in Encoding.UTF8.GetBytes(lSplit[1]).Index())
-                        buffer[0x20 + j] = b;
-                    if (buffer.Length > 0x40)
-                    {
-                        idx = BitConverter.GetBytes(int.Parse(lSplit[2]));
-                        for (var j = 0; j < 4; j++)
-                            buffer[0x40 + j] = idx[j];
-                    }
+                    buffer = CsvToBytes(l, l.Split(',').Length > 2
+                        ? [(DataTypes.String, 0x20), (DataTypes.String, 0x20), (DataTypes.Int, 1)]
+                        : [(DataTypes.String, 0x20), (DataTypes.String, 0x20)], sect);
                     break;
                 case "SEQN":
                 case "EFFN":
@@ -79,152 +82,55 @@ public class Compiler
                         buffer[0x20 + j] = idx[j];
                     break;
                 case "BALLD":
-                    var fl = BitConverter.GetBytes(float.Parse(l));
-                    for (var j = 0; j < 4; j++)
-                        buffer[j] = fl[j];
+                    buffer = CsvToBytes(l, [(DataTypes.Float, 1)], sect);
                     break;
                 case "LNEWARP":
                 case "LNEWARP_":
                 case "KUOFS":
-                    lSplit = l.Split(',');
-                    buffer = new byte[8];
-                    foreach (var (j, b) in lSplit.Index())
-                    {
-                        var s = BitConverter.GetBytes(short.Parse(b));
-                        buffer[j * 2] = s[0];
-                        buffer[j * 2 + 1] = s[1];
-                    }
+                    buffer = CsvToBytes(l, [(DataTypes.Short, l.Split(',').Length)], sect);
                     break;
                 case "KUINF":
-                    lSplit = l.Split(',');
-                    List<byte> lB = [];
-                    for (var j = 0; j < lSplit.Length; j++)
-                    {
-                        switch (j)
-                        {
-                            case < 0x10:
-                                lB.AddRange(BitConverter.GetBytes(short.Parse(lSplit[j])));
-                                break;
-                            case < 0x14:
-                                lB.AddRange(BitConverter.GetBytes(float.Parse(lSplit[j])));
-                                break;
-                            case < 0x1A:
-                                lB.AddRange(BitConverter.GetBytes(short.Parse(lSplit[j])));
-                                break;
-                            default:
-                                lB.Add(byte.Parse(lSplit[j]));
-                                break;
-                        }
-                    }
-                    buffer = [.. lB];
+                    buffer = CsvToBytes(l, [(DataTypes.Short, 0x10), (DataTypes.Float, 4), (DataTypes.Short, 6), (DataTypes.Byte, 12)], sect);
                     break;
                 case "EVTINF":
-                    lSplit = l.Split(',');
-                    buffer = new byte[0xC];
-                    var stgIdx = BitConverter.GetBytes(int.Parse(lSplit[0]));
-                    var msgIdx = BitConverter.GetBytes(int.Parse(lSplit[4]));
-                    for (var j = 0; j < 4; j++)
-                        buffer[j] = stgIdx[j];
-                    for (var j = 8; j < 12; j++)
-                        buffer[j] = msgIdx[j - 8];
-                    buffer[4] = byte.Parse(lSplit[1]);
-                    buffer[6] = byte.Parse(lSplit[2]);
-                    buffer[7] = byte.Parse(lSplit[3]);
+                    buffer = CsvToBytes(l,
+                    [
+                        (DataTypes.Int, 1), (DataTypes.Byte, 1), (DataTypes.Padding, 1), (DataTypes.Byte, 2),
+                        (DataTypes.Int, 1)
+                    ], sect);
                     break;
                 case "RECORD":
-                    lSplit = l.Split(',');
-                    lB =
-                    [
-                        .. BitConverter.GetBytes(long.Parse(lSplit[0])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[1])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[2])),
-                        .. PadString(lSplit[3], 0x20),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[4])),
-                    ];
-                    buffer = [.. lB];
+                    buffer = CsvToBytes(l, [(DataTypes.Long, 1), (DataTypes.Int, 2), (DataTypes.String, 0x20), (DataTypes.Int, 1)], sect);
                     break;
                 case "CAMD":
                     lSplit = l.Split(',');
                     var stiffy = lSplit[9].Split('/');
-                    lB =
+                    buffer =
                     [
-                        .. BitConverter.GetBytes(int.Parse(lSplit[0])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[1])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[2])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[3])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[4])),
+                        .. lSplit.Take(5).SelectMany(p => BitConverter.GetBytes(int.Parse(p))).ToArray(),
                         .. BitConverter.GetBytes(0),
                         .. BitConverter.GetBytes((int)GenerateCamDByte(lSplit[5], lSplit[6])),
-                        .. BitConverter.GetBytes(sstSection["CAMN"].FindIndex(p => lSplit[7].TrimEnd('\0') == Decompiler.GetString(p))),
+                        .. BitConverter.GetBytes(_sstSection["CAMN"].FindIndex(p => lSplit[7].TrimEnd('\0') == Decompiler.GetString(p))),
                         .. BitConverter.GetBytes(int.Parse(lSplit[8])),
-                        .. BitConverter.GetBytes(float.Parse(stiffy[0])),
-                        .. BitConverter.GetBytes(float.Parse(stiffy[1])),
-                        .. BitConverter.GetBytes(float.Parse(stiffy[2]))
+                        .. stiffy.SelectMany(p => BitConverter.GetBytes(float.Parse(p))).ToArray()
                     ];
-                    buffer = [.. lB];
                     break;
                 case "CAMLD":
-                    lSplit = l.Split(',');
-                    lB =
-                    [
-                        .. BitConverter.GetBytes(int.Parse(lSplit[0])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[1])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[2])),
-                        .. BitConverter.GetBytes(float.Parse(lSplit[3])),
-                        .. BitConverter.GetBytes(float.Parse(lSplit[4])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[5])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[6])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[7])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[8])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[9])),
-                    ];
-                    buffer = [.. lB];
+                    buffer = CsvToBytes(l, [(DataTypes.Int, 3), (DataTypes.Float, 2), (DataTypes.Int, 5)], sect);
                     break;
                 case "IPUN":
-                    lSplit = l.Split(',');
-                    lB =
-                    [
-                        .. PadString(lSplit[0], 0x20),
-                        .. PadString(lSplit[1], 0x20),
-                        .. BitConverter.GetBytes(lSplit[2] == "FmvType::LoRes" ? 3 : 2),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[3])),
-                        .. BitConverter.GetBytes(lSplit[4] == "FadeIn::White" ? 1 : 0),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[5])),
-                        .. BitConverter.GetBytes(lSplit[6] == "FadeOut::White" ? 1 : 0),
-                    ];
-                    buffer = [.. lB];
+                    buffer = CsvToBytes(l, [(DataTypes.String, 0x20), (DataTypes.String, 0x20), (DataTypes.SFmvType, 1), (DataTypes.Int, 1), (DataTypes.SFadeInType, 1), (DataTypes.Int, 1), (DataTypes.SFadeOutType, 1)], sect);
                     break;
                 case "CAMKUD":
-                    lSplit = l.Split(',');
-                    lB =
-                    [
-                        .. BitConverter.GetBytes(float.Parse(lSplit[0])),
-                        .. BitConverter.GetBytes(float.Parse(lSplit[1])),
-                        byte.Parse(lSplit[2]),
-                    ];
-                    for (var j = 4; j < lSplit.Length; j++)
-                    {
-                        lB.Add(byte.Parse(lSplit[j]));
-                    }
-                    lB.Add(0xFF);
-                    while (lB.Count != 0x20)
-                        lB.Add(0);
-                    buffer = [.. lB];
+                    buffer = CsvToBytes(l + ",255", [(DataTypes.Float, 2), (DataTypes.Byte, 1), (DataTypes.Dummy, 1), (DataTypes.Byte, l.Split(',').Length - 1)], sect);
                     break;
                 case "REBIRTH":
                 case "REBIRTH_":
                 case "REBIRTH+":
-                    lSplit = l.Split(',');
-                    var s1 = BitConverter.GetBytes(short.Parse(lSplit[0]));
-                    var s2 = BitConverter.GetBytes(short.Parse(lSplit[1]));
-                    var s3 = BitConverter.GetBytes(short.Parse(lSplit[2]));
-                    buffer = [s1[0], s1[1], s2[0], s2[1], s3[0], s3[1], 0, 0];
+                    buffer = CsvToBytes(l, [(DataTypes.Short, 3)], sect);
                     break;
                 case "SGKTBL":
-                    lSplit = l.Split(',');
-                    s1 = BitConverter.GetBytes(short.Parse(lSplit[0]));
-                    s2 = BitConverter.GetBytes(short.Parse(lSplit[1]));
-                    buffer = [s1[0], s1[1], s2[0], s2[1]];
+                    buffer = CsvToBytes(l, [(DataTypes.Short, 2)], sect);
                     break;
                 case "SGKIDX":
                 case "EVTIDX":
@@ -234,12 +140,7 @@ public class Compiler
                     buffer = Convert.FromBase64String(l[8..][..(l[8..].Length - 1)]);
                     break;
                 case "DRAWD":
-                    lSplit = l.Split(',');
-                    buffer =
-                    [
-                        .. BitConverter.GetBytes(float.Parse(lSplit[0])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[1])),
-                    ];
+                    buffer = CsvToBytes(l, [(DataTypes.Float, 1), (DataTypes.Int, 1)], sect);
                     break;
                 case "MTTBL":
                 case "PTTBL":
@@ -248,20 +149,7 @@ public class Compiler
                     buffer = [.. l.Split(',').Select(byte.Parse)];
                     break;
                 case "SETBL":
-                    lSplit = l.Split(',');
-                    buffer =
-                    [
-                        byte.Parse(lSplit[0]),
-                        byte.Parse(lSplit[1]),
-                        byte.Parse(lSplit[2]),
-                        byte.Parse(lSplit[3]),
-                        byte.Parse(lSplit[4]),
-                        byte.Parse(lSplit[5]),
-                        byte.Parse(lSplit[6]),
-                        byte.Parse(lSplit[7]),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[8])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[9])),
-                    ];
+                    buffer = CsvToBytes(l, [(DataTypes.Byte, 8), (DataTypes.Int, 2)], sect);
                     break;
                 case "EVENT":
                     buffer = Event.Parse(l);
@@ -269,51 +157,30 @@ public class Compiler
                 case "WALLD":
                 case "PLIGHT":
                     lSplit = l.Split(',');
-                    lB = [];
-                    foreach (var split in lSplit)
-                        lB.AddRange(BitConverter.GetBytes(float.Parse(split)));
-                    buffer = [.. lB];
+                    buffer = CsvToBytes(l, [(DataTypes.Float, lSplit.Length)], sect);
                     break;
                 case "BOSS_TEX":
-                    lSplit = l.Split(',');
-                    buffer =
-                    [
-                        .. PadString(lSplit[0], 0x20),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[1])),
-                        .. BitConverter.GetBytes(int.Parse(lSplit[2])),
-                        .. BitConverter.GetBytes(float.Parse(lSplit[3])),
-                        .. BitConverter.GetBytes(float.Parse(lSplit[4])),
-                    ];
+                    buffer = CsvToBytes(l, [(DataTypes.String, 0x20), (DataTypes.Int, 2), (DataTypes.Float, 2)], sect);
                     break;
                 case "BOSS_CAS":
-                    lSplit = l.Split(',');
-                    lB =
-                    [
-                        .. PadString(lSplit[0], 0x30)
-                    ];
-                    foreach (var s in lSplit.Skip(1).Take(15))
-                        lB.AddRange(BitConverter.GetBytes(int.Parse(s)));
-                    foreach (var s in lSplit.Skip(16).Take(15))
-                        lB.AddRange(BitConverter.GetBytes(float.Parse(s)));
-                    buffer = [.. lB];
+                    buffer = CsvToBytes(l, [(DataTypes.String, 0x30), (DataTypes.Int, 15), (DataTypes.Float, 15)], sect);
                     break;
                 default:
                     Console.WriteLine($"Unknown section \"{sect}\", skipping");
                     continue;
-                    return ( $"Unknown section name \"{sect}\"", i);
             } 
 endSwitch:
-            sstSection[sect].AddRange(buffer);
-            sstSizes[sect] = buffer.Length;
+            _sstSection[sect].AddRange(buffer);
+            _sstSizes[sect] = buffer.Length;
         }
         // write section binaries
         Console.WriteLine("Generating header");
         output.Write("FpnSst00"u8);
-        output.Write(BitConverter.GetBytes(sstSection.Count));
-        var offset = 0x10 + 0x10 * sstSection.Count;
+        output.Write(BitConverter.GetBytes(_sstSection.Count));
+        var offset = 0x10 + 0x10 * _sstSection.Count;
         output.Write(BitConverter.GetBytes(offset));
         var preKey = "";
-        foreach (var key in sstSection.Keys)
+        foreach (var key in _sstSection.Keys)
         {
             if (output.Position % 0x10 != 0)
             {
@@ -322,18 +189,18 @@ endSwitch:
                 output.Write(BitConverter.GetBytes(offset));
             }
 
-            preKey = key;
+            preKey = key; 
             Console.WriteLine($"Generating bytecode for {key}");
             var buffer = new byte[0x8];
-            foreach (var (i, c) in key.ToCharArray().Index())
+            foreach (var (i, c) in key.Replace('_', '+').ToCharArray().Index())
             {
                 if ((i == key.Length - 1) && (c == '_')) break;
                 buffer[i] = Encoding.UTF8.GetBytes(c.ToString().Replace('+', '_'))[0];
             }
 
             output.Write(buffer);
-            if (!sstSection.TryGetValue(key, out var value)) value = [];
-            var size = sstSizes.GetValueOrDefault(key, GetDefaultSize(preKey));
+            if (!_sstSection.TryGetValue(key, out var value)) value = [];
+            var size = _sstSizes.GetValueOrDefault(key, GetDefaultSize(preKey));
             output.Write(BitConverter.GetBytes((short)value.Count));
             output.Write(BitConverter.GetBytes((short)size));
             output.Write(BitConverter.GetBytes(offset));
@@ -352,15 +219,15 @@ endSwitch:
         return ("Operation completed successfully", input.Length);
     }
 
-    private short GetDefaultSize(string key)
+    private static short GetDefaultSize(string key)
     {
         return key switch
         {
             "SGKTBL" or "SGKIDX" or "MTTBLDEF" or "EVTIDX" => 0x4,
-            "LNEWARP" or "LNEWARP_" or "KUOFS" or "REBIRTH" or "DRAWD" or "WALLD" => 0x8,
+            "LNEWARP" or "LNEWARP_" or "KUOFS" or "REBIRTH" or "DRAWD" or "WALLD" or "REBIRTH_" or "REBIRTH+" => 0x8,
             "EVTINF" => 0xC,
             "SETBL" or "MTTBL" or "PTTBL" or "EVTBL" => 0x10,
-            "SKYN" or "CAMN" or "LIGHTN" or "PATHN" or "BALLD" or "CAMKUD" or "BOSSN" or "STGNAME" => 0x20,
+            "SKYN" or "CAMN" or "LIGHTN" or "PATHN" or "BALLD" or "CAMKUD" or "BOSSN" or "STGNAME" or "KUIDX" => 0x20,
             "SEQN" or "STGINF" or "BOSS_REF" => 0x24,
             "CAMLD" or "EFFN" or "FNTN" => 0x28,
             "CAMD" or "PLIGHT" or "BOSS_TEX" => 0x30,
@@ -384,6 +251,85 @@ endSwitch:
         sum += (byte)(xyz.Contains('Y') ? (byte)Math.Pow(2, 1) : 0);
         sum += (byte)(xyz.Contains('Z') ? (byte)Math.Pow(2, 0) : 0);
         return sum;
+    }
+    
+    private static byte[] CsvToBytes(string csv, List<(DataTypes, int)> structure, string sectionKey)
+    {
+        var ms = new MemoryStream();
+        ms.SetLength(GetDefaultSize(sectionKey));
+        var cSplit = csv.Split(',');
+        var structureIdx = 0;
+        var type = structure[0].Item1;
+        var count = structure[0].Item2;
+        foreach (var t in cSplit)
+        {
+            switch (type)
+            {
+                case DataTypes.Float:
+                    float f = float.TryParse(t, out f) ? f : -1f;
+                    ms.Write(BitConverter.GetBytes(f));
+                    break;
+                case DataTypes.Byte:
+                    byte b = byte.TryParse(t, out b) ? b : (byte)255;
+                    ms.WriteByte(b);
+                    break;
+                case DataTypes.Int:
+                    int n = int.TryParse(t, out n) ? n : -1;
+                    ms.Write(BitConverter.GetBytes(n));
+                    break;
+                case DataTypes.Short:
+                    short s = short.TryParse(t, out s) ? s : (short)-1;
+                    ms.Write(BitConverter.GetBytes(s));
+                    break;
+                case DataTypes.Long:
+                    long l = long.TryParse(t, out l) ? l : -1;
+                    ms.Write(BitConverter.GetBytes(l));
+                    break;
+                case DataTypes.String:
+                    ms.Write(Encoding.UTF8.GetBytes(t));
+                    if (t.Length < count)
+                    {
+                        ms.Position += count - t.Length;
+                        count = 1;
+                    }
+                    break;
+                case DataTypes.WString:
+                    ms.Write(Encoding.Unicode.GetBytes(t));
+                    if (t.Length < count)
+                    {
+                        ms.Position += count - t.Length * 2;
+                        count = 1;
+                    }
+                    break;
+                case DataTypes.SFmvType:
+                    ms.WriteByte((byte)(t == "FmvType::LoRes" ? 3 : 2));
+                    ms.Position += 3;
+                    break;
+                case DataTypes.SFadeInType:
+                    ms.WriteByte((byte)(t == "FadeIn::White" ? 1 : 0));
+                    ms.Position += 3;
+                    break;
+                case DataTypes.SFadeOutType:
+                    ms.WriteByte((byte)(t == "FadeOut::White" ? 1 : 0));
+                    ms.Position += 3;
+                    break;
+                case DataTypes.Dummy:
+                    break;
+                case DataTypes.Padding:
+                default:
+                    ms.Position++;
+                    break;
+            }
+            count--;
+            if (count != 0) continue;
+            structureIdx++;
+            if (structureIdx >= structure.Count) continue;
+            type = structure[structureIdx].Item1;
+            count = structure[structureIdx].Item2;
+        }
+        var ret = ms.ToArray();
+        ms.Close();
+        return ret;
     }
     
     private static byte[] PadString(string s, int size)
